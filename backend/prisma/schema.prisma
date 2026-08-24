@@ -1,0 +1,579 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// 1. ПЕРЕЧИСЛЕНИЯ (ENUMS)
+// ==========================================
+
+enum RoleType {
+  ADMIN
+  SUPPLIER              // Üpjün ediji (Поставщик)
+  CLIENT                // Sargyt ediji (Заказчик)
+  PURCHASING_SPECIALIST // Satyn alyş hünärmeni (Специалист по закупкам)
+  COMMISSION_MEMBER     // Komissiýa topary (Тендерная комиссия)
+}
+
+enum TenderStatus {
+  TASLAMA              @map("taslama")              // черновик
+  ACYK                 @map("açyk")                 // открыт
+  YAPYK                @map("ýapyk")                // закрыт
+  BAHALANDYRYLDY       @map("bahalandyryldy")       // оценен
+  YENIJI_YGLAN_EDILDI  @map("ýeňiji yglan edildi")  // победитель объявлен
+  GOYBOLSUN_EDILDI     @map("goýbolsun edildi")     // отменен
+  ARHIWLENDI           @map("arhiwlendi")           // архивирован
+}
+
+enum OfferStatus {
+  TASLAMA          @map("taslama")          // черновик
+  TABSARYLDY       @map("tabşyryldy")       // отправлено
+  KABUL_EDILDI     @map("kabul edildi")     // принято
+  YENIJI           @map("ýeňiji")           // победитель
+  GOYBOLSUN_EDILDI @map("goýbolsun edildi") // отменено
+  RET_EDILDI       @map("ret edildi")       // отклонено
+}
+
+enum TenderType {
+  YERLI   @map("ýerli")    // местный
+  HALKARA @map("halkara")  // международный
+}
+
+enum TenderVisibility {
+  ACYK  @map("açyk")  // публичный
+  YAPYK @map("ýapyk") // закрытый
+}
+
+enum ProductType {
+  HARYT  @map("haryt")  // товар
+  HYZMAT @map("hyzmat") // услуга
+}
+
+enum EventType {
+  HARYT  @map("haryt")
+  TENDER @map("tender")
+}
+
+enum OperationType {
+  OKAMAK @map("okamak") // чтение
+  YAZMAK @map("ýazmak") // запись
+}
+
+enum BidStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+// ==========================================
+// 2. ПОЛЬЗОВАТЕЛИ, РОЛИ И БЕЗОПАСНОСТЬ (RBAC & AUDIT)
+// ==========================================
+
+model Role {
+  id             String   @id @default(uuid())
+  name           String
+  code           String   @unique
+  allowedModules Json?    @map("allowed_modules") // Список доступных модулей (JSON)
+  permissions    Json?    // Права CRUD (JSON)
+  users          User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model User {
+  id         String   @id @default(uuid())
+  username   String   @unique
+  password   String
+  firstName  String   @map("first_name")
+  lastName   String   @map("last_name")
+  middleName String?  @map("middle_name")
+  roleType   RoleType @default(SUPPLIER) @map("role_type")
+  position   String?
+
+  roleId String? @map("role_id")
+  role   Role?   @relation(fields: [roleId], references: [id], onDelete: SetNull)
+
+  companies Company[]
+  suppliers Supplier[]
+  tenders   Tender[]   @relation("CreatedTenders")
+  logs      Log[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Log {
+  id            String        @id @default(uuid())
+  userId        String?       @map("user_id")
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  eventType     EventType     @map("event_type")
+  operationType OperationType @map("operation_type")
+  ip            String?
+  data          Json?         // Данные в формате JSON (до/после изменений)
+  createdAt     DateTime      @default(now())
+
+  @@map("logs")
+}
+
+model Backup {
+  id        String   @id @default(uuid())
+  name      String
+  file      String
+  createdAt DateTime @default(now())
+
+  @@map("backups")
+}
+
+// ==========================================
+// 3. СПРАВОЧНИКИ (КАТАЛОГИ)
+// ==========================================
+
+model Category {
+  id              String           @id @default(uuid())
+  name            String
+  code            String?          @unique
+  description     String?
+  generalProducts GeneralProduct[]
+  tenders         Tender[]
+
+  @@map("categories")
+}
+
+model GeneralProduct {
+  id          String      @id @default(uuid())
+  categoryId  String?     @map("category_id")
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  name        String      // МНН (Международное непатентованное наименование)
+  code        String?
+  type        ProductType @default(HARYT)
+  description String?
+
+  tenderSpecs TenderSpecification[]
+  offerSpecs  OfferSpecification[]
+
+  @@map("general_products")
+}
+
+model Unit {
+  id        String  @id @default(uuid())
+  name      String
+  shortName String  @map("short_name")
+  order     Int     @default(0)
+  isActive  Boolean @default(true) @map("is_active")
+
+  tenderSpecs TenderSpecification[]
+  offerSpecs  OfferSpecification[]
+
+  @@map("units")
+}
+
+model Currency {
+  id       String  @id @default(uuid())
+  name     String
+  code     String  @unique
+  flag     String?
+  symbol   String?
+  order    Int     @default(0)
+  isActive Boolean @default(true) @map("is_active")
+
+  fromExchangeRates ExchangeRate[]       @relation("FromCurrency")
+  toExchangeRates   ExchangeRate[]       @relation("ToCurrency")
+  baseOffers        Offer[]              @relation("BaseCurrency")
+  offerRates        OfferExchangeRate[]
+
+  @@map("currencies")
+}
+
+model ExchangeRate {
+  id             String   @id @default(uuid())
+  fromCurrencyId String   @map("from_currency_id")
+  fromCurrency   Currency @relation("FromCurrency", fields: [fromCurrencyId], references: [id], onDelete: Cascade)
+  toCurrencyId   String   @map("to_currency_id")
+  toCurrency     Currency @relation("ToCurrency", fields: [toCurrencyId], references: [id], onDelete: Cascade)
+  value          Float
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([fromCurrencyId, toCurrencyId])
+  @@map("exchange_rates")
+}
+
+model Country {
+  id       String  @id @default(uuid())
+  name     String
+  alpha2   String  @map("alpha_2")
+  alpha3   String  @map("alpha_3")
+  order    Int     @default(0)
+  isActive Boolean @default(true) @map("is_active")
+
+  manufacturers Manufacturer[]
+  suppliers     Supplier[]
+
+  @@map("countries")
+}
+
+model Brand {
+  id            String         @id @default(uuid())
+  name          String
+  code          String?
+  manufacturers Manufacturer[]
+
+  @@map("brands")
+}
+
+model Manufacturer {
+  id        String   @id @default(uuid())
+  countryId String?  @map("country_id")
+  country   Country? @relation(fields: [countryId], references: [id], onDelete: SetNull)
+  brandId   String?  @map("brand_id")
+  brand     Brand?   @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  name      String
+  code      String?
+
+  tenderSpecs TenderSpecification[]
+  offerSpecs  OfferSpecification[]
+
+  @@map("manufacturers")
+}
+
+model DeliveryTerm {
+  id        String  @id @default(uuid())
+  name      String  // DAP, DDP, CIP
+  shortName String  @map("short_name")
+  offers    Offer[]
+
+  @@map("delivery_terms")
+}
+
+model DocumentType {
+  id        String     @id @default(uuid())
+  name      String
+  order     Int        @default(0)
+  isActive  Boolean    @default(true) @map("is_active")
+  documents Document[]
+
+  @@map("document_types")
+}
+
+model VariationGroup {
+  id     String           @id @default(uuid())
+  name   String           // Например: "Цвет", "Материал"
+  values VariationValue[]
+
+  @@map("variation_groups")
+}
+
+model VariationValue {
+  id      String         @id @default(uuid())
+  groupId String         @map("group_id")
+  group   VariationGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  value   String         // Красный, Синий, Сталь
+
+  @@map("variation_values")
+}
+
+// ==========================================
+// 4. МОДУЛЬ ТЕНДЕРОВ И СПЕЦИФИКАЦИЙ
+// ==========================================
+
+model Tender {
+  id             String           @id @default(uuid())
+  lotNumber      String           @map("lot_number")
+  title          String
+  description    String?
+  technicalSpecs String?          @map("technical_specs")
+  price          Float            @default(0)
+  type           TenderType       @default(YERLI)
+  status         TenderStatus     @default(TASLAMA)
+  visibility     TenderVisibility @default(ACYK)
+
+  announcementDate DateTime? @map("announcement_date")
+  deadline         DateTime
+
+  categoryId String?   @map("category_id")
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  createdById String @map("created_by_id")
+  createdBy   User   @relation("CreatedTenders", fields: [createdById], references: [id], onDelete: Cascade)
+
+  // Новые спецификации ТЗ
+  specs  TenderSpecification[]
+  files  TenderFile[]
+  offers Offer[]
+
+  // Старые связи для поддержки MVP
+  items     TenderItem[]
+  bids      Bid[]
+  documents Document[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tenders")
+}
+
+model TenderSpecification {
+  id               String          @id @default(uuid())
+  tenderId         String          @map("tender_id")
+  tender           Tender          @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  generalProductId String?         @map("general_product_id")
+  generalProduct   GeneralProduct? @relation(fields: [generalProductId], references: [id], onDelete: SetNull)
+  unitId           String?         @map("unit_id")
+  unit             Unit?           @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  manufacturerId   String?         @map("manufacturer_id")
+  manufacturer     Manufacturer?   @relation(fields: [manufacturerId], references: [id], onDelete: SetNull)
+
+  name           String?
+  quantity       Float   @default(1)
+  positionNumber Int     @default(1) @map("position_number")
+  description    String?
+
+  offerSpecs OfferSpecification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tender_specifications")
+}
+
+// Старая модель TenderItem для прямой обратной совместимости
+model TenderItem {
+  id          String  @id @default(uuid())
+  name        String
+  quantity    Int
+  unit        String  @default("шт")
+  description String?
+
+  tenderId String
+  tender   Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  bidItems BidItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tender_items")
+}
+
+// ==========================================
+// 5. МОДУЛЬ ПОСТАВЩИКОВ, ПРЕДЛОЖЕНИЙ (OFFERS) И ФИКСАЦИИ КУРСОВ
+// ==========================================
+
+model Supplier {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  countryId     String?  @map("country_id")
+  country       Country? @relation(fields: [countryId], references: [id], onDelete: SetNull)
+
+  name          String
+  regNumber     String?  @map("reg_number")
+  licenseNumber String?  @map("license_number")
+  taxId         String?  @map("tax_id")
+  email         String?
+  phone         String?
+  fax           String?
+  address       String?
+  notes         String?
+  isActive      Boolean  @default(true) @map("is_active")
+
+  offers Offer[]
+  files  SupplierFile[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("suppliers")
+}
+
+model Offer {
+  id             String        @id @default(uuid())
+  tenderId       String        @map("tender_id")
+  tender         Tender        @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  supplierId     String        @map("supplier_id")
+  supplier       Supplier      @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  deliveryTermId String?       @map("delivery_term_id")
+  deliveryTerm   DeliveryTerm? @relation(fields: [deliveryTermId], references: [id], onDelete: SetNull)
+  baseCurrencyId String?       @map("base_currency_id")
+  baseCurrency   Currency?     @relation("BaseCurrency", fields: [baseCurrencyId], references: [id], onDelete: SetNull)
+
+  number       String?
+  paymentTerms String?     @map("payment_terms")
+  version      Int         @default(1)
+  isDefault    Boolean     @default(true) @map("is_default")
+  status       OfferStatus @default(TASLAMA)
+  offeredPrice Float       @default(0) @map("offered_price")
+  comment      String?
+
+  specs         OfferSpecification[]
+  exchangeRates OfferExchangeRate[]
+  files         OfferFile[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("offers")
+}
+
+model OfferSpecification {
+  id               String              @id @default(uuid())
+  offerId          String              @map("offer_id")
+  offer            Offer               @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  tenderSpecId     String              @map("tender_spec_id")
+  tenderSpec       TenderSpecification @relation(fields: [tenderSpecId], references: [id], onDelete: Cascade)
+  generalProductId String?             @map("general_product_id")
+  generalProduct   GeneralProduct?     @relation(fields: [generalProductId], references: [id], onDelete: SetNull)
+  unitId           String?             @map("unit_id")
+  unit             Unit?               @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  manufacturerId   String?             @map("manufacturer_id")
+  manufacturer     Manufacturer?       @relation(fields: [manufacturerId], references: [id], onDelete: SetNull)
+
+  name           String?
+  positionNumber Int?    @map("position_number")
+  quantity       Float   @default(1)
+  unitPrice      Float   @default(0) @map("unit_price")
+  description    String?
+
+  @@map("offer_specifications")
+}
+
+model OfferExchangeRate {
+  id         String   @id @default(uuid())
+  offerId    String   @map("offer_id")
+  offer      Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  currencyId String   @map("currency_id")
+  currency   Currency @relation(fields: [currencyId], references: [id], onDelete: Cascade)
+  value      Float
+
+  @@map("offer_exchange_rates")
+}
+
+// Старая модель Company для обратной совместимости
+model Company {
+  id      String  @id @default(uuid())
+  name    String
+  inn     String  @unique
+  phone   String?
+  address String?
+  email   String?
+  license String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bids Bid[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("companies")
+}
+
+// Старая модель Bid для обратной совместимости
+model Bid {
+  id           String    @id @default(uuid())
+  offeredPrice Float
+  comment      String?
+  status       BidStatus @default(PENDING)
+
+  tenderId String
+  tender   Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  items     BidItem[]
+  documents Document[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("bids")
+}
+
+model BidItem {
+  id              String  @id @default(uuid())
+  pricePerUnit    Float
+  totalPrice      Float
+  isAlternative   Boolean @default(false)
+  alternativeDesc String?
+
+  bidId String
+  bid   Bid    @relation(fields: [bidId], references: [id], onDelete: Cascade)
+
+  tenderItemId String
+  tenderItem   TenderItem @relation(fields: [tenderItemId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("bid_items")
+}
+
+// ==========================================
+// 6. МОДУЛЬ ДОКУМЕНТОВ И СВЯЗУЮЩИЕ ТАБЛИЦЫ
+// ==========================================
+
+model Document {
+  id             String        @id @default(uuid())
+  name           String?
+  description    String?
+  fileName       String
+  filePath       String
+  fileType       String
+  documentTypeId String?       @map("document_type_id")
+  documentType   DocumentType? @relation(fields: [documentTypeId], references: [id], onDelete: SetNull)
+
+  tenderFiles   TenderFile[]
+  supplierFiles SupplierFile[]
+  offerFiles    OfferFile[]
+
+  // Поддержка старых связей MVP
+  tenderId String?
+  tender   Tender? @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  bidId String?
+  bid   Bid?    @relation(fields: [bidId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("documents")
+}
+
+model TenderFile {
+  id         String   @id @default(uuid())
+  tenderId   String   @map("tender_id")
+  tender     Tender   @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  documentId String   @map("document_id")
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("tender_files")
+}
+
+model SupplierFile {
+  id         String   @id @default(uuid())
+  supplierId String   @map("supplier_id")
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  documentId String   @map("document_id")
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("supplier_files")
+}
+
+model OfferFile {
+  id         String   @id @default(uuid())
+  offerId    String   @map("offer_id")
+  offer      Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  documentId String   @map("document_id")
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("offer_files")
+}
