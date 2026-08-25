@@ -42,15 +42,14 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
 
   // Загружаем справочники с API
   const [categories, setCategories] = useState([]);
+  const [currencies, setCurrencies] = useState([]);
   const [units, setUnits] = useState([]);
   const [manufacturers, setManufacturers] = useState([]);
   useEffect(() => {
-    API.get('/catalogs/categories')
-      .then(res => { if (Array.isArray(res.data)) setCategories(res.data); }).catch(() => {});
-    API.get('/catalogs/units')
-      .then(res => { if (Array.isArray(res.data)) setUnits(res.data); }).catch(() => {});
-    API.get('/catalogs/manufacturers')
-      .then(res => { if (Array.isArray(res.data)) setManufacturers(res.data); }).catch(() => {});
+    API.get('/catalogs/categories').then(res => { if (Array.isArray(res.data)) setCategories(res.data.filter(c => c.isActive)); }).catch(() => {});
+    API.get('/catalogs/currencies').then(res => { if (Array.isArray(res.data)) setCurrencies(res.data.filter(c => c.isActive)); }).catch(() => {});
+    API.get('/catalogs/units').then(res => { if (Array.isArray(res.data)) setUnits(res.data.filter(c => c.isActive)); }).catch(() => {});
+    API.get('/catalogs/manufacturers').then(res => { if (Array.isArray(res.data)) setManufacturers(res.data.filter(c => c.isActive)); }).catch(() => {});
   }, []);
 
   const handleSaveSpec = () => {
@@ -349,9 +348,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
               onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
               className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
             >
-              <option value="TMT">TMT</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
+              {currencies.map(c => (<option key={c.id} value={c.code}>{c.code} - {c.name}</option>))}
             </select>
           </div>
         </div>

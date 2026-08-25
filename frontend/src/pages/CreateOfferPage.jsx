@@ -59,13 +59,13 @@ export default function CreateOfferPage({ role, isDarkMode, lang = 'RU' }) {
       }
 
       // Устанавливаем справочники
-      const loadedCurrencies = Array.isArray(currRes.data) ? currRes.data : [];
+      const loadedCurrencies = Array.isArray(currRes.data) ? currRes.data.filter(c => c.isActive) : [];
       setCurrencies(loadedCurrencies);
       if (loadedCurrencies.length > 0) {
         setCurrency(loadedCurrencies[0].id); // UUID первой валюты
       }
 
-      const loadedDT = Array.isArray(dtRes.data) ? dtRes.data : [];
+      const loadedDT = Array.isArray(dtRes.data) ? dtRes.data.filter(c => c.isActive) : [];
       setDeliveryTermsList(loadedDT);
       if (loadedDT.length > 0) {
         setDeliveryTerm(loadedDT[0].id); // UUID первого условия поставки

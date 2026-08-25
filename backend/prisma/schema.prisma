@@ -144,6 +144,8 @@ model Category {
   generalProducts GeneralProduct[]
   tenders         Tender[]
 
+  isActive Boolean @default(true) @map("is_active")
+
   @@map("categories")
 }
 
@@ -158,6 +160,8 @@ model GeneralProduct {
 
   tenderSpecs TenderSpecification[]
   offerSpecs  OfferSpecification[]
+
+  isActive Boolean @default(true) @map("is_active")
 
   @@map("general_products")
 }
@@ -241,6 +245,8 @@ model Manufacturer {
   tenderSpecs TenderSpecification[]
   offerSpecs  OfferSpecification[]
 
+  isActive Boolean @default(true) @map("is_active")
+
   @@map("manufacturers")
 }
 
@@ -249,6 +255,8 @@ model DeliveryTerm {
   name      String  // DAP, DDP, CIP
   shortName String  @map("short_name")
   offers    Offer[]
+
+  isActive Boolean @default(true) @map("is_active")
 
   @@map("delivery_terms")
 }

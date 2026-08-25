@@ -36,7 +36,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
   if (loading) {
     return (
       <div className={`p-6 flex-1 flex justify-center items-center h-full ${bgClass}`}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+        <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${theme.primaryBorder}`}></div>
       </div>
     );
   }
@@ -50,7 +50,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
   }
 
   return (
-    <div className={`p-4 md:p-6 lg:p-8 flex-1 overflow-y-auto ${bgClass} space-y-6 max-w-5xl mx-auto`}>
+    <div className={`p-4 md:p-6 lg:p-8 flex-1 overflow-y-auto ${bgClass} space-y-6 w-full`}>
       {/* Шапка предложения */}
       <div className={`rounded-2xl shadow-sm border p-6 flex flex-col md:flex-row gap-6 justify-between items-start md:items-center ${cardBg}`}>
         <div className="space-y-2">
@@ -67,7 +67,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
         <div className="flex flex-col items-end">
           <p className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-1">Сумма предложения</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-teal-600">{offer.offeredPrice.toLocaleString()}</span>
+            <span className={`text-3xl font-black ${theme.primaryText}`}>{offer.offeredPrice.toLocaleString()}</span>
             <span className="text-lg font-bold text-slate-400">{offer.baseCurrency?.code}</span>
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
             </div>
             <div>
               <p className="text-slate-500 font-medium mb-1">Название</p>
-              <p className="font-semibold text-teal-600 hover:underline cursor-pointer" onClick={() => navigate(`/tender-details/${offer.tender?.id}`)}>
+              <p className={`font-semibold hover:underline cursor-pointer ${theme.primaryText}`} onClick={() => navigate(`/tender-details/${offer.tender?.id}`)}>
                 {offer.tender?.title || 'Нет названия'}
               </p>
             </div>
@@ -121,7 +121,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
       <div className={`rounded-2xl shadow-sm border overflow-hidden ${cardBg}`}>
         <div className="p-4 md:p-6 border-b border-slate-100/10 flex items-center justify-between">
           <h3 className="font-bold text-lg flex items-center gap-2">
-            <Package size={20} className="text-teal-500" />
+            <Package size={20} className={theme.primaryText} />
             Спецификация (Предложенные товары)
           </h3>
           <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-xs font-bold">
@@ -164,7 +164,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                     <td className="py-4 px-4 text-right font-medium">
                       {(spec.unitPrice || 0).toLocaleString()} <span className="text-xs text-slate-400">{offer.baseCurrency?.code}</span>
                     </td>
-                    <td className="py-4 px-4 text-right font-bold text-teal-600">
+                    <td className={`py-4 px-4 text-right font-bold ${theme.primaryText}`}>
                       {((spec.unitPrice || 0) * (spec.quantity || 0)).toLocaleString()} <span className="text-xs text-slate-400">{offer.baseCurrency?.code}</span>
                     </td>
                   </tr>
@@ -208,7 +208,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                   return (
                     <tr key={index} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
                       <td className="py-4 px-4 text-center font-medium text-slate-400">{index + 1}</td>
-                      <td className="py-4 px-4 font-bold text-teal-600 hover:underline cursor-pointer" onClick={() => window.open(fileUrl, '_blank')}>
+                      <td className={`py-4 px-4 font-bold hover:underline cursor-pointer ${theme.primaryText}`} onClick={() => window.open(fileUrl, '_blank')}>
                         {safeString(doc.fileName || doc.name)}
                       </td>
                       <td className="py-4 px-4 text-center">
@@ -218,7 +218,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                       </td>
                       <td className="py-4 px-4 text-center font-medium text-slate-500">{dateStr}</td>
                       <td className="py-4 px-4 text-center">
-                        <button onClick={() => window.open(fileUrl, '_blank')} className="text-teal-600 hover:text-teal-800 transition-colors p-2 hover:bg-teal-50 rounded-full">
+                        <button onClick={() => window.open(fileUrl, '_blank')} className={`${theme.primaryText} hover:opacity-80 transition-all p-2 bg-slate-100 dark:bg-slate-800 rounded-full`}>
                           <Download size={18} />
                         </button>
                       </td>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trophy, FileText, Building2, Phone, Mail, MapPin, Hash } from 'lucide-react';
+import { ArrowLeft, Trophy, FileText, Building2, Phone, Mail, MapPin, Hash, Globe } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
 import { getRoleTheme } from '../utils/themeUtils';
@@ -71,10 +71,8 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode }) {
   }
 
   return (
-    <div className={`p-4 md:p-6 lg:p-8 flex-1 overflow-y-auto ${bgClass} space-y-6 max-w-5xl mx-auto`}>
-      <button onClick={() => navigate(-1)} className="flex items-center text-slate-500 hover:text-teal-600 font-medium transition-colors">
-        <ArrowLeft size={16} className="mr-2" /> {t('back', 'Назад')}
-      </button>
+    <div className={`p-4 md:p-6 lg:p-8 flex-1 overflow-y-auto ${bgClass} space-y-6 `}>
+      
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* Левая колонка - Профиль */}
@@ -133,6 +131,15 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode }) {
                   <p className="font-semibold">{supplier.address || '-'}</p>
                 </div>
               </div>
+
+              <div className="flex items-start gap-3 sm:col-span-2 mt-4">
+                <Globe size={18} className="text-slate-400 mt-0.5" />
+                <div>
+                  <p className="text-slate-500 font-medium">{t('colCountry', 'Страна')}</p>
+                  <p className="font-semibold">{supplier.country?.name || '-'}</p>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>

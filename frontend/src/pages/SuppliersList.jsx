@@ -12,6 +12,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
   const t = (key, fallback) => getTranslation(lang, key, fallback);
 
   const [suppliers, setSuppliers] = useState([]);
+  const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [supplierToEdit, setSupplierToEdit] = useState(null);
@@ -19,6 +20,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
 
   useEffect(() => {
     fetchSuppliers();
+    API.get('/catalogs/countries').then(r => setCountries(r.data.filter(c => c.isActive))).catch(() => {});
   }, []);
 
   const fetchSuppliers = async () => {
@@ -136,7 +138,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
       </div>
 
       {showAddModal && (
-        <AddSupplierModal 
+        <AddSupplierModal countries={countries} 
           lang={lang}
           isDarkMode={isDarkMode}
           onClose={() => setShowAddModal(false)}
@@ -148,7 +150,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
       )}
 
       {supplierToEdit && (
-        <EditSupplierModal 
+        <EditSupplierModal countries={countries} 
           supplier={supplierToEdit}
           lang={lang}
           isDarkMode={isDarkMode}

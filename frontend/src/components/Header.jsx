@@ -68,7 +68,7 @@ export default function Header({ user, role, setRole, isDarkMode, lang, setLang,
             className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold ${isDarkMode ? 'border-slate-800 hover:bg-slate-800' : 'border-slate-200 hover:bg-slate-50'}`}
           >
             <Globe size={15} className="text-slate-400" />
-            <span>{currentLang.flag} {currentLang.code}</span>
+            <span>{currentLang.name}</span>
           </button>
 
           {showLangMenu && (
@@ -82,7 +82,6 @@ export default function Header({ user, role, setRole, isDarkMode, lang, setLang,
                   }}
                   className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors ${currentLang.code === l.code ? (isDarkMode ? 'bg-slate-800 font-bold' : 'bg-slate-100 font-bold') : 'hover:bg-slate-50 hover:text-slate-900'}`}
                 >
-                  <span className="text-sm">{l.flag}</span>
                   <span>{l.name}</span>
                 </button>
               ))}

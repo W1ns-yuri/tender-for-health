@@ -2,7 +2,7 @@
     const bcrypt = require('bcryptjs');
     const createCompany = async (req, res) => {
         try {
-            const { name, inn, phone, address, username, password, email, license } = req.body;
+            const { name, inn, phone, address, username, password, email, license, countryId } = req.body;
 
             if (!username || !password || !name || !inn) {
                 return res.status(400).json({ error: 'Пожалуйста, заполните обязательные поля: название, ИНН, логин и пароль' });
@@ -88,7 +88,7 @@
     const updateCompany = async (req, res) => {
         try {
             const { id } = req.params;
-            const { name, inn, phone, address, email, license, username, password } = req.body;
+            const { name, inn, phone, address, email, license, username, password, countryId } = req.body;
             const bcrypt = require('bcryptjs');
 
             // Проверяем, не занято ли имя другой компанией
@@ -104,13 +104,13 @@
 
             const company = await prisma.company.update({
                 where: { id },
-                data: { name, inn, phone, address, email, license }
+                data: { name, inn, phone, address, email, license, countryId: countryId || null }
             });
 
             // Синхронизируем email и license в Supplier
             await prisma.supplier.updateMany({
                 where: { userId: company.userId },
-                data: { email, phone, address, name, licenseNumber: license }
+                data: { email, phone, address, name, licenseNumber: license, countryId: countryId || null }
             });
 
             // Обновляем логин и пароль в User (если переданы)

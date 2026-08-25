@@ -95,7 +95,12 @@ export default function App() {
   };
 
   if (!token) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} lang={lang} setLang={setLang} />;
+    return (
+    <Routes>
+      <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} lang={lang} setLang={setLang} />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
   }
 
   return (

@@ -1,30 +1,74 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
-  Plus, Database, Package, Settings, ChevronLeft, ChevronRight, 
+  Plus, PlusCircle, Search, Filter, Edit, ToggleRight, ToggleLeft, Trash2, Database, Package, Settings, ChevronLeft, ChevronRight, 
   Hash, Flag, Globe, Truck, DollarSign, Layers, ShieldAlert, 
   Users, FolderTree, ArrowLeft
 } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
+import CatalogFormModal from '../components/CatalogFormModal';
 
 export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
   
-  const [activeCatalog, setActiveCatalog] = useState(null); // null means grid view, string means table view
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeCatalog = searchParams.get('catalog');
 
   const [categories, setCategories] = useState([]);
   const [currencies, setCurrencies] = useState([]);
   const [countries, setCountries] = useState([]);
   const [deliveryTerms, setDeliveryTerms] = useState([]);
   const [productsMNN, setProductsMNN] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [manufacturers, setManufacturers] = useState([]);
+  const [clients, setClients] = useState([]);
   
   const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
 
-  useEffect(() => {
-    setActiveCatalog(null);
-  }, [section]);
+  const handleSaveModal = async (formData, itemId) => {
+    try {
+      const endpoint = activeCatalog === 'productsMNN' ? 'products' : activeCatalog === 'delivery' ? 'delivery-terms' : activeCatalog;
+      if (itemId) {
+        await API.put(`/catalogs/${endpoint}/${itemId}`, formData);
+      } else {
+        await API.post(`/catalogs/${endpoint}`, formData);
+      }
+      setIsModalOpen(false);
+      fetchCatalogData(activeCatalog);
+    } catch (e) {
+      console.error(e);
+      alert('Ошибка при сохранении');
+    }
+  };
+
+  const handleToggleActive = async (item) => {
+    try {
+      const endpoint = activeCatalog === 'productsMNN' ? 'products' : activeCatalog === 'delivery' ? 'delivery-terms' : activeCatalog;
+      await API.put(`/catalogs/${endpoint}/${item.id}`, { isActive: !item.isActive });
+      fetchCatalogData(activeCatalog);
+    } catch (e) {
+      console.error(e);
+      alert('Ошибка при изменении статуса');
+    }
+  };
+
+  const handleDelete = async (itemId) => {
+    if (window.confirm('Вы уверены, что хотите удалить эту запись?')) {
+      try {
+        const endpoint = activeCatalog === 'productsMNN' ? 'products' : activeCatalog === 'delivery' ? 'delivery-terms' : activeCatalog;
+        await API.delete(`/catalogs/${endpoint}/${itemId}`);
+        fetchCatalogData(activeCatalog);
+      } catch (e) {
+        console.error(e);
+        alert('Ошибка при удалении');
+      }
+    }
+  };
 
   useEffect(() => {
     if (activeCatalog) {
@@ -50,6 +94,14 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
       } else if (catalogKey === 'productsMNN') {
         const res = await API.get('/catalogs/products');
         setProductsMNN(res.data);
+      } else if (catalogKey === 'units') {
+        const res = await API.get('/catalogs/units');
+        setUnits(res.data);
+      } else if (catalogKey === 'manufacturers') {
+        const res = await API.get('/catalogs/manufacturers');
+        setManufacturers(res.data);
+      } else if (catalogKey === 'clients') {
+        setClients([]);
       }
     } catch (e) {
       console.error(e);
@@ -90,7 +142,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
       return <div className="p-8 text-center text-slate-400">{t('loading', 'Ýüklenýär...')}</div>;
     }
 
-    const tableHeaderClass = "bg-teal-600 text-white font-medium";
+    const tableHeaderClass = isDarkMode ? "bg-slate-800 text-slate-200 font-medium" : "bg-[#eef6ff] text-slate-800 font-medium";
 
     if (activeCatalog === 'categories') {
       return (
@@ -100,6 +152,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
               <th className="py-3 px-4 w-16 text-center">#</th>
               <th className="py-3 px-4">{t('colName', 'Ady')}</th>
               <th className="py-3 px-4 text-center">{t('colCode', 'Kody')}</th>
+              <th className="py-3 px-4 text-center w-32">{t('colAction', 'Amal')}</th>
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -108,6 +161,13 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{c.name}</td>
                 <td className="py-3 px-4 text-center font-mono">{c.code}</td>
+                <td className="py-3 px-4 text-center">
+                  <div className="flex items-center justify-center gap-3 text-slate-400">
+                    {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
+                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(c); setIsModalOpen(true); }} />
+                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(c.id)} />
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -125,6 +185,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
               <th className="py-3 px-4 text-center">{t('colCode', 'Kody')}</th>
               <th className="py-3 px-4 text-center">{t('colSymbol', 'Nyşan')}</th>
               <th className="py-3 px-4 text-center">{t('colFlag', 'Baýdak')}</th>
+              <th className="py-3 px-4 text-center w-32">{t('colAction', 'Amal')}</th>
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -135,6 +196,13 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center font-mono">{c.code}</td>
                 <td className="py-3 px-4 text-center font-bold text-teal-600">{c.symbol}</td>
                 <td className="py-3 px-4 text-center text-lg">{c.flag || '-'}</td>
+                <td className="py-3 px-4 text-center">
+                  <div className="flex items-center justify-center gap-3 text-slate-400">
+                    {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
+                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(c); setIsModalOpen(true); }} />
+                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(c.id)} />
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -151,6 +219,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
               <th className="py-3 px-4">{t('colName', 'Ady')}</th>
               <th className="py-3 px-4 text-center">Alpha 2</th>
               <th className="py-3 px-4 text-center">Alpha 3</th>
+              <th className="py-3 px-4 text-center w-32">{t('colAction', 'Amal')}</th>
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -160,6 +229,13 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 font-bold">{c.name}</td>
                 <td className="py-3 px-4 text-center font-mono">{c.alpha2}</td>
                 <td className="py-3 px-4 text-center font-mono">{c.alpha3}</td>
+                <td className="py-3 px-4 text-center">
+                  <div className="flex items-center justify-center gap-3 text-slate-400">
+                    {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
+                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(c); setIsModalOpen(true); }} />
+                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(c.id)} />
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -175,6 +251,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
               <th className="py-3 px-4 w-16 text-center">#</th>
               <th className="py-3 px-4">{t('colName', 'Ady')}</th>
               <th className="py-3 px-4 text-center">{t('colShortName', 'Gysga ady')}</th>
+              <th className="py-3 px-4 text-center w-32">{t('colAction', 'Amal')}</th>
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -183,6 +260,13 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{c.name}</td>
                 <td className="py-3 px-4 text-center font-bold text-teal-600">{c.shortName}</td>
+                <td className="py-3 px-4 text-center">
+                  <div className="flex items-center justify-center gap-3 text-slate-400">
+                    {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
+                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(c); setIsModalOpen(true); }} />
+                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(c.id)} />
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -199,6 +283,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
               <th className="py-3 px-4">{t('colName', 'Ady')}</th>
               <th className="py-3 px-4 text-center">{t('colCode', 'Kody')}</th>
               <th className="py-3 px-4">{t('colDesc', 'Mazmuny')}</th>
+              <th className="py-3 px-4 text-center w-32">{t('colAction', 'Amal')}</th>
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -208,6 +293,110 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 font-bold">{p.name}</td>
                 <td className="py-3 px-4 text-center font-mono">{p.code}</td>
                 <td className="py-3 px-4 text-slate-500">{p.description}</td>
+                <td className="py-3 px-4 text-center">
+                  <div className="flex items-center justify-center gap-3 text-slate-400">
+                    {p.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(p)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(p)} />}
+                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(p); setIsModalOpen(true); }} />
+                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(p.id)} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+
+    if (activeCatalog === 'units') {
+      return (
+        <table className="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr className={tableHeaderClass}>
+              <th className="py-3 px-4 w-16 text-center">#</th>
+              <th className="py-3 px-4">{t('colName', 'Ady')}</th>
+              <th className="py-3 px-4 text-center">{t('colShortName', 'Gysga ady')}</th>
+              <th className="py-3 px-4 text-center w-32">{t('colAction', 'Amal')}</th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+            {units.map((u, i) => (
+              <tr key={u.id} className={theme.tableRowHover}>
+                <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
+                <td className="py-3 px-4 font-bold">{u.name}</td>
+                <td className="py-3 px-4 text-center font-bold text-teal-600">{u.shortName}</td>
+                <td className="py-3 px-4 text-center">
+                  <div className="flex items-center justify-center gap-3 text-slate-400">
+                    {u.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(u)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(u)} />}
+                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(u); setIsModalOpen(true); }} />
+                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(u.id)} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+
+    if (activeCatalog === 'manufacturers') {
+      return (
+        <table className="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr className={tableHeaderClass}>
+              <th className="py-3 px-4 w-16 text-center">#</th>
+              <th className="py-3 px-4">{t('colName', 'Ady')}</th>
+              <th className="py-3 px-4 text-center">{t('colCode', 'Kody')}</th>
+              <th className="py-3 px-4 text-center w-32">{t('colAction', 'Amal')}</th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+            {manufacturers.map((m, i) => (
+              <tr key={m.id} className={theme.tableRowHover}>
+                <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
+                <td className="py-3 px-4 font-bold">{m.name}</td>
+                <td className="py-3 px-4 text-center font-mono">{m.code}</td>
+                <td className="py-3 px-4 text-center">
+                  <div className="flex items-center justify-center gap-3 text-slate-400">
+                    {m.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(m)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(m)} />}
+                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(m); setIsModalOpen(true); }} />
+                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(m.id)} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+
+    if (activeCatalog === 'clients') {
+      return (
+        <table className="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr className={tableHeaderClass}>
+              <th className="py-3 px-4 w-16 text-center">#</th>
+              <th className="py-3 px-4">{t('colName', 'Ady')}</th>
+              <th className="py-3 px-4 text-center">ИИН / Email</th>
+              <th className="py-3 px-4 text-center w-32">{t('colAction', 'Amal')}</th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+            {clients.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="py-12 text-center text-slate-400">
+                  {lang === 'RU' ? 'Список заказчиков пуст (в разработке)' : 'Sargyt edijiler sanawy boş (gurluşykda)'}
+                </td>
+              </tr>
+            ) : clients.map((c, i) => (
+              <tr key={c.id} className={theme.tableRowHover}>
+                <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
+                <td className="py-3 px-4 font-bold">{c.name}</td>
+                <td className="py-3 px-4 text-center font-mono">{c.email}</td>
+                <td className="py-3 px-4 text-center">
+                  <div className="flex items-center justify-center gap-3 text-slate-400">
+                    <Edit size={16} className="cursor-pointer hover:text-teal-600" />
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -217,11 +406,16 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
 
     // Default table placeholder for non-implemented catalogs
     return (
-      <div className="p-8 text-center text-slate-400">
-        {t('underConstruction', 'Gurluşygy dowam edýär (Maglumat ýok)')}
+      <div className="p-12 flex items-center justify-center">
+        <div className="text-center text-slate-400">
+          <Database size={48} className="mx-auto mb-4 opacity-20" />
+          <p className="text-lg font-medium">{t('underConstruction', 'Gurluşygy dowam edýär (Maglumat ýok)')}</p>
+          <p className="text-sm mt-1">{lang === 'RU' ? 'Этот раздел находится в разработке.' : 'Bu bölüm gurluşykda.'}</p>
+        </div>
       </div>
     );
   };
+
   return (
     <div className={`flex flex-col min-h-[calc(100vh-100px)] -mx-6 -mt-6 ${isDarkMode ? 'bg-[#0b0f17]' : 'bg-slate-50/50'}`}>
       {/* Основная рабочая область */}
@@ -232,7 +426,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
             {sections[section] && sections[section].map((item) => (
               <div 
                 key={item.id} 
-                onClick={() => setActiveCatalog(item.id)}
+                onClick={() => setSearchParams({ catalog: item.id })}
                 className={`p-4 rounded-xl border flex items-center space-x-4 cursor-pointer transition-all ${
                   isDarkMode 
                     ? 'bg-slate-800 border-slate-700 hover:border-teal-500 hover:shadow-lg hover:shadow-teal-900/20' 
@@ -256,23 +450,31 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
         ) : (
           // Table View (Режим таблицы)
           <div className="animate-in slide-in-from-right-4 duration-200">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <button 
-                  onClick={() => setActiveCatalog(null)}
-                  className={`flex items-center text-xs font-semibold hover:text-teal-600 transition-colors ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}
-                >
-                  <ArrowLeft size={14} className="mr-1" />
-                  {t('back', 'Yza')}
+            <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+                {sections[section]?.find(s => s.id === activeCatalog)?.title || activeCatalog}
+              </h2>
+              
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input 
+                    type="text" 
+                    placeholder={t('searchPlaceholder', 'Gözleg...')} 
+                    className={`pl-9 pr-4 py-2 rounded-md border text-sm w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-teal-500/50 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`} 
+                  />
+                </div>
+                
+                <button className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-md text-sm font-medium transition-colors">
+                  <Filter size={16} />
+                  <span>{t('filter', 'Filter')}</span>
                 </button>
-                <h2 className={`text-lg font-bold mt-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                  {sections[section]?.find(s => s.id === activeCatalog)?.title || activeCatalog}
-                </h2>
+                
+                <button onClick={() => { setEditingItem(null); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors">
+                  <PlusCircle size={16} />
+                  <span>{t('addBtn', 'Goş')}</span>
+                </button>
               </div>
-              <button className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold flex items-center shadow-md">
-                <Plus size={16} className="mr-1.5" />
-                <span>{t('add', 'Goşmak')}</span>
-              </button>
             </div>
 
             <div className={`rounded-xl border shadow-xs overflow-hidden ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
@@ -283,6 +485,17 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
           </div>
         )}
       </div>
+      <CatalogFormModal
+        countries={countries}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveModal}
+        catalogId={activeCatalog}
+        editingItem={editingItem}
+        theme={theme}
+        t={t}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 }

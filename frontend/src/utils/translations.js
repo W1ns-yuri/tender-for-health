@@ -1,5 +1,18 @@
 export const translations = {
   TM: {
+    // Авторизация
+    logoTitle: 'Tender Ulgamy',
+    logoSubtitle: 'Sanly Platforma',
+    invalidLogin: 'Nädogry login ýa-da açarsöz',
+    emailOrLogin: 'Login / Email',
+    password: 'Açarsöz',
+    loggingIn: 'Girýär...',
+    loginBtn: 'Girmek',
+    forgotPassword: 'Açarsözi unutdyňyzmy?',
+    quickLogin: 'Çalt girmek (Demo)',
+    admin: 'Administrator',
+    supplier: 'Üpjün ediji',
+
     // Навигация
     home: 'Baş sahypa',
     tenders: 'Tenderler',
@@ -53,6 +66,7 @@ export const translations = {
     addBtn: 'Goşmak',
     backToList: 'Yza gaýtmak',
     saveTender: 'Ýatda sakla',
+    filter: 'Filter',
     saving: 'Saklanýar...',
     save: 'Ýatda sakla',
     addSupplier: 'Üpjün ediji goşmak',
@@ -203,6 +217,20 @@ export const translations = {
   },
 
   RU: {
+
+    // Auth
+    logoTitle: 'Система Тендеров',
+    logoSubtitle: 'Цифровая Платформа',
+    invalidLogin: 'Неверный логин или пароль',
+    emailOrLogin: 'Логин / Email',
+    password: 'Пароль',
+    loggingIn: 'Вход...',
+    loginBtn: 'Вход',
+    forgotPassword: 'Забыли пароль?',
+    quickLogin: 'Быстрый вход (Demo)',
+    admin: 'Администратор',
+    supplier: 'Поставщик',
+
     // Навигация
     home: 'Главная страница',
     tenders: 'Тендеры',
@@ -249,11 +277,12 @@ export const translations = {
     viewDetails: 'Подробнее',
     allBtn: 'Все',
     searchPlaceholder: 'Поиск...',
+    addBtn: 'Добавить',
+    filter: 'Фильтр',
     saveBtn: 'Сохранить',
     offerSubmitted: 'Заявка подана',
     alreadySubmitted: 'Вы уже подали заявку на этот тендер',
     cancelBtn: 'Отмена',
-    addBtn: 'Добавить',
     backToList: 'Назад',
     saveTender: 'Сохранить',
     saving: 'Сохранение...',
@@ -404,9 +433,35 @@ export const translations = {
     colShortName: 'Краткое название',
     colDesc: 'Описание',
   }
+  , EN: {
+    // Auth
+    logoTitle: 'Tender System',
+    logoSubtitle: 'Digital Platform',
+    invalidLogin: 'Invalid login or password',
+    emailOrLogin: 'Login / Email',
+    password: 'Password',
+    loggingIn: 'Logging in...',
+    loginBtn: 'Login',
+    forgotPassword: 'Forgot Password?',
+    quickLogin: 'Quick Login (Demo)',
+    admin: 'Admin',
+    supplier: 'Supplier',
+    
+    // General fallback
+    home: 'Home',
+    tenders: 'Tenders',
+    myOffers: 'My Offers',
+    profile: 'Profile',
+    settings: 'Settings',
+    logout: 'Logout',
+    select: 'Select...',
+    back: 'Back',
+    saveBtn: 'Save',
+    cancelBtn: 'Cancel'
+  }
 };
 
 export const getTranslation = (lang, key, fallback = '') => {
   const dictionary = translations[lang] || translations.RU;
-  return dictionary[key] || translations.TM[key] || fallback || key;
+  return dictionary[key] || fallback || translations.TM[key] || key;
 };

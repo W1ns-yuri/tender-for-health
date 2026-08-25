@@ -216,20 +216,125 @@ const createManufacturer = async (req, res) => {
     }
 };
 
+const updateCategory = async (req, res) => {
+    try {
+        const category = await prisma.category.update({ where: { id: req.params.id }, data: req.body });
+        res.json(category);
+    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+};
+const deleteCategory = async (req, res) => {
+    try {
+        await prisma.category.delete({ where: { id: req.params.id } });
+        res.status(204).send();
+    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+};
+
+const updateGeneralProduct = async (req, res) => {
+    try {
+        const product = await prisma.generalProduct.update({ where: { id: req.params.id }, data: req.body });
+        res.json(product);
+    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+};
+const deleteGeneralProduct = async (req, res) => {
+    try {
+        await prisma.generalProduct.delete({ where: { id: req.params.id } });
+        res.status(204).send();
+    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+};
+
+const updateUnit = async (req, res) => {
+    try {
+        const unit = await prisma.unit.update({ where: { id: req.params.id }, data: req.body });
+        res.json(unit);
+    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+};
+const deleteUnit = async (req, res) => {
+    try {
+        await prisma.unit.delete({ where: { id: req.params.id } });
+        res.status(204).send();
+    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+};
+
+const updateCurrency = async (req, res) => {
+    try {
+        const currency = await prisma.currency.update({ where: { id: req.params.id }, data: req.body });
+        res.json(currency);
+    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+};
+const deleteCurrency = async (req, res) => {
+    try {
+        await prisma.currency.delete({ where: { id: req.params.id } });
+        res.status(204).send();
+    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+};
+
+const updateCountry = async (req, res) => {
+    try {
+        const country = await prisma.country.update({ where: { id: req.params.id }, data: req.body });
+        res.json(country);
+    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+};
+const deleteCountry = async (req, res) => {
+    try {
+        await prisma.country.delete({ where: { id: req.params.id } });
+        res.status(204).send();
+    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+};
+
+const updateDeliveryTerm = async (req, res) => {
+    try {
+        const term = await prisma.deliveryTerm.update({ where: { id: req.params.id }, data: req.body });
+        res.json(term);
+    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+};
+const deleteDeliveryTerm = async (req, res) => {
+    try {
+        await prisma.deliveryTerm.delete({ where: { id: req.params.id } });
+        res.status(204).send();
+    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+};
+
+const updateManufacturer = async (req, res) => {
+    try {
+        const m = await prisma.manufacturer.update({ where: { id: req.params.id }, data: req.body });
+        res.json(m);
+    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+};
+const deleteManufacturer = async (req, res) => {
+    try {
+        await prisma.manufacturer.delete({ where: { id: req.params.id } });
+        res.status(204).send();
+    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+};
+
 module.exports = {
     getCategories,
     createCategory,
+    updateCategory,
+    deleteCategory,
     getGeneralProducts,
     createGeneralProduct,
+    updateGeneralProduct,
+    deleteGeneralProduct,
     getUnits,
     createUnit,
+    updateUnit,
+    deleteUnit,
     getCurrencies,
     createCurrency,
+    updateCurrency,
+    deleteCurrency,
     setExchangeRate,
     getCountries,
     createCountry,
+    updateCountry,
+    deleteCountry,
     getDeliveryTerms,
     createDeliveryTerm,
+    updateDeliveryTerm,
+    deleteDeliveryTerm,
     getManufacturers,
-    createManufacturer
+    createManufacturer,
+    updateManufacturer,
+    deleteManufacturer
 };
