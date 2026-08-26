@@ -1,8 +1,72 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Save, Trash2, Edit2, ArrowLeft, X, Upload } from 'lucide-react';
+import { Plus, Save, Trash2, Edit2, ArrowLeft, X, Upload, ChevronDown } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
+
+
+const SearchableSelect = ({ options, value, onChange, placeholder, isDarkMode, theme, t }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [wrapperRef]);
+
+  const filteredOptions = options.filter(opt => opt.name.toLowerCase().includes(search.toLowerCase()));
+  const selectedOption = options.find(opt => opt.id === value);
+
+  return (
+    <div ref={wrapperRef} className="relative w-full">
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full px-3 py-2 rounded-lg text-xs cursor-pointer flex justify-between items-center ${theme.inputBg}`}
+      >
+        <span className={!selectedOption ? 'opacity-50' : ''}>{selectedOption ? selectedOption.name : placeholder}</span>
+        <ChevronDown size={14} className="opacity-50" />
+      </div>
+      
+      {isOpen && (
+        <div className={`absolute z-[50] w-full mt-1 rounded-lg border shadow-lg ${theme.cardBg} ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} max-h-60 flex flex-col overflow-hidden`}>
+          <div className="p-2 border-b border-slate-200/20">
+            <input
+              type="text"
+              autoFocus
+              className={`w-full px-2 py-1.5 rounded text-xs ${theme.inputBg} focus:outline-none focus:ring-1 focus:ring-emerald-500`}
+              placeholder={t('search', 'Поиск...')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="overflow-y-auto">
+            {filteredOptions.length > 0 ? filteredOptions.map(opt => (
+              <div
+                key={opt.id}
+                className={`px-3 py-2 text-xs cursor-pointer hover:bg-emerald-500/10 ${value === opt.id ? 'bg-emerald-500/20 font-semibold' : ''}`}
+                onClick={() => {
+                  onChange(opt.id);
+                  setIsOpen(false);
+                  setSearch('');
+                }}
+              >
+                {opt.name}
+              </div>
+            )) : (
+              <div className="px-3 py-3 text-xs text-center opacity-50">{t('noResults', 'Нет совпадений')}</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
@@ -11,7 +75,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
   const [formData, setFormData] = useState({
     title: '',
     categoryId: '',
-    clientId: '1',
+    clientId: '',
     type: 'YERLI',
     announcementDate: new Date().toISOString().split('T')[0],
     deadline: '',
@@ -42,6 +106,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
 
   // Загружаем справочники с API
   const [categories, setCategories] = useState([]);
+  const [clients, setClients] = useState([]);
   const [currencies, setCurrencies] = useState([]);
   const [units, setUnits] = useState([]);
   const [manufacturers, setManufacturers] = useState([]);
@@ -50,6 +115,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     API.get('/catalogs/currencies').then(res => { if (Array.isArray(res.data)) setCurrencies(res.data.filter(c => c.isActive)); }).catch(() => {});
     API.get('/catalogs/units').then(res => { if (Array.isArray(res.data)) setUnits(res.data.filter(c => c.isActive)); }).catch(() => {});
     API.get('/catalogs/manufacturers').then(res => { if (Array.isArray(res.data)) setManufacturers(res.data.filter(c => c.isActive)); }).catch(() => {});
+    API.get('/catalogs/clients').then(res => { if (Array.isArray(res.data)) setClients(res.data.filter(c => c.isActive)); }).catch(() => {});
   }, []);
 
   const handleSaveSpec = () => {
@@ -136,7 +202,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       return;
     }
 
-    if (!formData.announcementDate || !formData.deadline) {
+    if (!formData.announcementDate || !formData.deadline || !formData.clientId || !formData.categoryId) {
       setErrorMsg(t('fillRequired', 'Заполните обязательные поля (даты)'));
       setLoading(false);
       return;
@@ -144,7 +210,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
 
     try {
       await API.post('/tenders', {
-        lotNumber: `Lot № ${Math.floor(Math.random() * 900) + 100}`,
+        tenderNumber: `Lot № ${Math.floor(Math.random() * 900) + 100}`,
         title: formData.title,
         description: formData.description,
         technicalSpecs: formData.technicalSpecs,
@@ -153,6 +219,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
         visibility: formData.visibility,
         // categoryId is omitted because "1" is not a valid UUID in the database
         categoryId: formData.categoryId !== '' ? formData.categoryId : undefined,
+        clientId: formData.clientId !== '' ? formData.clientId : undefined,
         announcementDate: new Date(formData.announcementDate).toISOString(),
         deadline: new Date(formData.deadline).toISOString(),
         specs: specs.map((s, idx) => ({
@@ -221,30 +288,30 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
           <div>
             <label className="block font-semibold mb-1">{t('category', 'Kategoriýa')}*</label>
             <div className="flex space-x-1.5">
-              <select
-                value={formData.categoryId}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
-              >
-                <option value="">{t('selectCategory', 'Выберите категорию')}</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
+              <SearchableSelect 
+                t={t}
+                options={categories} 
+                value={formData.categoryId} 
+                onChange={(val) => setFormData({ ...formData, categoryId: val })} 
+                placeholder={t('selectCategory', 'Выберите категорию')} 
+                isDarkMode={isDarkMode} 
+                theme={theme} 
+              />
             </div>
           </div>
 
           <div>
             <label className="block font-semibold mb-1">{t('client', 'Sargyt ediji')}*</label>
             <div className="flex space-x-1.5">
-              <select
-                value={formData.clientId}
-                onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
-              >
-                <option value="1">{t('clientArkadag', 'Arkadag şäh. hassahanalary')}</option>
-                <option value="2">{t('clientMinZdrav', 'Министерство Здравоохранения')}</option>
-              </select>
+              <SearchableSelect 
+                t={t}
+                options={clients} 
+                value={formData.clientId} 
+                onChange={(val) => setFormData({ ...formData, clientId: val })} 
+                placeholder={t('select', 'Saýlaň...')} 
+                isDarkMode={isDarkMode} 
+                theme={theme} 
+              />
             </div>
           </div>
         </div>
@@ -503,7 +570,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                     onChange={(e) => setNewSpec({ ...newSpec, unit: e.target.value })}
                     className={`w-full p-2 border rounded-md ${theme.inputBg}`}
                   >
-                    <option value="">Выберите ед. изм.</option>
+                    <option value="">{t('selectUnit', 'Выберите ед. изм.')}</option>
                     {units.map(u => (
                       <option key={u.id} value={u.id}>{u.name} ({u.shortName})</option>
                     ))}
@@ -528,7 +595,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                   onChange={(e) => setNewSpec({ ...newSpec, brand: e.target.value })}
                   className={`w-full p-2 border rounded-md ${theme.inputBg}`}
                 >
-                  <option value="">Выберите производителя (опционально)</option>
+                  <option value="">{t('selectBrand', 'Выберите производителя (опционально)')}</option>
                   {manufacturers.map(m => (
                     <option key={m.id} value={m.id}>{m.name}</option>
                   ))}

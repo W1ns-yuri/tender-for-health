@@ -154,6 +154,7 @@ model GeneralProduct {
   categoryId  String?     @map("category_id")
   category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   name        String      // МНН (Международное непатентованное наименование)
+  tradeName   String?     @map("trade_name") // Торговое (патентованное) название
   code        String?
   type        ProductType @default(HARYT)
   description String?
@@ -292,9 +293,22 @@ model VariationValue {
 // 4. МОДУЛЬ ТЕНДЕРОВ И СПЕЦИФИКАЦИЙ
 // ==========================================
 
+
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  tenders   Tender[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("clients")
+}
+
 model Tender {
   id             String           @id @default(uuid())
-  lotNumber      String           @map("lot_number")
+  tenderNumber   String           @map("tender_number")
   title          String
   description    String?
   technicalSpecs String?          @map("technical_specs")
@@ -305,6 +319,9 @@ model Tender {
 
   announcementDate DateTime? @map("announcement_date")
   deadline         DateTime
+
+  clientId   String?   @map("client_id")
+  client     Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
   categoryId String?   @map("category_id")
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)

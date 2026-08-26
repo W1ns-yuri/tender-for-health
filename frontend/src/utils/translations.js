@@ -1,5 +1,6 @@
 export const translations = {
   TM: {
+    select: 'Saýlaň...',
     // Авторизация
     logoTitle: 'Tender Ulgamy',
     logoSubtitle: 'Sanly Platforma',
@@ -43,6 +44,7 @@ export const translations = {
     suppliersListDesc: 'Ulgamda hasaba alnan üpjün edijiler',
     recentTenders: 'Soňky açyk tenderler',
     recentOffers: 'Soňky tekliplerim',
+    offerDate: 'Teklip berlen sene',
 
     // Метрики
     totalOpenTenders: 'Jemi açyk tenderler',
@@ -59,6 +61,9 @@ export const translations = {
     viewDetails: 'Giňişleýin',
     allBtn: 'Ähli',
     searchPlaceholder: 'Gözleg...',
+    search: 'Gözleg...',
+    noResults: 'Netije tapylmady',
+    selectCategory: 'Kategoriýa saýlaň',
     saveBtn: 'Ýatda sakla',
     offerSubmitted: 'Teklip tabşyryldy',
     alreadySubmitted: 'Siz eýýäm bu tender üçin teklip tabşyrdyňyz',
@@ -77,7 +82,7 @@ export const translations = {
     deleteConfirm: 'Üpjün edijini hakykatdan hem öçürmek isleýärsiňizmi?',
 
     // Поля таблиц
-    lotNo: 'Lot №',
+    lotNo: 'Tender №',
     title: 'Ady',
     tenderName: 'Tender ady',
     description: 'Mazmuny',
@@ -139,6 +144,14 @@ export const translations = {
     createOfferTitle: 'Teklip döretmek',
     addItemTitle: 'Goşulýan haryt',
     addSpecModalTitle: 'Tender spesifikasiýasy goşmak',
+    addSpec: 'Täze pozisiýa goş',
+    editSpec: 'Pozisiýany üýtget',
+    save: 'Ýatda sakla',
+    cancel: 'Ýatyrmak',
+    innName: 'Halkara patentleşdirilmedik ady (HPA)',
+    tradeName: 'Söwda (patentleşdirilen) ady',
+    selectUnit: 'Ölçeg birligini saýlaň',
+    selectBrand: 'Öndürijini saýlaň (hökman däl)',
 
     // Статусы
     statusAcyk: 'Açyk',
@@ -217,6 +230,7 @@ export const translations = {
   },
 
   RU: {
+    select: 'Выберите...',
 
     // Auth
     logoTitle: 'Система Тендеров',
@@ -277,6 +291,9 @@ export const translations = {
     viewDetails: 'Подробнее',
     allBtn: 'Все',
     searchPlaceholder: 'Поиск...',
+    search: 'Поиск...',
+    noResults: 'Нет совпадений',
+    selectCategory: 'Выберите категорию',
     addBtn: 'Добавить',
     filter: 'Фильтр',
     saveBtn: 'Сохранить',
@@ -295,7 +312,7 @@ export const translations = {
     deleteConfirm: 'Вы действительно хотите удалить этого поставщика?',
 
     // Поля таблиц
-    lotNo: 'Лот №',
+    lotNo: 'Тендер №',
     title: 'Название',
     tenderName: 'Название тендера',
     description: 'Описание',
@@ -357,6 +374,14 @@ export const translations = {
     createOfferTitle: 'Создание коммерческого предложения',
     addItemTitle: 'Добавление товара в спецификацию',
     addSpecModalTitle: 'Добавление спецификации',
+    addSpec: 'Добавить позицию',
+    editSpec: 'Изменить позицию',
+    save: 'Сохранить',
+    cancel: 'Отмена',
+    innName: 'Международное непатентованное наименование (МНН)',
+    tradeName: 'Торговое (патентованное) название',
+    selectUnit: 'Выберите ед. изм.',
+    selectBrand: 'Выберите производителя (опционально)',
 
     // Статусы
     statusAcyk: 'Открыт',

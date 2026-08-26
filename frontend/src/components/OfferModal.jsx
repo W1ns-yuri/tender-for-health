@@ -82,7 +82,7 @@ export default function OfferModal({ tender, onClose, onSuccess, role, isDarkMod
         <div className={`p-5 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-100 bg-slate-50'}`}>
           <div>
             <h2 className={`text-lg font-bold ${theme.primaryText}`}>{t('createOfferTitle', 'Teklip döretmek')}</h2>
-            <p className="text-xs font-semibold text-teal-600">{tender?.lotNumber || 'Lot № 325'}</p>
+            <p className="text-xs font-semibold text-teal-600">{tender?.tenderNumber || 'Lot № 325'}</p>
           </div>
 
           <div className="flex items-center space-x-2">

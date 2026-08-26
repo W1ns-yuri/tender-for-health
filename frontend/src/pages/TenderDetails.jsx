@@ -37,7 +37,8 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
   };
 
   const getClientName = (d) => {
-    if (d?.createdBy?.firstName) return `${d.createdBy.firstName} ${d.createdBy.lastName || ''}`.trim();
+    if (d?.client?.name) return d.client.name;
+  if (d?.createdBy?.firstName) return `${d.createdBy.firstName} ${d.createdBy.lastName || ''}`.trim();
     return safeString(d?.client, '-');
   };
 
@@ -67,7 +68,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
       <div className={`p-6 rounded-xl border shadow-xs ${theme.cardBg}`}>
         <div className="flex justify-between items-start">
           <div>
-            <h1 className={`text-2xl font-bold tracking-tight ${theme.primaryText}`}>{safeString(data?.lotNumber)}</h1>
+            <h1 className={`text-2xl font-bold tracking-tight ${theme.primaryText}`}>{safeString(data?.tenderNumber)}</h1>
             <p className={`text-sm font-medium mt-1 ${theme.subText}`}>{safeString(data?.title)}</p>
           </div>
           {role === 'SUPPLIER' && (

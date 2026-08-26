@@ -80,7 +80,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
           <div className="space-y-3 text-sm">
             <div>
               <p className="text-slate-500 font-medium mb-1">Лот</p>
-              <p className="font-semibold">{offer.tender?.lotNumber}</p>
+              <p className="font-semibold">{offer.tender?.tenderNumber}</p>
             </div>
             <div>
               <p className="text-slate-500 font-medium mb-1">Название</p>

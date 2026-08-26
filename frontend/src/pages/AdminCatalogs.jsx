@@ -101,7 +101,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
         const res = await API.get('/catalogs/manufacturers');
         setManufacturers(res.data);
       } else if (catalogKey === 'clients') {
-        setClients([]);
+        const res = await API.get('/catalogs/clients');
+        setClients(res.data);
       }
     } catch (e) {
       console.error(e);
@@ -280,7 +281,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
           <thead>
             <tr className={tableHeaderClass}>
               <th className="py-3 px-4 w-16 text-center">#</th>
-              <th className="py-3 px-4">{t('colName', 'Ady')}</th>
+              <th className="py-3 px-4">{t('innName', 'Международное непатентованное наименование (МНН)')}</th>
+              <th className="py-3 px-4">{t('tradeName', 'Торговое (патентованное) название')}</th>
               <th className="py-3 px-4 text-center">{t('colCode', 'Kody')}</th>
               <th className="py-3 px-4">{t('colDesc', 'Mazmuny')}</th>
               <th className="py-3 px-4 text-center w-32">{t('colAction', 'Amal')}</th>
@@ -291,6 +293,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
               <tr key={p.id} className={theme.tableRowHover}>
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{p.name}</td>
+                <td className="py-3 px-4">{p.tradeName || '-'}</td>
                 <td className="py-3 px-4 text-center font-mono">{p.code}</td>
                 <td className="py-3 px-4 text-slate-500">{p.description}</td>
                 <td className="py-3 px-4 text-center">
@@ -376,25 +379,27 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
             <tr className={tableHeaderClass}>
               <th className="py-3 px-4 w-16 text-center">#</th>
               <th className="py-3 px-4">{t('colName', 'Ady')}</th>
-              <th className="py-3 px-4 text-center">ИИН / Email</th>
+              
               <th className="py-3 px-4 text-center w-32">{t('colAction', 'Amal')}</th>
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
             {clients.length === 0 ? (
               <tr>
-                <td colSpan="4" className="py-12 text-center text-slate-400">
-                  {lang === 'RU' ? 'Список заказчиков пуст (в разработке)' : 'Sargyt edijiler sanawy boş (gurluşykda)'}
+                <td colSpan="3" className="py-12 text-center text-slate-400">
+                  {lang === 'RU' ? 'Список заказчиков пуст' : 'Sargyt edijiler sanawy boş'}
                 </td>
               </tr>
             ) : clients.map((c, i) => (
               <tr key={c.id} className={theme.tableRowHover}>
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{c.name}</td>
-                <td className="py-3 px-4 text-center font-mono">{c.email}</td>
+                
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
-                    <Edit size={16} className="cursor-pointer hover:text-teal-600" />
+                    {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
+                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(c); setIsModalOpen(true); }} />
+                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(c.id)} />
                   </div>
                 </td>
               </tr>

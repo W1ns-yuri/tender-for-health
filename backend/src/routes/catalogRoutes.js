@@ -7,6 +7,7 @@ const {
     getCountries, createCountry, updateCountry, deleteCountry,
     getDeliveryTerms, createDeliveryTerm, updateDeliveryTerm, deleteDeliveryTerm,
     getManufacturers, createManufacturer, updateManufacturer, deleteManufacturer,
+    getClients, createClient, updateClient, deleteClient,
 } = require('../controllers/catalogController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { checkRole } = require('../middleware/rbacMiddleware');
@@ -55,5 +56,12 @@ router.get('/manufacturers', getManufacturers);
 router.post('/manufacturers', authMiddleware, checkRole(['ADMIN', 'PURCHASING_SPECIALIST']), createManufacturer);
 router.put('/manufacturers/:id', authMiddleware, checkRole(['ADMIN', 'PURCHASING_SPECIALIST']), updateManufacturer);
 router.delete('/manufacturers/:id', authMiddleware, checkRole(['ADMIN', 'PURCHASING_SPECIALIST']), deleteManufacturer);
+
+
+// Заказчики
+router.get('/clients', getClients);
+router.post('/clients', createClient);
+router.put('/clients/:id', updateClient);
+router.delete('/clients/:id', deleteClient);
 
 module.exports = router;

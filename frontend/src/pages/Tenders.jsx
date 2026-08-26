@@ -178,7 +178,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
               ) : (
                 list.map((item, idx) => (
                   <tr key={item.id || idx} className={theme.tableRowHover}>
-                    <td className="py-3.5 px-4 text-center font-semibold">{safeString(item.lotNumber)}</td>
+                    <td className="py-3.5 px-4 text-center font-semibold">{safeString(item.tenderNumber)}</td>
                     <td className="py-3.5 px-4 text-center font-medium">{safeString(item.title)}</td>
                     <td className={`py-3.5 px-4 text-center w-auto min-w-[220px] whitespace-normal break-words ${theme.subText}`}>{safeString(item.description)}</td>
                     <td className="py-3.5 px-4 text-center">{getTypeBadge(item.type, lang, isDarkMode)}</td>

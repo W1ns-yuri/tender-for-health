@@ -61,9 +61,9 @@ async function seedDatabase() {
 
         // 3. Категории
         console.log('3️⃣ Создаем категории...');
-        const catMed = await prisma.category.create({ data: { name: 'Derman serişdeleri', code: 'MED-01' } });
-        const catCon = await prisma.category.create({ data: { name: 'Gurluşyk harytlary', code: 'CON-02' } });
-        const catEqp = await prisma.category.create({ data: { name: 'Lukmançylyk enjamlary', code: 'EQP-03' } });
+        const catMed = await prisma.category.create({ data: { name: 'Медикаменты', code: 'MED-01' } });
+        const catCon = await prisma.category.create({ data: { name: 'Строительные материалы', code: 'CON-02' } });
+        const catEqp = await prisma.category.create({ data: { name: 'Медицинское оборудование', code: 'EQP-03' } });
 
         // 4. Единицы измерения
         console.log('4️⃣ Создаем единицы измерения...');
@@ -129,12 +129,36 @@ async function seedDatabase() {
             }
         });
 
-        // 10. Тендеры
+        
+        // 9.5 Создаем компании
+        console.log('9️⃣.5️⃣ Создаем компании...');
+        await prisma.company.create({
+            data: {
+                name: 'ООО Медик-Фарм',
+                address: 'Москва, ул. Ленина, 1',
+                license: 'LIC-654321',
+                email: 'info@medic-pharm.ru',
+                phone: '+79991234567',
+                 inn: '1234567890', userId: supplierUser1.id
+            }
+        });
+        await prisma.company.create({
+            data: {
+                name: 'ИП Строй-Торг',
+                address: 'Москва, ул. Пушкина, 2',
+                license: 'LIC-210987',
+                email: 'stroy@torg.ru',
+                phone: '+79997654321',
+                 inn: '0987654321', userId: supplierUser1.id
+            }
+        });
+    
+    // 10. Тендеры
         console.log('🔟 Создаем тендеры и спецификации...');
         const tender1 = await prisma.tender.create({
             data: {
-                lotNumber: 'Lot № 23',
-                title: 'Abatlyş işleri üçin zerur bolan gurluşyk torlaryny we enjamlaryny satyn almak baradaky tender',
+                tenderNumber: 'Тендер № 23',
+                title: 'Abatlyş işleri üçin строительных материалов и оборудования',
                 description: 'Ministrliginiň garamagyndaky binalaryň we desgalaryň abatlaýyş işleri üçin tor (setka) enjam satyn almak.',
                 technicalSpecs: 'TDS standartly, §3mm galyňlykda, §50x50mm gözenekli sinklenen metal tor.',
                 price: 75000,
@@ -156,8 +180,8 @@ async function seedDatabase() {
 
         const tender2 = await prisma.tender.create({
             data: {
-                lotNumber: 'Lot № 325',
-                title: 'Arkadag şäherindäki hassahanalaryň derman serişdeleriniň üpjünçiligi',
+                tenderNumber: 'Тендер № 325',
+                title: 'Arkadag şäherindäki медикаментов в г. Аркадаг',
                 description: 'Ministrliginiň garamagyndaky binalaryň we desgalaryň abatlaýyş işleri üçin derman serişdelerini satyn almak.',
                 technicalSpecs: 'Срок годности не менее 24 месяцев со дня поставки.',
                 price: 120000,

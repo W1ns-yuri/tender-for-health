@@ -43,10 +43,11 @@ const getGeneralProducts = async (req, res) => {
 
 const createGeneralProduct = async (req, res) => {
     try {
-        const { name, code, categoryId, type, description } = req.body;
+        const { name, tradeName, code, categoryId, type, description } = req.body;
         const product = await prisma.generalProduct.create({
             data: {
                 name,
+                tradeName,
                 code,
                 categoryId: categoryId || null,
                 type: type || 'HARYT',
@@ -307,7 +308,61 @@ const deleteManufacturer = async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
 };
 
+
+// =============================
+// Заказчики (Clients)
+// =============================
+const getClients = async (req, res) => {
+    try {
+        const clients = await prisma.client.findMany({
+            orderBy: { name: 'asc' },
+        });
+        res.json(clients);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при получении заказчиков', details: error.message });
+    }
+};
+
+const createClient = async (req, res) => {
+    try {
+        const { name } = req.body;
+        const client = await prisma.client.create({
+            data: { name },
+        });
+        res.status(201).json(client);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при создании заказчика', details: error.message });
+    }
+};
+
+const updateClient = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, isActive } = req.body;
+        const client = await prisma.client.update({
+            where: { id },
+            data: { name, isActive },
+        });
+        res.json(client);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при обновлении заказчика', details: error.message });
+    }
+};
+
+const deleteClient = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.client.delete({
+            where: { id },
+        });
+        res.json({ message: 'Заказчик удален' });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при удалении заказчика', details: error.message });
+    }
+};
+
 module.exports = {
+    getClients, createClient, updateClient, deleteClient,
     getCategories,
     createCategory,
     updateCategory,

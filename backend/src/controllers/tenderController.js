@@ -13,10 +13,12 @@ const createTender = async (req, res) => {
             visibility,
             status,
             categoryId,
-            lotNumber,
+            clientId,
+            tenderNumber,
             specs,
             documents,
         } = req.body;
+        console.log("CREATE TENDER BODY:", req.body);
 
         const userId = req.user.id; // Из authMiddleware
 
@@ -24,7 +26,7 @@ const createTender = async (req, res) => {
             return res.status(400).json({ error: 'Укажите хотя бы одну позицию спецификации (товар МНН / услугу) для тендера' });
         }
 
-        let generatedLotNumber = lotNumber;
+        let generatedLotNumber = tenderNumber;
         if (!generatedLotNumber || generatedLotNumber.includes('Lot №') || generatedLotNumber.includes('undefined')) {
             const today = new Date();
             const year = today.getFullYear();
@@ -38,7 +40,7 @@ const createTender = async (req, res) => {
                     }
                 }
             });
-            generatedLotNumber = `LOT-${year}-${month}-${String(count + 1).padStart(3, '0')}`;
+            generatedLotNumber = `TNDR-${year}-${month}-${String(count + 1).padStart(3, '0')}`;
         }
 
         const tender = await prisma.tender.create({
@@ -51,9 +53,10 @@ const createTender = async (req, res) => {
                 type: type || 'YERLI',
                 visibility: visibility || 'ACYK',
                 status: status || 'ACYK', // По умолчанию 'открыт' (açyk)
-                lotNumber: generatedLotNumber,
+                tenderNumber: generatedLotNumber,
                 announcementDate: new Date(),
                 categoryId: categoryId || null,
+                clientId: clientId || null,
                 createdById: userId,
                 // Создаем позиции спецификации в tender_specifications
                 specs: {
@@ -88,6 +91,7 @@ const createTender = async (req, res) => {
                     select: { id: true, username: true, firstName: true, lastName: true, roleType: true },
                 },
                 category: true,
+                client: true,
             },
         });
 
@@ -100,10 +104,10 @@ const createTender = async (req, res) => {
 // Получение списка всех тендеров с поиском и фильтрацией (по Lot No, статусу, типу, категории)
 const getTenders = async (req, res) => {
     try {
-        const { lotNumber, status, type, visibility, categoryId, search } = req.query;
+        const { tenderNumber, status, type, visibility, categoryId, search } = req.query;
 
         const where = {};
-        if (lotNumber) where.lotNumber = { contains: lotNumber, mode: 'insensitive' };
+        if (tenderNumber) where.tenderNumber = { contains: tenderNumber, mode: 'insensitive' };
         if (status) where.status = status;
         if (type) where.type = type;
         if (visibility) where.visibility = visibility;
@@ -111,7 +115,7 @@ const getTenders = async (req, res) => {
 
         if (search) {
             where.OR = [
-                { lotNumber: { contains: search, mode: 'insensitive' } },
+                { tenderNumber: { contains: search, mode: 'insensitive' } },
                 { title: { contains: search, mode: 'insensitive' } },
                 { description: { contains: search, mode: 'insensitive' } },
             ];
@@ -127,6 +131,7 @@ const getTenders = async (req, res) => {
                     select: { id: true, username: true, firstName: true, lastName: true },
                 },
                 category: true,
+                client: true,
                 _count: { select: { offers: true } },
             },
             orderBy: { createdAt: 'desc' },
@@ -166,6 +171,7 @@ const getTenderById = async (req, res) => {
                     select: { id: true, username: true, firstName: true, lastName: true },
                 },
                 category: true,
+                client: true,
                 offers: includeOffers,
                 files: {
                     include: {

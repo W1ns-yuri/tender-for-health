@@ -18,6 +18,14 @@ export default function CatalogFormModal({
   // Configuration for different catalogs
   const getCatalogConfig = (catId) => {
     switch (catId) {
+            case 'clients':
+        return {
+          title: t('addClient', 'Добавить заказчика'),
+          editTitle: t('editClient', 'Редактировать заказчика'),
+          fields: [
+            { name: 'name', label: t('colName', 'Название'), required: true }
+          ]
+        };
       case 'categories':
         return {
           title: t('addCategory', 'Добавить категорию'),
@@ -36,7 +44,6 @@ export default function CatalogFormModal({
             { name: 'code', label: t('colCode', 'Код (например, USD)'), required: true },
             { name: 'symbol', label: t('colSymbol', 'Символ (например, $)'), required: true },
             { name: 'flag', label: t('colFlag', 'Флаг (Эмодзи)'), required: false },
-            { name: 'order', label: t('colOrder', 'Сортировка (порядок)'), type: 'number', required: false }
           ]
         };
       case 'countries':
@@ -47,7 +54,6 @@ export default function CatalogFormModal({
             { name: 'name', label: t('colName', 'Название'), required: true },
             { name: 'alpha2', label: 'Alpha-2 Код (например, TM)', required: true },
             { name: 'alpha3', label: 'Alpha-3 Код (например, TKM)', required: true },
-            { name: 'order', label: t('colOrder', 'Сортировка (порядок)'), type: 'number', required: false }
           ]
         };
       case 'delivery':
@@ -64,7 +70,8 @@ export default function CatalogFormModal({
           title: t('addProduct', 'Добавить товар'),
           editTitle: t('editProduct', 'Редактировать товар'),
           fields: [
-            { name: 'name', label: t('colName', 'Название'), required: true },
+            { name: 'name', label: t('innName', 'Международное непатентованное наименование (МНН)'), required: true },
+            { name: 'tradeName', label: t('tradeName', 'Торговое (патентованное) название'), required: false },
             { name: 'code', label: t('colCode', 'Код'), required: false },
             { name: 'description', label: t('colDesc', 'Описание'), required: false, type: 'textarea' }
           ]
@@ -76,7 +83,6 @@ export default function CatalogFormModal({
           fields: [
             { name: 'name', label: t('colName', 'Название'), required: true },
             { name: 'shortName', label: t('colShortName', 'Краткое название'), required: true },
-            { name: 'order', label: t('colOrder', 'Сортировка (порядок)'), type: 'number', required: false }
           ]
         };
       case 'manufacturers':

@@ -111,7 +111,7 @@ const evaluateTenderBids = async (req, res) => {
 
         res.json({
             tenderId: tender.id,
-            lotNumber: tender.lotNumber,
+            tenderNumber: tender.tenderNumber,
             title: tender.title,
             status: tender.status,
             ranking: evaluatedOffers,

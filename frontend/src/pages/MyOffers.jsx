@@ -99,11 +99,11 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
                 offers.map((item, idx) => (
                   <tr key={item.id || idx} className={theme.tableRowHover}>
                     <td className="py-3.5 px-4 text-center font-semibold">
-                      {safeString(item.tender?.lotNumber || item.lot)}
+                      {safeString(item.tender?.tenderNumber || item.lot)}
                       {item.tender?.title && <span className="block text-xs font-normal text-slate-500">{item.tender.title}</span>}
                     </td>
                     <td className="py-3.5 px-4 text-center">{getTypeBadge(item.tender?.type || item.type, lang, isDarkMode)}</td>
-                    <td className="py-3.5 px-4 text-center font-bold text-teal-600">{safeString(item.supplier?.name || item.client)}</td>
+                    <td className="py-3.5 px-4 text-center font-bold text-teal-600">{safeString(item.tender?.client?.name || item.tender?.createdBy?.firstName || "-")}</td>
                     <td className={`py-3.5 px-4 text-center font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{item.baseCurrency?.code || item.currency}</td>
                     <td className="py-3.5 px-4 text-center text-slate-500 font-mono">{item.number || item.code}</td>
                     <td className="py-3.5 px-4 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>

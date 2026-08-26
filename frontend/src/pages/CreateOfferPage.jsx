@@ -182,7 +182,7 @@ export default function CreateOfferPage({ role, isDarkMode, lang = 'RU' }) {
       <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm mt-4">
         {/* Lot Details */}
         <div className="pb-5 mb-5 border-b border-slate-100">
-          <h3 className="text-2xl font-bold text-[#1e3a8a]">{safeString(tender?.lotNumber)}</h3>
+          <h3 className="text-2xl font-bold text-[#1e3a8a]">{safeString(tender?.tenderNumber)}</h3>
           <p className="text-sm text-slate-500 mt-1">{safeString(tender?.title)}</p>
         </div>
 

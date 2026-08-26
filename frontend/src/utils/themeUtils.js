@@ -27,7 +27,7 @@ export const safeString = (val, fallback = '') => {
   if (val === null || val === undefined) return fallback;
   if (typeof val === 'string' || typeof val === 'number') return String(val);
   if (typeof val === 'object') {
-    const extracted = val.name || val.shortName || val.title || val.description || val.code || val.lotNumber || val.value;
+    const extracted = val.name || val.shortName || val.title || val.description || val.code || val.tenderNumber || val.value;
     if (extracted && (typeof extracted === 'string' || typeof extracted === 'number')) {
       return String(extracted);
     }

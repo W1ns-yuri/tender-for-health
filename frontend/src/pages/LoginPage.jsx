@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Lock, User, LogIn, AlertCircle, Globe } from 'lucide-react';
 import { getTranslation } from '../utils/translations';
 import API from '../services/api';
@@ -39,7 +39,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
     <div className="relative min-h-screen w-full bg-[#3d98fb] md:bg-gradient-to-br md:from-[#2e88ed] md:to-[#64b5f6] flex items-center justify-center p-4 sm:p-8">
 
       {/* Переключатель языка */}
-            {/* Переключатель языка */}
+      {/* Переключатель языка */}
       <div className="absolute top-6 right-6 z-50">
         <button
           type="button"
@@ -73,10 +73,10 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
 
       {/* Главная карточка логина */}
       <div className="max-w-5xl w-full bg-white rounded-3xl shadow-2xl flex overflow-hidden min-h-[550px] animate-in zoom-in-95 duration-500">
-        
+
         {/* ЛЕВАЯ ЧАСТЬ (ФОРМА) */}
         <div className="w-full md:w-[45%] lg:w-[40%] p-8 sm:p-12 flex flex-col justify-center bg-white relative z-10">
-          
+
           {/* Логотип / Аватарка (как в референсе) */}
           <div className="flex flex-col items-center mb-8">
             <div className="w-20 h-20 rounded-full bg-blue-50 border border-blue-100 shadow-sm flex items-center justify-center mb-4">
@@ -149,14 +149,14 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
             <div className="flex flex-row justify-center gap-2">
               <button
                 type="button"
-                onClick={() => handleQuickLogin('admin', 'admin123')}
+                onClick={() => handleQuickLogin('admin', 'password123')}
                 className="flex-1 py-2 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold transition-all shadow-sm"
               >
                 {t('admin', 'Администратор')}
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickLogin('login123', 'pass123')}
+                onClick={() => handleQuickLogin('supplier1', 'password123')}
                 className="flex-1 py-2 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold transition-all shadow-sm"
               >
                 {t('supplier', 'Поставщик')}
@@ -169,9 +169,9 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
         {/* ПРАВАЯ ЧАСТЬ (ИЛЛЮСТРАЦИЯ) */}
         <div className="hidden md:flex md:w-[55%] lg:w-[60%] bg-[#81ccff] relative overflow-hidden items-center justify-center">
           {/* Сгенерированное изображение */}
-          <img 
-            src="/assets/login-illustration.jpg" 
-            alt="Corporate 3D Isometric illustration" 
+          <img
+            src="/assets/login-illustration.jpg"
+            alt="Corporate 3D Isometric illustration"
             className="w-full h-full object-cover object-center absolute inset-0 opacity-95"
             style={{ mixBlendMode: 'normal' }}
           />
