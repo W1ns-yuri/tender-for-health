@@ -119,14 +119,14 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                     </td>
                     <td className="py-3.5 px-4 text-center text-emerald-500 font-bold">{t('statusActive', 'Hawa')}</td>
                     <td className="py-3.5 px-4 text-center space-x-1">
-                      <button onClick={() => navigate(`/suppliers/${s.id}`)} className="p-1 hover:bg-slate-200/50 rounded text-slate-800 dark:text-slate-200">
-                        <Eye size={14} />
+                      <button onClick={() => navigate(`/suppliers/${s.id}`)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors">
+                        <Eye size={16} />
                       </button>
-                      <button onClick={() => setSupplierToEdit(s)} className="p-1 hover:bg-slate-200/50 rounded">
-                        <Edit2 size={14} />
+                      <button onClick={() => setSupplierToEdit(s)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors">
+                        <Edit2 size={16} />
                       </button>
-                      <button onClick={() => handleDelete(s.id)} className="p-1 hover:bg-rose-500/10 text-rose-500 rounded">
-                        <Trash2 size={14} />
+                      <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors">
+                        <Trash2 size={16} />
                       </button>
                     </td>
                   </tr>

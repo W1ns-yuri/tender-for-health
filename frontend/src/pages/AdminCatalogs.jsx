@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
-  Plus, PlusCircle, Search, Filter, Edit, ToggleRight, ToggleLeft, Trash2, Database, Package, Settings, ChevronLeft, ChevronRight, 
+  Plus, PlusCircle, Search, Filter, Edit2, ToggleRight, ToggleLeft, Trash2, Database, Package, Settings, ChevronLeft, ChevronRight, 
   Hash, Flag, Globe, Truck, DollarSign, Layers, ShieldAlert, 
   Users, FolderTree, ArrowLeft
 } from 'lucide-react';
@@ -165,8 +165,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(c); setIsModalOpen(true); }} />
-                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(c.id)} />
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -200,8 +200,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(c); setIsModalOpen(true); }} />
-                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(c.id)} />
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -233,8 +233,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(c); setIsModalOpen(true); }} />
-                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(c.id)} />
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -264,8 +264,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(c); setIsModalOpen(true); }} />
-                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(c.id)} />
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -299,8 +299,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {p.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(p)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(p)} />}
-                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(p); setIsModalOpen(true); }} />
-                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(p.id)} />
+                    <button onClick={() => { setEditingItem(p); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -330,8 +330,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {u.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(u)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(u)} />}
-                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(u); setIsModalOpen(true); }} />
-                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(u.id)} />
+                    <button onClick={() => { setEditingItem(u); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(u.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -361,8 +361,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {m.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(m)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(m)} />}
-                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(m); setIsModalOpen(true); }} />
-                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(m.id)} />
+                    <button onClick={() => { setEditingItem(m); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(m.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -398,8 +398,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <Edit size={16} className="cursor-pointer hover:text-teal-600" onClick={() => { setEditingItem(c); setIsModalOpen(true); }} />
-                    <Trash2 size={16} className="cursor-pointer hover:text-rose-500" onClick={() => handleDelete(c.id)} />
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>

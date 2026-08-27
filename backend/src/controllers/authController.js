@@ -60,11 +60,33 @@ const login = async (req, res) => {
             return res.status(401).json({ error: 'Неверный логин или пароль' });
         }
 
+        if (!user.isActive) {
+            return res.status(403).json({ error: 'Аккаунт заблокирован' });
+        }
+
+        if (user.lockoutExpireDate && user.lockoutExpireDate > new Date()) {
+            return res.status(403).json({ error: 'Аккаунт временно заблокирован. Попробуйте позже.' });
+        }
+
         // Сравниваем введенный пароль с хешем из базы
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
+            let failedCount = user.failedCount + 1;
+            let lockoutExpireDate = null;
+            if (failedCount >= 5) {
+                lockoutExpireDate = new Date(Date.now() + 15 * 60 * 1000); // Блокировка на 15 минут
+            }
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { failedCount, lockoutExpireDate }
+            });
             return res.status(401).json({ error: 'Неверный логин или пароль' });
         }
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLogin: new Date(), failedCount: 0, lockoutExpireDate: null }
+        });
 
         // Создаем токен
         const token = jwt.sign(

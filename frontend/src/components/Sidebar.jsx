@@ -117,6 +117,18 @@ export default function Sidebar({
                 </button>
 
                 <button
+                  onClick={() => setActiveTab('evaluation')}
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === 'evaluation'
+                      ? theme.primaryBg + ' font-semibold shadow-sm'
+                      : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <Trophy size={19} />
+                  {!isCollapsed && <span className="ml-3">{lang === 'RU' ? 'Оценка заявок' : 'Ýeňijilik (Baha)'}</span>}
+                </button>
+
+                <button
                   onClick={() => setActiveTab('settings')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === 'settings'

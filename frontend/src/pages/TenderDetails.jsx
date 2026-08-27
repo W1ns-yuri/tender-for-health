@@ -38,7 +38,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
 
   const getClientName = (d) => {
     if (d?.client?.name) return d.client.name;
-  if (d?.createdBy?.firstName) return `${d.createdBy.firstName} ${d.createdBy.lastName || ''}`.trim();
+    if (d?.createdBy?.firstName) return `${d.createdBy.firstName} ${d.createdBy.lastName || ''}`.trim();
     return safeString(d?.client, '-');
   };
 
@@ -128,61 +128,153 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
 
         {/* Mazmuny */}
         <div className="mt-6">
-          <h4 className={`text-base font-bold mb-1 ${theme.primaryText}`}>{t('description', 'Mazmuny')}:</h4>
-          <div className={`text-sm leading-relaxed whitespace-normal break-words ${theme.primaryText} ${isDarkMode ? 'opacity-90' : 'text-slate-700'}`}>
+          <h4 className={`text-base font-bold mb-1 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{t('description', 'Mazmuny')}:</h4>
+          <div className={`text-sm leading-relaxed whitespace-normal break-words ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
             {safeString(data?.description)}
           </div>
         </div>
 
         {/* Tehniki şartler */}
         <div className="mt-6">
-          <h4 className={`text-base font-bold mb-1 ${theme.primaryText}`}>{t('technicalSpecs', 'Tehniki şartler')}:</h4>
-          <div className={`text-sm leading-relaxed whitespace-normal break-words ${theme.primaryText} ${isDarkMode ? 'opacity-90' : 'text-slate-700'}`}>
+          <h4 className={`text-base font-bold mb-1 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{t('technicalSpecs', 'Tehniki şartler')}:</h4>
+          <div className={`text-sm leading-relaxed whitespace-normal break-words ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
             {safeString(data?.technicalSpecs)}
           </div>
         </div>
       </div>
 
-      {/* 3. Таблица спецификаций */}
-      <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
-        <div className={`p-4 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-          <h3 className="font-bold text-base">{lang === 'RU' ? 'Товары/Спецификация' : 'Tender spesifikasiýasy'}</h3>
-        </div>
+      {/* 3. Таблицы лотов и спецификаций */}
+      <div className="space-y-6">
+        {(!data?.lots || data.lots.length === 0) && (!data?.specs || data.specs.length === 0) ? (
+          <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg} p-6 text-center text-slate-400`}>
+            {lang === 'RU' ? 'Нет лотов и спецификаций' : 'Lot we haryt ýok'}
+          </div>
+        ) : data?.lots && data.lots.length > 0 ? (
+          data.lots.map((lot, lotIdx) => {
+            // Найдем победителя этого лота из офферов
+            let winningOffer = null;
+            if (data.status === 'YENIJI_YGLAN_EDILDI' && data.offers) {
+              const lotSpecIds = lot.specs.map(s => s.id);
+              // Если хотя бы одна спецификация лота имеет isAwarded, то этот оффер выиграл лот
+              winningOffer = data.offers.find(offer =>
+                offer.specs.some(os => lotSpecIds.includes(os.tenderSpecId) && os.isAwarded)
+              );
+            }
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className={theme.tableHeaderBg}>
-                <th className="py-3 px-4 w-16 text-center">H/K</th>
-                <th className="py-3 px-4 text-center w-48">{lang === 'RU' ? 'Товар' : 'Haryt'}</th>
-                <th className="py-3 px-4 text-center w-28">{t('unit', 'Ölçeg birligi')}</th>
-                <th className="py-3 px-4 text-center w-36">{t('manufacturer', 'Öndüriji')}</th>
-                <th className="py-3 px-4 text-center w-24">{t('quantity', 'Mukdar')}</th>
-                <th className="py-3 px-4 text-center">{t('description', 'Mazmuny')}</th>
-              </tr>
-            </thead>
-            <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-              {specsList.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="py-6 text-center text-slate-400">
-                    {lang === 'RU' ? 'Нет спецификаций' : 'Spesifikasiýa ýok'}
-                  </td>
-                </tr>
-              ) : specsList.map((spec, idx) => (
-                <tr key={idx} className={theme.tableRowHover}>
-                  <td className="py-3.5 px-4 text-center font-semibold text-slate-400">{safeString(spec?.positionNumber || idx + 1)}</td>
-                  <td className="py-3.5 px-4 text-center font-medium">{safeString(spec?.generalProduct?.name || spec?.name)}</td>
-                  <td className="py-3.5 px-4 text-center">{safeString(spec?.unit?.name || spec?.unit?.shortName)}</td>
-                  <td className="py-3.5 px-4 text-center">{safeString(spec?.manufacturer?.name || '-')}</td>
-                  <td className="py-3.5 px-4 text-center font-bold">{safeString(spec?.quantity)}</td>
-                  <td className="py-3.5 px-4 text-center w-auto min-w-[240px] whitespace-normal break-words text-slate-500">
-                    {safeString(spec?.description)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            return (
+              <div key={lot.id} className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
+                <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-white'}`}>
+                  <div>
+                    <h3 className="font-bold text-base">{lang === 'RU' ? 'Лот' : 'Lot'} #{lotIdx + 1}: {lot.name}</h3>
+                    {lot.deliveryTerm && <p className="text-xs text-slate-500 mt-1">{lang === 'RU' ? 'Условие поставки' : 'Eltip beriş şerti'}: {lot.deliveryTerm.shortName}</p>}
+                  </div>
+                  {winningOffer && (
+                    <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-800">
+                      <Trophy size={16} className="text-emerald-500" />
+                      <div>
+                        <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">{lang === 'RU' ? 'Победитель' : 'Ýeňiji'}</div>
+                        <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{winningOffer.supplier?.name}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className={theme.tableHeaderBg}>
+                        <th className="py-3 px-4 w-16 text-center">H/K</th>
+                        <th className="py-3 px-4 text-center w-48">{lang === 'RU' ? 'Товар' : 'Haryt'}</th>
+                        <th className="py-3 px-4 text-center w-28">{t('unit', 'Ölçeg birligi')}</th>
+                        <th className="py-3 px-4 text-center w-36">{t('manufacturer', 'Öndüriji')}</th>
+                        <th className="py-3 px-4 text-center w-24">{t('quantity', 'Mukdar')}</th>
+                        <th className="py-3 px-4 text-center">{t('description', 'Mazmuny')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+                      {lot.specs.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" className="py-6 text-center text-slate-400">
+                            {lang === 'RU' ? 'В этом лоте нет товаров' : 'Bu lotda haryt ýok'}
+                          </td>
+                        </tr>
+                      ) : lot.specs.map((spec, idx) => (
+                        <tr key={idx} className={theme.tableRowHover}>
+                          <td className="py-3.5 px-4 text-center font-semibold text-slate-400">{safeString(spec?.positionNumber || idx + 1)}</td>
+                          <td className="py-3.5 px-4 text-center font-medium">{safeString(spec?.generalProduct?.name || spec?.name)}</td>
+                          <td className="py-3.5 px-4 text-center">{safeString(spec?.unit?.name || spec?.unit?.shortName)}</td>
+                          <td className="py-3.5 px-4 text-center">{safeString(spec?.manufacturer?.name || '-')}</td>
+                          <td className="py-3.5 px-4 text-center font-bold">{safeString(spec?.quantity)}</td>
+                          <td className="py-3.5 px-4 text-center w-auto min-w-[240px] whitespace-normal break-words text-slate-500">
+                            {safeString(spec?.description)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
+            <div className={`p-4 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+              <h3 className="font-bold text-base">{lang === 'RU' ? 'Товары/Спецификация' : 'Tender spesifikasiýasy'}</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className={theme.tableHeaderBg}>
+                    <th className="py-3 px-4 w-16 text-center">H/K</th>
+                    <th className="py-3 px-4 text-center w-48">{lang === 'RU' ? 'Товар' : 'Haryt'}</th>
+                    <th className="py-3 px-4 text-center w-28">{t('unit', 'Ölçeg birligi')}</th>
+                    <th className="py-3 px-4 text-center w-36">{t('manufacturer', 'Öndüriji')}</th>
+                    <th className="py-3 px-4 text-center w-24">{t('quantity', 'Mukdar')}</th>
+                    <th className="py-3 px-4 text-center">{t('description', 'Mazmuny')}</th>
+                    {data?.status === 'YENIJI_YGLAN_EDILDI' && <th className="py-3 px-4 text-center w-36">{lang === 'RU' ? 'Победитель' : 'Ýeňiji'}</th>}
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+                  {data.specs.map((spec, idx) => {
+                    // Fallback logic for old tenders without lots
+                    let winningSupplier = null;
+                    if (data.status === 'YENIJI_YGLAN_EDILDI' && data.offers) {
+                      for (const offer of data.offers) {
+                        const os = offer.specs.find(s => s.tenderSpecId === spec.id);
+                        if (os && os.isAwarded) {
+                          winningSupplier = offer.supplier?.name;
+                          break;
+                        }
+                      }
+                    }
+
+                    return (
+                      <tr key={idx} className={theme.tableRowHover}>
+                        <td className="py-3.5 px-4 text-center font-semibold text-slate-400">{safeString(spec?.positionNumber || idx + 1)}</td>
+                        <td className="py-3.5 px-4 text-center font-medium">{safeString(spec?.generalProduct?.name || spec?.name)}</td>
+                        <td className="py-3.5 px-4 text-center">{safeString(spec?.unit?.name || spec?.unit?.shortName)}</td>
+                        <td className="py-3.5 px-4 text-center">{safeString(spec?.manufacturer?.name || '-')}</td>
+                        <td className="py-3.5 px-4 text-center font-bold">{safeString(spec?.quantity)}</td>
+                        <td className="py-3.5 px-4 text-center w-auto min-w-[240px] whitespace-normal break-words text-slate-500">
+                          {safeString(spec?.description)}
+                        </td>
+                        {data?.status === 'YENIJI_YGLAN_EDILDI' && (
+                          <td className="py-3.5 px-4 text-center font-bold text-emerald-600">
+                            {winningSupplier ? (
+                              <div className="flex items-center justify-center gap-1">
+                                <Trophy size={14} /> <span>{winningSupplier}</span>
+                              </div>
+                            ) : '-'}
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 4. Таблица документов */}

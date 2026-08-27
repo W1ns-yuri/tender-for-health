@@ -168,7 +168,156 @@ const selectWinnerOffer = async (req, res) => {
     }
 };
 
+
+// --- NEW EVALUATION LOGIC ---
+
+// Получение списка тендеров для оценки
+const getEvaluationTenders = async (req, res) => {
+    try {
+        const tenders = await prisma.tender.findMany({
+            where: {
+                status: { in: ['YAPYK', 'BAHALANDYRYLDY', 'YENIJI_YGLAN_EDILDI'] }
+            },
+            include: {
+                client: true,
+                category: true,
+                _count: { select: { offers: true } }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(tenders);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при получении списка тендеров', details: error.message });
+    }
+};
+
+// Получение деталей тендера для по-позиционной оценки
+const getTenderEvaluationDetails = async (req, res) => {
+    try {
+        const { tenderId } = req.params;
+        const tender = await prisma.tender.findUnique({
+            where: { id: tenderId },
+            include: {
+                lots: {
+                    include: {
+                        specs: {
+                            include: {
+                                generalProduct: true,
+                                unit: true
+                            }
+                        }
+                    }
+                },
+                specs: {
+                    include: {
+                        generalProduct: true,
+                        unit: true
+                    }
+                },
+                offers: {
+                    include: {
+                        supplier: true,
+                        specs: {
+                            include: {
+                                generalProduct: true,
+                                unit: true,
+                                manufacturer: true,
+                                tenderSpec: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!tender) return res.status(404).json({ error: 'Тендер не найден' });
+
+        res.json(tender);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при получении деталей оценки', details: error.message });
+    }
+};
+
+// Назначение победителя по целому Лоту
+const awardLot = async (req, res) => {
+    try {
+        const { tenderId, lotId, offerId } = req.body;
+
+        // Находим все спецификации этого лота
+        const lot = await prisma.tenderLot.findUnique({
+            where: { id: lotId },
+            include: { specs: true }
+        });
+        if (!lot) return res.status(404).json({ error: 'Лот не найден' });
+        const specIds = lot.specs.map(s => s.id);
+
+        await prisma.$transaction(async (prisma) => {
+            // 1. Снимаем флаг isAwarded со всех предложений на спецификации ЭТОГО лота
+            await prisma.offerSpecification.updateMany({
+                where: {
+                    tenderSpecId: { in: specIds },
+                    offer: { tenderId: tenderId }
+                },
+                data: { isAwarded: false }
+            });
+
+            // 2. Если передан offerId, то устанавливаем isAwarded = true для всех спецификаций ЭТОГО лота в ЭТОМ предложении
+            if (offerId) {
+                await prisma.offerSpecification.updateMany({
+                    where: { 
+                        tenderSpecId: { in: specIds },
+                        offerId: offerId 
+                    },
+                    data: { isAwarded: true }
+                });
+            }
+        });
+
+        res.json({ message: 'Победитель по лоту обновлен' });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при выборе победителя лота', details: error.message });
+    }
+};
+
+// Завершение оценки тендера
+const completeEvaluation = async (req, res) => {
+    try {
+        const { tenderId } = req.params;
+
+        const tender = await prisma.tender.findUnique({
+            where: { id: tenderId },
+            include: { offers: { include: { specs: true } } }
+        });
+
+        if (!tender) return res.status(404).json({ error: 'Тендер не найден' });
+
+        await prisma.$transaction(async (prisma) => {
+            for (const offer of tender.offers) {
+                const hasWonSomething = offer.specs.some(s => s.isAwarded);
+                await prisma.offer.update({
+                    where: { id: offer.id },
+                    data: { status: hasWonSomething ? 'YENIJI' : 'RET_EDILDI' }
+                });
+            }
+
+            await prisma.tender.update({
+                where: { id: tenderId },
+                data: { status: 'YENIJI_YGLAN_EDILDI' }
+            });
+        });
+
+        res.json({ message: 'Оценка завершена, результаты оглашены' });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при завершении оценки', details: error.message });
+    }
+};
+
 module.exports = {
+    getEvaluationTenders,
+    getTenderEvaluationDetails,
+    awardLot,
+    completeEvaluation,
+
     openTenderBids,
     evaluateTenderBids,
     selectWinnerOffer,

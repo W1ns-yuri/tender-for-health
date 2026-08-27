@@ -46,16 +46,26 @@ export default function CreateOfferPage({ role, isDarkMode, lang = 'RU' }) {
       API.get('/catalogs/delivery-terms').catch(() => ({ data: [] })),
     ]).then(([tenderRes, currRes, dtRes]) => {
       setTender(tenderRes.data);
-      if (tenderRes.data?.specs) {
-        setOfferItems(tenderRes.data.specs.map(spec => ({
-          tenderSpecId: spec.id,
-          haryt: spec.generalProduct?.name || spec.name,
-          unit: spec.unit?.name || spec.unit?.shortName || '',
-          brand: spec.manufacturer?.name || '',
-          mukdar: spec.quantity,
-          price: 0,
-          desc: ''
-        })));
+      if (tenderRes.data?.lots) {
+        const initialSelectedLots = {};
+        const initialOfferItems = {};
+        
+        tenderRes.data.lots.forEach(lot => {
+          initialSelectedLots[lot.id] = true; // Select all lots by default
+          initialOfferItems[lot.id] = lot.specs.map(spec => ({
+            tenderSpecId: spec.id,
+            lotId: lot.id,
+            haryt: spec.generalProduct?.name || spec.name,
+            unit: spec.unit?.name || spec.unit?.shortName || '',
+            brand: spec.manufacturer?.name || '',
+            mukdar: spec.quantity,
+            price: 0,
+            desc: ''
+          }));
+        });
+        
+        setSelectedLots(initialSelectedLots);
+        setOfferItemsByLot(initialOfferItems);
       }
 
       // Устанавливаем справочники
@@ -76,8 +86,9 @@ export default function CreateOfferPage({ role, isDarkMode, lang = 'RU' }) {
   }, [id]);
 
   // Позиции предложения
-  const [offerItems, setOfferItems] = useState([]);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  // Позиции предложения сгруппированы по лотам: { lotId: [offerItem1, offerItem2] }
+  const [offerItemsByLot, setOfferItemsByLot] = useState({});
+  const [selectedLots, setSelectedLots] = useState({}); // { lotId: boolean }
   const fileInputRef = useRef(null);
 
   const handleFileUpload = async (e) => {
@@ -103,28 +114,49 @@ export default function CreateOfferPage({ role, isDarkMode, lang = 'RU' }) {
     setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
   };
 
+  const [activeLotIdForModal, setActiveLotIdForModal] = useState(null);
+
   const handleSaveItem = () => {
+    if (!activeLotIdForModal) return;
+    const lotItems = [...(offerItemsByLot[activeLotIdForModal] || [])];
+    
     if (editIndex !== null) {
-      const updated = [...offerItems];
-      updated[editIndex] = newItem;
-      setOfferItems(updated);
+      lotItems[editIndex] = newItem;
     } else {
-      setOfferItems([...offerItems, { ...newItem, id: Date.now().toString() }]);
+      lotItems.push({ ...newItem, id: Date.now().toString() });
     }
+    
+    setOfferItemsByLot({
+      ...offerItemsByLot,
+      [activeLotIdForModal]: lotItems
+    });
+    
     setShowItemModal(false);
   };
 
-  const handleEditItem = (index) => {
-    const itemToEdit = offerItems[index];
+  const handleEditItem = (lotId, index) => {
+    const itemToEdit = offerItemsByLot[lotId][index];
     setNewItem(itemToEdit);
     setEditIndex(index);
-    const originalSpec = tender?.specs?.find(s => s.id === itemToEdit.tenderSpecId);
+    setActiveLotIdForModal(lotId);
+    
+    const lot = tender?.lots?.find(l => l.id === lotId);
+    const originalSpec = lot?.specs?.find(s => s.id === itemToEdit.tenderSpecId);
     setSelectedSpecForModal(originalSpec || null);
     setShowItemModal(true);
   };
 
-  const handleRemoveItem = (index) => {
-    setOfferItems(offerItems.filter((_, i) => i !== index));
+  const handleRemoveItem = (lotId, index) => {
+    const lotItems = [...(offerItemsByLot[lotId] || [])];
+    lotItems.splice(index, 1);
+    setOfferItemsByLot({
+      ...offerItemsByLot,
+      [lotId]: lotItems
+    });
+  };
+
+  const toggleLotSelection = (lotId) => {
+    setSelectedLots(prev => ({ ...prev, [lotId]: !prev[lotId] }));
   };
 
   const handleSubmitOffer = async () => {
@@ -137,12 +169,14 @@ export default function CreateOfferPage({ role, isDarkMode, lang = 'RU' }) {
         paymentTerms,
         comment,
         attachedDocumentIds: uploadedFiles.map(f => f.id),
-        specs: offerItems.map(item => ({
-          tenderSpecId: item.tenderSpecId,
-          quantity: item.mukdar,
-          unitPrice: item.price,
-          description: item.desc
-        }))
+        specs: Object.keys(selectedLots)
+          .filter(lotId => selectedLots[lotId])
+          .flatMap(lotId => (offerItemsByLot[lotId] || []).map(item => ({
+            tenderSpecId: item.tenderSpecId,
+            quantity: item.mukdar,
+            unitPrice: item.price,
+            description: item.desc
+          })))
       });
       alert(`✅ ${t('successOffer', 'Kommerçiýa teklibi üstünlikli iberildi!')}`);
       navigate('/offers');
@@ -246,118 +280,98 @@ export default function CreateOfferPage({ role, isDarkMode, lang = 'RU' }) {
         </div>
       </div>
 
-      {/* Двухколоночный блок таблиц спецификаций */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-        {/* Левая таблица: Tender spesifikasiýasy */}
-        <div className="border border-slate-300 rounded bg-white overflow-hidden shadow-sm flex flex-col h-full">
-          <div className="px-4 py-3 border-b border-slate-300 font-bold text-slate-800">
-            {t('tenderSpecs', 'Tender spesifikasiýa')}
+      {/* Лоты и позиции */}
+      <div className="space-y-6 pt-4">
+        {tender?.lots?.map((lot, lotIdx) => (
+          <div key={lot.id} className={`border rounded bg-white overflow-hidden shadow-sm flex flex-col ${!selectedLots[lot.id] ? 'opacity-50 grayscale transition-all' : ''}`}>
+            <div className="px-4 py-3 border-b border-slate-300 font-bold text-slate-800 flex items-center gap-3">
+              <input 
+                type="checkbox" 
+                checked={!!selectedLots[lot.id]} 
+                onChange={() => toggleLotSelection(lot.id)}
+                className="w-4 h-4 cursor-pointer"
+              />
+              <div className="flex-1">
+                 <span className="text-base">{lot.name}</span>
+                 {lot.deliveryTerm && <span className="ml-4 text-xs font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded">{t('deliveryTerm', 'Условие поставки')}: {lot.deliveryTerm.shortName}</span>}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-slate-200">
+               {/* Левая часть: Запрос заказчика */}
+               <div className="border-r border-slate-200">
+                  <div className="px-3 py-2 bg-slate-50 text-xs font-semibold text-slate-600 border-b border-slate-200">
+                     {t('customerRequest', 'Запрос заказчика')}
+                  </div>
+                  <table className="w-full text-left text-xs border-collapse min-w-max">
+                    <tbody className="divide-y divide-slate-100">
+                      {lot.specs.map((spec, idx) => (
+                        <tr key={idx} className="hover:bg-slate-50">
+                          <td className="py-2 px-3 w-[5%] text-center text-slate-500">{spec.positionNumber || idx + 1}</td>
+                          <td className="py-2 px-3 w-[45%] font-medium text-slate-700 truncate max-w-[120px]" title={spec.generalProduct?.name || spec.name}>{spec.generalProduct?.name || spec.name}</td>
+                          <td className="py-2 px-3 w-[20%] text-center text-slate-600">{spec.unit?.shortName || spec.unit?.name || '-'}</td>
+                          <td className="py-2 px-3 w-[15%] text-center text-slate-600">{spec.quantity}</td>
+                          <td className="py-2 px-3 w-[15%] text-center">
+                            <button 
+                              disabled={!selectedLots[lot.id]}
+                              onClick={() => {
+                                setEditIndex(null);
+                                setActiveLotIdForModal(lot.id);
+                                setSelectedSpecForModal(spec);
+                                setNewItem({
+                                  tenderSpecId: spec.id,
+                                  haryt: spec.generalProduct?.name || spec.name,
+                                  unit: spec.unit?.name || spec.unit?.shortName || '',
+                                  brand: spec.manufacturer?.name || '',
+                                  mukdar: spec.quantity,
+                                  price: 0,
+                                  desc: ''
+                                });
+                                setShowItemModal(true);
+                              }} 
+                              className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded disabled:opacity-30"
+                            >
+                              <ArrowLeft className="rotate-[135deg]" size={15} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+               </div>
+               
+               {/* Правая часть: Ваше предложение */}
+               <div>
+                  <div className="px-3 py-2 bg-blue-50 text-xs font-semibold text-blue-800 border-b border-slate-200">
+                     {t('yourOffer', 'Ваше предложение по лоту')}
+                  </div>
+                  <table className="w-full text-left text-xs border-collapse min-w-max">
+                    <tbody className="divide-y divide-slate-100">
+                      {(offerItemsByLot[lot.id] || []).length > 0 ? (
+                        (offerItemsByLot[lot.id] || []).map((item, idx) => (
+                          <tr key={idx} className="hover:bg-blue-50/50">
+                            <td className="py-2 px-3 font-medium text-slate-700 truncate max-w-[120px]">{item.haryt}</td>
+                            <td className="py-2 px-3 text-center text-slate-600">{item.mukdar} {item.unit}</td>
+                            <td className="py-2 px-3 text-right font-bold text-emerald-600">{item.price} {currency ? (currencies.find(c => c.id === currency)?.code) : ''}</td>
+                            <td className="py-2 px-3 text-center space-x-1">
+                              <button disabled={!selectedLots[lot.id]} onClick={() => handleEditItem(lot.id, idx)} className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"><Edit2 size={13}/></button>
+                              <button disabled={!selectedLots[lot.id]} onClick={() => handleRemoveItem(lot.id, idx)} className="p-1 text-rose-400 hover:text-rose-600 disabled:opacity-30"><Trash2 size={13}/></button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" className="py-4 text-center text-slate-400">
+                            {lang === 'RU' ? 'Вы еще не предложили товары' : 'Haryt hödürlemediňiz'}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+               </div>
+            </div>
           </div>
-          <div className="overflow-x-auto flex-1">
-            <table className="w-full text-left text-xs border-collapse min-w-max">
-              <thead>
-                <tr className="bg-[#254b8a] text-white">
-                  <th className="py-2 px-3 border-r border-blue-800/30 text-center">H/K</th>
-                  <th className="py-2 px-3 border-r border-blue-800/30">{t('product', 'Haryt')}</th>
-                  <th className="py-2 px-3 border-r border-blue-800/30 text-center">{t('unit', 'Ölçeg birligi')}</th>
-                  <th className="py-2 px-3 border-r border-blue-800/30">{t('manufacturer', 'Öndüriji')}</th>
-                  <th className="py-2 px-3 border-r border-blue-800/30 text-center">{t('quantity', 'Mukdary')}</th>
-                  <th className="py-2 px-3 border-r border-blue-800/30 text-center">{t('description', 'Mazmuny')}</th>
-                  <th className="py-2 px-3 text-center">{t('action', 'Amal')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {tender?.specs?.length > 0 ? tender.specs.map((spec, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-2.5 px-3 text-center text-slate-500 border-r border-slate-200">{spec.positionNumber || idx + 1}</td>
-                    <td className="py-2.5 px-3 border-r border-slate-200 font-medium text-slate-700 truncate max-w-[100px]" title={spec.generalProduct?.name || spec.name}>{spec.generalProduct?.name || spec.name}</td>
-                    <td className="py-2.5 px-3 text-center border-r border-slate-200 text-slate-600">{spec.unit?.name || spec.unit?.shortName || '-'}</td>
-                    <td className="py-2.5 px-3 border-r border-slate-200 text-slate-600 truncate max-w-[80px]" title={spec.manufacturer?.name || '-'}>{spec.manufacturer?.name || '-'}</td>
-                    <td className="py-2.5 px-3 text-center border-r border-slate-200 font-medium">{spec.quantity}</td>
-                    <td className="py-2.5 px-3 border-r border-slate-200 text-slate-500 truncate max-w-[120px]" title={spec.description || ''}>{spec.description || '-'}</td>
-                    <td className="py-2.5 px-3 text-center">
-                      <button 
-                        onClick={() => {
-                          setEditIndex(null);
-                          setSelectedSpecForModal(spec);
-                          setNewItem({
-                            tenderSpecId: spec.id,
-                            haryt: spec.generalProduct?.name || spec.name,
-                            unit: spec.unit?.name || spec.unit?.shortName || '',
-                            brand: spec.manufacturer?.name || '',
-                            mukdar: spec.quantity,
-                            price: 0,
-                            desc: ''
-                          });
-                          setShowItemModal(true);
-                        }} 
-                        className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded"
-                      >
-                        <ArrowLeft className="rotate-[135deg]" size={15} />
-                      </button>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan="7" className="py-6 text-center text-slate-400">
-                      {lang === 'RU' ? 'Нет спецификаций' : 'Spesifikasiýa ýok'}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Правая таблица: Saýlananlar */}
-        <div className="border border-slate-300 rounded bg-white overflow-hidden shadow-sm flex flex-col h-full">
-          <div className="px-4 py-3 border-b border-slate-300 font-bold text-slate-800">
-            {t('selectedItems', 'Saýlananlar')}
-          </div>
-          <div className="overflow-x-auto flex-1">
-            <table className="w-full text-left text-xs border-collapse min-w-max">
-              <thead>
-                <tr className="bg-[#254b8a] text-white">
-                  <th className="py-2 px-3 border-r border-blue-800/30 text-center">H/K</th>
-                  <th className="py-2 px-3 border-r border-blue-800/30">{t('product', 'Haryt')}</th>
-                  <th className="py-2 px-3 border-r border-blue-800/30 text-center">{t('unit', 'Ölçeg birligi')}</th>
-                  <th className="py-2 px-3 border-r border-blue-800/30">{t('manufacturer', 'Öndüriji')}</th>
-                  <th className="py-2 px-3 border-r border-blue-800/30 text-center">{t('quantity', 'Mukdary')}</th>
-                  <th className="py-2 px-3 border-r border-blue-800/30 text-center">{t('description', 'Mazmuny')}</th>
-                  <th className="py-2 px-3 text-center">{t('action', 'Amal')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {offerItems.length > 0 ? offerItems.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-2.5 px-3 text-center text-slate-500 border-r border-slate-200">{idx + 1}</td>
-                    <td className="py-2.5 px-3 border-r border-slate-200 font-medium text-slate-700">{item.haryt}</td>
-                    <td className="py-2.5 px-3 text-center border-r border-slate-200 text-slate-600">{item.unit}</td>
-                    <td className="py-2.5 px-3 border-r border-slate-200 text-slate-600">{item.brand}</td>
-                    <td className="py-2.5 px-3 text-center border-r border-slate-200 font-medium">{item.mukdar}</td>
-                    <td className="py-2.5 px-3 border-r border-slate-200">
-                      <span className="truncate max-w-[120px] text-slate-500 block" title={item.desc}>{item.desc || '-'}</span>
-                    </td>
-                    <td className="py-2.5 px-3 flex items-center justify-center space-x-1">
-                      <button onClick={() => handleEditItem(idx)} className="p-1 text-slate-400 hover:text-slate-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
-                      </button>
-                      <button onClick={() => handleRemoveItem(idx)} className="p-1 text-rose-400 hover:text-rose-600">
-                        <Trash2 size={14} />
-                      </button>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan="7" className="py-6 text-center text-slate-400">
-                      {lang === 'RU' ? 'Ничего не выбрано' : 'Hiç zat saýlanmady'}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Таблицы документов */}

@@ -86,7 +86,8 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     currency: 'TMT'
   });
 
-  const [specs, setSpecs] = useState([]);
+  const [lots, setLots] = useState([{ id: Date.now(), name: 'Лот 1', deliveryTermId: '', specs: [] }]);
+  const [activeLotIndex, setActiveLotIndex] = useState(null);
   const [docs, setDocs] = useState([]);
 
   const [showSpecModal, setShowSpecModal] = useState(false);
@@ -110,11 +111,13 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
   const [currencies, setCurrencies] = useState([]);
   const [units, setUnits] = useState([]);
   const [manufacturers, setManufacturers] = useState([]);
+  const [deliveryTerms, setDeliveryTerms] = useState([]);
   useEffect(() => {
     API.get('/catalogs/categories').then(res => { if (Array.isArray(res.data)) setCategories(res.data.filter(c => c.isActive)); }).catch(() => {});
     API.get('/catalogs/currencies').then(res => { if (Array.isArray(res.data)) setCurrencies(res.data.filter(c => c.isActive)); }).catch(() => {});
     API.get('/catalogs/units').then(res => { if (Array.isArray(res.data)) setUnits(res.data.filter(c => c.isActive)); }).catch(() => {});
     API.get('/catalogs/manufacturers').then(res => { if (Array.isArray(res.data)) setManufacturers(res.data.filter(c => c.isActive)); }).catch(() => {});
+    API.get('/catalogs/delivery-terms').then(res => { if (Array.isArray(res.data)) setDeliveryTerms(res.data.filter(c => c.isActive)); }).catch(() => {});
     API.get('/catalogs/clients').then(res => { if (Array.isArray(res.data)) setClients(res.data.filter(c => c.isActive)); }).catch(() => {});
   }, []);
 
@@ -132,17 +135,41 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       brandName: selectedBrand ? selectedBrand.name : newSpec.brand
     };
 
+    const updatedLots = [...lots];
+    const targetLot = updatedLots[activeLotIndex];
+
     if (editSpecIndex !== null) {
-      const updatedSpecs = [...specs];
-      updatedSpecs[editSpecIndex] = { ...formattedSpec, hk: updatedSpecs[editSpecIndex].hk };
-      setSpecs(updatedSpecs);
+      targetLot.specs[editSpecIndex] = { ...formattedSpec, hk: targetLot.specs[editSpecIndex].hk };
     } else {
-      setSpecs([...specs, { ...formattedSpec, hk: (specs.length + 1).toString() }]);
+      targetLot.specs.push({ ...formattedSpec, hk: (targetLot.specs.length + 1).toString() });
     }
+    setLots(updatedLots);
     
     setShowSpecModal(false);
     setEditSpecIndex(null);
+    setActiveLotIndex(null);
     setNewSpec({ haryt: '', unit: '', type: 'Haryt', brand: '', mukdar: 1, desc: '' });
+  };
+
+  const handleRemoveSpec = (lotIdx, specIdx) => {
+    const updated = [...lots];
+    updated[lotIdx].specs = updated[lotIdx].specs.filter((_, i) => i !== specIdx);
+    setLots(updated);
+  };
+  
+  const handleAddLot = () => {
+    setLots([...lots, { id: Date.now(), name: `Лот ${lots.length + 1}`, deliveryTermId: '', specs: [] }]);
+  };
+  
+  const handleRemoveLot = (lotIdx) => {
+    if (lots.length === 1) return alert(lang === 'RU' ? 'Должен быть хотя бы один лот' : 'Iň bolmanda bir lot bolmaly');
+    setLots(lots.filter((_, i) => i !== lotIdx));
+  };
+  
+  const handleLotChange = (lotIdx, field, value) => {
+    const updated = [...lots];
+    updated[lotIdx][field] = value;
+    setLots(updated);
   };
 
   const handleEditSpec = (index) => {
@@ -196,8 +223,9 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     setLoading(true);
     setErrorMsg('');
 
-    if (specs.length === 0) {
-      setErrorMsg(t('specRequired', 'Добавьте хотя бы одну спецификацию (Tender spesifikasiýasy)'));
+    const hasSpecs = lots.some(lot => lot.specs.length > 0);
+    if (!hasSpecs) {
+      setErrorMsg(t('specRequired', 'Добавьте хотя бы один лот со спецификациями'));
       setLoading(false);
       return;
     }
@@ -222,13 +250,17 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
         clientId: formData.clientId !== '' ? formData.clientId : undefined,
         announcementDate: new Date(formData.announcementDate).toISOString(),
         deadline: new Date(formData.deadline).toISOString(),
-        specs: specs.map((s, idx) => ({
-          positionNumber: idx + 1,
-          name: s.haryt,
-          quantity: parseFloat(s.mukdar) || 1,
-          unitId: s.unit || undefined,
-          manufacturerId: s.brand || undefined,
-          description: s.desc
+        lots: lots.map((lot, lotIdx) => ({
+          name: lot.name,
+          deliveryTermId: lot.deliveryTermId || undefined,
+          specs: lot.specs.map((s, idx) => ({
+            positionNumber: idx + 1,
+            name: s.haryt,
+            quantity: parseFloat(s.mukdar) || 1,
+            unitId: s.unit || undefined,
+            manufacturerId: s.brand || undefined,
+            description: s.desc
+          }))
         })),
         documents: docs.map(d => d.id) // passing array of document IDs if the backend supports it
       });
@@ -256,12 +288,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
           </p>
         </div>
 
-        <button
-          onClick={() => { if (onNavigate) onNavigate('tenders'); }}
-          className={`flex items-center text-xs font-semibold ${theme.subText} hover:text-slate-900 transition-colors`}
-        >
-          <ArrowLeft size={16} className="mr-1" /> {t('backToList', 'Yza gaýtmak')}
-        </button>
+        
       </div>
 
       {errorMsg && (
@@ -421,56 +448,100 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
         </div>
       </form>
 
-      {/* 3. Спецификации */}
-      <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
-        <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-          <h3 className="font-bold text-base">{t('tenderSpecs', 'Tender spesifikasiýasy')}</h3>
-          <button type="button" onClick={() => setShowSpecModal(true)} className="p-1.5 rounded-full bg-teal-600 text-white hover:bg-teal-700 transition-colors">
-            <Plus size={16} />
+      {/* 3. Лоты и Спецификации */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className={`font-bold text-lg ${theme.primaryText}`}>{lang === 'RU' ? 'Лоты и позиции' : 'Lotlar we pozisiýalar'}</h3>
+          <button type="button" onClick={handleAddLot} className="px-4 py-2 text-xs rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 transition-colors flex items-center gap-1.5">
+            <Plus size={14} /> {lang === 'RU' ? 'Добавить лот' : 'Lot goş'}
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-teal-600 text-white font-medium">
-                <th className="py-3 px-4 w-[5%] text-center">H/K</th>
-                <th className="py-3 px-4 w-[25%]">{t('specProduct', 'Haryt')}</th>
-                <th className="py-3 px-4 w-[10%] text-center">{t('specUnit', 'Ölçeg birligi')}</th>
-                <th className="py-3 px-4 w-[15%] text-center">{t('specBrand', 'Öndüriji')}</th>
-                <th className="py-3 px-4 w-[10%] text-center">{t('specQty', 'Mukdar')}</th>
-                <th className="py-3 px-4 w-[25%]">{t('specDesc', 'Mazmuny')}</th>
-                <th className="py-3 px-4 w-[10%] text-center">{t('action', 'Amal')}</th>
-              </tr>
-            </thead>
-            <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-              {specs.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="py-6 text-center text-slate-400">
-                    {t('noSpecs', 'Спецификации пока не добавлены')}
-                  </td>
-                </tr>
-              ) : specs.map((item, idx) => (
-                <tr key={idx} className={theme.tableRowHover}>
-                  <td className="py-3 px-4 font-semibold text-slate-400 text-center">{item.hk}</td>
-                  <td className="py-3 px-4 font-medium">{item.haryt}</td>
-                  <td className="py-3 px-4 text-center">{item.unitName}</td>
-                  <td className="py-3 px-4 text-center">{item.brandName || '-'}</td>
-                  <td className="py-3 px-4 text-center font-bold">{item.mukdar}</td>
-                  <td className="py-3 px-4 text-slate-500 max-w-xs truncate">{item.desc}</td>
-                  <td className="py-3 px-4 text-center space-x-1">
-                    <button type="button" onClick={() => handleEditSpec(idx)} className="p-1 hover:bg-teal-500/10 text-teal-600 rounded">
-                      <Edit2 size={14} />
-                    </button>
-                    <button type="button" onClick={() => setSpecs(specs.filter((_, i) => i !== idx))} className="p-1 hover:bg-rose-500/10 text-rose-500 rounded">
-                      <Trash2 size={14} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {lots.map((lot, lotIdx) => (
+          <div key={lot.id} className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
+            <div className={`p-4 border-b flex items-end justify-between gap-4 ${isDarkMode ? 'border-slate-800 bg-slate-900/30' : 'border-slate-100 bg-white'}`}>
+               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div>
+                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">{lang === 'RU' ? 'Название лота' : 'Lot ady'}*</label>
+                   <input
+                     type="text"
+                     required
+                     value={lot.name}
+                     onChange={(e) => handleLotChange(lotIdx, 'name', e.target.value)}
+                     placeholder={lang === 'RU' ? 'Напр: Лот 1: Оборудование' : 'Meselem: Lot 1'}
+                     className={`w-full px-3 py-2 rounded-lg text-sm font-semibold ${theme.inputBg}`}
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">{lang === 'RU' ? 'Условия поставки' : 'Eltip beriş şerti'}*</label>
+                   <select
+                     required
+                     value={lot.deliveryTermId}
+                     onChange={(e) => handleLotChange(lotIdx, 'deliveryTermId', e.target.value)}
+                     className={`w-full px-3 py-2 rounded-lg text-sm ${theme.inputBg}`}
+                   >
+                     <option value="">{lang === 'RU' ? 'Выберите условие поставки...' : 'Eltip beriş şertini saýlaň...'}</option>
+                     {deliveryTerms.map(dt => (
+                       <option key={dt.id} value={dt.id}>{dt.shortName} — {dt.name}</option>
+                     ))}
+                   </select>
+                 </div>
+               </div>
+               <div className="flex items-center gap-2 mt-4 md:mt-0">
+                 <button type="button" onClick={() => { setActiveLotIndex(lotIdx); setShowSpecModal(true); }} className="px-3 py-2 text-xs rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                   <Plus size={14} /> {lang === 'RU' ? 'Товар' : 'Haryt'}
+                 </button>
+                 {lots.length > 1 && (
+                   <button type="button" onClick={() => handleRemoveLot(lotIdx)} className="p-2 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Удалить лот">
+                     <Trash2 size={16} />
+                   </button>
+                 )}
+               </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className={`font-medium text-white ${isDarkMode ? 'bg-teal-900' : 'bg-teal-600'}`}>
+                    <th className="py-2.5 px-4 w-[5%] text-center">H/K</th>
+                    <th className="py-2.5 px-4 w-[25%]">{t('specProduct', 'Haryt')}</th>
+                    <th className="py-2.5 px-4 w-[10%] text-center">{t('specUnit', 'Ölçeg birligi')}</th>
+                    <th className="py-2.5 px-4 w-[15%] text-center">{t('specBrand', 'Öndüriji')}</th>
+                    <th className="py-2.5 px-4 w-[10%] text-center">{t('specQty', 'Mukdar')}</th>
+                    <th className="py-2.5 px-4 w-[25%]">{t('specDesc', 'Mazmuny')}</th>
+                    <th className="py-2.5 px-4 w-[10%] text-center">{t('action', 'Amal')}</th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+                  {lot.specs.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="py-6 text-center text-slate-400">
+                        {lang === 'RU' ? 'В этот лот еще не добавлены товары' : 'Bu lota entek haryt goşulmady'}
+                      </td>
+                    </tr>
+                  ) : lot.specs.map((item, idx) => (
+                    <tr key={idx} className={theme.tableRowHover}>
+                      <td className="py-3 px-4 font-semibold text-slate-400 text-center">{item.hk}</td>
+                      <td className="py-3 px-4 font-medium">{item.haryt}</td>
+                      <td className="py-3 px-4 text-center">{item.unitName}</td>
+                      <td className="py-3 px-4 text-center">{item.brandName || '-'}</td>
+                      <td className="py-3 px-4 text-center font-bold">{item.mukdar}</td>
+                      <td className="py-3 px-4 text-slate-500 max-w-xs truncate">{item.desc}</td>
+                      <td className="py-3 px-4 text-center space-x-1">
+                        <button type="button" onClick={() => handleEditSpec(lotIdx, idx)} className="p-1 hover:bg-teal-500/10 text-teal-600 rounded">
+                          <Edit2 size={14} />
+                        </button>
+                        <button type="button" onClick={() => handleRemoveSpec(lotIdx, idx)} className="p-1 hover:bg-rose-500/10 text-rose-500 rounded">
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* 4. Документы */}
@@ -546,7 +617,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
           <div className={`${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'} rounded-xl shadow-2xl border w-full max-w-md p-6 space-y-4 animate-in zoom-in-95`}>
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-lg">{editSpecIndex !== null ? t('editSpec', 'Изменить позицию') : t('addSpec', 'Täze pozisiýa goş')}</h3>
-              <button onClick={() => { setShowSpecModal(false); setEditSpecIndex(null); setNewSpec({ haryt: '', unit: '', type: 'Haryt', brand: '', mukdar: 1, desc: '' }); }} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => { setShowSpecModal(false); setEditSpecIndex(null); setActiveLotIndex(null); setNewSpec({ haryt: '', unit: '', type: 'Haryt', brand: '', mukdar: 1, desc: '' }); }} className="text-slate-400 hover:text-slate-600">
                 <X size={20} />
               </button>
             </div>

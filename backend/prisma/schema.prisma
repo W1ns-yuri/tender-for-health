@@ -12,43 +12,62 @@ datasource db {
 
 enum RoleType {
   ADMIN
-  SUPPLIER              // Üpjün ediji (Поставщик)
-  CLIENT                // Sargyt ediji (Заказчик)
+  SUPPLIER // Üpjün ediji (Поставщик)
+  CLIENT // Sargyt ediji (Заказчик)
   PURCHASING_SPECIALIST // Satyn alyş hünärmeni (Специалист по закупкам)
-  COMMISSION_MEMBER     // Komissiýa topary (Тендерная комиссия)
+  COMMISSION_MEMBER // Komissiýa topary (Тендерная комиссия)
 }
 
 enum TenderStatus {
-  TASLAMA              @map("taslama")              // черновик
-  ACYK                 @map("açyk")                 // открыт
-  YAPYK                @map("ýapyk")                // закрыт
-  BAHALANDYRYLDY       @map("bahalandyryldy")       // оценен
-  YENIJI_YGLAN_EDILDI  @map("ýeňiji yglan edildi")  // победитель объявлен
-  GOYBOLSUN_EDILDI     @map("goýbolsun edildi")     // отменен
-  ARHIWLENDI           @map("arhiwlendi")           // архивирован
+  TASLAMA             @map("taslama") // черновик
+  ACYK                @map("açyk") // открыт
+  YAPYK               @map("ýapyk") // закрыт
+  BAHALANDYRYLDY      @map("bahalandyryldy") // оценен
+  YENIJI_YGLAN_EDILDI @map("ýeňiji yglan edildi") // победитель объявлен
+  GOYBOLSUN_EDILDI    @map("goýbolsun edildi") // отменен
+  ARHIWLENDI          @map("arhiwlendi") // архивирован
 }
 
 enum OfferStatus {
-  TASLAMA          @map("taslama")          // черновик
-  TABSARYLDY       @map("tabşyryldy")       // отправлено
-  KABUL_EDILDI     @map("kabul edildi")     // принято
-  YENIJI           @map("ýeňiji")           // победитель
+  TASLAMA          @map("taslama") // черновик
+  TABSARYLDY       @map("tabşyryldy") // отправлено
+  KABUL_EDILDI     @map("kabul edildi") // принято
+  YENIJI           @map("ýeňiji") // победитель
   GOYBOLSUN_EDILDI @map("goýbolsun edildi") // отменено
-  RET_EDILDI       @map("ret edildi")       // отклонено
+  RET_EDILDI       @map("ret edildi") // отклонено
 }
 
 enum TenderType {
-  YERLI   @map("ýerli")    // местный
-  HALKARA @map("halkara")  // международный
+  YERLI   @map("ýerli") // местный
+  HALKARA @map("halkara") // международный
 }
 
 enum TenderVisibility {
-  ACYK  @map("açyk")  // публичный
+  ACYK  @map("açyk") // публичный
   YAPYK @map("ýapyk") // закрытый
 }
 
+enum SupplierType {
+  ENTREPRENEUR
+  BUSINESS_SOCIETY
+  BUSINESS_COMPANY
+  GOVERNMENT
+}
+
+enum PaymentStatus {
+  PENDING
+  NOT_PAID
+  PAID
+}
+
+enum DocumentScope {
+  SUPPLIER_DOC
+  TENDER_DOC
+  OFFER_DOC
+}
+
 enum ProductType {
-  HARYT  @map("haryt")  // товар
+  HARYT  @map("haryt") // товар
   HYZMAT @map("hyzmat") // услуга
 }
 
@@ -73,11 +92,11 @@ enum BidStatus {
 // ==========================================
 
 model Role {
-  id             String   @id @default(uuid())
+  id             String @id @default(uuid())
   name           String
-  code           String   @unique
-  allowedModules Json?    @map("allowed_modules") // Список доступных модулей (JSON)
-  permissions    Json?    // Права CRUD (JSON)
+  code           String @unique
+  allowedModules Json?  @map("allowed_modules") // Список доступных модулей (JSON)
+  permissions    Json? // Права CRUD (JSON)
   users          User[]
 
   createdAt DateTime @default(now())
@@ -104,6 +123,12 @@ model User {
   tenders   Tender[]   @relation("CreatedTenders")
   logs      Log[]
 
+  // Поля безопасности из UserAuth (ERD)
+  lastLogin         DateTime? @map("last_login")
+  failedCount       Int       @default(0) @map("failed_count")
+  lockoutExpireDate DateTime? @map("lockout_expire_date")
+  isActive          Boolean   @default(true) @map("is_active")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -117,7 +142,7 @@ model Log {
   eventType     EventType     @map("event_type")
   operationType OperationType @map("operation_type")
   ip            String?
-  data          Json?         // Данные в формате JSON (до/после изменений)
+  data          Json? // Данные в формате JSON (до/после изменений)
   createdAt     DateTime      @default(now())
 
   @@map("logs")
@@ -153,7 +178,7 @@ model GeneralProduct {
   id          String      @id @default(uuid())
   categoryId  String?     @map("category_id")
   category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  name        String      // МНН (Международное непатентованное наименование)
+  name        String // МНН (Международное непатентованное наименование)
   tradeName   String?     @map("trade_name") // Торговое (патентованное) название
   code        String?
   type        ProductType @default(HARYT)
@@ -189,9 +214,9 @@ model Currency {
   order    Int     @default(0)
   isActive Boolean @default(true) @map("is_active")
 
-  fromExchangeRates ExchangeRate[]       @relation("FromCurrency")
-  toExchangeRates   ExchangeRate[]       @relation("ToCurrency")
-  baseOffers        Offer[]              @relation("BaseCurrency")
+  fromExchangeRates ExchangeRate[]      @relation("FromCurrency")
+  toExchangeRates   ExchangeRate[]      @relation("ToCurrency")
+  baseOffers        Offer[]             @relation("BaseCurrency")
   offerRates        OfferExchangeRate[]
 
   @@map("currencies")
@@ -253,9 +278,10 @@ model Manufacturer {
 
 model DeliveryTerm {
   id        String  @id @default(uuid())
-  name      String  // DAP, DDP, CIP
+  name      String // DAP, DDP, CIP
   shortName String  @map("short_name")
   offers    Offer[]
+  tenderLots TenderLot[]
 
   isActive Boolean @default(true) @map("is_active")
 
@@ -263,18 +289,21 @@ model DeliveryTerm {
 }
 
 model DocumentType {
-  id        String     @id @default(uuid())
-  name      String
-  order     Int        @default(0)
-  isActive  Boolean    @default(true) @map("is_active")
-  documents Document[]
+  id          String        @id @default(uuid())
+  name        String
+  order       Int           @default(0)
+  isActive    Boolean       @default(true) @map("is_active")
+  description String?
+  isMandatory Boolean       @default(false) @map("is_mandatory")
+  scope       DocumentScope @default(TENDER_DOC)
+  documents   Document[]
 
   @@map("document_types")
 }
 
 model VariationGroup {
   id     String           @id @default(uuid())
-  name   String           // Например: "Цвет", "Материал"
+  name   String // Например: "Цвет", "Материал"
   values VariationValue[]
 
   @@map("variation_groups")
@@ -284,7 +313,7 @@ model VariationValue {
   id      String         @id @default(uuid())
   groupId String         @map("group_id")
   group   VariationGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  value   String         // Красный, Синий, Сталь
+  value   String // Красный, Синий, Сталь
 
   @@map("variation_values")
 }
@@ -293,12 +322,11 @@ model VariationValue {
 // 4. МОДУЛЬ ТЕНДЕРОВ И СПЕЦИФИКАЦИЙ
 // ==========================================
 
-
 model Client {
-  id        String   @id @default(uuid())
-  name      String
-  isActive  Boolean  @default(true)
-  tenders   Tender[]
+  id       String   @id @default(uuid())
+  name     String
+  isActive Boolean  @default(true)
+  tenders  Tender[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -320,8 +348,8 @@ model Tender {
   announcementDate DateTime? @map("announcement_date")
   deadline         DateTime
 
-  clientId   String?   @map("client_id")
-  client     Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  clientId String? @map("client_id")
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
   categoryId String?   @map("category_id")
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -331,6 +359,7 @@ model Tender {
 
   // Новые спецификации ТЗ
   specs  TenderSpecification[]
+  lots   TenderLot[]
   files  TenderFile[]
   offers Offer[]
 
@@ -345,10 +374,29 @@ model Tender {
   @@map("tenders")
 }
 
+
+model TenderLot {
+  id              String         @id @default(uuid())
+  tenderId        String         @map("tender_id")
+  tender          Tender         @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  name            String
+  deliveryTermId  String?        @map("delivery_term_id")
+  deliveryTerm    DeliveryTerm?  @relation(fields: [deliveryTermId], references: [id], onDelete: SetNull)
+  
+  specs           TenderSpecification[]
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("tender_lots")
+}
+
 model TenderSpecification {
   id               String          @id @default(uuid())
   tenderId         String          @map("tender_id")
   tender           Tender          @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  lotId            String?         @map("lot_id")
+  lot              TenderLot?      @relation(fields: [lotId], references: [id], onDelete: Cascade)
   generalProductId String?         @map("general_product_id")
   generalProduct   GeneralProduct? @relation(fields: [generalProductId], references: [id], onDelete: SetNull)
   unitId           String?         @map("unit_id")
@@ -393,22 +441,23 @@ model TenderItem {
 // ==========================================
 
 model Supplier {
-  id            String   @id @default(uuid())
-  userId        String   @map("user_id")
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  countryId     String?  @map("country_id")
-  country       Country? @relation(fields: [countryId], references: [id], onDelete: SetNull)
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  countryId String?  @map("country_id")
+  country   Country? @relation(fields: [countryId], references: [id], onDelete: SetNull)
 
   name          String
-  regNumber     String?  @map("reg_number")
-  licenseNumber String?  @map("license_number")
-  taxId         String?  @map("tax_id")
+  type          SupplierType?
+  regNumber     String?       @map("reg_number")
+  licenseNumber String?       @map("license_number")
+  taxId         String?       @map("tax_id")
   email         String?
   phone         String?
   fax           String?
   address       String?
   notes         String?
-  isActive      Boolean  @default(true) @map("is_active")
+  isActive      Boolean       @default(true) @map("is_active")
 
   offers Offer[]
   files  SupplierFile[]
@@ -430,13 +479,16 @@ model Offer {
   baseCurrencyId String?       @map("base_currency_id")
   baseCurrency   Currency?     @relation("BaseCurrency", fields: [baseCurrencyId], references: [id], onDelete: SetNull)
 
-  number       String?
-  paymentTerms String?     @map("payment_terms")
-  version      Int         @default(1)
-  isDefault    Boolean     @default(true) @map("is_default")
-  status       OfferStatus @default(TASLAMA)
-  offeredPrice Float       @default(0) @map("offered_price")
-  comment      String?
+  number        String?
+  bidderCode    String?       @map("bidder_code")
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+  isArchived    Boolean       @default(false) @map("is_archived")
+  paymentTerms  String?       @map("payment_terms")
+  version       Int           @default(1)
+  isDefault     Boolean       @default(true) @map("is_default")
+  status        OfferStatus   @default(TASLAMA)
+  offeredPrice  Float         @default(0) @map("offered_price")
+  comment       String?
 
   specs         OfferSpecification[]
   exchangeRates OfferExchangeRate[]
@@ -466,6 +518,7 @@ model OfferSpecification {
   quantity       Float   @default(1)
   unitPrice      Float   @default(0) @map("unit_price")
   description    String?
+  isAwarded      Boolean @default(false) @map("is_awarded")
 
   @@map("offer_specifications")
 }

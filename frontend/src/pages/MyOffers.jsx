@@ -110,16 +110,16 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
                     <td className="py-3.5 px-4 text-center text-slate-500 text-[11px] max-w-xs">{item.paymentTerms || item.terms}</td>
                     <td className="py-3.5 px-4 text-center text-slate-500">{new Date(item.createdAt || item.date).toLocaleDateString('ru-RU')}</td>
                     <td className="py-3.5 px-4 text-center space-x-1">
-                      <button onClick={() => navigate(`/offers/${item.id}`)} className="p-1 hover:bg-slate-200/50 rounded text-teal-600" title={t('viewDetails', 'Просмотр')}>
-                        <Eye size={14} />
+                      <button onClick={() => navigate(`/offers/${item.id}`)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors" title={t('viewDetails', 'Просмотр')}>
+                        <Eye size={16} />
                       </button>
                       {role !== 'ADMIN' && (
                         <>
-                          <button className="p-1 hover:bg-slate-200/50 rounded" title={t('edit', 'Редактировать')}>
-                            <Edit2 size={14} />
+                          <button className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors" title={t('edit', 'Редактировать')}>
+                            <Edit2 size={16} />
                           </button>
-                          <button className="p-1 hover:bg-rose-500/10 text-rose-500 rounded" title={t('delete', 'Удалить')}>
-                            <Trash2 size={14} />
+                          <button className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors" title={t('delete', 'Удалить')}>
+                            <Trash2 size={16} />
                           </button>
                         </>
                       )}

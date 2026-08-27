@@ -195,7 +195,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                       <div className="flex items-center justify-center space-x-1">
                         <button
                           onClick={() => onNavigate('tender-details', item.id)}
-                          className="p-1.5 rounded-full hover:bg-slate-200/50 text-slate-500 transition-colors"
+                          className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
                           title={t('viewDetails', 'Детальнее')}
                         >
                           <Eye size={16} />
@@ -205,14 +205,14 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                           <>
                             <button
                               onClick={() => alert(lang === 'RU' ? 'Редактирование пока недоступно' : 'Üýtgetmek häzirlikçe elýeterli däl')}
-                              className="p-1.5 rounded-full hover:bg-amber-500/10 text-amber-500 transition-colors"
+                              className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"
                               title={t('edit', 'Изменить')}
                             >
                               <Edit2 size={16} />
                             </button>
                             <button
                               onClick={() => handleDelete(item.id)}
-                              className="p-1.5 rounded-full hover:bg-rose-500/10 text-rose-500 transition-colors"
+                              className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"
                               title={t('delete', 'Удалить')}
                             >
                               <Trash2 size={16} />

@@ -282,16 +282,16 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                     <td className={`py-3.5 px-4 text-center w-auto min-w-[200px] whitespace-normal break-words ${theme.subText}`}>{safeString(item.paymentTerms || item.terms)}</td>
                     <td className={`py-3.5 px-4 text-center ${theme.subText}`}>{formatDate(item.createdAt || item.date)}</td>
                     <td className="py-3.5 px-4 text-center space-x-1">
-                      <button onClick={() => onNavigate('offers', item.id)} className="p-1 hover:bg-slate-200/50 rounded text-teal-600" title={t('viewDetails', 'Просмотр')}>
-                        <Eye size={14} />
+                      <button onClick={() => onNavigate('offers', item.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors" title={t('viewDetails', 'Просмотр')}>
+                        <Eye size={16} />
                       </button>
                       {role !== 'ADMIN' && (
                         <>
-                          <button className="p-1 hover:bg-slate-200/50 rounded" title={t('edit', 'Редактировать')}>
-                            <Edit2 size={14} />
+                          <button className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors" title={t('edit', 'Редактировать')}>
+                            <Edit2 size={16} />
                           </button>
-                          <button className="p-1 hover:bg-rose-500/10 text-rose-500 rounded" title={t('delete', 'Удалить')}>
-                            <Trash2 size={14} />
+                          <button className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors" title={t('delete', 'Удалить')}>
+                            <Trash2 size={16} />
                           </button>
                         </>
                       )}

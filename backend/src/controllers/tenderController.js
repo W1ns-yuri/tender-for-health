@@ -4,110 +4,109 @@ const prisma = require('../lib/prisma');
 const createTender = async (req, res) => {
     try {
         const {
+            tenderNumber,
             title,
-            description,
-            technicalSpecs,
-            price,
             deadline,
-            type,
-            visibility,
-            status,
             categoryId,
             clientId,
-            tenderNumber,
-            specs,
-            documents,
+            status,
+            lots,
+            technicalSpecs,
+            additionalRequirements,
+            paymentTerms,
         } = req.body;
-        console.log("CREATE TENDER BODY:", req.body);
 
-        const userId = req.user.id; // Из authMiddleware
+        const createdById = req.user.id;
 
-        if (!specs || !Array.isArray(specs) || specs.length === 0) {
-            return res.status(400).json({ error: 'Укажите хотя бы одну позицию спецификации (товар МНН / услугу) для тендера' });
-        }
-
-        let generatedLotNumber = tenderNumber;
-        if (!generatedLotNumber || generatedLotNumber.includes('Lot №') || generatedLotNumber.includes('undefined')) {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            
-            const startOfMonth = new Date(year, today.getMonth(), 1);
-            const count = await prisma.tender.count({
-                where: {
-                    createdAt: {
-                        gte: startOfMonth
-                    }
+        const tender = await prisma.$transaction(async (tx) => {
+            // 1. Создаем тендер
+            const newTender = await tx.tender.create({
+                data: {
+                    tenderNumber,
+                    title,
+                    deadline: new Date(deadline),
+                    categoryId,
+                    clientId,
+                    status: status || 'YAPYK',
+                    technicalSpecs,
+                    additionalRequirements,
+                    paymentTerms,
+                    createdById
                 }
             });
-            generatedLotNumber = `TNDR-${year}-${month}-${String(count + 1).padStart(3, '0')}`;
-        }
 
-        const tender = await prisma.tender.create({
-            data: {
-                title,
-                description,
-                technicalSpecs,
-                price: parseFloat(price || 0),
-                deadline: new Date(deadline),
-                type: type || 'YERLI',
-                visibility: visibility || 'ACYK',
-                status: status || 'ACYK', // По умолчанию 'открыт' (açyk)
-                tenderNumber: generatedLotNumber,
-                announcementDate: new Date(),
-                categoryId: categoryId || null,
-                clientId: clientId || null,
-                createdById: userId,
-                // Создаем позиции спецификации в tender_specifications
-                specs: {
-                    create: specs.map((item, index) => ({
-                        positionNumber: item.positionNumber || index + 1,
-                        generalProductId: item.generalProductId || null,
-                        unitId: item.unitId || null,
-                        manufacturerId: item.manufacturerId || null,
-                        name: item.name || null,
-                        quantity: parseFloat(item.quantity || 1),
-                        description: item.description || '',
-                    })),
-                },
-                // Если переданы документы (массив ID), создаем записи в tender_files
-                ...(documents && documents.length > 0 && {
-                    files: {
-                        create: documents.map(docId => ({
-                            documentId: docId
-                        }))
+            // 2. Создаем лоты и спецификации
+            let parsedLots = lots;
+            if (!parsedLots || !Array.isArray(parsedLots)) {
+                if (req.body.specs && Array.isArray(req.body.specs)) {
+                    parsedLots = [{ name: 'Основной лот', specs: req.body.specs }];
+                } else {
+                    parsedLots = [];
+                }
+            }
+
+            for (const lot of parsedLots) {
+                const newLot = await tx.tenderLot.create({
+                    data: {
+                        name: lot.name || 'Без названия',
+                        tenderId: newTender.id,
+                        deliveryTermId: lot.deliveryTermId || null
                     }
-                }),
-            },
-            include: {
-                specs: {
-                    include: {
-                        generalProduct: true,
-                        unit: true,
-                        manufacturer: true,
+                });
+
+                if (lot.specs && Array.isArray(lot.specs)) {
+                    await tx.tenderSpecification.createMany({
+                        data: lot.specs.map(spec => ({
+                            tenderId: newTender.id,
+                            lotId: newLot.id,
+                            positionNumber: parseInt(spec.positionNumber, 10) || 1,
+                            name: spec.name,
+                            quantity: parseFloat(spec.quantity) || 1,
+                            unitId: spec.unitId || null,
+                            manufacturerId: spec.manufacturerId || null,
+                            description: spec.description
+                        }))
+                    });
+                }
+            }
+
+            return await tx.tender.findUnique({
+                where: { id: newTender.id },
+                include: {
+                    lots: {
+                        include: {
+                            deliveryTerm: true,
+                            specs: {
+                                include: {
+                                    generalProduct: true,
+                                    unit: true,
+                                    manufacturer: true,
+                                }
+                            }
+                        }
                     },
-                },
-                createdBy: {
-                    select: { id: true, username: true, firstName: true, lastName: true, roleType: true },
-                },
-                category: true,
-                client: true,
-            },
+                    createdBy: {
+                        select: { id: true, username: true, firstName: true, lastName: true, roleType: true },
+                    },
+                    category: true,
+                    client: true,
+                }
+            });
         });
 
         res.status(201).json(tender);
     } catch (error) {
+        console.error('CreateTender Error:', error);
         res.status(500).json({ error: 'Ошибка при создании тендера', details: error.message });
     }
 };
 
-// Получение списка всех тендеров с поиском и фильтрацией (по Lot No, статусу, типу, категории)
 const getTenders = async (req, res) => {
     try {
-        const { tenderNumber, status, type, visibility, categoryId, search } = req.query;
+        const { lotNumber, status, type, visibility, categoryId, search } = req.query;
 
         const where = {};
-        if (tenderNumber) where.tenderNumber = { contains: tenderNumber, mode: 'insensitive' };
+        if (lotNumber) where.lotNumber = { contains: lotNumber, mode: 'insensitive' };
         if (status) where.status = status;
         if (type) where.type = type;
         if (visibility) where.visibility = visibility;
@@ -115,7 +114,7 @@ const getTenders = async (req, res) => {
 
         if (search) {
             where.OR = [
-                { tenderNumber: { contains: search, mode: 'insensitive' } },
+                { lotNumber: { contains: search, mode: 'insensitive' } },
                 { title: { contains: search, mode: 'insensitive' } },
                 { description: { contains: search, mode: 'insensitive' } },
             ];
@@ -139,7 +138,7 @@ const getTenders = async (req, res) => {
 
         res.json(tenders);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении тендеров', details: error.message });
+        console.error(error); res.status(500).json({});
     }
 };
 
@@ -160,18 +159,23 @@ const getTenderById = async (req, res) => {
         const tender = await prisma.tender.findUnique({
             where: { id },
             include: {
-                specs: {
+                lots: {
                     include: {
-                        generalProduct: true,
-                        unit: true,
-                        manufacturer: true,
-                    },
+                        deliveryTerm: true,
+                        specs: {
+                            include: {
+                                generalProduct: true,
+                                unit: true,
+                                manufacturer: true,
+                            }
+                        }
+                    }
                 },
+                client: true,
+                category: true,
                 createdBy: {
                     select: { id: true, username: true, firstName: true, lastName: true },
                 },
-                category: true,
-                client: true,
                 offers: includeOffers,
                 files: {
                     include: {
@@ -187,7 +191,7 @@ const getTenderById = async (req, res) => {
 
         res.json(tender);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении тендера', details: error.message });
+        console.error(error); res.status(500).json({ error: 'Ошибка при получении тендера' });
     }
 };
 
@@ -199,7 +203,7 @@ const deleteTender = async (req, res) => {
         });
         res.json({ message: 'Тендер успешно удален' });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при удалении тендера', details: error.message });
+        console.error(error); res.status(500).json({});
     }
 };
 
