@@ -104,10 +104,10 @@
 
             const company = await prisma.company.update({
                 where: { id },
-                data: { name, inn, phone, address, email, license, countryId: countryId || null }
+                data: { name, inn, phone, address, email, license }
             });
 
-            // Синхронизируем email и license в Supplier
+            // Синхронизируем email, license и countryId в Supplier
             await prisma.supplier.updateMany({
                 where: { userId: company.userId },
                 data: { email, phone, address, name, licenseNumber: license, countryId: countryId || null }

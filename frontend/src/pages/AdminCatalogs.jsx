@@ -9,8 +9,13 @@ import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import CatalogFormModal from '../components/CatalogFormModal';
+import AdminLogs from './AdminLogs';
 
 export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lang = 'RU' }) {
+  if (section === 'administrasiya') {
+    return <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} />;
+  }
+
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
   
@@ -79,7 +84,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
   const fetchCatalogData = async (catalogKey) => {
     setLoading(true);
     try {
-      if (catalogKey === 'categories') {
+      if (catalogKey === 'categories' || catalogKey === 'productCategories') {
         const res = await API.get('/catalogs/categories');
         setCategories(res.data);
       } else if (catalogKey === 'currencies') {
@@ -91,13 +96,13 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
       } else if (catalogKey === 'delivery') {
         const res = await API.get('/catalogs/delivery-terms');
         setDeliveryTerms(res.data);
-      } else if (catalogKey === 'productsMNN') {
+      } else if (catalogKey === 'productsMNN' || catalogKey === 'generalProducts') {
         const res = await API.get('/catalogs/products');
         setProductsMNN(res.data);
       } else if (catalogKey === 'units') {
         const res = await API.get('/catalogs/units');
         setUnits(res.data);
-      } else if (catalogKey === 'manufacturers') {
+      } else if (catalogKey === 'manufacturers' || catalogKey === 'brands') {
         const res = await API.get('/catalogs/manufacturers');
         setManufacturers(res.data);
       } else if (catalogKey === 'clients') {
@@ -145,7 +150,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
 
     const tableHeaderClass = isDarkMode ? "bg-slate-800 text-slate-200 font-medium" : "bg-[#eef6ff] text-slate-800 font-medium";
 
-    if (activeCatalog === 'categories') {
+    if (activeCatalog === 'categories' || activeCatalog === 'productCategories') {
       return (
         <table className="w-full text-left text-xs border-collapse">
           <thead>
@@ -275,7 +280,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
       );
     }
 
-    if (activeCatalog === 'productsMNN') {
+    if (activeCatalog === 'productsMNN' || activeCatalog === 'generalProducts') {
       return (
         <table className="w-full text-left text-xs border-collapse">
           <thead>
@@ -341,7 +346,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
       );
     }
 
-    if (activeCatalog === 'manufacturers') {
+    if (activeCatalog === 'manufacturers' || activeCatalog === 'brands') {
       return (
         <table className="w-full text-left text-xs border-collapse">
           <thead>

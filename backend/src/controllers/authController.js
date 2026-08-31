@@ -21,6 +21,7 @@ const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Создаем пользователя в БД
+        
         const newUser = await prisma.user.create({
             data: {
                 username,
@@ -32,6 +33,25 @@ const register = async (req, res) => {
                 position: position || null,
             },
         });
+
+        // Создаем профиль поставщика или заказчика при регистрации
+        if (newUser.roleType === 'SUPPLIER') {
+            await prisma.supplier.create({
+                data: {
+                    userId: newUser.id,
+                    name: req.body.companyName || (firstName + ' ' + lastName),
+                    type: req.body.supplierType || null,
+                }
+            });
+        } else if (newUser.roleType === 'CLIENT') {
+            await prisma.company.create({
+                data: {
+                    userId: newUser.id,
+                    name: req.body.companyName || (firstName + ' ' + lastName),
+                }
+            });
+        }
+
 
         // Генерируем JWT-токен на 7 дней
         const token = jwt.sign(

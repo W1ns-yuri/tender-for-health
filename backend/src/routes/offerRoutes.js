@@ -6,7 +6,8 @@ const {
     getOffersByTender,
     getMyOffers,
     getAllOffers,
-    getOfferById
+    getOfferById,
+    deleteOffer
 } = require('../controllers/offerController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { checkRole } = require('../middleware/rbacMiddleware');
@@ -23,5 +24,6 @@ router.post('/', authMiddleware, checkRole(['SUPPLIER', 'ADMIN']), createOffer);
 router.get('/tender/:tenderId', authMiddleware, getOffersByTender);
 router.get('/my', authMiddleware, checkRole(['SUPPLIER', 'ADMIN']), getMyOffers);
 router.get('/:id', authMiddleware, checkRole(['SUPPLIER', 'ADMIN']), getOfferById);
+router.delete('/:id', authMiddleware, checkRole(['SUPPLIER', 'ADMIN']), deleteOffer);
 
 module.exports = router;

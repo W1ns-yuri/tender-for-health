@@ -230,9 +230,14 @@ const getAllOffers = async (req, res) => {
     try {
         const offers = await prisma.offer.findMany({
             include: {
-                tender: true,
+                tender: {
+                    include: {
+                        client: true,
+                    }
+                },
                 supplier: true,
                 baseCurrency: true,
+                deliveryTerm: true,
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -249,11 +254,47 @@ const getOfferById = async (req, res) => {
         const offer = await prisma.offer.findUnique({
             where: { id },
             include: {
-                tender: true,
-                supplier: true,
+                tender: {
+                    include: {
+                        client: true,
+                        category: true,
+                        lots: {
+                            include: {
+                                deliveryTerm: true,
+                            }
+                        }
+                    }
+                },
+                supplier: {
+                    include: {
+                        country: true,
+                    }
+                },
+                deliveryTerm: true,
                 baseCurrency: true,
-                specs: { include: { tenderSpec: { include: { generalProduct: true } } } }, // OfferSpecification с оригинальными данными
-                files: {     // OfferFile (документы)
+                exchangeRates: {
+                    include: { currency: true }
+                },
+                specs: {
+                    include: {
+                        tenderSpec: {
+                            include: {
+                                generalProduct: true,
+                                unit: true,
+                                manufacturer: true,
+                                lot: {
+                                    include: {
+                                        deliveryTerm: true,
+                                    }
+                                }
+                            }
+                        },
+                        generalProduct: true,
+                        unit: true,
+                        manufacturer: true,
+                    }
+                },
+                files: {
                     include: { document: true }
                 }
             }
@@ -278,6 +319,25 @@ const getOfferById = async (req, res) => {
     }
 };
 
+const deleteOffer = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const offer = await prisma.offer.findUnique({ where: { id } });
+        if (!offer) {
+            return res.status(404).json({ error: 'Предложение не найдено' });
+        }
+        await prisma.$transaction([
+            prisma.offerFile.deleteMany({ where: { offerId: id } }),
+            prisma.offerSpecification.deleteMany({ where: { offerId: id } }),
+            prisma.offerExchangeRate.deleteMany({ where: { offerId: id } }),
+            prisma.offer.delete({ where: { id } })
+        ]);
+        res.json({ message: 'Предложение успешно удалено' });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при удалении предложения', details: error.message });
+    }
+};
+
 module.exports = {
     createSupplier,
     getSuppliers,
@@ -285,5 +345,6 @@ module.exports = {
     getOffersByTender,
     getMyOffers,
     getAllOffers,
-    getOfferById
+    getOfferById,
+    deleteOffer
 };

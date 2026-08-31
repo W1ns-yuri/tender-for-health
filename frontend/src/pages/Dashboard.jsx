@@ -249,7 +249,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
               <tr className={theme.tableHeaderBg}>
                 <th className="py-3.5 px-4 text-center">Tender</th>
                 <th className="py-3.5 px-4 text-center">{t('type', 'Görnüşi')}</th>
-                <th className="py-3.5 px-4 text-center">{t('client', 'Поставщик')}</th>
+                <th className="py-3.5 px-4 text-center">{t('client', 'Заказчик')}</th>
                 <th className="py-3.5 px-4 text-center">{t('currency', 'Walýuta')}</th>
                 <th className="py-3.5 px-4 text-center">{t('code', 'Belgisi')}</th>
                 <th className="py-3.5 px-4 text-center">{t('status', 'Status')}</th>

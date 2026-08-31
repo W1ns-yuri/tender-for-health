@@ -25,6 +25,7 @@ router.get('/tenders', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN'])
 router.get('/tenders/:tenderId/details', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN']), getTenderEvaluationDetails);
 
 // 5. Выбор победителя по конкретной позиции (лоту/товару)
+router.post('/award-lot', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN']), awardLot);
 router.post('/award-item', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN']), awardLot);
 
 // 6. Завершение оценки тендера

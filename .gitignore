@@ -3,3 +3,11 @@ node_modules/
 .DS_Store
 backend/uploads/
 quation.txt
+scratch*
+backend/scratch*
+temp.txt
+*extracted.txt
+extract_pdf.js
+test_prisma.js
+backend/test_prisma.js
+

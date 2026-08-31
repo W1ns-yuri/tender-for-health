@@ -125,7 +125,7 @@ async function testFullTenderLifecycle() {
         console.log('\n5️⃣ Заказчик создает открытый тендер...');
         const tender = await prisma.tender.create({
             data: {
-                lotNumber: 'LOT-2026-MED-01',
+                tenderNumber: 'LOT-2026-MED-01',
                 title: 'Закупка антибиотиков и жаропонижающих для больниц',
                 description: 'Срочный тендер на поставку партий медикаментов',
                 technicalSpecs: 'Срок годности не менее 24 месяцев с даты поставки',
@@ -147,7 +147,7 @@ async function testFullTenderLifecycle() {
             include: { specs: true }
         });
 
-        console.log(`✅ Тендер создан! Лот: ${tender.lotNumber}, Статус: ${tender.status}, Позиций: ${tender.specs.length}`);
+        console.log(`✅ Тендер создан! Лот: ${tender.tenderNumber}, Статус: ${tender.status}, Позиций: ${tender.specs.length}`);
 
         // 6. Подача Коммерческих Предложений Поставщиками
         console.log('\n6️⃣ Поставщики подают коммерческие предложения...');

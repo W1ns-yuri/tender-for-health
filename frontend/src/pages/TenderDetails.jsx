@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Calendar, User, Tag, Clock, Users, LayoutGrid } from 'lucide-react';
+import { Download, Calendar, User, Tag, Clock, Users, LayoutGrid, Trophy } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
@@ -56,7 +56,9 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
   };
 
   const specsList = Array.isArray(data?.specs) ? data.specs : [];
-  const docsList = Array.isArray(data?.files) ? data.files.map(f => f.document).filter(Boolean) : [];
+  const docsList = Array.isArray(data?.files) && data.files.length > 0
+    ? data.files.map(f => f.document).filter(Boolean)
+    : (Array.isArray(data?.documents) ? data.documents : []);
 
   if (!tender) {
     return <div className="text-center py-10 text-slate-500">{t('loading', 'Загрузка...')}</div>;

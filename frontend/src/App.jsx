@@ -56,10 +56,9 @@ export default function App() {
           const res = await API.get('/auth/me');
           setUser(res.data);
           localStorage.setItem('tender_user', JSON.stringify(res.data));
-          setRole(res.data.roleType || 'SUPPLIER');
         } catch (error) {
-          // Ошибка 401 будет перехвачена интерсептором в api.js
-          console.error('Failed to sync user session', error);
+          console.warn('Session expired or user not found, logging out...');
+          handleLogout();
         }
       }
     };
@@ -158,6 +157,8 @@ export default function App() {
               <Route path="/umumy" element={role === 'ADMIN' ? <AdminCatalogs section="umumy" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/haryt" element={role === 'ADMIN' ? <AdminCatalogs section="haryt" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/administrasiya" element={role === 'ADMIN' ? <AdminCatalogs section="administrasiya" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
+              <Route path="/logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
+              <Route path="/admin-logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               
               <Route path="/profile" element={
                 <div className={`p-6 rounded-xl border shadow-xs max-w-xl ${theme.cardBg}`}>

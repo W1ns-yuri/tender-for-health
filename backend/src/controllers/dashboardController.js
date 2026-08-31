@@ -79,4 +79,31 @@ const getDashboardStats = async (req, res) => {
     }
 };
 
-module.exports = { getDashboardStats };
+// 5. Получение всех логов аудита
+const getLogs = async (req, res) => {
+    try {
+        const { search, limit = 100 } = req.query;
+        const where = {};
+        if (search) {
+            where.OR = [
+                { eventType: { contains: search, mode: 'insensitive' } },
+                { operationType: { contains: search, mode: 'insensitive' } },
+                { ip: { contains: search, mode: 'insensitive' } },
+                { user: { username: { contains: search, mode: 'insensitive' } } }
+            ];
+        }
+        const logs = await prisma.log.findMany({
+            where,
+            take: parseInt(limit, 10) || 100,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                user: { select: { id: true, username: true, firstName: true, lastName: true, roleType: true } }
+            }
+        });
+        res.json(logs);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при получении логов аудита', details: error.message });
+    }
+};
+
+module.exports = { getDashboardStats, getLogs };

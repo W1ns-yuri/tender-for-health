@@ -105,6 +105,18 @@ export default function Sidebar({
                 </button>
 
                 <button
+                  onClick={() => setActiveTab('offers')}
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === 'offers'
+                      ? theme.primaryBg + ' font-semibold shadow-sm'
+                      : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <Send size={19} />
+                  {!isCollapsed && <span className="ml-3">{lang === 'RU' ? 'Поданные предложения' : 'Gowşurylan teklipler'}</span>}
+                </button>
+
+                <button
                   onClick={() => setActiveTab('suppliers')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === 'suppliers'
