@@ -336,7 +336,7 @@ model Client {
 
 model Tender {
   id             String           @id @default(uuid())
-  tenderNumber   String           @map("tender_number")
+  tenderNumber   String           @unique @map("tender_number")
   title          String
   description    String?
   technicalSpecs String?          @map("technical_specs")

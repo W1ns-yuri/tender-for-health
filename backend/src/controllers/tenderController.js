@@ -51,10 +51,19 @@ const createTender = async (req, res) => {
         }
 
         const tender = await prisma.$transaction(async (tx) => {
-            // 1. Создаем тендер с пользовательским или автоматически сгенерированным номером
+            // 1. Проверяем уникальность номера тендера
             const finalTenderNumber = (tenderNumber && tenderNumber.trim() !== '')
                 ? tenderNumber.trim()
                 : await generateNextTenderNumber(tx);
+
+            const existingTender = await tx.tender.findFirst({
+                where: { tenderNumber: { equals: finalTenderNumber, mode: 'insensitive' } }
+            });
+            if (existingTender) {
+                const err = new Error(`Тендер с номером "${finalTenderNumber}" уже существует! Пожалуйста, укажите уникальный номер.`);
+                err.isClientError = true;
+                throw err;
+            }
 
             const newTender = await tx.tender.create({
                 data: {
@@ -166,7 +175,7 @@ const createTender = async (req, res) => {
         res.status(201).json(tender);
     } catch (error) {
         console.error('CreateTender Error:', error);
-        res.status(500).json({ error: 'Ошибка при создании тендера', details: error.message });
+        res.status(error.isClientError ? 400 : 500).json({ error: error.message || 'Ошибка при создании тендера', details: error.message });
     }
 };
 

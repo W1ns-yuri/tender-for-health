@@ -346,6 +346,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
   const [manufacturers, setManufacturers] = useState([]);
   const [deliveryTerms, setDeliveryTerms] = useState([]);
   const [products, setProducts] = useState([]);
+  const [existingTenderNumbers, setExistingTenderNumbers] = useState([]);
 
   // Модальное окно создания товара через CatalogFormModal
   const [catalogModal, setCatalogModal] = useState({
@@ -355,6 +356,17 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     lotIdx: null,
     specIdx: null
   });
+
+  const fetchExistingTenders = async () => {
+    try {
+      const res = await API.get('/tenders');
+      if (Array.isArray(res.data)) {
+        setExistingTenderNumbers(res.data.map(t => (t.tenderNumber || '').trim().toLowerCase()));
+      }
+    } catch (e) {
+      console.warn('Failed to fetch existing tenders', e);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -404,6 +416,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     if (!savedDraft?.formData?.tenderNumber) {
       fetchNextTenderNumber();
     }
+    fetchExistingTenders();
     fetchProducts();
     API.get('/catalogs/categories').then(res => { if (Array.isArray(res.data)) setCategories(res.data.filter(c => c.isActive)); }).catch(() => {});
     API.get('/catalogs/currencies').then(res => { if (Array.isArray(res.data)) setCurrencies(res.data.filter(c => c.isActive)); }).catch(() => {});
@@ -636,10 +649,27 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     }, 50);
   };
 
+  const isTenderNumberDuplicate = Boolean(
+    formData.tenderNumber && 
+    formData.tenderNumber.trim() !== '' &&
+    existingTenderNumbers.includes(formData.tenderNumber.trim().toLowerCase())
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
+
+    // 0. Проверка уникальности номера тендера
+    if (isTenderNumberDuplicate) {
+      setErrorMsg(lang === 'RU'
+        ? `Тендер с номером "${formData.tenderNumber}" уже существует в системе! Пожалуйста, укажите другой номер или нажмите кнопку "Авто".`
+        : `"${formData.tenderNumber}" belgili tender eýýäm bar. Başga belgi giriziň ýa-da "Awtomat" basyň.`
+      );
+      setLoading(false);
+      scrollToError();
+      return;
+    }
 
     // 1. Проверка заполненности позиций
     const hasSpecs = lots.some(lot => lot.specs.some(s => s.haryt && s.haryt.trim() !== ''));
@@ -800,8 +830,22 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
               placeholder="TNDR-2026-08-001"
               value={formData.tenderNumber}
               onChange={(e) => handleFormChange('tenderNumber', e.target.value, e)}
-              className={`w-full px-3 py-2 rounded-lg text-xs font-mono font-bold tracking-wide ${theme.inputBg}`}
+              className={`w-full px-3 py-2 rounded-lg text-xs font-mono font-bold tracking-wide border transition-colors ${
+                isTenderNumberDuplicate
+                  ? 'border-rose-500 bg-rose-50/60 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 focus:ring-1 focus:ring-rose-500'
+                  : `border-transparent ${theme.inputBg}`
+              }`}
             />
+            {isTenderNumberDuplicate && (
+              <p className="text-[10px] text-rose-500 font-semibold mt-1 animate-in fade-in flex items-center gap-1">
+                <span>⚠️</span>
+                <span>
+                  {lang === 'RU' 
+                    ? `Номер "${formData.tenderNumber}" уже занят другим тендером!` 
+                    : `"${formData.tenderNumber}" belgili tender eýýäm bar!`}
+                </span>
+              </p>
+            )}
           </div>
 
           <div className="md:col-span-8">
