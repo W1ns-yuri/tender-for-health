@@ -4,6 +4,7 @@ import { Plus, Save, Trash2, ArrowLeft, X, Upload, ChevronDown, AlertCircle, Ref
 import API from '../services/api';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
+import CatalogFormModal from '../components/CatalogFormModal';
 
 // Запрещенные спецсимволы (<, >, {, }, |, ^, ~, `, \)
 const FORBIDDEN_CHARS_REGEX = /[<>{}\|^~`\\]/g;
@@ -82,7 +83,6 @@ const ProductSearchableSelect = ({
   generalProductId,
   onChange,
   onOpenCreateModal,
-  onQuickAdd,
   placeholder,
   isDarkMode,
   theme,
@@ -91,7 +91,6 @@ const ProductSearchableSelect = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const wrapperRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -150,20 +149,10 @@ const ProductSearchableSelect = ({
     setSearch('');
   };
 
-  const handleQuickAddClick = async () => {
-    const trimmed = search.trim();
-    if (!trimmed) return;
-    setIsAdding(true);
-    try {
-      const created = await onQuickAdd(trimmed);
-      if (created) {
-        onChange(created.name, created.id);
-        setIsOpen(false);
-        setSearch('');
-      }
-    } finally {
-      setIsAdding(false);
-    }
+  const handleOpenModalAndCloseDropdown = (initialName = '') => {
+    setIsOpen(false);
+    setSearch('');
+    onOpenCreateModal(initialName);
   };
 
   return (
@@ -193,7 +182,7 @@ const ProductSearchableSelect = ({
         {/* Кнопка быстрого добавления (+) нового товара в справочник */}
         <button
           type="button"
-          onClick={() => onOpenCreateModal(search || '')}
+          onClick={() => handleOpenModalAndCloseDropdown(search || '')}
           className="p-1.5 rounded-md bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/50 dark:hover:bg-teal-900/50 text-teal-600 dark:text-teal-400 border border-teal-200 dark:border-teal-800 shrink-0 transition-colors"
           title={lang === 'RU' ? 'Добавить новый товар в справочник (+)' : 'Kataloga täze haryt goşmak (+)'}
         >
@@ -209,7 +198,7 @@ const ProductSearchableSelect = ({
             top: `${coords.top}px`,
             left: `${coords.left}px`,
             width: `${coords.width}px`,
-            zIndex: 9999,
+            zIndex: 1000,
           }}
           className={`rounded-xl border shadow-2xl ${theme.cardBg} ${isDarkMode ? 'border-slate-700 bg-slate-900 shadow-black/70' : 'border-slate-200 bg-white shadow-slate-400/40'} max-h-64 flex flex-col overflow-hidden animate-in fade-in-50 zoom-in-95 duration-150`}
         >
@@ -244,17 +233,15 @@ const ProductSearchableSelect = ({
               </div>
             )}
 
-            {/* Если введен поиск и его нет в результатах - предлагаем быстро добавить */}
+            {/* Если введен поиск и его нет в результатах - открываем модальное окно с предзаполненным именем */}
             {search.trim().length > 0 && !filteredProducts.some(p => p.name.toLowerCase() === search.trim().toLowerCase()) && (
               <div
                 className="p-2.5 text-xs bg-teal-50/80 hover:bg-teal-100 dark:bg-teal-950/60 dark:hover:bg-teal-900/80 text-teal-700 dark:text-teal-300 cursor-pointer font-bold flex items-center gap-2 border-t border-teal-200/50 dark:border-teal-800/50 transition-colors"
-                onClick={handleQuickAddClick}
+                onClick={() => handleOpenModalAndCloseDropdown(search.trim())}
               >
                 <Plus size={14} className="shrink-0 text-teal-600 dark:text-teal-400" />
                 <span className="truncate">
-                  {isAdding 
-                    ? (lang === 'RU' ? 'Добавление...' : 'Goşulýar...') 
-                    : (lang === 'RU' ? `Добавить в справочник: "${search.trim()}"` : `Kataloga goş: "${search.trim()}"`)}
+                  {lang === 'RU' ? `Добавить в справочник: "${search.trim()}"` : `Kataloga goş: "${search.trim()}"`}
                 </span>
               </div>
             )}
@@ -360,15 +347,13 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
   const [deliveryTerms, setDeliveryTerms] = useState([]);
   const [products, setProducts] = useState([]);
 
-  // Модальное окно быстрого создания нового товара
-  const [newProductModal, setNewProductModal] = useState({
+  // Модальное окно создания товара через CatalogFormModal
+  const [catalogModal, setCatalogModal] = useState({
     isOpen: false,
-    name: '',
-    code: '',
-    description: '',
+    catalogId: 'productsMNN',
+    editingItem: null,
     lotIdx: null,
-    specIdx: null,
-    loading: false
+    specIdx: null
   });
 
   const fetchProducts = async () => {
@@ -382,61 +367,36 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     }
   };
 
-  const handleQuickAddProduct = async (productName, lotIdx = null, specIdx = null) => {
-    try {
-      const res = await API.post('/catalogs/products', {
-        name: productName,
-        categoryId: formData.categoryId || undefined
-      });
-      if (res.data) {
-        const created = res.data;
-        setProducts(prev => [created, ...prev]);
-        if (lotIdx !== null && specIdx !== null) {
-          handleSpecChange(lotIdx, specIdx, 'productSelect', created.name, created.id);
-        }
-        return created;
-      }
-    } catch (err) {
-      console.error('Failed to create product', err);
-      alert(err.response?.data?.error || (lang === 'RU' ? 'Ошибка при создании товара' : 'Haryt goşulmady'));
-      return null;
-    }
-  };
-
   const handleOpenProductModal = (initialName = '', lotIdx = null, specIdx = null) => {
-    setNewProductModal({
+    setCatalogModal({
       isOpen: true,
-      name: initialName,
-      code: '',
-      description: '',
+      catalogId: 'productsMNN',
+      editingItem: initialName ? { name: initialName } : null,
       lotIdx,
-      specIdx,
-      loading: false
+      specIdx
     });
   };
 
-  const handleSaveNewProductModal = async () => {
-    if (!newProductModal.name.trim()) return;
-    setNewProductModal(prev => ({ ...prev, loading: true }));
+  const handleSaveProductFromModal = async (savedData) => {
     try {
       const res = await API.post('/catalogs/products', {
-        name: newProductModal.name.trim(),
-        code: newProductModal.code.trim() || undefined,
-        description: newProductModal.description.trim() || undefined,
+        name: savedData.name?.trim(),
+        tradeName: savedData.tradeName?.trim() || undefined,
+        code: savedData.code?.trim() || undefined,
+        description: savedData.description?.trim() || undefined,
         categoryId: formData.categoryId || undefined
       });
       if (res.data) {
         const created = res.data;
         setProducts(prev => [created, ...prev]);
-        if (newProductModal.lotIdx !== null && newProductModal.specIdx !== null) {
-          handleSpecChange(newProductModal.lotIdx, newProductModal.specIdx, 'productSelect', created.name, created.id);
+        if (catalogModal.lotIdx !== null && catalogModal.specIdx !== null) {
+          handleSpecChange(catalogModal.lotIdx, catalogModal.specIdx, 'productSelect', created.name, created.id);
         }
-        setNewProductModal({ isOpen: false, name: '', code: '', description: '', lotIdx: null, specIdx: null, loading: false });
+        setCatalogModal({ isOpen: false, catalogId: 'productsMNN', editingItem: null, lotIdx: null, specIdx: null });
       }
     } catch (err) {
-      console.error(err);
+      console.error('Failed to create product', err);
       alert(err.response?.data?.error || (lang === 'RU' ? 'Ошибка сохранения товара' : 'Ýalňyşlyk'));
-      setNewProductModal(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -1299,86 +1259,16 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       </div>
 
       {/* Модальное окно создания нового товара в справочнике */}
-      {newProductModal.isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className={`w-full max-w-md p-6 rounded-2xl border shadow-2xl space-y-4 ${theme.cardBg} ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} animate-in zoom-in-95 duration-200`}>
-            <div className="flex items-center justify-between border-b pb-3 border-slate-200/50 dark:border-slate-800">
-              <h3 className="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <Plus size={18} className="text-teal-600 dark:text-teal-400" />
-                <span>{lang === 'RU' ? 'Новый товар в справочник' : 'Täze haryt goşmak'}</span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => setNewProductModal({ isOpen: false, name: '', code: '', description: '', lotIdx: null, specIdx: null, loading: false })}
-                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
-                  {lang === 'RU' ? 'Наименование товара (МНН)' : 'Harydyň ady'} *
-                </label>
-                <input
-                  type="text"
-                  required
-                  autoFocus
-                  value={newProductModal.name}
-                  onChange={(e) => setNewProductModal(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder={lang === 'RU' ? 'Например: Парацетамол 500 мг' : 'Haryt ady...'}
-                  className={`w-full px-3 py-2 rounded-lg border font-medium focus:ring-1 focus:ring-teal-500 focus:outline-none ${theme.inputBg}`}
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
-                  {lang === 'RU' ? 'Код / Артикул' : 'Kody / Artikul'}
-                </label>
-                <input
-                  type="text"
-                  value={newProductModal.code}
-                  onChange={(e) => setNewProductModal(prev => ({ ...prev, code: e.target.value }))}
-                  placeholder={lang === 'RU' ? 'Например: MED-0012' : 'Kody...'}
-                  className={`w-full px-3 py-2 rounded-lg border focus:ring-1 focus:ring-teal-500 focus:outline-none ${theme.inputBg}`}
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
-                  {lang === 'RU' ? 'Описание / Характеристики' : 'Mazmuny'}
-                </label>
-                <textarea
-                  rows="2"
-                  value={newProductModal.description}
-                  onChange={(e) => setNewProductModal(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder={lang === 'RU' ? 'Краткое описание товара...' : 'Bellik...'}
-                  className={`w-full px-3 py-2 rounded-lg border focus:ring-1 focus:ring-teal-500 focus:outline-none ${theme.inputBg}`}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200/50 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setNewProductModal({ isOpen: false, name: '', code: '', description: '', lotIdx: null, specIdx: null, loading: false })}
-                className="px-4 py-2 rounded-lg border text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                {t('cancelBtn', 'Отмена')}
-              </button>
-              <button
-                type="button"
-                disabled={!newProductModal.name.trim() || newProductModal.loading}
-                onClick={handleSaveNewProductModal}
-                className="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold shadow-md transition-all disabled:opacity-50"
-              >
-                {newProductModal.loading ? (lang === 'RU' ? 'Сохранение...' : 'Ýatda saklanýar...') : (lang === 'RU' ? 'Сохранить и выбрать' : 'Goş we saýla')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CatalogFormModal
+        isOpen={catalogModal.isOpen}
+        onClose={() => setCatalogModal({ isOpen: false, catalogId: 'productsMNN', editingItem: null, lotIdx: null, specIdx: null })}
+        onSave={handleSaveProductFromModal}
+        catalogId="productsMNN"
+        editingItem={catalogModal.editingItem}
+        theme={theme}
+        t={t}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 }
