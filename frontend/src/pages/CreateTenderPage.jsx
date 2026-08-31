@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Save, Trash2, ArrowLeft, X, Upload, ChevronDown, AlertCircle, RefreshCw } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
@@ -91,17 +92,49 @@ const ProductSearchableSelect = ({
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const wrapperRef = useRef(null);
+  const dropdownRef = useRef(null);
+
+  const updateCoords = () => {
+    if (wrapperRef.current) {
+      const rect = wrapperRef.current.getBoundingClientRect();
+      const dropdownHeight = 240;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUpwards = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
+
+      setCoords({
+        top: openUpwards ? (rect.top - dropdownHeight - 4) : (rect.bottom + 4),
+        left: Math.max(10, Math.min(rect.left, window.innerWidth - Math.max(rect.width, 320) - 10)),
+        width: Math.max(rect.width, 320),
+      });
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+      if (
+        wrapperRef.current && !wrapperRef.current.contains(event.target) &&
+        dropdownRef.current && !dropdownRef.current.contains(event.target)
+      ) {
         setIsOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [wrapperRef]);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      updateCoords();
+      window.addEventListener('resize', updateCoords);
+      window.addEventListener('scroll', updateCoords, true);
+    }
+    return () => {
+      window.removeEventListener('resize', updateCoords);
+      window.removeEventListener('scroll', updateCoords, true);
+    };
+  }, [isOpen]);
 
   const filteredProducts = products.filter(p => 
     (p.name || '').toLowerCase().includes(search.toLowerCase()) || 
@@ -138,8 +171,12 @@ const ProductSearchableSelect = ({
       <div className="flex items-center gap-1">
         <div 
           onClick={() => {
-            setIsOpen(!isOpen);
-            setSearch('');
+            const nextState = !isOpen;
+            setIsOpen(nextState);
+            if (nextState) {
+              setSearch('');
+              updateCoords();
+            }
           }}
           className={`flex-1 px-2.5 py-1.5 rounded-md text-xs cursor-pointer flex justify-between items-center border font-medium transition-colors ${
             isDuplicate
@@ -164,25 +201,35 @@ const ProductSearchableSelect = ({
         </button>
       </div>
 
-      {isOpen && (
-        <div className={`absolute z-[60] left-0 right-0 mt-1 rounded-lg border shadow-xl ${theme.cardBg} ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} max-h-64 flex flex-col overflow-hidden`}>
-          <div className="p-2 border-b border-slate-200/40 dark:border-slate-800">
+      {isOpen && createPortal(
+        <div 
+          ref={dropdownRef}
+          style={{
+            position: 'fixed',
+            top: `${coords.top}px`,
+            left: `${coords.left}px`,
+            width: `${coords.width}px`,
+            zIndex: 9999,
+          }}
+          className={`rounded-xl border shadow-2xl ${theme.cardBg} ${isDarkMode ? 'border-slate-700 bg-slate-900 shadow-black/70' : 'border-slate-200 bg-white shadow-slate-400/40'} max-h-64 flex flex-col overflow-hidden animate-in fade-in-50 zoom-in-95 duration-150`}
+        >
+          <div className="p-2 border-b border-slate-200/40 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/70">
             <input
               type="text"
               autoFocus
-              className={`w-full px-2 py-1.5 rounded text-xs ${theme.inputBg} focus:outline-none focus:ring-1 focus:ring-teal-500`}
+              className={`w-full px-2.5 py-1.5 rounded-lg text-xs ${theme.inputBg} border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/30`}
               placeholder={lang === 'RU' ? 'Поиск товара...' : 'Haryt gözle...'}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
-          <div className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 flex-1">
             {filteredProducts.length > 0 ? (
               filteredProducts.map(p => (
                 <div
                   key={p.id}
-                  className={`px-3 py-2 text-xs cursor-pointer hover:bg-teal-500/10 flex items-center justify-between gap-2 ${
+                  className={`px-3 py-2 text-xs cursor-pointer hover:bg-teal-500/10 flex items-center justify-between gap-2 transition-colors ${
                     (generalProductId === p.id || value === p.name) ? 'bg-teal-500/20 font-bold text-teal-700 dark:text-teal-300' : 'text-slate-700 dark:text-slate-200'
                   }`}
                   onClick={() => handleSelect(p)}
@@ -200,7 +247,7 @@ const ProductSearchableSelect = ({
             {/* Если введен поиск и его нет в результатах - предлагаем быстро добавить */}
             {search.trim().length > 0 && !filteredProducts.some(p => p.name.toLowerCase() === search.trim().toLowerCase()) && (
               <div
-                className="p-2.5 text-xs bg-teal-50/70 hover:bg-teal-100/80 dark:bg-teal-950/40 dark:hover:bg-teal-900/60 text-teal-700 dark:text-teal-300 cursor-pointer font-bold flex items-center gap-2 border-t border-teal-200/50 dark:border-teal-800/50"
+                className="p-2.5 text-xs bg-teal-50/80 hover:bg-teal-100 dark:bg-teal-950/60 dark:hover:bg-teal-900/80 text-teal-700 dark:text-teal-300 cursor-pointer font-bold flex items-center gap-2 border-t border-teal-200/50 dark:border-teal-800/50 transition-colors"
                 onClick={handleQuickAddClick}
               >
                 <Plus size={14} className="shrink-0 text-teal-600 dark:text-teal-400" />
@@ -212,7 +259,8 @@ const ProductSearchableSelect = ({
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
