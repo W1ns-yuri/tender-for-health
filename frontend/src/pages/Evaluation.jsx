@@ -99,7 +99,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
           <div className={`p-4 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
             <h3 className="font-bold text-sm">{lang === 'RU' ? 'Тендеры на оценку' : 'Baha berilmeli tenderler'}</h3>
           </div>
-          <div className="p-2 space-y-1 overflow-y-auto max-h-[600px]">
+          <div className="p-2 space-y-1 overflow-y-auto max-h-150">
             {tenders.length === 0 ? (
               <p className="text-center text-sm text-slate-400 p-4">{lang === 'RU' ? 'Нет тендеров' : 'Tender ýok'}</p>
             ) : (
@@ -129,12 +129,12 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
         {/* Right Content: Evaluation Board */}
         <div className="lg:col-span-3">
           {!selectedTenderId ? (
-            <div className="h-full min-h-[400px] flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-400">
+            <div className="h-full min-h-100 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-400">
               <Trophy size={48} className="mb-4 opacity-20" />
               <p>{lang === 'RU' ? 'Выберите тендер из списка слева для начала оценки' : 'Baha bermek üçin çepden tender saýlaň'}</p>
             </div>
           ) : loading ? (
-            <div className="h-full min-h-[400px] flex items-center justify-center border rounded-xl bg-white dark:bg-[#0f172a]">
+            <div className="h-full min-h-100 flex items-center justify-center border rounded-xl bg-white dark:bg-[#0f172a]">
               <div className="text-slate-400 animate-pulse">{lang === 'RU' ? 'Загрузка данных...' : 'Ýüklenýär...'}</div>
             </div>
           ) : tenderDetails ? (

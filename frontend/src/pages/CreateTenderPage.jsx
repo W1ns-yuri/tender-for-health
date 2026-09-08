@@ -43,7 +43,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, isDarkMode, t
       </div>
       
       {isOpen && (
-        <div className={`absolute z-[50] w-full mt-1 rounded-lg border shadow-lg ${theme.cardBg} ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} max-h-60 flex flex-col overflow-hidden`}>
+        <div className={`absolute z-50 w-full mt-1 rounded-lg border shadow-lg ${theme.cardBg} ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} max-h-60 flex flex-col overflow-hidden`}>
           <div className="p-2 border-b border-slate-200/20">
             <input
               type="text"
@@ -1060,15 +1060,15 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse min-w-[720px]">
+              <table className="w-full text-left text-xs border-collapse min-w-180">
                 <thead>
                   <tr className={`font-semibold text-white ${isDarkMode ? 'bg-teal-900' : 'bg-teal-600'}`}>
                     <th className="py-2.5 px-3 w-10 text-center">H/K</th>
-                    <th className="py-2.5 px-3 min-w-[200px]">{t('specProduct', 'Haryt')} *</th>
+                    <th className="py-2.5 px-3 min-w-50">{t('specProduct', 'Haryt')} *</th>
                     <th className="py-2.5 px-3 w-40 text-center">{t('specUnit', 'Ölçeg birligi')} *</th>
                     <th className="py-2.5 px-3 w-48 text-center">{t('specBrand', 'Öndüriji')}</th>
                     <th className="py-2.5 px-3 w-28 text-center">{t('specQty', 'Mukdar')} *</th>
-                    <th className="py-2.5 px-3 min-w-[220px]">{t('specDesc', 'Mazmuny')}</th>
+                    <th className="py-2.5 px-3 min-w-55">{t('specDesc', 'Mazmuny')}</th>
                     <th className="py-2.5 px-3 w-12 text-center">{t('action', 'Amal')}</th>
                   </tr>
                 </thead>
@@ -1094,7 +1094,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                         <td className="py-2.5 px-3 font-bold text-slate-400 text-center">{idx + 1}</td>
                         
                         {/* Поле 1: Товар из справочника с поиском и кнопкой (+) */}
-                        <td className="py-2.5 px-3 min-w-[240px]">
+                        <td className="py-2.5 px-3 min-w-60">
                           <ProductSearchableSelect
                             products={products}
                             value={item.haryt}

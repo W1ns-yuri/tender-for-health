@@ -214,7 +214,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
                       {/* Номер и название тендера */}
                       <td className="py-3 px-3 text-center font-semibold">
                         <span className={`font-bold ${theme.primaryText}`}>{safeString(item.tender?.tenderNumber || item.lot)}</span>
-                        {item.tender?.title && <span className="block text-[11px] font-normal text-slate-500 truncate max-w-[160px]">{item.tender.title}</span>}
+                        {item.tender?.title && <span className="block text-[11px] font-normal text-slate-500 truncate max-w-40">{item.tender.title}</span>}
                       </td>
 
                       {/* Вид закупки */}
@@ -223,7 +223,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
                       {/* Поставщик (виден администратору) */}
                       {isAdmin && (
                         <td className="py-3 px-3 font-semibold text-slate-800 dark:text-slate-200">
-                          <span className="truncate max-w-[180px] block">{supplierName}</span>
+                          <span className="truncate max-w-45 block">{supplierName}</span>
                         </td>
                       )}
 

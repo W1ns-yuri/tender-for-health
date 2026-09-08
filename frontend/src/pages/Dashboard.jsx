@@ -202,7 +202,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                   <tr key={item.id || idx} className={theme.tableRowHover}>
                     <td className="py-3.5 px-4 text-center font-semibold">{safeString(item.tenderNumber)}</td>
                     <td className="py-3.5 px-4 text-center font-medium">{safeString(item.title)}</td>
-                    <td className={`py-3.5 px-4 text-center w-auto min-w-[220px] whitespace-normal break-words ${theme.subText}`}>
+                    <td className={`py-3.5 px-4 text-center w-auto min-w-55 whitespace-normal text-wrap ${theme.subText}`}>
                       {safeString(item.description)}
                     </td>
                     <td className="py-3.5 px-4 text-center">{getTypeBadge(item.type, lang, isDarkMode)}</td>
@@ -214,7 +214,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                         {item.visibility === 'YAPYK' ? (lang === 'RU' ? 'Закрытый' : 'Ýapyk') : (lang === 'RU' ? 'Открытый' : 'Açyk')}
                       </span>
                     </td>
-                    <td className={`py-3.5 px-4 text-center w-auto min-w-[180px] whitespace-normal break-words ${theme.subText}`}>
+                    <td className={`py-3.5 px-4 text-center w-auto min-w-45 whitespace-normal text-wrap ${theme.subText}`}>
                       {renderTechSpecs(item)}
                     </td>
                     <td className="py-3.5 px-4 text-center">
@@ -279,7 +279,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                     <td className="py-3.5 px-4 text-center font-medium">{safeString(item.baseCurrency?.code || item.currency)}</td>
                     <td className={`py-3.5 px-4 text-center font-mono ${theme.subText}`}>{safeString(item.number || item.code)}</td>
                     <td className="py-3.5 px-4 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
-                    <td className={`py-3.5 px-4 text-center w-auto min-w-[200px] whitespace-normal break-words ${theme.subText}`}>{safeString(item.paymentTerms || item.terms)}</td>
+                    <td className={`py-3.5 px-4 text-center w-auto min-w-50 whitespace-normal text-wrap ${theme.subText}`}>{safeString(item.paymentTerms || item.terms)}</td>
                     <td className={`py-3.5 px-4 text-center ${theme.subText}`}>{formatDate(item.createdAt || item.date)}</td>
                     <td className="py-3.5 px-4 text-center space-x-1">
                       <button onClick={() => onNavigate('offers', item.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors" title={t('viewDetails', 'Просмотр')}>

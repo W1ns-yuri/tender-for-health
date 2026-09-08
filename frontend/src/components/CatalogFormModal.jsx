@@ -137,7 +137,7 @@ export default function CatalogFormModal({
   const inputBg = isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-slate-50 border-slate-200 placeholder:text-slate-400';
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-10000 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className={`w-full max-w-lg rounded-2xl shadow-xl border ${bgClass} overflow-hidden animate-in zoom-in-95 duration-200`}>
         
         {/* Header */}

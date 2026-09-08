@@ -89,7 +89,7 @@ export default function SupplierWins({ role, isDarkMode, lang = 'RU' }) {
 
                 {/* Won Items List */}
                 <div className="p-0 overflow-x-auto">
-                  <table className="w-full text-left text-sm min-w-[600px]">
+                  <table className="w-full text-left text-sm min-w-150">
                     <thead className={`text-xs uppercase font-bold text-slate-500 ${isDarkMode ? 'bg-slate-800/50' : 'bg-slate-50'} border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
                       <tr>
                         <th className="p-4">{lang === 'RU' ? 'Товар (Ваше предложение)' : 'Haryt'}</th>

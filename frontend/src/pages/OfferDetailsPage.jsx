@@ -312,8 +312,8 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                     <thead>
                       <tr className={`font-semibold ${theme.tableHeaderBg}`}>
                         <th className="py-2.5 px-3 w-12 text-center">H/K</th>
-                        <th className="py-2.5 px-3 min-w-[240px]">{lang === 'RU' ? 'Наименование предложенного товара' : 'Harydyň ady'}</th>
-                        <th className="py-2.5 px-3 min-w-[180px]">{lang === 'RU' ? 'Производитель / Модель' : 'Öndüriji'}</th>
+                        <th className="py-2.5 px-3 min-w-60">{lang === 'RU' ? 'Наименование предложенного товара' : 'Harydyň ady'}</th>
+                        <th className="py-2.5 px-3 min-w-45">{lang === 'RU' ? 'Производитель / Модель' : 'Öndüriji'}</th>
                         <th className="py-2.5 px-3 w-28 text-center">{lang === 'RU' ? 'Ед. изм.' : 'Ölçeg birligi'}</th>
                         <th className="py-2.5 px-3 w-28 text-center">{lang === 'RU' ? 'Количество' : 'Mukdary'}</th>
                         <th className="py-2.5 px-3 w-36 text-center">{lang === 'RU' ? `Цена за ед. (${currencyCode})` : 'Birlik bahasy'}</th>
@@ -374,8 +374,8 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                 <thead>
                   <tr className={`font-semibold ${theme.tableHeaderBg}`}>
                     <th className="py-2.5 px-3 w-12 text-center">H/K</th>
-                    <th className="py-2.5 px-3 min-w-[240px]">{lang === 'RU' ? 'Наименование предложенного товара' : 'Harydyň ady'}</th>
-                    <th className="py-2.5 px-3 min-w-[180px]">{lang === 'RU' ? 'Производитель / Модель' : 'Öndüriji'}</th>
+                    <th className="py-2.5 px-3 min-w-60">{lang === 'RU' ? 'Наименование предложенного товара' : 'Harydyň ady'}</th>
+                    <th className="py-2.5 px-3 min-w-45">{lang === 'RU' ? 'Производитель / Модель' : 'Öndüriji'}</th>
                     <th className="py-2.5 px-3 w-28 text-center">{lang === 'RU' ? 'Ед. изм.' : 'Ölçeg birligi'}</th>
                     <th className="py-2.5 px-3 w-28 text-center">{lang === 'RU' ? 'Количество' : 'Mukdary'}</th>
                     <th className="py-2.5 px-3 w-36 text-center">{lang === 'RU' ? `Цена за ед. (${currencyCode})` : 'Birlik bahasy'}</th>
@@ -454,7 +454,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                     return (
                       <tr key={spec.id || index} className={`${theme.tableRowHover} transition-colors`}>
                         <td className="py-3 px-3 text-center font-bold text-slate-400 w-12">{index + 1}</td>
-                        <td className="py-3 px-3 min-w-[240px] font-bold text-slate-800 dark:text-slate-100">{productName}</td>
+                        <td className="py-3 px-3 min-w-60 font-bold text-slate-800 dark:text-slate-100">{productName}</td>
                         <td className="py-3 px-3 text-center font-bold text-slate-600 w-28">{spec.unit?.shortName || 'шт'}</td>
                         <td className="py-3 px-3 text-center font-black text-slate-800 w-28">{itemQty}</td>
                         <td className="py-3 px-3 text-center font-bold text-slate-700 w-36">{itemPrice.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
@@ -498,7 +498,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
             <thead>
               <tr className={`font-semibold ${theme.tableHeaderBg}`}>
                 <th className="py-2.5 px-3 text-center w-12">#</th>
-                <th className="py-2.5 px-3 min-w-[200px]">{t('fileName', 'Имя файла')}</th>
+                <th className="py-2.5 px-3 min-w-50">{t('fileName', 'Имя файла')}</th>
                 <th className="py-2.5 px-3 text-center w-28">{t('type', 'Тип')}</th>
                 <th className="py-2.5 px-3 text-center w-36">{t('date', 'Дата загрузки')}</th>
                 <th className="py-2.5 px-3 text-center w-20">{t('action', 'Действие')}</th>

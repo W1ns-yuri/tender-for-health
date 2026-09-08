@@ -131,7 +131,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
         {/* Mazmuny */}
         <div className="mt-6">
           <h4 className={`text-base font-bold mb-1 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{t('description', 'Mazmuny')}:</h4>
-          <div className={`text-sm leading-relaxed whitespace-normal break-words ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+          <div className={`text-sm leading-relaxed whitespace-normal text-wrap ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
             {safeString(data?.description)}
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
         {/* Tehniki şartler */}
         <div className="mt-6">
           <h4 className={`text-base font-bold mb-1 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{t('technicalSpecs', 'Tehniki şartler')}:</h4>
-          <div className={`text-sm leading-relaxed whitespace-normal break-words ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+          <div className={`text-sm leading-relaxed whitespace-normal text-wrap ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
             {safeString(data?.technicalSpecs)}
           </div>
         </div>
@@ -207,7 +207,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
                           <td className="py-3.5 px-4 text-center">{safeString(spec?.unit?.name || spec?.unit?.shortName)}</td>
                           <td className="py-3.5 px-4 text-center">{safeString(spec?.manufacturer?.name || '-')}</td>
                           <td className="py-3.5 px-4 text-center font-bold">{safeString(spec?.quantity)}</td>
-                          <td className="py-3.5 px-4 text-center w-auto min-w-[240px] whitespace-normal break-words text-slate-500">
+                          <td className="py-3.5 px-4 text-center w-auto min-w-60 whitespace-normal text-wrap text-slate-500">
                             {safeString(spec?.description)}
                           </td>
                         </tr>
@@ -257,7 +257,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
                         <td className="py-3.5 px-4 text-center">{safeString(spec?.unit?.name || spec?.unit?.shortName)}</td>
                         <td className="py-3.5 px-4 text-center">{safeString(spec?.manufacturer?.name || '-')}</td>
                         <td className="py-3.5 px-4 text-center font-bold">{safeString(spec?.quantity)}</td>
-                        <td className="py-3.5 px-4 text-center w-auto min-w-[240px] whitespace-normal break-words text-slate-500">
+                        <td className="py-3.5 px-4 text-center w-auto min-w-60 whitespace-normal text-wrap text-slate-500">
                           {safeString(spec?.description)}
                         </td>
                         {data?.status === 'YENIJI_YGLAN_EDILDI' && (
@@ -309,7 +309,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
                 <tr key={idx} className={theme.tableRowHover}>
                   <td className="py-3.5 px-4 text-center font-medium text-slate-400">{idx + 1}</td>
                   <td className="py-3.5 px-4 text-center font-semibold">{safeString(doc?.fileName || doc?.name)}</td>
-                  <td className="py-3.5 px-4 text-center w-auto min-w-[200px] whitespace-normal break-words text-slate-500">{safeString(doc?.description)}</td>
+                  <td className="py-3.5 px-4 text-center w-auto min-w-50 whitespace-normal text-wrap text-slate-500">{safeString(doc?.description)}</td>
                   <td className={`py-3.5 px-4 text-center font-bold ${theme.primaryText}`}>{safeString(doc?.fileType || doc?.type)}</td>
                   <td className="py-3.5 px-4 text-center text-slate-400">{safeString(doc?.size, '-')}</td>
                   <td className="py-3.5 px-4 text-center text-slate-400">{formatDate(doc?.createdAt)}</td>

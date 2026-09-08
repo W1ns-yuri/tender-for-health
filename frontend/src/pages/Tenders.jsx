@@ -180,7 +180,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                   <tr key={item.id || idx} className={theme.tableRowHover}>
                     <td className="py-3.5 px-4 text-center font-semibold">{safeString(item.tenderNumber)}</td>
                     <td className="py-3.5 px-4 text-center font-medium">{safeString(item.title)}</td>
-                    <td className={`py-3.5 px-4 text-center w-auto min-w-[220px] whitespace-normal break-words ${theme.subText}`}>{safeString(item.description)}</td>
+                    <td className={`py-3.5 px-4 text-center w-auto min-w-55 whitespace-normal text-wrap ${theme.subText}`}>{safeString(item.description)}</td>
                     <td className="py-3.5 px-4 text-center">{getTypeBadge(item.type, lang, isDarkMode)}</td>
                     <td className="py-3.5 px-4 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
                     <td className={`py-3.5 px-4 text-center ${theme.subText}`}>{formatDate(item.announcementDate || item.date)}</td>
@@ -190,7 +190,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                         {item.visibility === 'YAPYK' ? (lang === 'RU' ? 'Закрытый' : 'Ýapyk') : (lang === 'RU' ? 'Открытый' : 'Açyk')}
                       </span>
                     </td>
-                    <td className={`py-3.5 px-4 text-center w-auto min-w-[180px] whitespace-normal break-words ${theme.subText}`}>{renderTechSpecs(item)}</td>
+                    <td className={`py-3.5 px-4 text-center w-auto min-w-45 whitespace-normal text-wrap ${theme.subText}`}>{renderTechSpecs(item)}</td>
                     <td className="py-3.5 px-4 text-center">
                       <div className="flex items-center justify-center space-x-1">
                         <button
