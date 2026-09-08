@@ -110,7 +110,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
               <option value="">{lang === 'RU' ? 'Все' : 'Ählisi'}</option>
               <option value="ACYK">{lang === 'RU' ? 'Открыт' : 'Açyk'}</option>
               <option value="YAPYK">{lang === 'RU' ? 'Закрыт' : 'Ýapyk'}</option>
-              <option value="BAHALANDYRYLDY">{lang === 'RU' ? 'Оценен' : 'Bahalandyryldy'}</option>
+              <option value="BAHALANDYRYLDY">{lang === 'RU' ? 'На рассмотрении' : 'Bahalandyryldy'}</option>
               <option value="YENIJI_YGLAN_EDILDI">{lang === 'RU' ? 'Победитель' : 'Ýeňiji yglan edildi'}</option>
             </select>
           </div>

@@ -11,6 +11,7 @@ import Tenders from './pages/Tenders';
 import TenderDetails from './pages/TenderDetails';
 import MyOffers from './pages/MyOffers';
 import Evaluation from './pages/Evaluation';
+import SupplierWins from './pages/SupplierWins';
 import AdminCatalogs from './pages/AdminCatalogs';
 import AdminLogs from './pages/AdminLogs';
 import CreateTenderPage from './pages/CreateTenderPage';
@@ -153,7 +154,7 @@ export default function App() {
               <Route path="/create-offer/:id" element={<CreateOfferPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/offers" element={<MyOffers role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/offers/:id" element={<OfferDetailsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
-              <Route path="/evaluation" element={<Evaluation role={role} isDarkMode={isDarkMode} lang={lang} />} />
+              <Route path="/evaluation" element={role === 'SUPPLIER' ? <SupplierWins role={role} isDarkMode={isDarkMode} lang={lang} /> : <Evaluation role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/umumy" element={role === 'ADMIN' ? <AdminCatalogs section="umumy" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/haryt" element={role === 'ADMIN' ? <AdminCatalogs section="haryt" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/administrasiya" element={role === 'ADMIN' ? <AdminCatalogs section="administrasiya" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />

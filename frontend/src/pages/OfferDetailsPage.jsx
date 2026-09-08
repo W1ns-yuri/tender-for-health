@@ -114,6 +114,13 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
 
   return (
     <div className="space-y-6 pb-12">
+      <button 
+        onClick={() => navigate(-1)}
+        className="flex items-center text-slate-500 hover:text-slate-800 transition-colors mb-2"
+      >
+        <ArrowLeft size={16} className="mr-2" /> {t('back', 'Назад')}
+      </button>
+
       {/* 1. Главная карточка деталей коммерческого предложения */}
       <div className={`p-6 rounded-xl border shadow-xs ${theme.cardBg}`}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">

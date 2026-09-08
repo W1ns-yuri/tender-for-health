@@ -395,7 +395,7 @@ export const translations = {
     statusAcyk: 'Открыт',
     statusYapyk: 'Закрыт',
     statusTaslama: 'Проект',
-    statusBahalandyryldy: 'Оценен',
+    statusBahalandyryldy: 'На рассмотрении',
     statusYeniji: 'Объявлен победитель',
     statusTabsyryldy: 'Подано',
     statusGoybolsun: 'Отменено',

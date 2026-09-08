@@ -34,7 +34,7 @@ async function seedDatabase() {
         const passwordHash = await bcrypt.hash('password123', 10);
 
         const admin = await prisma.user.create({
-            data: { username: 'admin', password: passwordHash, firstName: 'Arzygül', lastName: 'Berdiýewa', middleName: 'Berdiýewna', roleType: 'ADMIN', position: 'Главный Администратор' }
+            data: { username: 'admin', password: passwordHash, firstName: 'Yuri', lastName: 'Wins', middleName: 'Wladimirovich', roleType: 'ADMIN', position: 'Главный Администратор' }
         });
 
         const client = await prisma.user.create({
@@ -129,7 +129,7 @@ async function seedDatabase() {
             }
         });
 
-        
+
         // 9.5 Создаем компании
         console.log('9️⃣.5️⃣ Создаем компании...');
         await prisma.company.create({
@@ -139,7 +139,7 @@ async function seedDatabase() {
                 license: 'LIC-654321',
                 email: 'info@medic-pharm.ru',
                 phone: '+79991234567',
-                 inn: '1234567890', userId: supplierUser1.id
+                inn: '1234567890', userId: supplierUser1.id
             }
         });
         await prisma.company.create({
@@ -149,11 +149,11 @@ async function seedDatabase() {
                 license: 'LIC-210987',
                 email: 'stroy@torg.ru',
                 phone: '+79997654321',
-                 inn: '0987654321', userId: supplierUser1.id
+                inn: '0987654321', userId: supplierUser1.id
             }
         });
-    
-    // 10. Тендеры
+
+        // 10. Тендеры
         console.log('🔟 Создаем тендеры и спецификации...');
         const tender1 = await prisma.tender.create({
             data: {

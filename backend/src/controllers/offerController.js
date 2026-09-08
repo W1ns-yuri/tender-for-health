@@ -148,6 +148,11 @@ const createOffer = async (req, res) => {
                 exchangeRates: {
                     create: offerRatesData, // Зафиксированные курсы валют!
                 },
+                files: attachedDocumentIds && attachedDocumentIds.length > 0 ? {
+                    create: attachedDocumentIds.map(docId => ({
+                        documentId: docId
+                    }))
+                } : undefined,
             },
             include: {
                 specs: true,
@@ -223,6 +228,70 @@ const getMyOffers = async (req, res) => {
         res.json(offers);
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при получении предложений', details: error.message });
+    }
+};
+
+const getMyWins = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        const suppliers = await prisma.supplier.findMany({
+            where: { userId }
+        });
+        
+        const supplierIds = suppliers.map(s => s.id);
+        
+        if (supplierIds.length === 0) {
+            return res.json([]);
+        }
+
+        const winningOffers = await prisma.offer.findMany({
+            where: { 
+                supplierId: { in: supplierIds },
+                tender: {
+                    status: 'YENIJI_YGLAN_EDILDI'
+                },
+                specs: {
+                    some: {
+                        isAwarded: true
+                    }
+                }
+            },
+            include: {
+                tender: {
+                    include: {
+                        client: true,
+                        category: true,
+                    }
+                },
+                specs: {
+                    where: {
+                        isAwarded: true
+                    },
+                    include: {
+                        tenderSpec: {
+                            include: {
+                                generalProduct: true,
+                                unit: true,
+                                lot: {
+                                    include: {
+                                        deliveryTerm: true
+                                    }
+                                }
+                            }
+                        },
+                        unit: true,
+                        generalProduct: true,
+                    }
+                },
+                baseCurrency: true,
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        res.json(winningOffers);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при получении выигранных тендеров', details: error.message });
     }
 };
 
@@ -344,6 +413,7 @@ module.exports = {
     createOffer,
     getOffersByTender,
     getMyOffers,
+    getMyWins,
     getAllOffers,
     getOfferById,
     deleteOffer

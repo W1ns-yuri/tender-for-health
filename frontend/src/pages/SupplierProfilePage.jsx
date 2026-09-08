@@ -23,16 +23,17 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode }) {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Сначала получаем список компаний
-        const compRes = await API.get('/companies');
+        // Сначала получаем список компаний (теперь это Suppliers)
+        const compRes = await API.get('/offers/suppliers');
         const comp = compRes.data.find(c => String(c.id) === String(id));
         setSupplier(comp);
 
-        // Затем пробуем получить статистику (если сервер не перезагружен, это может упасть с 404)
+        // Затем пробуем получить статистику (сейчас её может не быть для Supplier, оставляем нули)
         if (comp) {
           try {
-            const statsRes = await API.get(`/companies/${id}/stats`);
-            setStats(statsRes.data);
+            // Если есть отдельный роут для статистики supplier-а, можно использовать его. Пока заглушка
+            const statsRes = await API.get(`/offers/suppliers/${id}/stats`).catch(() => ({ data: { totalOffers: 0, wonOffers: 0 }}));
+            setStats(statsRes.data || { totalOffers: 0, wonOffers: 0 });
           } catch (statsErr) {
             console.error('Не удалось загрузить статистику:', statsErr);
             // Оставляем нули
@@ -94,7 +95,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode }) {
                 <Hash size={18} className="text-slate-400 mt-0.5" />
                 <div>
                   <p className="text-slate-500 font-medium">{t('regNo', 'Рег. номер')} (ИНН)</p>
-                  <p className="font-semibold">{supplier.inn || supplier.reg || '-'}</p>
+                  <p className="font-semibold">{supplier.taxId || supplier.regNumber || supplier.inn || '-'}</p>
                 </div>
               </div>
               
@@ -102,7 +103,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode }) {
                 <FileText size={18} className="text-slate-400 mt-0.5" />
                 <div>
                   <p className="text-slate-500 font-medium">{t('license', 'Лицензия')}</p>
-                  <p className="font-semibold">{supplier.license || '-'}</p>
+                  <p className="font-semibold">{supplier.licenseNumber || supplier.license || '-'}</p>
                 </div>
               </div>
 

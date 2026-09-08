@@ -19,16 +19,16 @@ router.post('/open/:tenderId', authMiddleware, checkRole(['CLIENT', 'PURCHASING_
 router.get('/evaluate/:tenderId', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN', 'PURCHASING_SPECIALIST']), evaluateTenderBids);
 
 // 3. Список тендеров для оценки
-router.get('/tenders', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN']), getEvaluationTenders);
+router.get('/tenders', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN', 'CLIENT', 'PURCHASING_SPECIALIST']), getEvaluationTenders);
 
 // 4. Детали тендера для оценки по позициям
-router.get('/tenders/:tenderId/details', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN']), getTenderEvaluationDetails);
+router.get('/tenders/:tenderId/details', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN', 'CLIENT', 'PURCHASING_SPECIALIST']), getTenderEvaluationDetails);
 
 // 5. Выбор победителя по конкретной позиции (лоту/товару)
-router.post('/award-lot', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN']), awardLot);
-router.post('/award-item', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN']), awardLot);
+router.post('/award-lot', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN', 'CLIENT', 'PURCHASING_SPECIALIST']), awardLot);
+router.post('/award-item', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN', 'CLIENT', 'PURCHASING_SPECIALIST']), awardLot);
 
 // 6. Завершение оценки тендера
-router.post('/complete/:tenderId', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN']), completeEvaluation);
+router.post('/complete/:tenderId', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN', 'CLIENT', 'PURCHASING_SPECIALIST']), completeEvaluation);
 
 module.exports = router;

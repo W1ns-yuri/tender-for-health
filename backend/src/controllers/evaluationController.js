@@ -174,10 +174,17 @@ const selectWinnerOffer = async (req, res) => {
 // Получение списка тендеров для оценки
 const getEvaluationTenders = async (req, res) => {
     try {
+        const whereClause = {
+            status: { in: ['TASLAMA', 'ACYK', 'YAPYK', 'BAHALANDYRYLDY', 'YENIJI_YGLAN_EDILDI'] }
+        };
+
+        // Если пользователь обычный Заказчик (CLIENT) или Специалист, показываем только его тендеры
+        if (req.user && (req.user.roleType === 'CLIENT' || req.user.roleType === 'PURCHASING_SPECIALIST')) {
+            whereClause.createdById = req.user.id;
+        }
+
         const tenders = await prisma.tender.findMany({
-            where: {
-                status: { in: ['YAPYK', 'BAHALANDYRYLDY', 'YENIJI_YGLAN_EDILDI'] }
-            },
+            where: whereClause,
             include: {
                 client: true,
                 category: true,
@@ -198,8 +205,11 @@ const getTenderEvaluationDetails = async (req, res) => {
         const tender = await prisma.tender.findUnique({
             where: { id: tenderId },
             include: {
+                client: true,
+                category: true,
                 lots: {
                     include: {
+                        deliveryTerm: true,
                         specs: {
                             include: {
                                 generalProduct: true,
