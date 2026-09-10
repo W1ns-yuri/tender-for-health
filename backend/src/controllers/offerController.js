@@ -65,6 +65,9 @@ const createOffer = async (req, res) => {
             if (!supplier) {
                 return res.status(403).json({ error: 'Профиль поставщика не найден' });
             }
+            if (supplier.verificationStatus !== 'VERIFIED') {
+                return res.status(403).json({ error: 'Ваш профиль еще не прошел верификацию. Вы не можете подавать предложения.' });
+            }
             finalSupplierId = supplier.id;
         }
 

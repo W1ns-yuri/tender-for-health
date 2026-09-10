@@ -18,6 +18,14 @@ enum RoleType {
   COMMISSION_MEMBER // Komissiýa topary (Тендерная комиссия)
 }
 
+enum VerificationStatus {
+  PENDING
+  PENDING_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+
 enum TenderStatus {
   TASLAMA             @map("taslama") // черновик
   ACYK                @map("açyk") // открыт
@@ -52,6 +60,7 @@ enum SupplierType {
   BUSINESS_SOCIETY
   BUSINESS_COMPANY
   GOVERNMENT
+  FARMER_ASSOCIATION
 }
 
 enum PaymentStatus {
@@ -114,6 +123,7 @@ model User {
   middleName String?  @map("middle_name")
   roleType   RoleType @default(SUPPLIER) @map("role_type")
   position   String?
+  phone      String?
 
   roleId String? @map("role_id")
   role   Role?   @relation(fields: [roleId], references: [id], onDelete: SetNull)
@@ -458,6 +468,13 @@ model Supplier {
   address       String?
   notes         String?
   isActive      Boolean       @default(true) @map("is_active")
+
+  verificationStatus VerificationStatus @default(PENDING) @map("verification_status")
+  rejectionReason String?       @map("rejection_reason")
+  bankName      String?       @map("bank_name")
+  bankAccount   String?       @map("bank_account")
+  bankMfo       String?       @map("bank_mfo")
+  passportInfo  String?       @map("passport_info")
 
   offers Offer[]
   files  SupplierFile[]

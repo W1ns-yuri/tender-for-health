@@ -161,49 +161,7 @@ export default function App() {
               <Route path="/logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/admin-logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               
-              <Route path="/profile" element={
-                <div className={`p-6 rounded-xl border shadow-xs max-w-xl ${theme.cardBg}`}>
-                  <h2 className="text-lg font-bold mb-4">{lang === 'RU' ? 'Настройки профиля' : 'Profil sazlamalary'}</h2>
-                  <div className="space-y-3 text-xs">
-                    <div>
-                      <label className={`block mb-1 ${theme.subText}`}>{lang === 'RU' ? 'Полное имя' : 'Doly ady'}</label>
-                      <p className="font-bold text-sm">
-                        {((user?.companies?.[0] || user?.suppliers?.[0])?.name && role !== 'ADMIN') 
-                          ? (user.companies?.[0] || user.suppliers?.[0]).name 
-                          : (user ? `${user.firstName} ${user.lastName || ''}` : 'Пользователь')}
-                      </p>
-                    </div>
-                    <div>
-                      <label className={`block mb-1 ${theme.subText}`}>{lang === 'RU' ? 'Имя пользователя (Логин)' : 'Ulanyjy ady (Логин)'}</label>
-                      <p className="font-medium">{user?.username}</p>
-                    </div>
-                    {((user?.companies?.[0] || user?.suppliers?.[0]) && role !== 'ADMIN') && (
-                      <>
-                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                          <label className={`block mb-1 mt-2 ${theme.subText}`}>{lang === 'RU' ? 'Название компании' : 'Kompaniýanyň ady'}</label>
-                          <p className="font-bold text-sm text-teal-600">{(user.companies?.[0] || user.suppliers?.[0]).name}</p>
-                        </div>
-                        <div>
-                          <label className={`block mb-1 ${theme.subText}`}>ИНН</label>
-                          <p className="font-medium">{(user.companies?.[0] || user.suppliers?.[0]).inn || '-'}</p>
-                        </div>
-                        <div>
-                          <label className={`block mb-1 ${theme.subText}`}>{lang === 'RU' ? 'Адрес' : 'Salgysy'}</label>
-                          <p className="font-medium">{(user.companies?.[0] || user.suppliers?.[0]).address || '-'}</p>
-                        </div>
-                        <div>
-                          <label className={`block mb-1 ${theme.subText}`}>{lang === 'RU' ? 'Телефон' : 'Telefon'}</label>
-                          <p className="font-medium">{(user.companies?.[0] || user.suppliers?.[0]).phone || '-'}</p>
-                        </div>
-                      </>
-                    )}
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                      <label className={`block mb-1 mt-2 ${theme.subText}`}>{lang === 'RU' ? 'Роль (Права)' : 'Rol (Права)'}</label>
-                      <p className={`font-semibold ${theme.primaryText}`}>{role}</p>
-                    </div>
-                  </div>
-                </div>
-              } />
+              <Route path="/profile" element={<SupplierProfilePage role={role} isDarkMode={isDarkMode} lang={lang} isOwner={true} />} />
               
               <Route path="/settings" element={
                 <div className={`p-6 rounded-xl border shadow-xs max-w-xl ${theme.cardBg}`}>

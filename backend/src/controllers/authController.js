@@ -5,10 +5,10 @@ const prisma = require('../lib/prisma');
 // Регистрация нового пользователя
 const register = async (req, res) => {
     try {
-        const { username, password, firstName, lastName, middleName, roleType, position } = req.body;
+        const { username, password, firstName, lastName, middleName, position, phone, companyType, companyName, taxId } = req.body;
 
-        if (!username || !password || !firstName || !lastName) {
-            return res.status(400).json({ error: 'Пожалуйста, заполните обязательные поля: username, password, firstName, lastName' });
+        if (!username || !password || !firstName || !lastName || !phone) {
+            return res.status(400).json({ error: 'Пожалуйста, заполните обязательные поля: username, password, firstName, lastName, phone' });
         }
 
         // Проверяем, существует ли уже пользователь с таким логином
@@ -29,28 +29,22 @@ const register = async (req, res) => {
                 firstName,
                 lastName,
                 middleName: middleName || null,
-                roleType: roleType || 'SUPPLIER',
+                roleType: 'SUPPLIER',
                 position: position || null,
+                phone: phone || null,
             },
         });
 
-        // Создаем профиль поставщика или заказчика при регистрации
-        if (newUser.roleType === 'SUPPLIER') {
-            await prisma.supplier.create({
-                data: {
-                    userId: newUser.id,
-                    name: req.body.companyName || (firstName + ' ' + lastName),
-                    type: req.body.supplierType || null,
-                }
-            });
-        } else if (newUser.roleType === 'CLIENT') {
-            await prisma.company.create({
-                data: {
-                    userId: newUser.id,
-                    name: req.body.companyName || (firstName + ' ' + lastName),
-                }
-            });
-        }
+        // Создаем профиль поставщика при регистрации
+        await prisma.supplier.create({
+            data: {
+                userId: newUser.id,
+                name: companyName || (firstName + ' ' + lastName),
+                type: companyType || 'ENTREPRENEUR',
+                taxId: taxId || null,
+                verificationStatus: 'PENDING',
+            }
+        });
 
 
         // Генерируем JWT-токен на 7 дней
@@ -73,14 +67,17 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     try {
         const { username, password } = req.body;
+        console.log(`[LOGIN ATTEMPT] username: "${username}", password: "${password}"`);
 
         // Ищем пользователя в БД
         const user = await prisma.user.findUnique({ where: { username }, include: { companies: true, suppliers: true } });
         if (!user) {
-            return res.status(401).json({ error: 'Неверный логин или пароль' });
+            console.log(`[LOGIN FAILED] User not found: "${username}"`);
+            return res.status(401).json({ error: `Неверный логин или пароль (User not found: ${username})` });
         }
 
         if (!user.isActive) {
+            console.log(`[LOGIN FAILED] Account inactive: "${username}"`);
             return res.status(403).json({ error: 'Аккаунт заблокирован' });
         }
 
@@ -91,6 +88,7 @@ const login = async (req, res) => {
         // Сравниваем введенный пароль с хешем из базы
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
+            console.log(`[LOGIN FAILED] Password mismatch for: "${username}"`);
             let failedCount = user.failedCount + 1;
             let lockoutExpireDate = null;
             if (failedCount >= 5) {
@@ -100,8 +98,10 @@ const login = async (req, res) => {
                 where: { id: user.id },
                 data: { failedCount, lockoutExpireDate }
             });
-            return res.status(401).json({ error: 'Неверный логин или пароль' });
+            return res.status(401).json({ error: 'Неверный логин или пароль (Password mismatch)' });
         }
+
+        console.log(`[LOGIN SUCCESS] User authenticated: "${username}"`);
 
         await prisma.user.update({
             where: { id: user.id },

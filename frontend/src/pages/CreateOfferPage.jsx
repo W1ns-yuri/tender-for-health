@@ -27,6 +27,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
 
   const [tender, setTender] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isVerified, setIsVerified] = useState(true);
 
   // Справочники с API
   const [currencies, setCurrencies] = useState([]);
@@ -54,7 +55,15 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
       API.get(`/tenders/${id}`),
       API.get('/catalogs/currencies').catch(() => ({ data: [] })),
       API.get('/catalogs/delivery-terms').catch(() => ({ data: [] })),
-    ]).then(([tenderRes, currRes, dtRes]) => {
+      API.get('/auth/me').catch(() => ({ data: null }))
+    ]).then(([tenderRes, currRes, dtRes, meRes]) => {
+      
+      if (role === 'SUPPLIER' && meRes.data?.suppliers?.[0]) {
+          if (meRes.data.suppliers[0].verificationStatus !== 'VERIFIED') {
+              setIsVerified(false);
+          }
+      }
+
       const tenderData = tenderRes.data;
       setTender(tenderData);
 
@@ -458,16 +467,16 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                 {/* Таблица спецификации: 1 товар = 2 строки (Сверху Запрос, Снизу Предложение) */}
                 {isSelected ? (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse min-w-[860px]">
+                    <table className="w-full text-left text-xs border-collapse min-w-215">
                       <thead>
                         <tr className={`font-semibold ${theme.tableHeaderBg}`}>
                           <th className="py-3 px-3.5 w-12 text-center">#</th>
-                          <th className="py-3 px-3.5 min-w-[240px]">{lang === 'RU' ? 'Товар / Предложение' : 'Haryt / Teklip'}</th>
+                          <th className="py-3 px-3.5 min-w-60">{lang === 'RU' ? 'Товар / Предложение' : 'Haryt / Teklip'}</th>
                           <th className="py-3 px-3.5 w-28 text-center">{lang === 'RU' ? 'Ед. изм.' : 'Ölçeg birligi'}</th>
                           <th className="py-3 px-3.5 w-28 text-center">{lang === 'RU' ? 'Количество' : 'Mukdary'}*</th>
                           <th className="py-3 px-3.5 w-36 text-center">{lang === 'RU' ? `Цена за ед. (${currencyCode})` : 'Birlik bahasy'}*</th>
                           <th className="py-3 px-3.5 w-36 text-right">{lang === 'RU' ? `Сумма (${currencyCode})` : 'Jemi baha'}</th>
-                          <th className="py-3 px-3.5 min-w-[180px]">{lang === 'RU' ? 'Характеристики / Производитель' : 'Mazmuny / Öndüriji'}</th>
+                          <th className="py-3 px-3.5 min-w-45">{lang === 'RU' ? 'Характеристики / Производитель' : 'Mazmuny / Öndüriji'}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y-2 divide-slate-200 dark:divide-slate-700">
@@ -756,6 +765,12 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
         )}
 
         <div className="sticky bottom-0 -mx-6 -mb-6 px-6 py-4 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-20 shadow-xl">
+          {!isVerified && (
+            <div className="mb-4 p-3 bg-rose-50 text-rose-700 text-sm font-bold rounded-xl flex items-center gap-2 border border-rose-200">
+              <AlertCircle size={16} />
+              {lang === 'RU' ? 'Ваш профиль не прошел верификацию. Подача предложений заблокирована.' : 'Siziň profiliňiz tassyklanmady. Teklip bermek gadagan.'}
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-6">
               <div>
@@ -782,7 +797,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
               <button
                 type="button"
                 onClick={handleSubmitOffer}
-                disabled={isSubmitting || grandTotal <= 0}
+                disabled={isSubmitting || grandTotal <= 0 || !isVerified}
                 className={`flex-1 sm:flex-none px-8 py-3 font-bold rounded-xl text-sm shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${theme.primaryBtn}`}
               >
                 <Send size={16} />

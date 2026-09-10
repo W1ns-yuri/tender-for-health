@@ -21,6 +21,7 @@ const catalogRoutes = require('./src/routes/catalogRoutes');
 const offerRoutes = require('./src/routes/offerRoutes');
 const evaluationRoutes = require('./src/routes/evaluationRoutes');
 const dashboardRoutes = require('./src/routes/dashboardRoutes');
+const supplierRoutes = require('./src/routes/supplierRoutes');
 
 const auditLog = require('./src/middleware/auditMiddleware');
 
@@ -51,6 +52,7 @@ app.use('/api/catalogs', catalogRoutes);
 app.use('/api/offers', offerRoutes);
 app.use('/api/evaluation', evaluationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/suppliers', supplierRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: '🚀 Сервер тендерной системы (Tender System Backend) работает!' });
@@ -61,7 +63,7 @@ app.use((err, req, res, next) => {
     console.error('Unhandled Error:', err.stack || err.message || err);
     res.status(500).json({
         error: 'Внутренняя ошибка сервера (Internal Server Error)',
-        details: process.env.NODE_ENV === 'development' ? err.message : undefined
+        details: err.stack || err.message
     });
 });
 
