@@ -1,5 +1,5 @@
 const express = require('express');
-const { uploadDocument, getDocuments } = require('../controllers/documentController');
+const { uploadDocument, getDocuments, deleteDocument } = require('../controllers/documentController');
 const authMiddleware = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
@@ -10,5 +10,8 @@ router.get('/', authMiddleware, getDocuments);
 
 // Принимаем один файл из поля "file"
 router.post('/upload', authMiddleware, upload.single('file'), uploadDocument);
+
+// Удалить документ по id
+router.delete('/:id', authMiddleware, deleteDocument);
 
 module.exports = router;

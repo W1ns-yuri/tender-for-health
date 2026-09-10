@@ -4,7 +4,7 @@ const prisma = require('../lib/prisma');
 const updateProfile = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { address, bankName, bankAccount, bankMfo, passportInfo, email, phone } = req.body;
+        const { address, region, bankName, bankAccount, bankMfo, passportInfo, passportSeries, passportIssuedBy, email, phone } = req.body;
 
         // Ищем поставщика
         const supplier = await prisma.supplier.findFirst({
@@ -15,21 +15,26 @@ const updateProfile = async (req, res) => {
             return res.status(404).json({ error: 'Профиль поставщика не найден' });
         }
 
+        const combinedPassport = passportInfo || [passportSeries, passportIssuedBy].filter(Boolean).join(', ');
+
         // Обновляем Supplier
         const updatedSupplier = await prisma.supplier.update({
             where: { id: supplier.id },
             data: {
                 address,
+                region,
                 bankName,
                 bankAccount,
                 bankMfo,
-                passportInfo,
+                passportInfo: combinedPassport,
+                passportSeries,
+                passportIssuedBy,
                 email,
                 verificationStatus: 'PENDING_REVIEW', // Переводим на проверку
             }
         });
 
-        // Обновляем User (телефон)
+        // Обновляем User (телефон, если передан)
         if (phone) {
             await prisma.user.update({
                 where: { id: userId },

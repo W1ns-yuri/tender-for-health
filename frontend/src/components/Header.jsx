@@ -45,21 +45,23 @@ export default function Header({ user, role, setRole, isDarkMode, lang, setLang,
 
       {/* 2. Правые инструменты */}
       <div className="flex items-center space-x-3">
-        {/* Переключатель роли */}
-        <div className={`flex items-center p-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-          <button
-            onClick={() => setRole('SUPPLIER')}
-            className={`px-3 py-1 rounded-md transition-all ${role === 'SUPPLIER' ? 'bg-blue-700 text-white shadow-xs font-bold' : 'hover:text-slate-900'}`}
-          >
-            {t('supplierStr', 'Üpjün ediji')}
-          </button>
-          <button
-            onClick={() => setRole('ADMIN')}
-            className={`px-3 py-1 rounded-md transition-all ${role === 'ADMIN' ? 'bg-teal-600 text-white shadow-xs font-bold' : 'hover:text-slate-900'}`}
-          >
-            {t('adminStr', 'Admin')}
-          </button>
-        </div>
+        {/* Переключатель роли (виден только администраторам) */}
+        {(user?.roleType === 'ADMIN' || user?.role === 'ADMIN') && (
+          <div className={`flex items-center p-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+            <button
+              onClick={() => setRole('SUPPLIER')}
+              className={`px-3 py-1 rounded-md transition-all ${role === 'SUPPLIER' ? 'bg-blue-700 text-white shadow-xs font-bold' : 'hover:text-slate-900'}`}
+            >
+              {t('supplierStr', 'Üpjün ediji')}
+            </button>
+            <button
+              onClick={() => setRole('ADMIN')}
+              className={`px-3 py-1 rounded-md transition-all ${role === 'ADMIN' ? 'bg-teal-600 text-white shadow-xs font-bold' : 'hover:text-slate-900'}`}
+            >
+              {t('adminStr', 'Admin')}
+            </button>
+          </div>
+        )}
 
         {/* Выбор языка */}
         <div className="relative">

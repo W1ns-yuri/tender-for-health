@@ -466,6 +466,7 @@ model Supplier {
   phone         String?
   fax           String?
   address       String?
+  region        String?
   notes         String?
   isActive      Boolean       @default(true) @map("is_active")
 
@@ -475,6 +476,8 @@ model Supplier {
   bankAccount   String?       @map("bank_account")
   bankMfo       String?       @map("bank_mfo")
   passportInfo  String?       @map("passport_info")
+  passportSeries String?      @map("passport_series")
+  passportIssuedBy String?    @map("passport_issued_by")
 
   offers Offer[]
   files  SupplierFile[]
@@ -624,6 +627,7 @@ model Document {
   fileName       String
   filePath       String
   fileType       String
+  fileSize       Int?          @map("file_size")
   documentTypeId String?       @map("document_type_id")
   documentType   DocumentType? @relation(fields: [documentTypeId], references: [id], onDelete: SetNull)
 

@@ -387,7 +387,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                         onChange={(e) => setRegData({ ...regData, phone: formatPhone(e.target.value) })}
                         placeholder="65 12-34-56"
                         maxLength={11}
-                        className="w-full pl-[4.5rem] pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
+                        className="w-full pl-[5.3rem] pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
                       />
                     </div>
                   </div>

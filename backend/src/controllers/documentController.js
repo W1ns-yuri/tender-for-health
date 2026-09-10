@@ -16,6 +16,7 @@ const uploadDocument = async (req, res) => {
                 fileName: Buffer.from(req.file.originalname, 'latin1').toString('utf8'),
                 filePath: req.file.path,
                 fileType: req.file.mimetype,
+                fileSize: req.file.size || null,
                 documentTypeId: documentTypeId || null,
             },
         });
@@ -71,4 +72,17 @@ const getDocuments = async (req, res) => {
     }
 };
 
-module.exports = { uploadDocument, getDocuments };
+const deleteDocument = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.supplierFile.deleteMany({ where: { documentId: id } });
+        await prisma.tenderFile.deleteMany({ where: { documentId: id } });
+        await prisma.offerFile.deleteMany({ where: { documentId: id } });
+        await prisma.document.delete({ where: { id } });
+        res.json({ success: true, message: 'Документ успешно удален' });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при удалении документа', details: error.message });
+    }
+};
+
+module.exports = { uploadDocument, getDocuments, deleteDocument };
