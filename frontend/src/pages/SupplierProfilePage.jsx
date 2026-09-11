@@ -21,7 +21,12 @@ import {
   ShieldCheck, 
   FileCheck, 
   Image as ImageIcon,
-  Search
+  Search,
+  Printer,
+  Edit3,
+  Lock,
+  Eye,
+  Download
 } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
@@ -89,6 +94,41 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
 
   // Локальное отображение номера телефона (без префикса +993)
   const [phoneDigits, setPhoneDigits] = useState('');
+
+  // Режим редактирования (для верифицированных компаний по умолчанию false)
+  const [isEditing, setIsEditing] = useState(false);
+  const [initialFormData, setInitialFormData] = useState(null);
+  const [initialPhoneDigits, setInitialPhoneDigits] = useState('');
+  const [showCompanyCard, setShowCompanyCard] = useState(false);
+  const [passportError, setPassportError] = useState('');
+
+  // Состояние скрытия верхнего баннера верификации (сохраняется в localStorage)
+  const [isBannerDismissed, setIsBannerDismissed] = useState(() => {
+    return localStorage.getItem('tender_verified_banner_dismissed') === 'true';
+  });
+
+  const handleDismissBanner = () => {
+    localStorage.setItem('tender_verified_banner_dismissed', 'true');
+    setIsBannerDismissed(true);
+  };
+
+  // Надежное получение формы собственности компании (ИП / ХО / ЧП / DH)
+  const getCompanyTypeBadge = () => {
+    let type = supplier?.type;
+    if (!type && supplier?.name) {
+      const n = supplier.name.trim().toLowerCase();
+      if (n.startsWith('ип') || n.includes('hususy telekeçi') || n.includes('telekeçi')) type = 'ENTREPRENEUR';
+      else if (n.startsWith('хо') || n.includes('hojalyk') || n.includes('hj')) type = 'BUSINESS_SOCIETY';
+      else if (n.startsWith('чп') || n.includes('kärhana') || n.includes('hk')) type = 'PRIVATE_ENTERPRISE';
+      else if (n.startsWith('dh') || n.includes('daýhan')) type = 'DAÝHAN_HOJALYGY';
+      else type = 'ENTREPRENEUR';
+    }
+    if (type === 'ENTREPRENEUR') return 'ИП (Hususy telekeçi)';
+    if (type === 'BUSINESS_SOCIETY') return 'ХО (Hojalyk jemgyýeti)';
+    if (type === 'PRIVATE_ENTERPRISE') return 'ЧП (Hususy kärhana)';
+    if (type === 'DAÝHAN_HOJALYGY') return 'DH (Daýhan hojalygy)';
+    return type || 'ИП (Hususy telekeçi)';
+  };
 
   // Закрытие выпадающих списков при клике вне их области
   useEffect(() => {
@@ -198,8 +238,9 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
           const formattedP = formatPhoneString(pureDigits);
 
           setPhoneDigits(formattedP);
+          setInitialPhoneDigits(formattedP);
 
-          setFormData({
+          const initialData = {
             region: reg,
             address: addr,
             bankName: currentSupplier.bankName || '',
@@ -209,7 +250,17 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
             passportIssuedBy: pIssued,
             email: currentSupplier.email || userEmail || '',
             phone: pureDigits ? `+993 ${formattedP}` : ''
-          });
+          };
+
+          setFormData(initialData);
+          setInitialFormData(initialData);
+
+          // Для подтвержденного профиля режим по умолчанию - просмотр
+          if (currentSupplier.verificationStatus === 'VERIFIED') {
+            setIsEditing(false);
+          } else {
+            setIsEditing(true);
+          }
 
           // Загрузка статистики
           try {
@@ -237,6 +288,104 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     fetchData();
   }, [id, isOwner]);
 
+  // Вычисление наличия изменений в форме по сравнению с сохраненными данными
+  const hasChanges = Boolean(
+    initialFormData && (
+      formData.region !== initialFormData.region ||
+      formData.address !== initialFormData.address ||
+      formData.bankName !== initialFormData.bankName ||
+      formData.bankAccount !== initialFormData.bankAccount ||
+      formData.bankMfo !== initialFormData.bankMfo ||
+      formData.passportSeries !== initialFormData.passportSeries ||
+      formData.passportIssuedBy !== initialFormData.passportIssuedBy ||
+      formData.phone !== initialFormData.phone ||
+      formData.email !== initialFormData.email
+    )
+  );
+
+  // Очистка адреса от дублирования названия велаята / города
+  const cleanAddressString = (addr, reg) => {
+    if (!addr) return '';
+    let cleaned = addr.trim();
+
+    const regionKeywords = [
+      'aşgabat ş.', 'aşgabat', 'ашхабад г.', 'ашхабад', 'г. ашхабад', 'г.ашхабад',
+      'ahal welaýaty', 'ahal', 'ахалский велаят', 'ахал',
+      'balkan welaýaty', 'balkan', 'балканский велаят', 'балкан',
+      'daşoguz welaýaty', 'daşoguz', 'дашогузский велаят', 'дашогуз',
+      'lebap welaýaty', 'lebap', 'лебапский велаят', 'лебап',
+      'mary welaýaty', 'mary', 'марыйский велаят', 'марый'
+    ];
+
+    if (reg) {
+      regionKeywords.unshift(reg.toLowerCase());
+    }
+
+    for (const kw of regionKeywords) {
+      const regExp = new RegExp(`^${kw}[,\\s\\-\\–]+`, 'i');
+      if (regExp.test(cleaned)) {
+        cleaned = cleaned.replace(regExp, '').trim();
+        break;
+      }
+    }
+
+    return cleaned;
+  };
+
+  const handleAddressBlur = () => {
+    const cleaned = cleanAddressString(formData.address, formData.region);
+    if (cleaned !== formData.address) {
+      setFormData(prev => ({ ...prev, address: cleaned }));
+    }
+  };
+
+  // Обработка ввода паспорта: серия (римские цифры + дефис + 2 буквы) + пробел + строго максимум 6 цифр
+  const handlePassportChange = (e) => {
+    let input = e.target.value.toUpperCase();
+    setPassportError('');
+
+    // Строго не более 6 цифр
+    const digits = (input.match(/\d/g) || []).join('').slice(0, 6);
+    
+    // Буквенная часть серии
+    let letters = input.replace(/[0-9]/g, '').trim();
+    
+    // Если введено слитно без дефиса, например "IAS" или "IIMR"
+    letters = letters.replace(/^([I|V|X]+)[-\s]?([A-ZА-Я]{1,2})/i, '$1-$2');
+    letters = letters.replace(/-+$/, '');
+
+    if (letters.length > 7) {
+      letters = letters.slice(0, 7);
+    }
+
+    let result = letters;
+    if (digits.length > 0 || input.includes(' ')) {
+      result = letters ? `${letters} ${digits}`.trimEnd() : digits;
+      if (input.endsWith(' ') && !result.endsWith(' ')) {
+        result += ' ';
+      }
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      passportSeries: result
+    }));
+  };
+
+  // Управление режимом редактирования
+  const handleStartEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    if (initialFormData) {
+      setFormData({ ...initialFormData });
+      setPhoneDigits(initialPhoneDigits);
+    }
+    setPassportError('');
+    setIsEditing(false);
+  };
+
   // Обработка изменения телефона
   const handlePhoneInputChange = (e) => {
     let raw = e.target.value.replace(/\D/g, '');
@@ -263,14 +412,28 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     setBankSearch('');
   };
 
-  // Загрузка файлов
+  // Загрузка файлов с жесткой валидацией допустимых расширений и MIME-типов
   const handleFileUpload = async (filesToUpload) => {
     if (!filesToUpload || !filesToUpload.length || !supplier?.id) return;
     setUploading(true);
     setUploadError('');
 
+    const ALLOWED_EXTS = ['pdf', 'jpg', 'jpeg', 'png'];
+    const ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png', 'image/pjpeg'];
+
     try {
       for (const file of Array.from(filesToUpload)) {
+        const ext = file.name.split('.').pop()?.toLowerCase() || '';
+        const mime = (file.type || '').toLowerCase();
+
+        // Блокируем любые недопустимые форматы (.doc, .exe, скрипты и др.) на клиенте
+        if (!ALLOWED_EXTS.includes(ext) || (mime && !ALLOWED_MIME.includes(mime))) {
+          setUploadError(t('onlyPdfJpgAllowed', 'Разрешены только документы PDF и изображения JPG/PNG'));
+          setUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
+
         const uploadData = new FormData();
         uploadData.append('file', file);
         uploadData.append('supplierId', supplier.id);
@@ -285,7 +448,8 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       }
     } catch (err) {
       console.error('Ошибка при загрузке документа:', err);
-      setUploadError(t('uploadError', 'Ошибка при загрузке файла'));
+      const serverMsg = err.response?.data?.error || err.response?.data?.message;
+      setUploadError(serverMsg || t('uploadError', 'Ошибка при загрузке файла'));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -327,14 +491,41 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       alert(t('attachDocsToSubmit', 'Прикрепите документы для отправки на проверку'));
       return;
     }
+
+    // Проверка формата паспорта: строго 6 цифр
+    if (formData.passportSeries) {
+      const passportRegex = /^([I|V|X]+-[A-ZА-Я]{2}\s\d{6})$/i;
+      if (!passportRegex.test(formData.passportSeries.trim())) {
+        setPassportError(t('passportInvalid', 'Некорректный номер паспорта (формат: I-XX 123456)'));
+        alert(t('passportInvalid', 'Некорректный номер паспорта (формат: I-XX 123456)'));
+        return;
+      }
+    }
+
+    const isVerifiedSupplier = supplier?.verificationStatus === 'VERIFIED';
+    if (isVerifiedSupplier && hasChanges) {
+      const confirmed = window.confirm(
+        t('resubmitWarning', 'Внимание: при изменении реквизитов статус верификации компании будет временно приостановлен до проверки администратором. Продолжить?')
+      );
+      if (!confirmed) return;
+    }
+
     setSaving(true);
     try {
+      const cleanedAddr = cleanAddressString(formData.address, formData.region);
+
       const payload = {
         ...formData,
+        address: cleanedAddr,
         passportInfo: [formData.passportSeries, formData.passportIssuedBy].filter(Boolean).join(', ')
       };
       const res = await API.put('/suppliers/profile', payload);
       setSupplier(res.data);
+      const newSavedData = { ...formData, address: cleanedAddr };
+      setFormData(newSavedData);
+      setInitialFormData(newSavedData);
+      setInitialPhoneDigits(phoneDigits);
+      setIsEditing(false);
       alert(t('profileSentSuccess', 'Профиль успешно отправлен на модерацию!'));
     } catch (error) {
       console.error(error);
@@ -421,9 +612,21 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   const readiness = calculateReadiness();
   const hasDocuments = documents && documents.length > 0;
 
+  const isVerified = supplier?.verificationStatus === 'VERIFIED';
+  const isEditable = isOwner && (isVerified ? isEditing : supplier?.verificationStatus !== 'PENDING_REVIEW');
+  const isSubmitDisabled = !isEditable || !hasDocuments || saving;
+
   const bgClass = isDarkMode ? 'text-slate-100' : 'text-slate-800';
   const cardBg = isDarkMode ? 'bg-slate-900 border-slate-800 shadow-none' : 'bg-white border-slate-200/60 shadow-xl shadow-slate-200/40';
-  const inputBg = isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400';
+  
+  // В режиме просмотра инпуты выглядят как неактивные поля (светлый/приглушенный текст, режим только для чтения)
+  const inputBg = isEditable
+    ? (isDarkMode 
+        ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-text' 
+        : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-xs cursor-text')
+    : (isDarkMode 
+        ? 'bg-slate-800/40 border-slate-800/60 text-slate-400 cursor-not-allowed select-text opacity-75' 
+        : 'bg-slate-50 border-slate-200 text-slate-500 cursor-not-allowed select-text opacity-75');
 
   if (loading) {
     return (
@@ -449,13 +652,24 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     if (!isOwner) return null;
 
     if (supplier.verificationStatus === 'VERIFIED') {
+      if (isBannerDismissed) return null;
       return (
-        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-start space-x-3 mb-6">
-          <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" />
-          <div>
-            <h3 className="font-bold text-emerald-800">{lang === 'RU' ? 'Компания верифицирована' : 'Kompaniýa tassyklanan'}</h3>
-            <p className="text-emerald-600 text-sm mt-1">{lang === 'RU' ? 'Доступ к торгам открыт. Вы можете подавать заявки на тендеры.' : 'Söwdalara girmäge rugsat berildi.'}</p>
+        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-start justify-between gap-3 mb-6 animate-in fade-in duration-200">
+          <div className="flex items-start space-x-3">
+            <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-bold text-emerald-800">{lang === 'RU' ? 'Компания верифицирована' : 'Kompaniýa tassyklanan'}</h3>
+              <p className="text-emerald-600 text-sm mt-0.5">{lang === 'RU' ? 'Доступ к торгам открыт. Вы можете подавать заявки на тендеры.' : 'Söwdalara girmäge rugsat berildi.'}</p>
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={handleDismissBanner}
+            className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100/80 rounded-xl transition-colors cursor-pointer shrink-0"
+            title={lang === 'RU' ? 'Закрыть уведомление' : 'Ýapmak'}
+          >
+            <X size={18} />
+          </button>
         </div>
       );
     }
@@ -495,9 +709,6 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     );
   };
 
-  const isEditable = isOwner && supplier.verificationStatus !== 'PENDING_REVIEW';
-  const isSubmitDisabled = !isEditable || !hasDocuments || saving;
-
   // Фильтрация банков по поисковому запросу
   const filteredBanks = TURKMEN_BANKS.filter(b => 
     b.name.toLowerCase().includes(bankSearch.toLowerCase()) || 
@@ -512,7 +723,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Левая колонка - Профиль и форма */}
         <div className={`flex-1 min-w-0 rounded-[2rem] p-6 sm:p-8 space-y-8 ${cardBg}`}>
-          {/* Шапка профиля компании */}
+          {/* Шапка профиля компании: в одну чистую строку */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pb-6 border-b border-slate-100">
             <div className="h-20 w-20 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-[1.25rem] flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0">
               <Building2 size={36} />
@@ -520,13 +731,19 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl font-black tracking-tight truncate">{supplier.name}</h1>
               <div className="flex flex-wrap items-center gap-2.5 mt-2">
-                <span className="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-md">
-                  {supplier.type === 'ENTREPRENEUR' ? 'ИП (Hususy telekeçi)' : 
-                   supplier.type === 'BUSINESS_SOCIETY' ? 'ХО (Hojalyk jemgyýeti)' : 
-                   supplier.type === 'PRIVATE_ENTERPRISE' ? 'ЧП (Hususy kärhana)' : 
-                   supplier.type === 'DAÝHAN_HOJALYGY' ? 'DH (Daýhan hojalygy)' : supplier.type}
+                {/* Форма собственности */}
+                <span className="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">
+                  {getCompanyTypeBadge()}
                 </span>
-                <span className="text-slate-400 text-sm font-medium">STŞK: <span className="text-slate-700 font-bold">{supplier.taxId}</span></span>
+                
+                {/* Защищенный STŞK с иконкой замка и тултипом */}
+                <span 
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg cursor-help hover:bg-slate-200/70 transition-colors" 
+                  title={t('stskLockedHint', 'STŞK зафиксирован после верификации. Изменение возможно только через техподдержку')}
+                >
+                  <Lock size={12} className="text-slate-400" />
+                  <span>STŞK: <strong className="text-slate-900 font-bold">{supplier.taxId}</strong></span>
+                </span>
 
                 {/* 🟡 / 🟢 Бейдж статуса верификации в шапке */}
                 {supplier.verificationStatus === 'VERIFIED' ? (
@@ -566,27 +783,32 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   {/* Кастомный красивый выпадающий список «Велаят» (без поиска) */}
                   <div className="relative" ref={regionDropdownRef}>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('regionLabel', 'Велаят')} <span className="text-rose-500">*</span>
+                      {t('regionLabel', 'Велаят')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
 
-                    {/* Кнопка выбора региона */}
+                    {/* Кнопка выбора региона: стрелочка только в режиме редактирования */}
                     <button
                       type="button"
                       disabled={!isEditable}
                       onClick={() => {
+                        if (!isEditable) return;
                         setIsRegionOpen(!isRegionOpen);
                         if (isBankOpen) setIsBankOpen(false);
                       }}
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 cursor-pointer ${inputBg}`}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border flex items-center justify-between text-left transition-colors ${inputBg} ${
+                        isEditable ? 'cursor-pointer' : 'cursor-not-allowed'
+                      }`}
                     >
-                      <span className={formData.region ? 'text-slate-800 font-semibold' : 'text-slate-400'}>
-                        {getSelectedRegionLabel() || t('regionSelect', 'Выберите велаят...')}
+                      <span className={isEditable ? (formData.region ? (isDarkMode ? 'text-slate-100 font-medium' : 'text-slate-900 font-medium') : 'text-slate-400') : (isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
+                        {getSelectedRegionLabel() || (isEditable ? t('regionSelect', 'Выберите велаят...') : '—')}
                       </span>
-                      <ChevronDown size={18} className={`text-slate-400 transition-transform ${isRegionOpen ? 'rotate-180' : ''}`} />
+                      {isEditable && (
+                        <ChevronDown size={18} className={`text-slate-400 transition-transform ${isRegionOpen ? 'rotate-180' : ''}`} />
+                      )}
                     </button>
 
                     {/* Всплывающее меню без поиска */}
-                    {isRegionOpen && (
+                    {isEditable && isRegionOpen && (
                       <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-1.5 divide-y divide-slate-50">
                         {REGIONS.map(r => {
                           const isSelected = formData.region === r.id || formData.region?.toLowerCase().startsWith(r.id.toLowerCase().slice(0, 4));
@@ -621,10 +843,10 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                     )}
                   </div>
 
-                  {/* Текстовое поле «Точный адрес» */}
+                  {/* Текстовое поле «Точный адрес» с очисткой от повторения велаята */}
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('exactAddress', 'Точный адрес (этрап, улица, офис)')} <span className="text-rose-500">*</span>
+                      {t('exactAddress', 'Точный адрес (этрап, улица, дом/офис)')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
                     <input 
                       type="text" 
@@ -632,18 +854,24 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       disabled={!isEditable}
                       value={formData.address}
                       onChange={e => setFormData({ ...formData, address: e.target.value })}
-                      placeholder={t('exactAddressPlaceholder', 'Битараплык шаёлы, д. 12, оф. 4')}
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${inputBg}`} 
+                      onBlur={handleAddressBlur}
+                      placeholder={isEditable ? t('exactAddressPlaceholder', 'этрап, улица, дом/офис') : ''}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
                     />
+                    {isEditable && (
+                      <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                        {t('addressCleanHint', 'Указывайте без повторения города/велаята: этрап, улица, дом, офис')}
+                      </p>
+                    )}
                   </div>
 
                   {/* Рабочий телефон с чистым международным префиксом +993 */}
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('workPhone', 'Рабочий телефон')} <span className="text-rose-500">*</span>
+                      {t('workPhone', 'Рабочий телефон')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
                     <div className="relative flex items-center">
-                      <span className="absolute left-4 text-slate-500 font-bold select-none pointer-events-none text-sm tracking-tight">
+                      <span className={`absolute left-4 font-bold select-none pointer-events-none text-sm tracking-tight ${isEditable ? 'text-slate-600' : 'text-slate-400 opacity-75'}`}>
                         +993
                       </span>
                       <input 
@@ -652,19 +880,21 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                         disabled={!isEditable}
                         value={phoneDigits}
                         onChange={handlePhoneInputChange}
-                        placeholder="65 56-65-65"
-                        className={`w-full pl-16 pr-4 py-3 rounded-xl text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 tracking-wider ${inputBg}`} 
+                        placeholder={isEditable ? "65 56-65-65" : ""}
+                        className={`w-full pl-16 pr-4 py-3 rounded-xl text-sm font-medium border tracking-wider ${inputBg}`} 
                       />
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-1 ml-1">
-                      {t('phoneFormatHint', 'Формат: +993 6X XX-XX-XX')}
-                    </p>
+                    {isEditable && (
+                      <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                        {t('phoneFormatHint', 'Формат: +993 XX XX-XX-XX')}
+                      </p>
+                    )}
                   </div>
 
                   {/* Автозаполнение Email */}
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('corpEmail', 'Корпоративный Email')} <span className="text-rose-500">*</span>
+                      {t('corpEmail', 'Корпоративный Email')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
                     <div className="relative">
                       <input 
@@ -673,13 +903,15 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                         disabled={!isEditable}
                         value={formData.email}
                         onChange={e => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="company@example.com"
-                        className={`w-full px-4 py-3 rounded-xl text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${inputBg}`} 
+                        placeholder={isEditable ? "company@example.com" : ""}
+                        className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
                       />
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-1 ml-1">
-                      {t('emailSyncHint', 'Автоматически синхронизирован с аккаунтом')}
-                    </p>
+                    {isEditable && (
+                      <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                        {t('emailSyncHint', 'Автоматически синхронизирован с аккаунтом')}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -694,27 +926,32 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   {/* Селект с поиском для банка */}
                   <div className="sm:col-span-2 relative" ref={bankDropdownRef}>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('bankNameLabel', 'Наименование банка')} <span className="text-rose-500">*</span>
+                      {t('bankNameLabel', 'Наименование банка')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
                     
-                    {/* Кнопка выбора банка */}
+                    {/* Кнопка выбора банка: стрелочка только в режиме редактирования */}
                     <button
                       type="button"
                       disabled={!isEditable}
                       onClick={() => {
+                        if (!isEditable) return;
                         setIsBankOpen(!isBankOpen);
                         if (isRegionOpen) setIsRegionOpen(false);
                       }}
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${inputBg}`}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border flex items-center justify-between text-left transition-colors ${inputBg} ${
+                        isEditable ? 'cursor-pointer' : 'cursor-not-allowed'
+                      }`}
                     >
-                      <span className={formData.bankName ? 'text-slate-800 font-semibold' : 'text-slate-400'}>
-                        {formData.bankName || t('bankSelectPlaceholder', 'Выберите банк из списка...')}
+                      <span className={isEditable ? (formData.bankName ? (isDarkMode ? 'text-slate-100 font-medium' : 'text-slate-900 font-medium') : 'text-slate-400') : (isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
+                        {formData.bankName || (isEditable ? t('bankSelectPlaceholder', 'Выберите банк из списка...') : '—')}
                       </span>
-                      <ChevronDown size={18} className={`text-slate-400 transition-transform ${isBankOpen ? 'rotate-180' : ''}`} />
+                      {isEditable && (
+                        <ChevronDown size={18} className={`text-slate-400 transition-transform ${isBankOpen ? 'rotate-180' : ''}`} />
+                      )}
                     </button>
 
                     {/* Всплывающее меню с поиском */}
-                    {isBankOpen && (
+                    {isEditable && isBankOpen && (
                       <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="p-3 border-b border-slate-100 bg-slate-50/50">
                           <div className="relative">
@@ -737,7 +974,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                                 key={bank.id}
                                 type="button"
                                 onClick={() => handleSelectBank(bank)}
-                                className="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-blue-50/80 transition-colors flex items-center justify-between group"
+                                className="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-blue-50/80 transition-colors flex items-center justify-between group cursor-pointer"
                               >
                                 <div>
                                   <p className="text-xs font-bold text-slate-800 group-hover:text-blue-700">{bank.name}</p>
@@ -773,7 +1010,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   {/* Расчетный счет */}
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('bankAccountLabel', 'Расчетный счет (Hasap belgisi)')} <span className="text-rose-500">*</span>
+                      {t('bankAccountLabel', 'Расчетный счет (Hasap belgisi)')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
                     <input 
                       type="text" 
@@ -782,16 +1019,18 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       maxLength={28}
                       value={formData.bankAccount}
                       onChange={e => setFormData({ ...formData, bankAccount: e.target.value.replace(/\s/g, '') })}
-                      placeholder="2320xxxxxxxxxxxxxxxxxxxxxxxx"
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium tracking-wider border focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${inputBg}`} 
+                      placeholder={isEditable ? "2320xxxxxxxxxxxxxxxxxxxxxxxx" : ""}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium tracking-wider border ${inputBg}`} 
                     />
-                    <p className="text-[11px] text-slate-400 mt-1 ml-1">{t('bankAccountHint', '28 символов (стандарт ЦБ Туркменистана)')}</p>
+                    {isEditable && (
+                      <p className="text-[11px] text-slate-400 mt-1 ml-1">{t('bankAccountHint', '28 символов (стандарт ЦБ Туркменистана)')}</p>
+                    )}
                   </div>
 
                   {/* МФО банка */}
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('bankMfoLabel', 'МФО банка (MFO kody)')} <span className="text-rose-500">*</span>
+                      {t('bankMfoLabel', 'МФО банка (MFO kody)')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
                     <input 
                       type="text" 
@@ -799,14 +1038,22 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       disabled={!isEditable}
                       value={formData.bankMfo}
                       onChange={e => setFormData({ ...formData, bankMfo: e.target.value })}
-                      placeholder="390101xxx"
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${inputBg}`} 
+                      placeholder={isEditable ? "390101xxx" : ""}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
                     />
                   </div>
+
+                  {/* Подсказка о фиксации STŞK */}
+                  {isVerified && (
+                    <div className="sm:col-span-2 flex items-center gap-2 text-xs text-slate-500 bg-slate-50/90 border border-slate-200/80 p-3 rounded-xl mt-1">
+                      <Lock size={14} className="text-slate-400 shrink-0" />
+                      <span>{t('stskLockedHint', 'STŞK зафиксирован после верификации. Изменение возможно только через техподдержку')}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* 3. Данные руководителя (разделено на два аккуратных поля) */}
+              {/* 3. Данные руководителя (разделено на два аккуратных поля с маской) */}
               <div>
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                   <User size={18} className="text-blue-600" />
@@ -815,21 +1062,28 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('passportSeriesLabel', 'Серия и номер паспорта')} <span className="text-rose-500">*</span>
+                      {t('passportSeriesLabel', 'Серия и номер паспорта')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
                     <input 
                       type="text" 
                       required
                       disabled={!isEditable}
                       value={formData.passportSeries}
-                      onChange={e => setFormData({ ...formData, passportSeries: e.target.value })}
-                      placeholder="I-AS 123456"
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${inputBg}`} 
+                      onChange={handlePassportChange}
+                      placeholder={isEditable ? "I-AS 123456" : ""}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
                     />
+                    {isEditable && (
+                      passportError ? (
+                        <p className="text-[11px] text-rose-500 font-semibold mt-1 ml-1">{passportError}</p>
+                      ) : (
+                        <p className="text-[11px] text-slate-400 mt-1 ml-1">{t('passportFormatHint', 'Пример: I-AS 123456 (серия и 6 цифр)')}</p>
+                      )
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('passportIssuedLabel', 'Кем и когда выдан')} <span className="text-rose-500">*</span>
+                      {t('passportIssuedLabel', 'Кем и когда выдан')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
                     <input 
                       type="text" 
@@ -837,73 +1091,95 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       disabled={!isEditable}
                       value={formData.passportIssuedBy}
                       onChange={e => setFormData({ ...formData, passportIssuedBy: e.target.value })}
-                      placeholder={lang === 'RU' ? 'Ашхабадским ГОВД, 15.05.2018' : 'Aşgabat ş. IIB, 15.05.2018'}
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${inputBg}`} 
+                      placeholder={isEditable ? (lang === 'RU' ? 'Ашхабадским ГОВД, 15.05.2018' : 'Aşgabat ş. IIB, 15.05.2018') : ''}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
                     />
                   </div>
                 </div>
               </div>
 
-              {/* 4. Загрузка документов с отображением списка */}
+              {/* 4. Загрузка документов с отображением списка и строгим фильтром */}
               <div>
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                   <FileCheck size={18} className="text-blue-600" />
                   {t('companyDocsTitle', 'Документы компании (PDF / JPG)')}
                 </h3>
                 
-                {/* Дропзона загрузки */}
-                <div 
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
-                    isDragging 
-                      ? 'border-blue-500 bg-blue-50/70 scale-[1.01]' 
-                      : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50'
-                  }`}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                    onChange={e => handleFileUpload(e.target.files)}
-                    className="hidden"
-                    disabled={!isEditable || uploading}
-                  />
+                {/* Скрытый input с жестким accept: проводник ОС отфильтровывает все недопустимые файлы */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                  onChange={e => handleFileUpload(e.target.files)}
+                  className="hidden"
+                  disabled={!isEditable || uploading}
+                />
 
-                  <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-3 text-blue-600">
-                    {uploading ? (
-                      <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <UploadCloud size={24} />
+                {/* Если компания уже верифицирована и документы загружены:
+                    В режиме просмотра дропзона скрыта, в режиме редактирования - компактная кнопка */}
+                {isVerified && hasDocuments ? (
+                  isEditing && (
+                    <div className="pt-1 pb-3">
+                      <button 
+                        type="button" 
+                        disabled={uploading} 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl text-xs font-bold text-blue-700 transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                      >
+                        <UploadCloud size={16} />
+                        <span>{t('addMoreDocsBtn', '+ Прикрепить дополнительный документ')}</span>
+                      </button>
+                      {uploadError && (
+                        <p className="text-xs text-rose-500 font-medium mt-2">{uploadError}</p>
+                      )}
+                    </div>
+                  )
+                ) : (
+                  /* Стандартная полноразмерная дропзона */
+                  <div 
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
+                      isDragging 
+                        ? 'border-blue-500 bg-blue-50/70 scale-[1.01]' 
+                        : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-3 text-blue-600">
+                      {uploading ? (
+                        <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <UploadCloud size={24} />
+                      )}
+                    </div>
+                    
+                    <p className="text-sm font-bold text-slate-700 mb-1">
+                      {uploading 
+                        ? t('uploadingDocs', 'Загрузка документов...') 
+                        : t('companyDocsDesc', 'Свидетельство, Выписка ЕГРЮЛ, Патент, Устав')}
+                    </p>
+                    <p className="text-xs text-slate-400 mb-4">
+                      {t('companyDocsDropHint', 'Перетащите файлы сюда или выберите на компьютере')}
+                    </p>
+
+                    <button 
+                      type="button" 
+                      disabled={!isEditable || uploading} 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-5 py-2.5 bg-white border border-slate-200 shadow-sm rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                    >
+                      {t('chooseFilesBtn', 'Выбрать файлы')}
+                    </button>
+
+                    {uploadError && (
+                      <p className="text-xs text-rose-500 font-medium mt-3">{uploadError}</p>
                     )}
                   </div>
-                  
-                  <p className="text-sm font-bold text-slate-700 mb-1">
-                    {uploading 
-                      ? t('uploadingDocs', 'Загрузка документов...') 
-                      : t('companyDocsDesc', 'Свидетельство, Выписка ЕГРЮЛ, Патент, Устав')}
-                  </p>
-                  <p className="text-xs text-slate-400 mb-4">
-                    {t('companyDocsDropHint', 'Перетащите файлы сюда или выберите на компьютере')}
-                  </p>
+                )}
 
-                  <button 
-                    type="button" 
-                    disabled={!isEditable || uploading} 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-5 py-2.5 bg-white border border-slate-200 shadow-sm rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
-                  >
-                    {t('chooseFilesBtn', 'Выбрать файлы')}
-                  </button>
-
-                  {uploadError && (
-                    <p className="text-xs text-rose-500 font-medium mt-3">{uploadError}</p>
-                  )}
-                </div>
-
-                {/* Список загруженных документов */}
+                {/* Список загруженных документов с бейджами проверки */}
                 {documents.length > 0 && (
                   <div className="space-y-2 mt-4">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
@@ -915,27 +1191,38 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                           key={doc.id} 
                           className="flex items-center justify-between p-3.5 bg-slate-50/80 border border-slate-200 rounded-xl hover:bg-slate-100/60 transition-colors"
                         >
-                          <div className="flex items-center space-x-3 overflow-hidden">
+                          <div className="flex items-center space-x-3 overflow-hidden min-w-0 flex-1">
                             <div className="p-2 bg-white rounded-lg border border-slate-200 shadow-xs shrink-0">
                               {getFileIcon(doc.fileName || doc.name)}
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                               <p className="text-xs font-bold text-slate-800 truncate">{doc.name || doc.fileName}</p>
                               <p className="text-[11px] text-slate-400">
                                 {formatFileSize(doc.fileSize)} {doc.createdAt ? `• ${new Date(doc.createdAt).toLocaleDateString()}` : ''}
                               </p>
                             </div>
                           </div>
-                          {isEditable && (
-                            <button 
-                              type="button" 
-                              onClick={() => handleDeleteDocument(doc.id)} 
-                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors ml-2 shrink-0 cursor-pointer"
-                              title={t('deleteDocumentTooltip', 'Удалить документ')}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          )}
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            {/* Зеленый бейдж проверки документа администратором */}
+                            {isVerified && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-200/80 text-emerald-700 rounded-lg text-[11px] font-bold">
+                                <CheckCircle2 size={12} className="text-emerald-500" />
+                                {t('docVerifiedBadge', 'Проверено администратором ✔️')}
+                              </span>
+                            )}
+
+                            {isEditable && (
+                              <button 
+                                type="button" 
+                                onClick={() => handleDeleteDocument(doc.id)} 
+                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors shrink-0 cursor-pointer"
+                                title={t('deleteDocumentTooltip', 'Удалить документ')}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -943,35 +1230,114 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                 )}
               </div>
 
-              {/* 5. Главная кнопка отправки на модерацию (с валидацией загруженных документов) */}
-              {isEditable && (
-                <div className="pt-6 border-t border-slate-100 space-y-3">
-                  {!hasDocuments && (
-                    <div className="flex items-center gap-2.5 p-3.5 bg-amber-50 border border-amber-200/80 rounded-xl text-xs font-semibold text-amber-800 animate-in fade-in">
-                      <AlertCircle size={16} className="text-amber-600 shrink-0" />
-                      <span>{t('attachDocsToSubmit', 'Прикрепите документы для отправки на проверку')}</span>
+              {/* 5. Кнопки действий: Режим просмотра vs Режим редактирования */}
+              {isOwner && (
+                <div className="pt-6 border-t border-slate-100">
+                  {isVerified ? (
+                    !isEditing ? (
+                      /* ВЕРИФИЦИРОВАН: Режим просмотра */
+                      <div className="flex flex-col sm:flex-row items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={handleStartEdit}
+                          className={`w-full sm:flex-1 py-3.5 px-6 border font-bold rounded-2xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-[0.99] ${
+                            isDarkMode 
+                              ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' 
+                              : 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700'
+                          }`}
+                        >
+                          <Edit3 size={18} />
+                          <span>{t('editProfileBtn', 'Редактировать профиль')}</span>
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => setShowCompanyCard(true)}
+                          className="w-full sm:flex-1 py-3.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-[0.99]"
+                        >
+                          <FileText size={18} />
+                          <span>{t('downloadCompanyCard', 'Скачать карточку предприятия (PDF)')}</span>
+                        </button>
+                      </div>
+                    ) : (
+                      /* ВЕРИФИЦИРОВАН: Режим редактирования */
+                      <div className="space-y-4">
+                        {hasChanges && (
+                          <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 text-xs text-amber-800 animate-in fade-in">
+                            <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="font-bold">{lang === 'RU' ? 'Внимание к изменениям' : 'Üns beriň'}</p>
+                              <p className="mt-0.5 leading-relaxed">
+                                {t('resubmitWarning', 'Внимание: при изменении реквизитов статус верификации компании будет временно приостановлен до проверки администратором.')}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={handleCancelEdit}
+                            disabled={saving}
+                            className="w-full sm:w-auto px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition-all text-sm cursor-pointer"
+                          >
+                            {t('cancelEditBtn', 'Отмена')}
+                          </button>
+
+                          {hasChanges ? (
+                            <button
+                              type="submit"
+                              disabled={saving || !hasDocuments}
+                              className="w-full sm:flex-1 py-4 px-6 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-amber-600/20 flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-[0.99]"
+                            >
+                              {saving ? (
+                                <>
+                                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  <span>{t('submitting', 'Отправка...')}</span>
+                                </>
+                              ) : (
+                                <span>{t('resubmitBtn', 'Сохранить и отправить на повторную проверку')}</span>
+                              )}
+                            </button>
+                          ) : (
+                            <div className="text-xs text-slate-400 italic px-2">
+                              {lang === 'RU' ? 'Измените поля, чтобы отправить на повторную проверку' : 'Gaýtadan barlaga ibermek üçin maglumatlary üýtgediň'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    /* НЕ ВЕРИФИЦИРОВАН: Стандартная кнопка отправки на модерацию */
+                    <div className="space-y-3">
+                      {!hasDocuments && (
+                        <div className="flex items-center gap-2.5 p-3.5 bg-amber-50 border border-amber-200/80 rounded-xl text-xs font-semibold text-amber-800 animate-in fade-in">
+                          <AlertCircle size={16} className="text-amber-600 shrink-0" />
+                          <span>{t('attachDocsToSubmit', 'Прикрепите документы для отправки на проверку')}</span>
+                        </div>
+                      )}
+
+                      <button 
+                        type="submit" 
+                        disabled={isSubmitDisabled} 
+                        title={!hasDocuments ? t('attachDocsToSubmit', 'Прикрепите документы для отправки на проверку') : ''}
+                        className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center space-x-2 text-base ${
+                          isSubmitDisabled
+                            ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-50 shadow-none'
+                            : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white shadow-lg shadow-blue-500/25 cursor-pointer'
+                        }`}
+                      >
+                        {saving ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>{t('submitting', 'Отправка...')}</span>
+                          </>
+                        ) : (
+                          <span>{t('submitToModeration', 'Отправить профиль на модерацию')}</span>
+                        )}
+                      </button>
                     </div>
                   )}
-
-                  <button 
-                    type="submit" 
-                    disabled={isSubmitDisabled} 
-                    title={!hasDocuments ? t('attachDocsToSubmit', 'Прикрепите документы для отправки на проверку') : ''}
-                    className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center space-x-2 text-base ${
-                      isSubmitDisabled
-                        ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-50 shadow-none'
-                        : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white shadow-lg shadow-blue-500/25 cursor-pointer'
-                    }`}
-                  >
-                    {saving ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>{t('submitting', 'Отправка...')}</span>
-                      </>
-                    ) : (
-                      <span>{t('submitToModeration', 'Отправить профиль на модерацию')}</span>
-                    )}
-                  </button>
                 </div>
               )}
             </form>
@@ -1127,6 +1493,186 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
           </div>
         </div>
       </div>
+
+      {/* Модальное окно "Карточка предприятия (PDF / Печать)" */}
+      {showCompanyCard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:p-0 print:bg-white print:static print:inset-auto">
+          <style>{`
+            @media print {
+              body * {
+                visibility: hidden !important;
+              }
+              #company-card-printable, #company-card-printable * {
+                visibility: visible !important;
+              }
+              #company-card-printable {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                border: none !important;
+              }
+            }
+          `}</style>
+          <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden print:shadow-none print:max-w-none print:max-h-none print:w-full print:rounded-none">
+            
+            {/* Панель управления печатью (скрыта при печати) */}
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 print:hidden">
+              <div className="flex items-center gap-2">
+                <FileText className="text-blue-600" size={20} />
+                <h3 className="font-bold text-slate-800 text-sm">
+                  {t('companyCardOfficial', 'ОФИЦИАЛЬНАЯ КАРТОЧКА ПРЕДПРИЯТИЯ')}
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm shadow-blue-500/20 active:scale-95"
+                >
+                  <Printer size={15} />
+                  <span>{t('printCompanyCard', 'Печать / Сохранить в PDF')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCompanyCard(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Карточка предприятия */}
+            <div id="company-card-printable" className="p-8 overflow-y-auto space-y-6 text-slate-800 print:overflow-visible print:p-6 bg-white">
+              
+              {/* Фирменная шапка с гербом / заголовком */}
+              <div className="border-b-2 border-slate-900 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    TÜRKMENISTANYŇ DÖWLET SAGLYK GORAÝYŞ SANLY TENDER MEÝDANÇASY
+                  </p>
+                  <h2 className="text-2xl font-black text-slate-900 mt-1">{supplier.name}</h2>
+                  <p className="text-xs text-slate-600 font-medium mt-0.5">
+                    {supplier.type === 'ENTREPRENEUR' ? 'Hususy telekeçi (ИП)' : 
+                     supplier.type === 'BUSINESS_SOCIETY' ? 'Hojalyk jemgyýeti (ХО)' : 
+                     supplier.type === 'PRIVATE_ENTERPRISE' ? 'Hususy kärhana (ЧП)' : 
+                     supplier.type === 'DAÝHAN_HOJALYGY' ? 'Daýhan hojalygy (DH)' : supplier.type}
+                  </p>
+                </div>
+                <div className="text-left sm:text-right shrink-0">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-full text-xs font-black">
+                    <CheckCircle2 size={14} className="text-emerald-600" />
+                    {t('verifiedStateBadge', 'Верифицированный участник электронных торгов')}
+                  </span>
+                  <p className="text-[11px] text-slate-400 mt-1 font-mono">
+                    {lang === 'RU' ? 'Дата выгрузки' : 'Döredilen senesi'}: {new Date().toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Сетка основных реквизитов */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                
+                {/* Блок адреса и контактов */}
+                <div className="p-4 bg-slate-50 rounded-2xl space-y-2.5 border border-slate-200/80">
+                  <p className="font-black text-slate-400 uppercase tracking-wider text-[10px]">
+                    {t('contactInfo', 'Адрес и контакты')}
+                  </p>
+                  <div>
+                    <p className="text-slate-500">{t('regionLabel', 'Велаят / Регион')}:</p>
+                    <p className="font-bold text-slate-800">{getSelectedRegionLabel() || supplier.region || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">{t('exactAddress', 'Точный адрес')}:</p>
+                    <p className="font-bold text-slate-800">{formData.address || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">{t('workPhone', 'Телефон')}:</p>
+                    <p className="font-bold text-slate-800">{formData.phone || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Email:</p>
+                    <p className="font-bold text-slate-800">{formData.email || '-'}</p>
+                  </div>
+                </div>
+
+                {/* Блок банковских реквизитов */}
+                <div className="p-4 bg-slate-50 rounded-2xl space-y-2.5 border border-slate-200/80">
+                  <p className="font-black text-slate-400 uppercase tracking-wider text-[10px]">
+                    {t('bankDetails', 'Банковские реквизиты')}
+                  </p>
+                  <div>
+                    <p className="text-slate-500">STŞK / Салык коду:</p>
+                    <p className="font-bold text-slate-900 text-sm tracking-wide">{supplier.taxId}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">{t('bankNameLabel', 'Банк')}:</p>
+                    <p className="font-bold text-slate-800">{formData.bankName || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">{t('bankAccountLabel', 'Расчетный счет')}:</p>
+                    <p className="font-bold text-slate-800 tracking-wider font-mono">{formData.bankAccount || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">{t('bankMfoLabel', 'МФО банка')}:</p>
+                    <p className="font-bold text-slate-800">{formData.bankMfo || '-'}</p>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Данные руководителя */}
+              <div className="p-4 bg-slate-50 rounded-2xl space-y-2 border border-slate-200/80 text-xs">
+                <p className="font-black text-slate-400 uppercase tracking-wider text-[10px]">
+                  {t('directorData', 'Данные руководителя')}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-slate-500">{t('passportSeriesLabel', 'Серия и номер паспорта')}:</p>
+                    <p className="font-bold text-slate-800 text-sm tracking-wider font-mono">{formData.passportSeries || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">{t('passportIssuedLabel', 'Кем и когда выдан')}:</p>
+                    <p className="font-bold text-slate-800">{formData.passportIssuedBy || '-'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Проверенные документы */}
+              {documents.length > 0 && (
+                <div className="text-xs space-y-2">
+                  <p className="font-black text-slate-400 uppercase tracking-wider text-[10px]">
+                    {t('uploadedDocsCount', 'Проверенные регистрационные документы')} ({documents.length})
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {documents.map(doc => (
+                      <div key={doc.id} className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <span className="font-medium text-slate-700 truncate">{doc.name || doc.fileName}</span>
+                        <span className="text-[10px] font-bold text-emerald-600 shrink-0 ml-2">✓ {t('statusVerifiedBadge', 'Проверено')}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Официальный подвал с электронной подписью системы */}
+              <div className="pt-5 border-t-2 border-slate-200 flex flex-col sm:flex-row items-center justify-between text-[10px] text-slate-400 gap-2">
+                <p>
+                  {lang === 'RU' 
+                    ? 'Электронная торговая площадка Министерства здравоохранения Туркменистана • Сформировано автоматически' 
+                    : 'Türkmenistanyň Saglygy goraýyş ministrliginiň elektron söwda meýdançasy • Awtomatiki döredildi'}
+                </p>
+                <p className="font-mono">ID: {supplier.id} • STŞK: {supplier.taxId}</p>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

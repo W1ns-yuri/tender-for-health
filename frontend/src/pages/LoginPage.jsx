@@ -333,7 +333,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                           required
                           value={regData.firstName}
                           onChange={(e) => setRegData({ ...regData, firstName: e.target.value })}
-                          placeholder="Иван"
+                          placeholder="Maksat"
                           className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
                         />
                       </div>
@@ -349,7 +349,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                           required
                           value={regData.lastName}
                           onChange={(e) => setRegData({ ...regData, lastName: e.target.value })}
-                          placeholder="Иванов"
+                          placeholder="Orazow"
                           className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
                         />
                       </div>
@@ -457,7 +457,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                         required
                         value={regData.companyName}
                         onChange={(e) => setRegData({ ...regData, companyName: e.target.value })}
-                        placeholder="Altyn Zaman"
+                        placeholder="Alem Tilsimat"
                         className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
                       />
                     </div>

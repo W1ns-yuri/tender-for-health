@@ -21,21 +21,20 @@ const storage = multer.diskStorage({
     },
 });
 
-// Фильтр типов файлов (разрешаем PDF, DOC, DOCX, PNG, JPG)
+// Фильтр типов файлов (разрешаем строго PDF, JPG, JPEG, PNG для безопасности)
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = [
+    const allowedMimeTypes = [
         'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'image/jpeg',
         'image/png',
-        'text/plain',
     ];
+    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png'];
+    const ext = path.extname(file.originalname).toLowerCase();
 
-    if (allowedTypes.includes(file.mimetype)) {
+    if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(ext)) {
         cb(null, true);
     } else {
-        cb(null, false);
+        cb(new Error('Недопустимый формат файла. Разрешены только PDF, JPG и PNG'), false);
     }
 };
 

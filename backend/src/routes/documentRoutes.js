@@ -8,8 +8,15 @@ const router = express.Router();
 // Получить список документов (по tenderId, supplierId, offerId)
 router.get('/', authMiddleware, getDocuments);
 
-// Принимаем один файл из поля "file"
-router.post('/upload', authMiddleware, upload.single('file'), uploadDocument);
+// Принимаем один файл из поля "file" с обработкой ошибок формата
+router.post('/upload', authMiddleware, (req, res, next) => {
+    upload.single('file')(req, res, (err) => {
+        if (err) {
+            return res.status(400).json({ error: err.message || 'Ошибка при загрузке файла' });
+        }
+        next();
+    });
+}, uploadDocument);
 
 // Удалить документ по id
 router.delete('/:id', authMiddleware, deleteDocument);

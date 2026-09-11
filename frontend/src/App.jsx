@@ -176,9 +176,9 @@ export default function App() {
                         onChange={(e) => setLang(e.target.value)}
                         className={`w-full p-2.5 rounded-lg border text-xs ${theme.inputBg}`}
                       >
-                        <option value="RU">🇷🇺 Русский (По умолчанию)</option>
-                        <option value="TM">🇹🇲 Türkmençe</option>
-                        <option value="EN">🇬🇧 English</option>
+                        <option value="RU">Русский (По умолчанию)</option>
+                        <option value="TM">Türkmençe</option>
+                        <option value="EN">English</option>
                       </select>
                     </div>
                   </div>
