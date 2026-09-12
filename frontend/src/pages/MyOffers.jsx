@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit2, Trash2, Eye, Filter, RefreshCw, Send, Building2 } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Eye, Filter, RefreshCw, Send, Building2, AlertCircle } from 'lucide-react';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
@@ -84,6 +84,19 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
 
   return (
     <div className="space-y-5 animate-in fade-in duration-300 pb-12">
+      {/* Баннер приостановки, если профиль поставщика на повторной модерации */}
+      {!isAdmin && offers.some(o => o.supplier?.verificationStatus === 'PENDING_REVIEW') && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start space-x-3 text-xs text-amber-800 animate-in fade-in">
+          <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold">{t('resubmitWarningTitle', 'Повторная модерация')}</p>
+            <p className="mt-0.5 leading-relaxed">
+              {t('offersSuspendedWarning', 'Ваш профиль находится на повторной модерации. До подтверждения администратором участие в торгах ограничено, а поданные предложения временно приостановлены.')}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* 1. Заголовок страницы и действия */}
       <div className="flex items-center justify-between">
         <div>
@@ -237,7 +250,18 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
                       <td className="py-3 px-3 text-center text-slate-500 font-mono">{item.number || item.code}</td>
 
                       {/* Статус */}
-                      <td className="py-3 px-3 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
+                      <td className="py-3 px-3 text-center">
+                        {item.supplier?.verificationStatus === 'PENDING_REVIEW' ? (
+                          <div className="flex flex-col items-center gap-1">
+                            {getStatusBadge(item.status, lang, isDarkMode)}
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200" title={t('offersSuspendedWarning')}>
+                              {t('offerSuspendedBadge', '⏳ Приостановлено (проверка профиля)')}
+                            </span>
+                          </div>
+                        ) : (
+                          getStatusBadge(item.status, lang, isDarkMode)
+                        )}
+                      </td>
 
                       {/* Условия оплаты */}
                       <td className="py-3 px-3 text-center text-slate-500 text-[11px] max-w-xs truncate">{item.paymentTerms || item.terms || '-'}</td>

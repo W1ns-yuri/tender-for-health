@@ -35,11 +35,17 @@ const register = async (req, res) => {
             },
         });
 
+        // Очищаем наименование от случайных приставок формы
+        let cleanCompanyName = companyName ? companyName.trim() : '';
+        if (cleanCompanyName) {
+            cleanCompanyName = cleanCompanyName.replace(/^(ип|хо|ооо|чп|hj|dh|hk|telekeçi|hojalyk\s+jemgyýeti|hususy\s+telekeçi|hususy\s+kärhana)\s*["«'”]?\s*/i, '').replace(/["»'”]$/, '').trim() || cleanCompanyName;
+        }
+
         // Создаем профиль поставщика при регистрации
         await prisma.supplier.create({
             data: {
                 userId: newUser.id,
-                name: companyName || (firstName + ' ' + lastName),
+                name: cleanCompanyName || (firstName + ' ' + lastName),
                 type: companyType || 'ENTREPRENEUR',
                 taxId: taxId || null,
                 verificationStatus: 'PENDING',

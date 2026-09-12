@@ -132,6 +132,7 @@ model User {
   suppliers Supplier[]
   tenders   Tender[]   @relation("CreatedTenders")
   logs      Log[]
+  moderationLogs SupplierModerationLog[]
 
   // Поля безопасности из UserAuth (ERD)
   lastLogin         DateTime? @map("last_login")
@@ -481,6 +482,7 @@ model Supplier {
 
   offers Offer[]
   files  SupplierFile[]
+  moderationLogs SupplierModerationLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -676,3 +678,19 @@ model OfferFile {
 
   @@map("offer_files")
 }
+
+model SupplierModerationLog {
+  id             String    @id @default(uuid())
+  supplierId     String    @map("supplier_id")
+  supplier       Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  adminId        String?   @map("admin_id")
+  admin          User?     @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  action         String    // 'APPROVED', 'REJECTED', 'SUBMITTED', 'RESUBMITTED'
+  previousStatus String?   @map("previous_status")
+  newStatus      String    @map("new_status")
+  reason         String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@map("supplier_moderation_logs")
+}
+

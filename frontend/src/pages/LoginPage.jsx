@@ -64,7 +64,11 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
     setLoading(true);
 
     try {
-      const res = await API.post('/auth/register', regData);
+      const cleanedName = regData.companyName.trim()
+        .replace(/^(ип|хо|ооо|чп|hj|dh|hk|telekeçi|hojalyk\s+jemgyýeti|hususy\s+telekeçi|hususy\s+kärhana)\s*["«'”]?\s*/i, '')
+        .replace(/["»'”]$/, '').trim() || regData.companyName.trim();
+
+      const res = await API.post('/auth/register', { ...regData, companyName: cleanedName });
       if (res.data?.token) {
         localStorage.setItem('tender_token', res.data.token);
         localStorage.setItem('tender_user', JSON.stringify(res.data.user));
@@ -188,7 +192,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
 
           {/* Header Формы */}
           <div className="mb-10 text-center">
-            {/* Мини-логотип TU (вместо старого чемодана) */}
+            {/* Мини-логотип TU */}
             <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/30 mx-auto">
               <span className="text-white font-black text-2xl">TU</span>
             </div>
@@ -290,7 +294,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleQuickLogin('supplier1', 'password123')}
+                    onClick={() => handleQuickLogin('supplier@1.com', 'password123')}
                     className="flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold transition-all hover:border-blue-300 hover:text-blue-600 active:scale-95 shadow-xs"
                   >
                     <Building2 size={18} className="text-slate-400" /> Supplier
@@ -448,7 +452,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
 
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                      {lang === 'RU' ? 'Наименование компании / ИП' : 'Kärhananyň ady'}*
+                      {lang === 'RU' ? 'Наименование компании / бренда' : 'Kärhananyň / brendiň ady'}*
                     </label>
                     <div className="relative flex items-center">
                       <Building2 size={18} className="absolute left-4 text-slate-400" />
@@ -457,10 +461,13 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                         required
                         value={regData.companyName}
                         onChange={(e) => setRegData({ ...regData, companyName: e.target.value })}
-                        placeholder="Alem Tilsimat"
+                        placeholder={lang === 'RU' ? "например, Медик-Фарм" : "mysal üçin, Medik-Farm"}
                         className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
                       />
                     </div>
+                    <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                      {lang === 'RU' ? 'Указывайте только название бренда без организационной формы (ИП, ХО, ЧП)' : 'Diňe brendiň adyny ýazyň (HJ, HK, Telekeçi goşmazdan)'}
+                    </p>
                   </div>
 
                   <div>
