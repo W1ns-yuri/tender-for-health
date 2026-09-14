@@ -97,7 +97,7 @@ export default function App() {
     setUser(userData);
     setToken(userToken);
     setRole(userData.roleType || 'SUPPLIER');
-    navigate('/dashboard');
+    navigate('/dashboard', { replace: true });
   };
 
   const handleLogout = () => {
@@ -156,6 +156,7 @@ export default function App() {
           <ErrorBoundary onReset={() => navigate('/dashboard')}>
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/login" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={
                 <Dashboard
                   role={role}
@@ -205,6 +206,7 @@ export default function App() {
                   </div>
                 </div>
               } />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </ErrorBoundary>
         </main>
