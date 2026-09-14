@@ -116,7 +116,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
               <FileText size={24} />
             </div>
             <div>
-              <h3 className="text-2xl font-bold">{stats.openTenders}</h3>
+              <h3 className="text-2xl font-bold tabular-nums">{stats.openTenders}</h3>
               <p className={`text-xs font-medium ${theme.subText}`}>{lang === 'RU' ? 'Открытых тендеров' : t('allTenders', 'Ähli tenderler')}</p>
             </div>
           </div>
@@ -126,7 +126,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
               <Send size={24} />
             </div>
             <div>
-              <h3 className="text-2xl font-bold">{stats.totalOffers}</h3>
+              <h3 className="text-2xl font-bold tabular-nums">{stats.totalOffers}</h3>
               <p className={`text-xs font-medium ${theme.subText}`}>{lang === 'RU' ? 'Поданных предложений' : t('totalOffersSubmitted', 'Jemi tabşyrylan teklipler')}</p>
             </div>
           </div>
@@ -136,7 +136,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
               <Users size={24} />
             </div>
             <div>
-              <h3 className="text-2xl font-bold">{stats.totalSuppliers}</h3>
+              <h3 className="text-2xl font-bold tabular-nums">{stats.totalSuppliers}</h3>
               <p className={`text-xs font-medium ${theme.subText}`}>{lang === 'RU' ? 'Всех поставщиков' : t('allSuppliers', 'Ähli üpjün edijiler')}</p>
             </div>
           </div>
@@ -151,7 +151,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
               <span className="text-sm font-medium">{t('tenders', 'Tenders')}</span>
             </div>
             <div className="text-right">
-              <span className="text-2xl font-bold">{stats.openTenders}</span>
+              <span className="text-2xl font-bold tabular-nums">{stats.openTenders}</span>
               <span className={`text-xs block font-medium ${theme.subText}`}>{t('totalOpenTenders', 'Jemi açyk tenderler')}</span>
             </div>
           </div>
@@ -164,7 +164,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
               <span className="text-sm font-medium">{t('myOffers', 'Teklipler')}</span>
             </div>
             <div className="text-right">
-              <span className="text-2xl font-bold">{stats.totalOffers}</span>
+              <span className="text-2xl font-bold tabular-nums">{stats.totalOffers}</span>
               <span className={`text-xs block font-medium ${theme.subText}`}>{t('totalOffersSubmitted', 'Jemi tabşyrylan teklipler')}</span>
             </div>
           </div>
@@ -177,7 +177,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
               <span className="text-sm font-medium">{t('winners', 'Ýeňijilik')}</span>
             </div>
             <div className="text-right">
-              <span className="text-2xl font-bold">{stats.winnersCount}</span>
+              <span className="text-2xl font-bold tabular-nums">{stats.winnersCount}</span>
               <span className={`text-xs block font-medium ${theme.subText}`}>{t('totalWinners', 'Jemi ýeňiji bolunan tenderler')}</span>
             </div>
           </div>
@@ -221,7 +221,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                 ) : (
                   tenders.map((item, idx) => (
                     <tr key={item.id || idx} className={`${theme.tableRowHover} transition-colors`}>
-                      <td className="py-3.5 px-4 text-center font-semibold font-mono">{safeString(item.tenderNumber)}</td>
+                      <td className="py-3.5 px-4 text-center font-semibold font-mono tabular-nums">{safeString(item.tenderNumber)}</td>
                       <td className="py-3.5 px-4 text-left font-medium max-w-[180px]">
                         <span className="line-clamp-2" title={safeString(item.title)}>{safeString(item.title)}</span>
                       </td>
@@ -232,8 +232,8 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                       </td>
                       <td className="py-3.5 px-3 text-center">{getTypeBadge(item.type, lang, isDarkMode)}</td>
                       <td className="py-3.5 px-3 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
-                      <td className={`py-3.5 px-3 text-center ${theme.subText}`}>{formatDate(item.announcementDate || item.date)}</td>
-                      <td className={`py-3.5 px-3 text-center ${theme.subText}`}>{formatDate(item.deadline)}</td>
+                      <td className={`py-3.5 px-3 text-center tabular-nums ${theme.subText}`}>{formatDate(item.announcementDate || item.date)}</td>
+                      <td className={`py-3.5 px-3 text-center tabular-nums ${theme.subText}`}>{formatDate(item.deadline)}</td>
                       <td className="py-3.5 px-4 text-left max-w-xs">
                         <div className={`line-clamp-2 text-xs leading-relaxed ${theme.subText}`} title={renderTechSpecs(item)}>
                           {renderTechSpecs(item)}
@@ -259,8 +259,8 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
         </div>
       </div>
 
-      {/* Секция 2: Последние предложения */}
-      <div>
+      {/* Секция 2: Последние предложения (увеличенный внешний отступ для четкого разделения блоков) */}
+      <div className="!mt-10">
         <div className="flex items-center justify-between mb-3 px-1">
           <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">{t('recentOffers', 'Soňky tekliplerim')}</h3>
           <button onClick={() => onNavigate('offers')} className={`text-xs font-semibold hover:underline ${theme.primaryText}`}>
@@ -273,7 +273,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
             <table className="w-full text-left text-xs border-collapse">
               <thead className={theme.tableHeaderBg}>
                 <tr className="border-b border-slate-200 dark:border-slate-800">
-                  <th className="py-3 px-4 text-left">Tender</th>
+                  <th className="py-3 px-4 text-left">{t('tenderOrName', 'Тендер / Наименование')}</th>
                   <th className="py-3 px-3 text-center">{t('type', 'Görnüşi')}</th>
                   <th className="py-3 px-4 text-center">{t('client', 'Заказчик')}</th>
                   <th className="py-3 px-3 text-center">{t('currency', 'Walýuta')}</th>
@@ -297,7 +297,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                   myOffers.map((item, idx) => (
                     <tr key={item.id || idx} className={`${theme.tableRowHover} transition-colors`}>
                       <td className="py-3.5 px-4 text-left font-semibold">
-                        <span className="font-mono">{safeString(item.tender?.tenderNumber || item.lot)}</span>
+                        <span className="font-mono tabular-nums">{safeString(item.tender?.tenderNumber || item.lot)}</span>
                         {item.tender?.title && (
                           <span className="block text-xs font-normal text-slate-500 line-clamp-1 max-w-[200px]" title={item.tender.title}>
                             {item.tender.title}
@@ -305,18 +305,20 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                         )}
                       </td>
                       <td className="py-3.5 px-3 text-center">{getTypeBadge(item.tender?.type || item.type, lang, isDarkMode)}</td>
-                      <td className={`py-3.5 px-4 text-center font-bold ${theme.primaryText}`}>
-                        {safeString(item.tender?.client?.name || item.tender?.createdBy?.firstName || "-")}
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="text-slate-800 dark:text-slate-200 font-medium hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors">
+                          {safeString(item.tender?.client?.name || item.tender?.createdBy?.firstName || "-")}
+                        </span>
                       </td>
-                      <td className="py-3.5 px-3 text-center font-medium">{safeString(item.baseCurrency?.code || item.currency)}</td>
-                      <td className={`py-3.5 px-4 text-center font-mono ${theme.subText}`}>{safeString(item.number || item.code)}</td>
+                      <td className="py-3.5 px-3 text-center font-medium tabular-nums">{safeString(item.baseCurrency?.code || item.currency)}</td>
+                      <td className={`py-3.5 px-4 text-center font-mono tabular-nums ${theme.subText}`}>{safeString(item.number || item.code)}</td>
                       <td className="py-3.5 px-3 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
                       <td className="py-3.5 px-4 text-center max-w-[180px]">
                         <div className={`line-clamp-2 text-xs ${theme.subText}`} title={safeString(item.paymentTerms || item.terms)}>
                           {safeString(item.paymentTerms || item.terms)}
                         </div>
                       </td>
-                      <td className={`py-3.5 px-3 text-center ${theme.subText}`}>{formatDate(item.createdAt || item.date)}</td>
+                      <td className={`py-3.5 px-3 text-center tabular-nums ${theme.subText}`}>{formatDate(item.createdAt || item.date)}</td>
                       <td className="py-3.5 px-4 text-center">
                         <div className="flex items-center justify-center gap-1.5">
                           <button

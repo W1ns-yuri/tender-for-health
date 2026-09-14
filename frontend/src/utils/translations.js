@@ -48,6 +48,7 @@ export const translations = {
     suppliersListDesc: 'Ulgamda hasaba alnan üpjün edijiler',
     recentTenders: 'Soňky açyk tenderler',
     recentOffers: 'Soňky tekliplerim',
+    tenderOrName: 'Tender / Ady',
     offerDate: 'Teklip berlen sene',
 
     // Метрики
@@ -421,6 +422,7 @@ export const translations = {
     suppliersListDesc: 'Зарегистрированные компании и участники торгов',
     recentTenders: 'Последние открытые тендеры',
     recentOffers: 'Последние поданные предложения',
+    tenderOrName: 'Тендер / Наименование',
     offerDate: 'Дата подачи заявки',
 
     // Метрики
@@ -801,6 +803,7 @@ export const translations = {
     suppliersListDesc: 'Registered companies and bidding participants',
     recentTenders: 'Recent Open Tenders',
     recentOffers: 'Recent Submitted Offers',
+    tenderOrName: 'Tender / Name',
     offerDate: 'Submission Date',
 
     // Metrics
