@@ -184,168 +184,172 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
         </div>
       )}
 
-      {/* Таблица 1 */}
-      <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden ${theme.tableCardBorderTop}`}>
-        <div className={`p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between ${theme.cardHeaderBg}`}>
-          <h3 className="font-bold text-base">{t('recentTenders', 'Soňky açyk tenderler')}</h3>
+      {/* Секция 1: Последние открытые тендеры */}
+      <div>
+        <div className="flex items-center justify-between mb-3 px-1">
+          <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">{t('recentTenders', 'Soňky açyk tenderler')}</h3>
           <button onClick={() => onNavigate('tenders')} className={`text-xs font-semibold hover:underline ${theme.primaryText}`}>
             {t('allBtn', 'Ähli')}
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className={theme.tableHeaderBg}>
-                <th className="py-3 px-4 w-28 text-center">{t('lotNo', 'Lot №')}</th>
-                <th className="py-3 px-4 w-44 text-left">{t('title', 'Ady')}</th>
-                <th className="py-3 px-4 max-w-xs text-left">{t('description', 'Mazmuny')}</th>
-                <th className="py-3 px-3 text-center">{t('type', 'Görnüşi')}</th>
-                <th className="py-3 px-3 text-center">{t('status', 'Status')}</th>
-                <th className="py-3 px-3 text-center">{t('announcementDate', 'Yglan edilen senesi')}</th>
-                <th className="py-3 px-3 text-center">{t('deadline', 'Soňky möhleti')}</th>
-                <th className="py-3 px-4 max-w-xs text-left">{t('technicalSpecs', 'Tehniki şartler')}</th>
-                <th className="py-3 px-4 text-center">{t('action', 'Amal')}</th>
-              </tr>
-            </thead>
-            <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-              {loadingTenders ? (
-                <tr>
-                  <td colSpan="9" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
+        <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className={theme.tableHeaderBg}>
+                <tr className="border-b border-slate-200 dark:border-slate-800">
+                  <th className="py-3 px-4 w-28 text-center">{t('lotNo', 'Lot №')}</th>
+                  <th className="py-3 px-4 w-44 text-left">{t('title', 'Ady')}</th>
+                  <th className="py-3 px-4 max-w-xs text-left">{t('description', 'Mazmuny')}</th>
+                  <th className="py-3 px-3 text-center">{t('type', 'Görnüşi')}</th>
+                  <th className="py-3 px-3 text-center">{t('status', 'Status')}</th>
+                  <th className="py-3 px-3 text-center">{t('announcementDate', 'Yglan edilen senesi')}</th>
+                  <th className="py-3 px-3 text-center">{t('deadline', 'Soňky möhleti')}</th>
+                  <th className="py-3 px-4 max-w-xs text-left">{t('technicalSpecs', 'Tehniki şartler')}</th>
+                  <th className="py-3 px-4 text-center">{t('action', 'Amal')}</th>
                 </tr>
-              ) : tenders.length === 0 ? (
-                <tr>
-                  <td colSpan="9" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
-                </tr>
-              ) : (
-                tenders.map((item, idx) => (
-                  <tr key={item.id || idx} className={`${theme.tableRowHover} transition-colors`}>
-                    <td className="py-3.5 px-4 text-center font-semibold font-mono">{safeString(item.tenderNumber)}</td>
-                    <td className="py-3.5 px-4 text-left font-medium max-w-[180px]">
-                      <span className="line-clamp-2" title={safeString(item.title)}>{safeString(item.title)}</span>
-                    </td>
-                    <td className="py-3.5 px-4 text-left max-w-xs">
-                      <div className={`line-clamp-2 text-xs leading-relaxed ${theme.subText}`} title={safeString(item.description)}>
-                        {safeString(item.description)}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-3 text-center">{getTypeBadge(item.type, lang, isDarkMode)}</td>
-                    <td className="py-3.5 px-3 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
-                    <td className={`py-3.5 px-3 text-center ${theme.subText}`}>{formatDate(item.announcementDate || item.date)}</td>
-                    <td className={`py-3.5 px-3 text-center ${theme.subText}`}>{formatDate(item.deadline)}</td>
-                    <td className="py-3.5 px-4 text-left max-w-xs">
-                      <div className={`line-clamp-2 text-xs leading-relaxed ${theme.subText}`} title={renderTechSpecs(item)}>
-                        {renderTechSpecs(item)}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center">
-                        <button
-                          onClick={() => onNavigate('tender-details', item.id)}
-                          className={theme.actionBtn}
-                          title={t('viewDetails', 'Детальнее')}
-                        >
-                          <Eye size={16} />
-                        </button>
-                      </div>
-                    </td>
+              </thead>
+              <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+                {loadingTenders ? (
+                  <tr>
+                    <td colSpan="9" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : tenders.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
+                  </tr>
+                ) : (
+                  tenders.map((item, idx) => (
+                    <tr key={item.id || idx} className={`${theme.tableRowHover} transition-colors`}>
+                      <td className="py-3.5 px-4 text-center font-semibold font-mono">{safeString(item.tenderNumber)}</td>
+                      <td className="py-3.5 px-4 text-left font-medium max-w-[180px]">
+                        <span className="line-clamp-2" title={safeString(item.title)}>{safeString(item.title)}</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-left max-w-xs">
+                        <div className={`line-clamp-2 text-xs leading-relaxed ${theme.subText}`} title={safeString(item.description)}>
+                          {safeString(item.description)}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-3 text-center">{getTypeBadge(item.type, lang, isDarkMode)}</td>
+                      <td className="py-3.5 px-3 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
+                      <td className={`py-3.5 px-3 text-center ${theme.subText}`}>{formatDate(item.announcementDate || item.date)}</td>
+                      <td className={`py-3.5 px-3 text-center ${theme.subText}`}>{formatDate(item.deadline)}</td>
+                      <td className="py-3.5 px-4 text-left max-w-xs">
+                        <div className={`line-clamp-2 text-xs leading-relaxed ${theme.subText}`} title={renderTechSpecs(item)}>
+                          {renderTechSpecs(item)}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex items-center justify-center">
+                          <button
+                            onClick={() => onNavigate('tender-details', item.id)}
+                            className={theme.actionBtn}
+                            title={t('viewDetails', 'Детальнее')}
+                          >
+                            <Eye size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* Таблица 2 */}
-      <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden ${theme.tableCardBorderTop}`}>
-        <div className={`p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between ${theme.cardHeaderBg}`}>
-          <h3 className="font-bold text-base">{t('recentOffers', 'Soňky tekliplerim')}</h3>
+      {/* Секция 2: Последние предложения */}
+      <div>
+        <div className="flex items-center justify-between mb-3 px-1">
+          <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">{t('recentOffers', 'Soňky tekliplerim')}</h3>
           <button onClick={() => onNavigate('offers')} className={`text-xs font-semibold hover:underline ${theme.primaryText}`}>
             {t('allBtn', 'Ähli')}
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className={theme.tableHeaderBg}>
-                <th className="py-3 px-4 text-left">Tender</th>
-                <th className="py-3 px-3 text-center">{t('type', 'Görnüşi')}</th>
-                <th className="py-3 px-4 text-center">{t('client', 'Заказчик')}</th>
-                <th className="py-3 px-3 text-center">{t('currency', 'Walýuta')}</th>
-                <th className="py-3 px-4 text-center">{t('code', 'Belgisi')}</th>
-                <th className="py-3 px-3 text-center">{t('status', 'Status')}</th>
-                <th className="py-3 px-4 text-center">{t('paymentTerms', 'Töleg şertleri')}</th>
-                <th className="py-3 px-3 text-center">{t('offerDate', 'Дата подачи заявки')}</th>
-                <th className="py-3 px-4 text-center">{t('action', 'Amal')}</th>
-              </tr>
-            </thead>
-            <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-              {loadingOffers ? (
-                <tr>
-                  <td colSpan="9" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
+        <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className={theme.tableHeaderBg}>
+                <tr className="border-b border-slate-200 dark:border-slate-800">
+                  <th className="py-3 px-4 text-left">Tender</th>
+                  <th className="py-3 px-3 text-center">{t('type', 'Görnüşi')}</th>
+                  <th className="py-3 px-4 text-center">{t('client', 'Заказчик')}</th>
+                  <th className="py-3 px-3 text-center">{t('currency', 'Walýuta')}</th>
+                  <th className="py-3 px-4 text-center">{t('code', 'Belgisi')}</th>
+                  <th className="py-3 px-3 text-center">{t('status', 'Status')}</th>
+                  <th className="py-3 px-4 text-center">{t('paymentTerms', 'Töleg şertleri')}</th>
+                  <th className="py-3 px-3 text-center">{t('offerDate', 'Дата подачи заявки')}</th>
+                  <th className="py-3 px-4 text-center">{t('action', 'Amal')}</th>
                 </tr>
-              ) : myOffers.length === 0 ? (
-                <tr>
-                  <td colSpan="9" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
-                </tr>
-              ) : (
-                myOffers.map((item, idx) => (
-                  <tr key={item.id || idx} className={`${theme.tableRowHover} transition-colors`}>
-                    <td className="py-3.5 px-4 text-left font-semibold">
-                      <span className="font-mono">{safeString(item.tender?.tenderNumber || item.lot)}</span>
-                      {item.tender?.title && (
-                        <span className="block text-xs font-normal text-slate-500 line-clamp-1 max-w-[200px]" title={item.tender.title}>
-                          {item.tender.title}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-3 text-center">{getTypeBadge(item.tender?.type || item.type, lang, isDarkMode)}</td>
-                    <td className={`py-3.5 px-4 text-center font-bold ${theme.primaryText}`}>
-                      {safeString(item.tender?.client?.name || item.tender?.createdBy?.firstName || "-")}
-                    </td>
-                    <td className="py-3.5 px-3 text-center font-medium">{safeString(item.baseCurrency?.code || item.currency)}</td>
-                    <td className={`py-3.5 px-4 text-center font-mono ${theme.subText}`}>{safeString(item.number || item.code)}</td>
-                    <td className="py-3.5 px-3 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
-                    <td className="py-3.5 px-4 text-center max-w-[180px]">
-                      <div className={`line-clamp-2 text-xs ${theme.subText}`} title={safeString(item.paymentTerms || item.terms)}>
-                        {safeString(item.paymentTerms || item.terms)}
-                      </div>
-                    </td>
-                    <td className={`py-3.5 px-3 text-center ${theme.subText}`}>{formatDate(item.createdAt || item.date)}</td>
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => onNavigate('offers', item.id)}
-                          className={theme.actionBtn}
-                          title={t('viewDetails', 'Просмотр')}
-                        >
-                          <Eye size={16} />
-                        </button>
-                        {role !== 'ADMIN' && (
-                          <>
-                            <button
-                              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 transition-all active:scale-95"
-                              title={t('edit', 'Редактировать')}
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button
-                              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95"
-                              title={t('delete', 'Удалить')}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
+              </thead>
+              <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+                {loadingOffers ? (
+                  <tr>
+                    <td colSpan="9" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : myOffers.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
+                  </tr>
+                ) : (
+                  myOffers.map((item, idx) => (
+                    <tr key={item.id || idx} className={`${theme.tableRowHover} transition-colors`}>
+                      <td className="py-3.5 px-4 text-left font-semibold">
+                        <span className="font-mono">{safeString(item.tender?.tenderNumber || item.lot)}</span>
+                        {item.tender?.title && (
+                          <span className="block text-xs font-normal text-slate-500 line-clamp-1 max-w-[200px]" title={item.tender.title}>
+                            {item.tender.title}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-3 text-center">{getTypeBadge(item.tender?.type || item.type, lang, isDarkMode)}</td>
+                      <td className={`py-3.5 px-4 text-center font-bold ${theme.primaryText}`}>
+                        {safeString(item.tender?.client?.name || item.tender?.createdBy?.firstName || "-")}
+                      </td>
+                      <td className="py-3.5 px-3 text-center font-medium">{safeString(item.baseCurrency?.code || item.currency)}</td>
+                      <td className={`py-3.5 px-4 text-center font-mono ${theme.subText}`}>{safeString(item.number || item.code)}</td>
+                      <td className="py-3.5 px-3 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
+                      <td className="py-3.5 px-4 text-center max-w-[180px]">
+                        <div className={`line-clamp-2 text-xs ${theme.subText}`} title={safeString(item.paymentTerms || item.terms)}>
+                          {safeString(item.paymentTerms || item.terms)}
+                        </div>
+                      </td>
+                      <td className={`py-3.5 px-3 text-center ${theme.subText}`}>{formatDate(item.createdAt || item.date)}</td>
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => onNavigate('offers', item.id)}
+                            className={theme.actionBtn}
+                            title={t('viewDetails', 'Просмотр')}
+                          >
+                            <Eye size={16} />
+                          </button>
+                          {role !== 'ADMIN' && (
+                            <>
+                              <button
+                                className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 transition-all active:scale-95"
+                                title={t('edit', 'Редактировать')}
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95"
+                                title={t('delete', 'Удалить')}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
