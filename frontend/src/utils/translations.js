@@ -49,6 +49,7 @@ export const translations = {
     recentTenders: 'Soňky açyk tenderler',
     recentOffers: 'Soňky tekliplerim',
     tenderOrName: 'Tender / Ady',
+    taxId: 'Salgyt belgisi (STŞK)',
     offerDate: 'Teklip berlen sene',
 
     // Метрики
@@ -423,6 +424,7 @@ export const translations = {
     recentTenders: 'Последние открытые тендеры',
     recentOffers: 'Последние поданные предложения',
     tenderOrName: 'Тендер / Наименование',
+    taxId: 'ИНН (STŞK)',
     offerDate: 'Дата подачи заявки',
 
     // Метрики
@@ -804,6 +806,7 @@ export const translations = {
     recentTenders: 'Recent Open Tenders',
     recentOffers: 'Recent Submitted Offers',
     tenderOrName: 'Tender / Name',
+    taxId: 'Tax ID (TIN)',
     offerDate: 'Submission Date',
 
     // Metrics

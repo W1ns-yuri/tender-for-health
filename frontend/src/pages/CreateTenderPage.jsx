@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Save, Trash2, ArrowLeft, X, Upload, ChevronDown, AlertCircle, RefreshCw } from 'lucide-react';
+import { Plus, Save, Trash2, ArrowLeft, X, Upload, ChevronDown, AlertCircle, RefreshCw, FileText, AlignLeft, Paperclip } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
@@ -805,207 +805,236 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
         )}
       </div>
 
-      {/* 2. Форма ввода данных */}
-      <form id="create-tender-form" onSubmit={handleSubmit} className={`p-6 rounded-xl border shadow-xs space-y-5 ${theme.cardBg}`}>
-        {/* Строка 1: Номер тендера (с генерацией и кастомизацией) + Название */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 text-xs">
-          <div className="md:col-span-4">
-            <div className="flex items-center justify-between mb-1">
-              <label className="font-semibold flex items-center">
-                {lang === 'RU' ? 'Номер тендера' : 'Tender belgisi'}*
+      {/* 2. Форма ввода данных, упакованная в аккуратные белые блоки-карточки */}
+      <form id="create-tender-form" onSubmit={handleSubmit} className="space-y-6">
+        {/* Карточка 1: Основные параметры */}
+        <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
+          <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-100 bg-slate-50/70'}`}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                <FileText size={16} />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">{lang === 'RU' ? 'Основные параметры' : 'Esasy parametrler'}</h3>
+                <p className="text-[11px] text-slate-400">{lang === 'RU' ? 'Номер, наименование, категория и сроки подачи' : 'Tender belgisi, ady we möhletleri'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-5 space-y-4 text-xs">
+            {/* Строка 1: Номер тендера (с генерацией и кастомизацией) + Название */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-4">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-semibold flex items-center">
+                    {lang === 'RU' ? 'Номер тендера' : 'Tender belgisi'}*
+                  </label>
+                  <button
+                    type="button"
+                    onClick={fetchNextTenderNumber}
+                    className="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1 cursor-pointer"
+                    title={lang === 'RU' ? 'Сгенерировать следующий системный номер' : 'Awtomatiki täzelemek'}
+                  >
+                    <RefreshCw size={11} />
+                    <span>{lang === 'RU' ? 'Авто' : 'Awtomat'}</span>
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  required
+                  placeholder="TNDR-2026-08-001"
+                  value={formData.tenderNumber}
+                  onChange={(e) => handleFormChange('tenderNumber', e.target.value, e)}
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-mono font-bold tracking-wide border transition-colors ${
+                    isTenderNumberDuplicate
+                      ? 'border-rose-500 bg-rose-50/60 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 focus:ring-1 focus:ring-rose-500'
+                      : `border-transparent ${theme.inputBg}`
+                  }`}
+                />
+                {isTenderNumberDuplicate && (
+                  <p className="text-[10px] text-rose-500 font-semibold mt-1 animate-in fade-in flex items-center gap-1">
+                    <span>⚠️</span>
+                    <span>
+                      {lang === 'RU' 
+                        ? `Номер "${formData.tenderNumber}" уже занят другим тендером!` 
+                        : `"${formData.tenderNumber}" belgili tender eýýäm bar!`}
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              <div className="md:col-span-8">
+                <label className="block font-semibold mb-1">
+                  {t('tenderName', 'Tender ady')}*
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder={lang === 'RU' ? 'Введите название предмета тендера...' : 'Tender adyny giriziň...'}
+                  value={formData.title}
+                  onChange={(e) => handleFormChange('title', e.target.value, e)}
+                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
+                />
+              </div>
+            </div>
+
+            {/* Строка 2: Категория, Заказчик, Тип */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block font-semibold mb-1">{t('category', 'Kategoriýa')}*</label>
+                <div className="flex space-x-1.5">
+                  <SearchableSelect 
+                    t={t}
+                    options={categories} 
+                    value={formData.categoryId} 
+                    onChange={(val) => handleFormChange('categoryId', val)} 
+                    placeholder={t('selectCategory', 'Выберите категорию')} 
+                    isDarkMode={isDarkMode} 
+                    theme={theme} 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-1">{t('client', 'Sargyt ediji')}*</label>
+                <div className="flex space-x-1.5">
+                  <SearchableSelect 
+                    t={t}
+                    options={clients} 
+                    value={formData.clientId} 
+                    onChange={(val) => handleFormChange('clientId', val)} 
+                    placeholder={t('select', 'Saýlaň...')} 
+                    isDarkMode={isDarkMode} 
+                    theme={theme} 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-1">{t('type', 'Görnüşi')}*</label>
+                <select
+                  value={formData.type}
+                  onChange={(e) => handleFormChange('type', e.target.value)}
+                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
+                >
+                  <option value="YERLI">{t('typeLocal', 'Ýerli')}</option>
+                  <option value="HALKARA">{t('typeGlobal', 'Halkara')}</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Строка 3: Даты, Валюта */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block font-semibold mb-1">{t('announcementDate', 'Yglan edilen senesi')}*</label>
+                <input
+                  type="date"
+                  required
+                  value={formData.announcementDate}
+                  onChange={(e) => handleFormChange('announcementDate', e.target.value)}
+                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-1">{t('deadline', 'Soňky möhleti')}*</label>
+                <input
+                  type="date"
+                  required
+                  value={formData.deadline}
+                  onChange={(e) => handleFormChange('deadline', e.target.value)}
+                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-1">{t('currency', 'Walýuta')}*</label>
+                <select
+                  value={formData.currency}
+                  onChange={(e) => handleFormChange('currency', e.target.value)}
+                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
+                >
+                  {currencies.map(c => (<option key={c.id} value={c.code}>{c.code} - {c.name}</option>))}
+                </select>
+              </div>
+            </div>
+
+            {/* Строка 4: Статус и видимость */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block font-semibold mb-1">{t('status', 'Status')}*</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => handleFormChange('status', e.target.value)}
+                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
+                >
+                  <option value="ACYK">{t('statusAcyk', 'Açyk')}</option>
+                  <option value="TASLAMA">{t('statusTaslama', 'Taslama')}</option>
+                  <option value="YAPYK">{t('statusYapyk', 'Ýapyk')}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-1">{t('visibility', 'Açyklygy')}*</label>
+                <select
+                  value={formData.visibility}
+                  onChange={(e) => handleFormChange('visibility', e.target.value)}
+                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
+                >
+                  <option value="ACYK">{t('visibilityPublic', 'Açyk')}</option>
+                  <option value="YAPYK">{t('visibilityPrivate', 'Ýapyk')}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Карточка 2: Описание и технические требования */}
+        <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
+          <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-100 bg-slate-50/70'}`}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                <AlignLeft size={16} />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">{lang === 'RU' ? 'Описание и технические требования' : 'Mazmuny we tehniki talaplar'}</h3>
+                <p className="text-[11px] text-slate-400">{lang === 'RU' ? 'Подробные условия закупки, стандарты качества и технические условия' : 'Satyn alyş şertleri we talaplary'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-5 space-y-4 text-xs">
+            {/* Описание */}
+            <div>
+              <label className="block font-semibold mb-1">
+                {t('description', 'Tender mazmuny')}*
               </label>
-              <button
-                type="button"
-                onClick={fetchNextTenderNumber}
-                className="text-[11px] text-teal-600 hover:text-teal-700 font-semibold flex items-center gap-1"
-                title={lang === 'RU' ? 'Сгенерировать следующий системный номер' : 'Awtomatiki täzelemek'}
-              >
-                <RefreshCw size={11} />
-                <span>{lang === 'RU' ? 'Авто' : 'Awtomat'}</span>
-              </button>
+              <textarea
+                rows={3}
+                required
+                placeholder={lang === 'RU' ? 'Подробное описание предмета закупки...' : 'Tender barada giňişleýin maglumat...'}
+                value={formData.description}
+                onChange={(e) => handleFormChange('description', e.target.value, e)}
+                className={`w-full p-3 rounded-lg text-xs leading-relaxed ${theme.inputBg}`}
+              />
             </div>
-            <input
-              type="text"
-              required
-              placeholder="TNDR-2026-08-001"
-              value={formData.tenderNumber}
-              onChange={(e) => handleFormChange('tenderNumber', e.target.value, e)}
-              className={`w-full px-3 py-2 rounded-lg text-xs font-mono font-bold tracking-wide border transition-colors ${
-                isTenderNumberDuplicate
-                  ? 'border-rose-500 bg-rose-50/60 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 focus:ring-1 focus:ring-rose-500'
-                  : `border-transparent ${theme.inputBg}`
-              }`}
-            />
-            {isTenderNumberDuplicate && (
-              <p className="text-[10px] text-rose-500 font-semibold mt-1 animate-in fade-in flex items-center gap-1">
-                <span>⚠️</span>
-                <span>
-                  {lang === 'RU' 
-                    ? `Номер "${formData.tenderNumber}" уже занят другим тендером!` 
-                    : `"${formData.tenderNumber}" belgili tender eýýäm bar!`}
-                </span>
-              </p>
-            )}
-          </div>
 
-          <div className="md:col-span-8">
-            <label className="block font-semibold mb-1">
-              {t('tenderName', 'Tender ady')}*
-            </label>
-            <input
-              type="text"
-              required
-              placeholder={lang === 'RU' ? 'Введите название предмета тендера...' : 'Tender adyny giriziň...'}
-              value={formData.title}
-              onChange={(e) => handleFormChange('title', e.target.value, e)}
-              className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
-            />
-          </div>
-        </div>
-
-        {/* Строка 2: Категория, Заказчик, Тип */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          <div>
-            <label className="block font-semibold mb-1">{t('category', 'Kategoriýa')}*</label>
-            <div className="flex space-x-1.5">
-              <SearchableSelect 
-                t={t}
-                options={categories} 
-                value={formData.categoryId} 
-                onChange={(val) => handleFormChange('categoryId', val)} 
-                placeholder={t('selectCategory', 'Выберите категорию')} 
-                isDarkMode={isDarkMode} 
-                theme={theme} 
+            {/* Технические условия */}
+            <div>
+              <label className="block font-semibold mb-1">
+                {t('techSpecs', 'Tehniki şartler')}*
+              </label>
+              <textarea
+                rows={3}
+                required
+                placeholder={lang === 'RU' ? 'Технические требования к продукции...' : 'Önümlere bildirilýän tehniki talaplar...'}
+                value={formData.technicalSpecs}
+                onChange={(e) => handleFormChange('technicalSpecs', e.target.value, e)}
+                className={`w-full p-3 rounded-lg text-xs leading-relaxed ${theme.inputBg}`}
               />
             </div>
           </div>
-
-          <div>
-            <label className="block font-semibold mb-1">{t('client', 'Sargyt ediji')}*</label>
-            <div className="flex space-x-1.5">
-              <SearchableSelect 
-                t={t}
-                options={clients} 
-                value={formData.clientId} 
-                onChange={(val) => handleFormChange('clientId', val)} 
-                placeholder={t('select', 'Saýlaň...')} 
-                isDarkMode={isDarkMode} 
-                theme={theme} 
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block font-semibold mb-1">{t('type', 'Görnüşi')}*</label>
-            <select
-              value={formData.type}
-              onChange={(e) => handleFormChange('type', e.target.value)}
-              className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
-            >
-              <option value="YERLI">{t('typeLocal', 'Ýerli')}</option>
-              <option value="HALKARA">{t('typeGlobal', 'Halkara')}</option>
-            </select>
-          </div>
         </div>
-
-        {/* Строка 3: Даты, Валюта */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          <div>
-            <label className="block font-semibold mb-1">{t('announcementDate', 'Yglan edilen senesi')}*</label>
-            <input
-              type="date"
-              required
-              value={formData.announcementDate}
-              onChange={(e) => handleFormChange('announcementDate', e.target.value)}
-              className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold mb-1">{t('deadline', 'Soňky möhleti')}*</label>
-            <input
-              type="date"
-              required
-              value={formData.deadline}
-              onChange={(e) => handleFormChange('deadline', e.target.value)}
-              className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold mb-1">{t('currency', 'Walýuta')}*</label>
-            <select
-              value={formData.currency}
-              onChange={(e) => handleFormChange('currency', e.target.value)}
-              className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
-            >
-              {currencies.map(c => (<option key={c.id} value={c.code}>{c.code} - {c.name}</option>))}
-            </select>
-          </div>
-        </div>
-
-        {/* Строка 4: Описание */}
-        <div>
-          <div className="flex justify-between items-center mb-1 text-xs font-semibold">
-            <label>
-              {t('description', 'Tender mazmuny')}*
-            </label>
-          </div>
-          <textarea
-            rows={4}
-            required
-            placeholder={lang === 'RU' ? 'Подробное описание предмета закупки...' : 'Tender barada giňişleýin maglumat...'}
-            value={formData.description}
-            onChange={(e) => handleFormChange('description', e.target.value, e)}
-            className={`w-full p-3 rounded-lg text-xs leading-relaxed ${theme.inputBg}`}
-          />
-        </div>
-
-        {/* Строка 5: Технические условия */}
-        <div>
-          <div className="flex justify-between items-center mb-1 text-xs font-semibold">
-            <label>
-              {t('techSpecs', 'Tehniki şartler')}*
-            </label>
-          </div>
-          <textarea
-            rows={4}
-            required
-            placeholder={lang === 'RU' ? 'Технические требования к продукции...' : 'Önümlere bildirilýän tehniki talaplar...'}
-            value={formData.technicalSpecs}
-            onChange={(e) => handleFormChange('technicalSpecs', e.target.value, e)}
-            className={`w-full p-3 rounded-lg text-xs leading-relaxed ${theme.inputBg}`}
-          />
-        </div>
-
-        {/* Строка 6: Статус и видимость */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div>
-            <label className="block font-semibold mb-1">{t('status', 'Status')}*</label>
-            <select
-              value={formData.status}
-              onChange={(e) => handleFormChange('status', e.target.value)}
-              className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
-            >
-              <option value="ACYK">{t('statusAcyk', 'Açyk')}</option>
-              <option value="TASLAMA">{t('statusTaslama', 'Taslama')}</option>
-              <option value="YAPYK">{t('statusYapyk', 'Ýapyk')}</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block font-semibold mb-1">{t('visibility', 'Açyklygy')}*</label>
-            <select
-              value={formData.visibility}
-              onChange={(e) => handleFormChange('visibility', e.target.value)}
-              className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
-            >
-              <option value="ACYK">{t('visibilityPublic', 'Açyk')}</option>
-              <option value="YAPYK">{t('visibilityPrivate', 'Ýapyk')}</option>
-            </select>
-          </div>
-        </div>
-      </form>
 
       {/* 3. Лоты и Спецификации */}
       <div className="space-y-4">
@@ -1019,8 +1048,8 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
         </div>
 
         {lots.map((lot, lotIdx) => (
-          <div key={lot.id} className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
-            <div className={`p-4 border-b flex items-end justify-between gap-4 ${isDarkMode ? 'border-slate-800 bg-slate-900/30' : 'border-slate-100 bg-white'}`}>
+          <div key={lot.id} className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
+            <div className={`p-4 border-b flex items-end justify-between gap-4 ${isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-100 bg-slate-50/70'}`}>
                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div>
                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
@@ -1052,7 +1081,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                </div>
                {lots.length > 1 && (
                  <div className="flex items-center gap-2 mt-4 md:mt-0">
-                   <button type="button" onClick={() => handleRemoveLot(lotIdx)} className="p-2 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title={lang === 'RU' ? 'Удалить лот' : 'Loty pozmak'}>
+                   <button type="button" onClick={() => handleRemoveLot(lotIdx)} className="p-2 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer" title={lang === 'RU' ? 'Удалить лот' : 'Loty pozmak'}>
                      <Trash2 size={16} />
                    </button>
                  </div>
@@ -1061,15 +1090,15 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse min-w-180">
-                <thead>
-                  <tr className={`font-semibold text-white ${isDarkMode ? 'bg-teal-900' : 'bg-teal-600'}`}>
-                    <th className="py-2.5 px-3 w-10 text-center">H/K</th>
-                    <th className="py-2.5 px-3 min-w-50">{t('specProduct', 'Haryt')} *</th>
-                    <th className="py-2.5 px-3 w-40 text-center">{t('specUnit', 'Ölçeg birligi')} *</th>
-                    <th className="py-2.5 px-3 w-48 text-center">{t('specBrand', 'Öndüriji')}</th>
-                    <th className="py-2.5 px-3 w-28 text-center">{t('specQty', 'Mukdar')} *</th>
-                    <th className="py-2.5 px-3 min-w-55">{t('specDesc', 'Mazmuny')}</th>
-                    <th className="py-2.5 px-3 w-12 text-center">{t('action', 'Amal')}</th>
+                <thead className={theme.tableHeaderBg}>
+                  <tr className="border-b border-slate-200 dark:border-slate-800">
+                    <th className="py-3 px-3 w-10 text-center">#</th>
+                    <th className="py-3 px-3 min-w-50">{t('specProduct', 'Haryt')} *</th>
+                    <th className="py-3 px-3 w-40 text-center">{t('specUnit', 'Ölçeg birligi')} *</th>
+                    <th className="py-3 px-3 w-48 text-center">{t('specBrand', 'Öndüriji')}</th>
+                    <th className="py-3 px-3 w-28 text-center">{t('specQty', 'Mukdar')} *</th>
+                    <th className="py-3 px-3 min-w-55">{t('specDesc', 'Mazmuny')}</th>
+                    <th className="py-3 px-3 w-12 text-center">{t('action', 'Amal')}</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -1226,24 +1255,33 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       </div>
 
       {/* 4. Документы */}
-      <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
-        <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-          <h3 className="font-bold text-base">{t('documents', 'Resminamalar')}</h3>
+      <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
+        <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-100 bg-slate-50/70'}`}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center">
+              <Paperclip size={16} />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('documents', 'Resminamalar')}</h3>
+              <p className="text-[11px] text-slate-400">{lang === 'RU' ? 'Прикрепите сопутствующие тендерные документы и спецификации' : 'Goşmaça faýllary ýükläň'}</p>
+            </div>
+          </div>
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleFileUpload}
             className="hidden"
           />
-          <button type="button" onClick={handleFileClick} className="p-1.5 rounded-full bg-teal-600 text-white hover:bg-teal-700 transition-colors">
-            <Plus size={16} />
+          <button type="button" onClick={handleFileClick} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer">
+            <Plus size={15} />
+            <span>{lang === 'RU' ? 'Загрузить файл' : 'Faýl ýükle'}</span>
           </button>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-teal-600 text-white font-medium">
+            <thead className={theme.tableHeaderBg}>
+              <tr className="border-b border-slate-200 dark:border-slate-800">
                 <th className="py-3 px-4 w-[5%] text-center">#</th>
                 <th className="py-3 px-4 w-[25%]">{t('fileName', 'Faýl ady')}</th>
                 <th className="py-3 px-4 w-[35%]">{t('fileDesc', 'Mazmuny')}</th>
@@ -1269,7 +1307,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                   <td className="py-3 px-4 text-center text-slate-400">{doc.size}</td>
                   <td className="py-3 px-4 text-center text-slate-400">{doc.date}</td>
                   <td className="py-3 px-4 text-center space-x-1">
-                    <button type="button" onClick={() => setDocs(docs.filter((_, i) => i !== idx))} className="p-1 hover:bg-rose-500/10 text-rose-500 rounded">
+                    <button type="button" onClick={() => setDocs(docs.filter((_, i) => i !== idx))} className="p-1 hover:bg-rose-500/10 text-rose-500 rounded cursor-pointer">
                       <Trash2 size={14} />
                     </button>
                   </td>
@@ -1279,25 +1317,56 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
           </table>
         </div>
       </div>
+      </form>
 
-      {/* 5. Блок ошибки и Кнопка сохранения (Ошибка расположена внизу прямо над кнопкой) */}
-      <div ref={errorRef} className="space-y-3 pt-2">
-        {errorMsg && (
-          <div className="p-4 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 rounded-xl text-sm font-semibold flex items-center gap-2.5 shadow-sm animate-in slide-in-from-bottom-2">
-            <AlertCircle size={18} className="shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
+      {/* Сообщение об ошибке (если есть) */}
+      {errorMsg && (
+        <div ref={errorRef} className="p-4 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 rounded-2xl text-sm font-semibold flex items-center gap-2.5 shadow-sm animate-in slide-in-from-bottom-2">
+          <AlertCircle size={18} className="shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
-        <div className="flex justify-end">
+      {/* 5. Плавающая нижняя панель сохранения (Sticky footer) */}
+      <div className="sticky bottom-0 z-40 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3.5 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 rounded-b-2xl">
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>{hasDraftContent ? (lang === 'RU' ? 'Черновик сохранен в браузере' : 'Taslama brauzerde saklandy') : (lang === 'RU' ? 'Заполните обязательные поля (*)' : 'Hökmany meýdanlary dolduryň')}</span>
+        </div>
+
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          {hasDraftContent && (
+            <button
+              type="button"
+              onClick={handleClearDraft}
+              className="px-4 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30 text-slate-600 dark:text-slate-400 transition-all active:scale-95 cursor-pointer"
+            >
+              {lang === 'RU' ? 'Очистить черновик' : 'Arassala'}
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              handleFormChange('status', 'TASLAMA');
+              setTimeout(() => {
+                document.getElementById('create-tender-form')?.requestSubmit();
+              }, 50);
+            }}
+            disabled={loading}
+            className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+          >
+            {lang === 'RU' ? 'Сохранить черновик' : 'Taslama sakla'}
+          </button>
+
           <button
             form="create-tender-form"
             type="submit"
             disabled={loading}
-            className="px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm shadow-lg transition-all flex items-center space-x-2 disabled:opacity-50 active:scale-95"
+            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 disabled:opacity-50 active:scale-95 cursor-pointer"
           >
-            <Save size={18} />
-            <span>{loading ? t('saving', 'Saklanýar...') : t('saveTender', 'Ýatda sakla')}</span>
+            <Save size={16} />
+            <span>{loading ? t('saving', 'Saklanýar...') : (lang === 'RU' ? 'Опубликовать тендер' : 'Tenderi çap et')}</span>
           </button>
         </div>
       </div>

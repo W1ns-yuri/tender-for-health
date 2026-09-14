@@ -38,6 +38,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [supplierToEdit, setSupplierToEdit] = useState(null);
   const [supplierToReject, setSupplierToReject] = useState(null);
+  const [search, setSearch] = useState('');
 
   // Вкладки: 'all', 'pending', 'archive'
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'all');
@@ -153,6 +154,18 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
     setSupplierToReject(null);
   };
 
+  // Фильтрация поставщиков
+  const filteredSuppliers = suppliers.filter(s => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      (s.name || '').toLowerCase().includes(q) ||
+      (s.taxId || '').toLowerCase().includes(q) ||
+      (s.regNo || '').toLowerCase().includes(q) ||
+      (s.country?.name || '').toLowerCase().includes(q)
+    );
+  });
+
   // Фильтрация записей архива
   const filteredArchiveLogs = archiveLogs.filter(log => {
     const matchesSearch = !archiveSearch.trim() || 
@@ -188,23 +201,35 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
         </button>
       </div>
 
-      {/* 2. Навигационные вкладки для администратора */}
+      {/* 2. Навигационные вкладки для администратора в едином фирменном стиле */}
       {role === 'ADMIN' && (
-        <div className="flex space-x-4 mb-4 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-2 mb-4 border-b border-slate-200 dark:border-slate-800 pb-3">
           <button 
             onClick={() => setActiveTab('all')}
-            className={`py-2 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'all' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'all'
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50 shadow-2xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'
+            }`}
           >
             {lang === 'RU' ? 'Все поставщики' : 'Ähli üpjün edijiler'}
           </button>
           
           <button 
             onClick={() => setActiveTab('pending')}
-            className={`py-2 px-4 text-sm font-bold border-b-2 transition-colors flex items-center space-x-2 ${activeTab === 'pending' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'pending'
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50 shadow-2xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'
+            }`}
           >
             <span>{lang === 'RU' ? 'На модерации' : 'Barlagda'}</span>
             {pendingSuppliers.length > 0 && (
-              <span className="bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 py-0.5 px-2 rounded-full text-[10px] font-bold">
+              <span className={`py-0.5 px-2 rounded-full text-[10px] font-bold ${
+                activeTab === 'pending'
+                  ? 'bg-emerald-200/80 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
+                  : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400'
+              }`}>
                 {pendingSuppliers.length}
               </span>
             )}
@@ -212,12 +237,20 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
 
           <button 
             onClick={() => setActiveTab('archive')}
-            className={`py-2 px-4 text-sm font-bold border-b-2 transition-colors flex items-center space-x-2 ${activeTab === 'archive' ? 'border-purple-600 text-purple-600' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'archive'
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50 shadow-2xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'
+            }`}
           >
-            <Archive size={15} />
+            <Archive size={14} />
             <span>{t('moderationArchiveTab', 'Архив модерации')}</span>
             {archiveStats.totalDecisions > 0 && (
-              <span className="bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 py-0.5 px-2 rounded-full text-[10px] font-bold">
+              <span className={`py-0.5 px-2 rounded-full text-[10px] font-bold ${
+                activeTab === 'archive'
+                  ? 'bg-emerald-200/80 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
+                  : 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+              }`}>
                 {archiveStats.totalDecisions}
               </span>
             )}
@@ -228,26 +261,28 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
       {/* 3. Содержимое вкладок */}
       {activeTab === 'all' ? (
         /* Вкладка 1: Все поставщики */
-        <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
-          <div className={`p-3 border-b grid grid-cols-1 md:grid-cols-4 gap-3 ${theme.cardHeaderBg}`}>
+        <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
+          <div className={`p-3.5 border-b grid grid-cols-1 md:grid-cols-4 gap-3 ${theme.cardHeaderBg}`}>
             <div className="col-span-2 relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input 
                 type="text" 
                 placeholder={t('searchPlaceholder', 'Gözleg...')}
-                className={`w-full pl-9 pr-3 py-1.5 rounded-md text-xs border focus:outline-hidden ${theme.inputBg}`}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className={`w-full pl-9 pr-3 py-1.5 rounded-lg text-xs border focus:outline-hidden ${theme.inputBg}`}
               />
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className={theme.tableHeaderBg}>
+              <thead className={theme.tableHeaderBg}>
+                <tr className="border-b border-slate-200 dark:border-slate-800">
                   <th className="py-3.5 px-4 text-center">{t('supplierName', 'Kompaniýanyň ady')}</th>
                   <th className="py-3.5 px-4 text-center">{t('country', 'Ýurt')}</th>
                   <th className="py-3.5 px-4 text-center">{t('regNo', 'Ýazgy belgisi')}</th>
-                  <th className="py-3.5 px-4 text-center">{t('taxId', 'Salgyt belgisi')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('taxId', 'ИНН (STŞK)')}</th>
                   <th className="py-3.5 px-4 text-center">{t('license', 'Ygtyýarnama')}</th>
                   <th className="py-3.5 px-4 text-center">{t('status', 'Ýagdaýy')}</th>
                   <th className="py-3.5 px-4 text-center">{t('action', 'Amal')}</th>
@@ -260,14 +295,22 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                       {t('loading', 'Ýüklenýär...')}
                     </td>
                   </tr>
-                ) : suppliers.length === 0 ? (
+                ) : filteredSuppliers.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="py-8 text-center text-slate-500">
-                      {t('noResults', 'Netije tapylmady')}
+                    <td colSpan="7" className="py-12 text-center text-slate-500">
+                      <Search size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                      <p className="font-bold text-sm text-slate-700 dark:text-slate-300">
+                        {lang === 'RU' ? 'Поставщики не найдены' : 'Üpjün ediji tapylmady'}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {search.trim()
+                          ? (lang === 'RU' ? 'Попробуйте изменить поисковый запрос или сбросить фильтр.' : 'Gözleg sözüni üýtgedip görüň.')
+                          : (lang === 'RU' ? 'В системе пока нет зарегистрированных поставщиков.' : 'Ulgamda heniz hasaba alnan üpjün ediji ýok.')}
+                      </p>
                     </td>
                   </tr>
                 ) : (
-                  suppliers.map((s, idx) => (
+                  filteredSuppliers.map((s, idx) => (
                     <tr key={s.id || idx} className={theme.tableRowHover}>
                       <td className="py-3.5 px-4 text-center font-medium">
                         {safeString(s.name)}
@@ -323,11 +366,11 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
         </div>
       ) : activeTab === 'pending' ? (
         /* Вкладка 2: На модерации */
-        <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
+        <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className={theme.tableHeaderBg}>
+              <thead className={theme.tableHeaderBg}>
+                <tr className="border-b border-slate-200 dark:border-slate-800">
                   <th className="py-3.5 px-4 text-center">{lang === 'RU' ? 'Компания' : 'Kompaniýa'}</th>
                   <th className="py-3.5 px-4 text-center">{lang === 'RU' ? 'Тип / ИНН' : 'Görnüşi / STŞK'}</th>
                   <th className="py-3.5 px-4 text-center">{lang === 'RU' ? 'Контакты' : 'Kontaktlar'}</th>
@@ -473,7 +516,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
           </div>
 
           {/* Фильтры и таблица архива */}
-          <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
+          <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
             <div className={`p-4 border-b flex flex-col sm:flex-row items-center justify-between gap-3 ${theme.cardHeaderBg}`}>
               <div className="relative w-full sm:max-w-md">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -500,7 +543,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                     onClick={() => setArchiveFilter(f.id)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 cursor-pointer ${
                       archiveFilter === f.id
-                        ? 'bg-blue-600 text-white shadow-xs'
+                        ? 'bg-emerald-600 text-white shadow-xs'
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                   >
@@ -512,8 +555,8 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className={theme.tableHeaderBg}>
+                <thead className={theme.tableHeaderBg}>
+                  <tr className="border-b border-slate-200 dark:border-slate-800">
                     <th className="py-3.5 px-4 text-center">{t('dateDecisionLabel', 'Дата и время')}</th>
                     <th className="py-3.5 px-4 text-center">{t('supplierName', 'Компания')}</th>
                     <th className="py-3.5 px-4 text-center">{t('decisionLabel', 'Решение')}</th>

@@ -138,7 +138,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
       </div>
 
       {/* 2. Таблица коммерческих предложений */}
-      <div className={`${theme.cardBg} rounded-xl border shadow-xs overflow-hidden`}>
+      <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
         {/* Интерактивные фильтры */}
         <div className={`p-3 border-b grid grid-cols-2 md:grid-cols-5 gap-2 text-xs ${isDarkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
           <input
@@ -190,19 +190,19 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className={theme.tableHeaderBg}>
-                <th className="py-3 px-3 w-28 text-center">Tender</th>
-                <th className="py-3 px-3 text-center">{t('type', 'Görnüşi')}</th>
-                {isAdmin && <th className="py-3 px-3 text-left">{lang === 'RU' ? 'Поставщик' : 'Üpjün ediji'}</th>}
-                <th className="py-3 px-3 text-center">{t('client', 'Заказчик')}</th>
-                <th className="py-3 px-3 text-center">{t('currency', 'Walýuta')}</th>
-                <th className="py-3 px-3 text-center">{t('code', 'Номер заявки')}</th>
-                <th className="py-3 px-3 text-center">{t('status', 'Status')}</th>
-                <th className="py-3 px-3 text-center">{t('paymentTerms', 'Условия оплаты')}</th>
-                <th className="py-3 px-3 text-center">{lang === 'RU' ? 'Сумма' : 'Baha'}</th>
-                <th className="py-3 px-3 text-center">{t('uploadDate', 'Дата подачи')}</th>
-                <th className="py-3 px-3 text-center w-20">{t('action', 'Действие')}</th>
+            <thead className={theme.tableHeaderBg}>
+              <tr className="border-b border-slate-200 dark:border-slate-800">
+                <th className="py-3.5 px-3 w-36 text-center">{t('tenderOrName', 'Тендер / Наименование')}</th>
+                <th className="py-3.5 px-3 text-center">{t('type', 'Görnüşi')}</th>
+                {isAdmin && <th className="py-3.5 px-3 text-left">{lang === 'RU' ? 'Поставщик' : 'Üpjün ediji'}</th>}
+                <th className="py-3.5 px-3 text-center">{t('client', 'Заказчик')}</th>
+                <th className="py-3.5 px-3 text-center">{t('currency', 'Walýuta')}</th>
+                <th className="py-3.5 px-3 text-center">{t('code', 'Номер заявки')}</th>
+                <th className="py-3.5 px-3 text-center">{t('status', 'Status')}</th>
+                <th className="py-3.5 px-3 text-center">{t('paymentTerms', 'Условия оплаты')}</th>
+                <th className="py-3.5 px-3 text-center">{lang === 'RU' ? 'Сумма' : 'Baha'}</th>
+                <th className="py-3.5 px-3 text-center">{t('uploadDate', 'Дата подачи')}</th>
+                <th className="py-3.5 px-3 text-center w-20">{t('action', 'Действие')}</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -226,7 +226,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
                     <tr key={item.id || idx} className={theme.tableRowHover}>
                       {/* Номер и название тендера */}
                       <td className="py-3 px-3 text-center font-semibold">
-                        <span className={`font-bold ${theme.primaryText}`}>{safeString(item.tender?.tenderNumber || item.lot)}</span>
+                        <span className="font-bold font-mono tabular-nums text-slate-800 dark:text-slate-100">{safeString(item.tender?.tenderNumber || item.lot)}</span>
                         {item.tender?.title && <span className="block text-[11px] font-normal text-slate-500 truncate max-w-40">{item.tender.title}</span>}
                       </td>
 
@@ -241,21 +241,25 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
                       )}
 
                       {/* Заказчик */}
-                      <td className="py-3 px-3 text-center font-medium">{safeString(item.tender?.client?.name || item.tender?.createdBy?.firstName || "-")}</td>
+                      <td className="py-3 px-3 text-center">
+                        <span className="text-slate-800 dark:text-slate-200 font-medium hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors">
+                          {safeString(item.tender?.client?.name || item.tender?.createdBy?.firstName || "-")}
+                        </span>
+                      </td>
 
                       {/* Валюта */}
-                      <td className={`py-3 px-3 text-center font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{currency}</td>
+                      <td className={`py-3 px-3 text-center font-bold tabular-nums ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{currency}</td>
 
                       {/* Номер заявки */}
-                      <td className="py-3 px-3 text-center text-slate-500 font-mono">{item.number || item.code}</td>
+                      <td className="py-3 px-3 text-center text-slate-500 font-mono tabular-nums">{item.number || item.code}</td>
 
                       {/* Статус */}
                       <td className="py-3 px-3 text-center">
                         {item.supplier?.verificationStatus === 'PENDING_REVIEW' ? (
                           <div className="flex flex-col items-center gap-1">
                             {getStatusBadge(item.status, lang, isDarkMode)}
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200" title={t('offersSuspendedWarning')}>
-                              {t('offerSuspendedBadge', '⏳ Приостановлено (проверка профиля)')}
+                            <span className="text-[10px] text-amber-500 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded">
+                              {t('moderationBadge', 'На модерации')}
                             </span>
                           </div>
                         ) : (
@@ -264,36 +268,40 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
                       </td>
 
                       {/* Условия оплаты */}
-                      <td className="py-3 px-3 text-center text-slate-500 text-[11px] max-w-xs truncate">{item.paymentTerms || item.terms || '-'}</td>
+                      <td className="py-3 px-3 text-center text-slate-500 max-w-32 truncate" title={item.paymentTerms}>
+                        {item.paymentTerms || '-'}
+                      </td>
 
-                      {/* Сумма */}
-                      <td className={`py-3 px-3 text-center font-bold ${theme.primaryText}`}>
+                      {/* Предложенная цена */}
+                      <td className="py-3 px-3 text-center font-bold tabular-nums text-slate-700 dark:text-slate-200">
                         {offerPrice > 0 ? `${offerPrice.toLocaleString('ru-RU')} ${currency}` : '-'}
                       </td>
 
                       {/* Дата подачи */}
-                      <td className="py-3 px-3 text-center text-slate-500">{new Date(item.createdAt || item.date).toLocaleDateString('ru-RU')}</td>
+                      <td className="py-3 px-3 text-center text-slate-500 tabular-nums">{new Date(item.createdAt || item.date).toLocaleDateString('ru-RU')}</td>
 
                       {/* Действия */}
-                      <td className="py-3 px-3 text-center space-x-1">
-                        <button 
-                          onClick={() => navigate(`/offers/${item.id}`)} 
-                          className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors inline-flex items-center justify-center" 
-                          title={t('viewDetails', 'Просмотр')}
-                        >
-                          <Eye size={16} />
-                        </button>
-
-                        {/* Кнопка удаления только для поставщика */}
-                        {!isAdmin && (
+                      <td className="py-3 px-3 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
                           <button 
-                            onClick={() => handleDeleteOffer(item.id)}
-                            className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors inline-flex items-center justify-center" 
-                            title={lang === 'RU' ? 'Удалить / Отозвать' : 'Pozmak'}
+                            onClick={() => navigate(`/offers/${item.id}`)} 
+                            className={theme.actionBtn}
+                            title={t('viewDetails', 'Просмотр')}
                           >
-                            <Trash2 size={16} />
+                            <Eye size={16} />
                           </button>
-                        )}
+
+                          {/* Кнопка удаления только для поставщика */}
+                          {!isAdmin && (
+                            <button 
+                              onClick={() => handleDeleteOffer(item.id)}
+                              className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95 cursor-pointer" 
+                              title={lang === 'RU' ? 'Удалить / Отозвать' : 'Pozmak'}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

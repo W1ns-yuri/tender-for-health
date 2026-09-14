@@ -149,19 +149,18 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
         </div>
       </div>
 
-      <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
+      <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className={theme.tableHeaderBg}>
-                <th className="py-3.5 px-4 w-24 text-center">{t('lotNo', 'Lot №')}</th>
+            <thead className={theme.tableHeaderBg}>
+              <tr className="border-b border-slate-200 dark:border-slate-800">
+                <th className="py-3.5 px-4 w-28 text-center">{t('lotNo', 'Lot №')}</th>
                 <th className="py-3.5 px-4 w-48 text-center">{t('title', 'Ady')}</th>
                 <th className="py-3.5 px-4 text-center">{t('description', 'Mazmuny')}</th>
                 <th className="py-3.5 px-4 text-center">{t('type', 'Görnüşi')}</th>
                 <th className="py-3.5 px-4 text-center">{t('status', 'Status')}</th>
                 <th className="py-3.5 px-4 text-center">{t('announcementDate', 'Yglan edilen senesi')}</th>
                 <th className="py-3.5 px-4 text-center">{t('deadline', 'Soňky möhleti')}</th>
-                <th className="py-3.5 px-4 text-center">{t('visibility', 'Açyklygy')}</th>
                 <th className="py-3.5 px-4 text-center">{t('technicalSpecs', 'Tehniki şartler')}</th>
                 <th className="py-3.5 px-4 text-center">{t('action', 'Amal')}</th>
               </tr>
@@ -169,33 +168,28 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
             <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
               {loading ? (
                 <tr>
-                  <td colSpan="10" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
+                  <td colSpan="9" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
                 </tr>
               ) : list.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
+                  <td colSpan="9" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
                 </tr>
               ) : (
                 list.map((item, idx) => (
                   <tr key={item.id || idx} className={theme.tableRowHover}>
-                    <td className="py-3.5 px-4 text-center font-semibold">{safeString(item.tenderNumber)}</td>
+                    <td className="py-3.5 px-4 text-center font-semibold font-mono tabular-nums">{safeString(item.tenderNumber)}</td>
                     <td className="py-3.5 px-4 text-center font-medium">{safeString(item.title)}</td>
                     <td className={`py-3.5 px-4 text-center w-auto min-w-55 whitespace-normal text-wrap ${theme.subText}`}>{safeString(item.description)}</td>
                     <td className="py-3.5 px-4 text-center">{getTypeBadge(item.type, lang, isDarkMode)}</td>
                     <td className="py-3.5 px-4 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
-                    <td className={`py-3.5 px-4 text-center ${theme.subText}`}>{formatDate(item.announcementDate || item.date)}</td>
-                    <td className={`py-3.5 px-4 text-center ${theme.subText}`}>{formatDate(item.deadline)}</td>
-                    <td className="py-3.5 px-4 text-center">
-                      <span className={`${isDarkMode ? 'text-emerald-400' : 'text-emerald-500'} font-semibold text-xs`}>
-                        {item.visibility === 'YAPYK' ? (lang === 'RU' ? 'Закрытый' : 'Ýapyk') : (lang === 'RU' ? 'Открытый' : 'Açyk')}
-                      </span>
-                    </td>
+                    <td className={`py-3.5 px-4 text-center tabular-nums ${theme.subText}`}>{formatDate(item.announcementDate || item.date)}</td>
+                    <td className={`py-3.5 px-4 text-center tabular-nums ${theme.subText}`}>{formatDate(item.deadline)}</td>
                     <td className={`py-3.5 px-4 text-center w-auto min-w-45 whitespace-normal text-wrap ${theme.subText}`}>{renderTechSpecs(item)}</td>
                     <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center space-x-1">
+                      <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => onNavigate('tender-details', item.id)}
-                          className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
+                          className={theme.actionBtn}
                           title={t('viewDetails', 'Детальнее')}
                         >
                           <Eye size={16} />
@@ -205,14 +199,14 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                           <>
                             <button
                               onClick={() => alert(lang === 'RU' ? 'Редактирование пока недоступно' : 'Üýtgetmek häzirlikçe elýeterli däl')}
-                              className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"
+                              className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 transition-all active:scale-95 cursor-pointer"
                               title={t('edit', 'Изменить')}
                             >
                               <Edit2 size={16} />
                             </button>
                             <button
                               onClick={() => handleDelete(item.id)}
-                              className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"
+                              className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95 cursor-pointer"
                               title={t('delete', 'Удалить')}
                             >
                               <Trash2 size={16} />
