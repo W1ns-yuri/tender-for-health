@@ -96,6 +96,16 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
         <h2 className="text-xl font-bold">
           {role === 'ADMIN' ? t('adminDashboardTitle', 'Tender Ulgamy / Admin Baş sahypa') : t('supplierDashboardTitle', 'Üpjün ediji / Baş sahypa')}
         </h2>
+
+        {role === 'ADMIN' && (
+          <button
+            onClick={onOpenCreateTender}
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-sm shadow-emerald-500/20 active:scale-95 transition-all text-xs"
+          >
+            <Plus size={16} />
+            <span>{t('createTenderBtn', 'Создать новый тендер')}</span>
+          </button>
+        )}
       </div>
 
       {/* Метрики */}
@@ -107,7 +117,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
             </div>
             <div>
               <h3 className="text-2xl font-bold">{stats.openTenders}</h3>
-              <p className={`text-xs font-medium ${theme.subText}`}>{t('allTenders', 'Все тендеры')}</p>
+              <p className={`text-xs font-medium ${theme.subText}`}>{lang === 'RU' ? 'Открытых тендеров' : t('allTenders', 'Ähli tenderler')}</p>
             </div>
           </div>
 
@@ -117,7 +127,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
             </div>
             <div>
               <h3 className="text-2xl font-bold">{stats.totalOffers}</h3>
-              <p className={`text-xs font-medium ${theme.subText}`}>{t('totalOffersSubmitted', 'Поданные предложения')}</p>
+              <p className={`text-xs font-medium ${theme.subText}`}>{lang === 'RU' ? 'Поданных предложений' : t('totalOffersSubmitted', 'Jemi tabşyrylan teklipler')}</p>
             </div>
           </div>
 
@@ -127,7 +137,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
             </div>
             <div>
               <h3 className="text-2xl font-bold">{stats.totalSuppliers}</h3>
-              <p className={`text-xs font-medium ${theme.subText}`}>{t('allSuppliers', 'Все поставщики')}</p>
+              <p className={`text-xs font-medium ${theme.subText}`}>{lang === 'RU' ? 'Всех поставщиков' : t('allSuppliers', 'Ähli üpjün edijiler')}</p>
             </div>
           </div>
         </div>
@@ -175,8 +185,8 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
       )}
 
       {/* Таблица 1 */}
-      <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
-        <div className={`p-4 border-b flex items-center justify-between ${theme.cardHeaderBg}`}>
+      <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden ${theme.tableCardBorderTop}`}>
+        <div className={`p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between ${theme.cardHeaderBg}`}>
           <h3 className="font-bold text-base">{t('recentTenders', 'Soňky açyk tenderler')}</h3>
           <button onClick={() => onNavigate('tenders')} className={`text-xs font-semibold hover:underline ${theme.primaryText}`}>
             {t('allBtn', 'Ähli')}
@@ -194,19 +204,18 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                 <th className="py-3 px-3 text-center">{t('status', 'Status')}</th>
                 <th className="py-3 px-3 text-center">{t('announcementDate', 'Yglan edilen senesi')}</th>
                 <th className="py-3 px-3 text-center">{t('deadline', 'Soňky möhleti')}</th>
-                <th className="py-3 px-3 text-center">{t('visibility', 'Açyklygy')}</th>
                 <th className="py-3 px-4 max-w-xs text-left">{t('technicalSpecs', 'Tehniki şartler')}</th>
-                <th className="py-3 px-3 text-center">{t('action', 'Amal')}</th>
+                <th className="py-3 px-4 text-center">{t('action', 'Amal')}</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
               {loadingTenders ? (
                 <tr>
-                  <td colSpan="10" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
+                  <td colSpan="9" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
                 </tr>
               ) : tenders.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
+                  <td colSpan="9" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
                 </tr>
               ) : (
                 tenders.map((item, idx) => (
@@ -224,24 +233,21 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                     <td className="py-3.5 px-3 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
                     <td className={`py-3.5 px-3 text-center ${theme.subText}`}>{formatDate(item.announcementDate || item.date)}</td>
                     <td className={`py-3.5 px-3 text-center ${theme.subText}`}>{formatDate(item.deadline)}</td>
-                    <td className="py-3.5 px-3 text-center">
-                      <span className={`${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'} font-semibold text-xs`}>
-                        {item.visibility === 'YAPYK' ? (lang === 'RU' ? 'Закрытый' : 'Ýapyk') : (lang === 'RU' ? 'Открытый' : 'Açyk')}
-                      </span>
-                    </td>
                     <td className="py-3.5 px-4 text-left max-w-xs">
                       <div className={`line-clamp-2 text-xs leading-relaxed ${theme.subText}`} title={renderTechSpecs(item)}>
                         {renderTechSpecs(item)}
                       </div>
                     </td>
-                    <td className="py-3.5 px-3 text-center">
-                      <button
-                        onClick={() => onNavigate('tender-details', item.id)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-blue-400 transition-all active:scale-95 inline-flex items-center justify-center"
-                        title={t('viewDetails', 'Детальнее')}
-                      >
-                        <Eye size={16} />
-                      </button>
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="flex items-center justify-center">
+                        <button
+                          onClick={() => onNavigate('tender-details', item.id)}
+                          className={theme.actionBtn}
+                          title={t('viewDetails', 'Детальнее')}
+                        >
+                          <Eye size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -252,8 +258,8 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
       </div>
 
       {/* Таблица 2 */}
-      <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
-        <div className={`p-4 border-b flex items-center justify-between ${theme.cardHeaderBg}`}>
+      <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden ${theme.tableCardBorderTop}`}>
+        <div className={`p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between ${theme.cardHeaderBg}`}>
           <h3 className="font-bold text-base">{t('recentOffers', 'Soňky tekliplerim')}</h3>
           <button onClick={() => onNavigate('offers')} className={`text-xs font-semibold hover:underline ${theme.primaryText}`}>
             {t('allBtn', 'Ähli')}
@@ -312,7 +318,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => onNavigate('offers', item.id)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-blue-400 transition-all active:scale-95"
+                          className={theme.actionBtn}
                           title={t('viewDetails', 'Просмотр')}
                         >
                           <Eye size={16} />
@@ -320,13 +326,13 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                         {role !== 'ADMIN' && (
                           <>
                             <button
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 dark:hover:text-amber-400 transition-all active:scale-95"
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 transition-all active:scale-95"
                               title={t('edit', 'Редактировать')}
                             >
                               <Edit2 size={16} />
                             </button>
                             <button
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 dark:hover:text-rose-400 transition-all active:scale-95"
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95"
                               title={t('delete', 'Удалить')}
                             >
                               <Trash2 size={16} />
