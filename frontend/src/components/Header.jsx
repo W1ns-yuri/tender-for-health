@@ -45,24 +45,6 @@ export default function Header({ user, role, setRole, isDarkMode, lang, setLang,
 
       {/* 2. Правые инструменты */}
       <div className="flex items-center space-x-3">
-        {/* Переключатель роли (виден только администраторам) */}
-        {(user?.roleType === 'ADMIN' || user?.role === 'ADMIN') && (
-          <div className={`flex items-center p-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-            <button
-              onClick={() => setRole('SUPPLIER')}
-              className={`px-3 py-1 rounded-md transition-all ${role === 'SUPPLIER' ? 'bg-blue-700 text-white shadow-xs font-bold' : 'hover:text-slate-900'}`}
-            >
-              {t('supplierStr', 'Üpjün ediji')}
-            </button>
-            <button
-              onClick={() => setRole('ADMIN')}
-              className={`px-3 py-1 rounded-md transition-all ${role === 'ADMIN' ? 'bg-teal-600 text-white shadow-xs font-bold' : 'hover:text-slate-900'}`}
-            >
-              {t('adminStr', 'Admin')}
-            </button>
-          </div>
-        )}
-
         {/* Выбор языка */}
         <div className="relative">
           <button
@@ -93,7 +75,7 @@ export default function Header({ user, role, setRole, isDarkMode, lang, setLang,
 
         <button className={`p-2 rounded-lg relative transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`} title="Уведомления">
           <Bell size={18} />
-          <span className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ring-2 ${isAdmin ? 'bg-teal-500' : 'bg-blue-600'} ring-white`}></span>
+          <span className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ring-2 ${isAdmin ? 'bg-emerald-500' : 'bg-blue-600'} ring-white`}></span>
         </button>
 
         {/* 🟢 Кнопка Настройки переводит на страницу Настройки */}
@@ -113,7 +95,7 @@ export default function Header({ user, role, setRole, isDarkMode, lang, setLang,
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className={`flex items-center space-x-1 cursor-pointer p-1 rounded-full hover:bg-slate-100 ${isDarkMode ? 'hover:bg-slate-800' : ''}`}
           >
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white ${isAdmin ? 'bg-teal-600' : 'bg-blue-700'}`}>
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white ${isAdmin ? 'bg-emerald-600 shadow-sm shadow-emerald-500/30' : 'bg-blue-600 shadow-sm shadow-blue-500/30'}`}>
               {((user?.companies?.[0] || user?.suppliers?.[0])?.name && role !== 'ADMIN') ? (user.companies?.[0] || user.suppliers?.[0]).name[0].toUpperCase() : (user?.firstName ? user.firstName[0].toUpperCase() : (role === 'ADMIN' ? 'A' : 'Ü'))}
             </div>
             <ChevronDown size={16} className="text-slate-500" />

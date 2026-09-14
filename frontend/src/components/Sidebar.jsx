@@ -220,10 +220,10 @@ export default function Sidebar({
           </nav>
         </div>
 
-        {/* 3. Секция Администратора (Administrasiýa) */}
+        {/* 3. Секция Управления */}
         {isAdmin && (
           <div className={`p-3 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100'} mt-2`}>
-            {!isCollapsed && <p className={`px-3 text-[11px] font-semibold ${theme.subText} uppercase tracking-wider mb-2`}>{t('administration', 'Administrasiýa')}</p>}
+            {!isCollapsed && <p className={`px-3 text-[11px] font-semibold ${theme.subText} uppercase tracking-wider mb-2`}>{t('managementSection', 'Dolandyryş')}</p>}
             <nav className="space-y-1">
               <button
                 onClick={() => setActiveTab('umumy')}
@@ -234,7 +234,7 @@ export default function Sidebar({
                 }`}
               >
                 <Database size={19} />
-                {!isCollapsed && <span className="ml-3">{t('sectionGeneral', 'Umumy')}</span>}
+                {!isCollapsed && <span className="ml-3">{t('sectionDirectories', 'Gollanmalar')}</span>}
               </button>
 
               <button
@@ -246,7 +246,7 @@ export default function Sidebar({
                 }`}
               >
                 <Package size={19} />
-                {!isCollapsed && <span className="ml-3">{t('sectionProducts', 'Haryt')}</span>}
+                {!isCollapsed && <span className="ml-3">{t('sectionProducts', 'Haryt katalogy')}</span>}
               </button>
 
               <button
@@ -258,7 +258,7 @@ export default function Sidebar({
                 }`}
               >
                 <ShieldAlert size={19} />
-                {!isCollapsed && <span className="ml-3">{t('administration', 'Administrasiýa')}</span>}
+                {!isCollapsed && <span className="ml-3">{t('sectionActivityLogs', 'Hereketler gündeligi')}</span>}
               </button>
             </nav>
           </div>

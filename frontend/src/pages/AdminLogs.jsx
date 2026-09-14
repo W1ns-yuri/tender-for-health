@@ -20,7 +20,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
   const t = (key, fallback) => getTranslation(lang, key, fallback);
 
   const cardBg = isDarkMode ? 'bg-[#111827] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-800';
-  const tableHeaderBg = isDarkMode ? 'bg-[#1e293b] text-slate-200' : 'bg-[#1e3a8a] text-white';
+  const tableHeaderBg = theme.tableHeaderBg;
   const inputBg = isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-slate-50 border-slate-200 placeholder:text-slate-400';
 
   useEffect(() => {
