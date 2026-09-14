@@ -86,7 +86,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
 
       {/* Панель фильтров */}
       <div className={`p-4 rounded-xl border shadow-xs space-y-3 ${theme.cardBg}`}>
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
           <div>
             <label className={`block text-[11px] font-medium mb-1 ${theme.subText}`}>{t('type', 'Görnüşi')}</label>
             <select
@@ -123,15 +123,6 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
           <div>
             <label className={`block text-[11px] font-medium mb-1 ${theme.subText}`}>{t('deadline', 'Soňky möhleti')}</label>
             <input type="text" placeholder="../../...." className={`w-full px-2.5 py-1.5 rounded-lg text-xs ${theme.inputBg}`} />
-          </div>
-
-          <div>
-            <label className={`block text-[11px] font-medium mb-1 ${theme.subText}`}>{t('visibility', 'Açyklygy')}</label>
-            <select className={`w-full px-2.5 py-1.5 rounded-lg text-xs ${theme.inputBg}`}>
-              <option value="">{lang === 'RU' ? 'Все' : 'Ählisi'}</option>
-              <option value="ACYK">{lang === 'RU' ? 'Открытый' : 'Açyk'}</option>
-              <option value="YAPYK">{lang === 'RU' ? 'Закрытый' : 'Ýapyk'}</option>
-            </select>
           </div>
 
           <div className="flex items-end">

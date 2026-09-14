@@ -655,6 +655,17 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     existingTenderNumbers.includes(formData.tenderNumber.trim().toLowerCase())
   );
 
+  const hasValidSpecs = lots.some(lot => lot.specs.some(s => s.haryt && s.haryt.trim() !== ''));
+  const isFormValid = Boolean(
+    formData.title && formData.title.trim() !== '' &&
+    formData.announcementDate &&
+    formData.deadline &&
+    formData.clientId &&
+    formData.categoryId &&
+    hasValidSpecs &&
+    !isTenderNumberDuplicate
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -1081,9 +1092,14 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                </div>
                {lots.length > 1 && (
                  <div className="flex items-center gap-2 mt-4 md:mt-0">
-                   <button type="button" onClick={() => handleRemoveLot(lotIdx)} className="p-2 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer" title={lang === 'RU' ? 'Удалить лот' : 'Loty pozmak'}>
-                     <Trash2 size={16} />
-                   </button>
+                   <button
+                      type="button"
+                      onClick={() => handleRemoveLot(lotIdx)}
+                      className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95 cursor-pointer"
+                      title={lang === 'RU' ? 'Удалить лот' : 'Loty pozmak'}
+                    >
+                      <Trash2 size={15} />
+                    </button>
                  </div>
                )}
             </div>
@@ -1211,7 +1227,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                           <button
                             type="button"
                             onClick={() => handleRemoveSpec(lotIdx, idx)}
-                            className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"
+                            className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95 cursor-pointer mx-auto"
                             title={lang === 'RU' ? 'Удалить позицию' : 'Pozmak'}
                           >
                             <Trash2 size={15} />
@@ -1306,9 +1322,14 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                   <td className="py-3 px-4 text-center font-bold text-teal-600">{doc.type}</td>
                   <td className="py-3 px-4 text-center text-slate-400">{doc.size}</td>
                   <td className="py-3 px-4 text-center text-slate-400">{doc.date}</td>
-                  <td className="py-3 px-4 text-center space-x-1">
-                    <button type="button" onClick={() => setDocs(docs.filter((_, i) => i !== idx))} className="p-1 hover:bg-rose-500/10 text-rose-500 rounded cursor-pointer">
-                      <Trash2 size={14} />
+                  <td className="py-3 px-4 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setDocs(docs.filter((_, i) => i !== idx))}
+                      className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95 cursor-pointer mx-auto"
+                      title={lang === 'RU' ? 'Удалить документ' : 'Faýly pozmak'}
+                    >
+                      <Trash2 size={15} />
                     </button>
                   </td>
                 </tr>
@@ -1329,9 +1350,21 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
 
       {/* 5. Плавающая нижняя панель сохранения (Sticky footer) */}
       <div className="sticky bottom-0 z-40 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3.5 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 rounded-b-2xl">
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>{hasDraftContent ? (lang === 'RU' ? 'Черновик сохранен в браузере' : 'Taslama brauzerde saklandy') : (lang === 'RU' ? 'Заполните обязательные поля (*)' : 'Hökmany meýdanlary dolduryň')}</span>
+        <div className="flex items-center gap-2 text-xs">
+          <span className={`w-2 h-2 rounded-full transition-colors ${
+            isFormValid
+              ? 'bg-emerald-500 shadow-xs shadow-emerald-500/50'
+              : 'bg-slate-400 dark:bg-slate-600'
+          }`}></span>
+          <span className={`font-medium transition-colors ${
+            isFormValid
+              ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
+              : 'text-slate-500 dark:text-slate-400'
+          }`}>
+            {isFormValid
+              ? (lang === 'RU' ? 'Все обязательные поля заполнены' : 'Ähli hökmany meýdanlar dolduryldy')
+              : (lang === 'RU' ? 'Заполните обязательные поля (*)' : 'Hökmany meýdanlary dolduryň')}
+          </span>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
