@@ -55,7 +55,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/suppliers', supplierRoutes);
 
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: '🚀 Сервер тендерной системы (Tender System Backend) работает!' });
+    res.json({ status: 'ok', message: 'Сервер тендерной системы (Tender System Backend) работает!' });
 });
 
 // Глобальный обработчик ошибок (Global Error Handler)
@@ -69,5 +69,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`🚀 Сервер тендерной системы успешно запущен на порту ${PORT}`);
+    console.log(`Сервер тендерной системы успешно запущен на порту ${PORT}`);
 });

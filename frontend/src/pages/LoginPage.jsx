@@ -52,7 +52,14 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
         onLoginSuccess(res.data.user, res.data.token);
       }
     } catch (err) {
-      setError(err.response?.data?.error || t('invalidLogin', 'Неверный логин или пароль'));
+      const isColdStart = !err.response || err.response.status === 502 || err.response.status === 503 || err.code === 'ERR_NETWORK';
+      if (isColdStart) {
+        setError(lang === 'RU'
+          ? 'Сервер подключается, пожалуйста, подождите 2-3 секунды и повторите...'
+          : 'Serwer birikdirilýär, 2-3 sekunt garaşyp gaýtadan synanyşyň...');
+      } else {
+        setError(err.response?.data?.error || t('invalidLogin', 'Неверный логин или пароль'));
+      }
     } finally {
       setLoading(false);
     }
@@ -91,7 +98,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
     setRegStep(2);
   };
 
-  const handleQuickLogin = async (demoUser, demoPass) => {
+  const handleQuickLogin = async (demoUser, demoPass, retryCount = 1) => {
     setIsRegister(false);
     setUsername(demoUser);
     setPassword(demoPass);
@@ -105,8 +112,22 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
         onLoginSuccess(res.data.user, res.data.token);
       }
     } catch (err) {
-      setError(err.response?.data?.error || t('invalidLogin', 'Неверный логин или пароль'));
-    } finally {
+      const isColdStart = !err.response || err.response.status === 502 || err.response.status === 503 || err.code === 'ERR_NETWORK';
+      if (isColdStart && retryCount > 0) {
+        // Если сервер еще стартует, автоматически повторяем через 1 секунду без ошибки пользователю
+        setTimeout(() => {
+          handleQuickLogin(demoUser, demoPass, retryCount - 1);
+        }, 1000);
+        return;
+      }
+
+      if (isColdStart) {
+        setError(lang === 'RU'
+          ? 'Сервер подключается, пожалуйста, нажмите еще раз через пару секунд...'
+          : 'Serwer birikdirilýär, birnäçe sekuntdan soň gaýtadan basyň...');
+      } else {
+        setError(err.response?.data?.error || t('invalidLogin', 'Неверный логин или пароль'));
+      }
       setLoading(false);
     }
   };

@@ -51,20 +51,41 @@ export default function App() {
 
   // Синхронизация сессии при монтировании
   useEffect(() => {
-    const fetchUser = async () => {
-      if (token) {
-        try {
-          const res = await API.get('/auth/me');
+    let isMounted = true;
+    let retryTimeout = null;
+
+    const fetchUser = async (retriesLeft = 2) => {
+      if (!token) return;
+
+      try {
+        const res = await API.get('/auth/me');
+        if (isMounted) {
           setUser(res.data);
           localStorage.setItem('tender_user', JSON.stringify(res.data));
-        } catch (error) {
+        }
+      } catch (error) {
+        // Вылогиниваем ТОЛЬКО если сервер подтвердил недействительность токена (401 или 404 пользователя)
+        if (error.response?.status === 401 || (error.response?.status === 404 && error.config?.url?.includes('/auth/me'))) {
           console.warn('Session expired or user not found, logging out...');
-          handleLogout();
+          if (isMounted) handleLogout();
+        } else if (!error.response || error.response.status === 502 || error.response.status === 503) {
+          // Если сервер еще запускается (502/503), не сбрасываем сессию, а повторяем запрос через 1.5 сек
+          if (retriesLeft > 0) {
+            retryTimeout = setTimeout(() => {
+              if (isMounted) fetchUser(retriesLeft - 1);
+            }, 1500);
+          }
         }
       }
     };
+
     fetchUser();
-  }, [token]); // Запускаем при изменении токена или первом рендере
+
+    return () => {
+      isMounted = false;
+      if (retryTimeout) clearTimeout(retryTimeout);
+    };
+  }, [token]);
 
   useEffect(() => {
     if (user?.roleType) {

@@ -18,19 +18,33 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
     fetchDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (retryCount = 1) => {
     try {
       setLoadingTenders(true);
       setLoadingOffers(true);
 
       const [tendersRes, statsRes, offersRes] = await Promise.all([
-        API.get('/tenders').catch((e) => { console.error('Tenders Err', e); return null; }),
-        API.get('/dashboard/stats').catch((e) => { console.error('Stats Err', e); return null; }),
-        API.get(role === 'ADMIN' ? '/offers' : '/offers/my').catch((e) => { console.error('Offers Err', e); return null; })
+        API.get('/tenders').catch((e) => {
+          if (e.response?.status !== 502 && e.response?.status !== 503) console.error('Tenders Err', e);
+          return null;
+        }),
+        API.get('/dashboard/stats').catch((e) => {
+          if (e.response?.status !== 502 && e.response?.status !== 503) console.error('Stats Err', e);
+          return null;
+        }),
+        API.get(role === 'ADMIN' ? '/offers' : '/offers/my').catch((e) => {
+          if (e.response?.status !== 502 && e.response?.status !== 503) console.error('Offers Err', e);
+          return null;
+        })
       ]);
 
-      console.log('Role:', role);
-      console.log('Offers Res:', offersRes?.data);
+      // Если все запросы вернули null из-за временного 502 (сервер еще прогревается/перезапускается)
+      if (!tendersRes && !statsRes && !offersRes && retryCount > 0) {
+        setTimeout(() => {
+          fetchDashboardData(retryCount - 1);
+        }, 1200);
+        return;
+      }
 
       if (tendersRes?.data && Array.isArray(tendersRes.data)) {
         setTenders(tendersRes.data);
