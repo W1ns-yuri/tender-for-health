@@ -13,11 +13,21 @@ import {
   Clock, 
   Package,
   Layers,
-  CornerDownRight
+  CornerDownRight,
+  UploadCloud,
+  Upload,
+  CheckCircle,
+  X,
+  Wrench,
+  Settings2,
+  ShieldCheck,
+  MapPin,
+  Info,
+  Paperclip
 } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
-import { getRoleTheme, safeString } from '../utils/themeUtils';
+import { getRoleTheme, safeString, getCurrencyLabel } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
 
 export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 'RU' }) {
@@ -44,11 +54,13 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
   const [selectedLots, setSelectedLots] = useState({}); // { [lotId]: boolean }
   const [lotDeliveryTerms, setLotDeliveryTerms] = useState({}); // { [lotId]: deliveryTermId }
   
-  // Позиции предложения: { [lotId]: [{ tenderSpecId, requestedName, haryt, brand, unit, mukdar, price, desc }] }
+  // Позиции предложения: { [lotId]: [{ tenderSpecId, requestedName, haryt, brand, unit, mukdar, price, desc, isEquivalent, equivalentName, equivalentJustification }] }
   const [offerItemsByLot, setOfferItemsByLot] = useState({});
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState('');
   const fileInputRef = useRef(null);
   const errorRef = useRef(null);
 
@@ -103,7 +115,10 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
             unitId: spec.unitId || null,
             mukdar: spec.quantity || 1,
             price: 0,
-            desc: ''
+            desc: '',
+            isEquivalent: false,
+            equivalentName: '',
+            equivalentJustification: ''
           }));
         });
         
@@ -119,27 +134,79 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const ALLOWED_EXTS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png'];
+  const MAX_FILE_SIZE_MB = 25;
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('name', file.name);
+  const processFiles = async (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+    setFileUploadError('');
 
-    try {
-      const res = await API.post('/documents/upload', formData);
-      setUploadedFiles(prev => [...prev, res.data]);
-    } catch (err) {
-      console.error(err);
-      showAlert({
-        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
-        message: lang === 'RU' ? 'Ошибка загрузки файла' : 'Faýl ýüklemekde ýalňyşlyk',
-        type: 'error'
-      });
+    const filesToUpload = Array.from(fileList);
+    for (const file of filesToUpload) {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (!ALLOWED_EXTS.includes(ext)) {
+        setFileUploadError(lang === 'RU' 
+          ? `Файл "${file.name}" имеет недопустимый формат. Разрешены: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG.`
+          : `"${file.name}" faýlyň formaty rugsat berilmeýär.`);
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        setFileUploadError(lang === 'RU'
+          ? `Файл "${file.name}" превышает допустимый размер ${MAX_FILE_SIZE_MB} МБ.`
+          : `"${file.name}" faýlyň göwrümi ${MAX_FILE_SIZE_MB} MB-dan uly.`);
+        continue;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('name', file.name);
+
+      try {
+        const res = await API.post('/documents/upload', formData);
+        const docData = {
+          ...res.data,
+          size: file.size,
+          fileName: file.name
+        };
+        setUploadedFiles(prev => [...prev, docData]);
+      } catch (err) {
+        console.error('File upload error', err);
+        setFileUploadError(lang === 'RU' ? `Ошибка загрузки "${file.name}"` : `Faýl ýüklemekde ýalňyşlyk`);
+      }
     }
-    
+  };
+
+  const handleFileInputChange = (e) => {
+    processFiles(e.target.files);
     e.target.value = '';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processFiles(e.dataTransfer.files);
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes || isNaN(bytes)) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const handleRemoveFile = (index) => {
@@ -235,11 +302,14 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
 
     const specsToSubmit = specsWithPrices.map(item => ({
       tenderSpecId: item.tenderSpecId,
-      name: item.haryt || item.requestedName,
-      quantity: parseFloat(item.mukdar) || 1,
+      name: item.isEquivalent ? (item.equivalentName?.trim() || item.requestedName) : item.requestedName,
+      quantity: parseFloat(item.requestedQty) || 1, // Зафиксировано строго по заказчику!
       unitPrice: parseFloat(item.price) || 0,
       description: item.desc || null,
-      unitId: item.unitId || null
+      unitId: item.unitId || null,
+      isEquivalent: Boolean(item.isEquivalent),
+      equivalentName: item.isEquivalent ? item.equivalentName?.trim() : null,
+      equivalentJustification: item.isEquivalent ? item.equivalentJustification?.trim() : null
     }));
 
     const primaryDeliveryTermId = lotDeliveryTerms[activeLotIds[0]] || null;
@@ -274,7 +344,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
   if (loading) {
     return (
       <div className="p-16 text-center text-slate-500 font-medium flex flex-col items-center justify-center space-y-3">
-        <div className="w-8 h-8 border-3 border-blue-900 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
         <span>{t('loading', 'Загрузка данных тендера...')}</span>
       </div>
     );
@@ -283,14 +353,14 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
   const grandTotal = calculateGrandTotal();
 
   return (
-    <div className="space-y-6 pb-6 text-sm">
+    <div className="space-y-6 pb-32 text-sm">
       {/* 1. Верхняя навигация и заголовок */}
       <div className="flex items-center justify-between pb-1">
         <div className="flex items-center gap-3">
           <h1 className={`text-2xl font-black tracking-tight ${theme.primaryText}`}>
             {lang === 'RU' ? 'Подача коммерческого предложения' : 'Tender teklibi tabşyrmak'}
           </h1>
-          <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-100 dark:bg-blue-950/60 text-[#1e3a8a] dark:text-blue-300 font-mono">
+          <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-mono">
             {tender?.tenderNumber}
           </span>
         </div>
@@ -327,10 +397,10 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
 
           {/* Виджет итоговой суммы предложения (компактный, расширяется по контенту) */}
           <div className="shrink-0 px-5 py-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 text-right shadow-xs">
-            <span className="text-[11px] font-bold text-[#1e3a8a] dark:text-blue-300 uppercase tracking-wider block">
+            <span className="text-[11px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider block">
               {lang === 'RU' ? 'Итоговая стоимость заявки' : 'Jemi teklip bahasy'}
             </span>
-            <div className="text-xl font-black text-[#1e3a8a] dark:text-blue-300 my-0.5 whitespace-nowrap">
+            <div className="text-xl font-black text-blue-600 dark:text-blue-400 my-0.5 whitespace-nowrap">
               {grandTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}
             </div>
             <div className="text-[11px] text-slate-500 font-medium flex items-center justify-end gap-1.5 whitespace-nowrap">
@@ -361,7 +431,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
             >
               {currencies.map(c => (
                 <option key={c.id} value={c.id}>
-                  {c.flag || ''} {c.code} — {c.name}
+                  {getCurrencyLabel(c)}
                 </option>
               ))}
             </select>

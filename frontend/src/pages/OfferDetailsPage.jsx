@@ -65,7 +65,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
   if (loading) {
     return (
       <div className="p-16 text-center text-slate-500 font-medium flex flex-col items-center justify-center space-y-3">
-        <div className={`w-8 h-8 border-3 rounded-full animate-spin border-t-transparent ${isAdmin ? 'border-teal-600' : 'border-[#1e3a8a]'}`} />
+        <div className={`w-8 h-8 border-3 rounded-full animate-spin border-t-transparent ${isAdmin ? 'border-teal-600' : 'border-blue-600'}`} />
         <span>{t('loading', 'Загрузка данных заявки...')}</span>
       </div>
     );
@@ -157,15 +157,15 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
           <div className={`shrink-0 px-5 py-3.5 rounded-xl border text-right shadow-xs ${
             isAdmin
               ? 'bg-teal-50/80 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800/80 text-teal-700 dark:text-teal-300'
-              : 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/80 text-[#1e3a8a] dark:text-blue-300'
+              : 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/80 text-blue-700 dark:text-blue-300'
           }`}>
             <span className={`text-[11px] font-bold uppercase tracking-wider block ${
-              isAdmin ? 'text-teal-700 dark:text-teal-300' : 'text-[#1e3a8a] dark:text-blue-300'
+              isAdmin ? 'text-teal-700 dark:text-teal-300' : 'text-blue-700 dark:text-blue-300'
             }`}>
               {lang === 'RU' ? 'Сумма предложения' : 'Teklip bahasy'}
             </span>
             <div className={`text-2xl font-black my-0.5 whitespace-nowrap ${
-              isAdmin ? 'text-teal-700 dark:text-teal-300' : 'text-[#1e3a8a] dark:text-blue-300'
+              isAdmin ? 'text-teal-700 dark:text-teal-300' : 'text-blue-600 dark:text-blue-400'
             }`}>
               {(offer.offeredPrice || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}
             </div>
@@ -221,7 +221,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                 <span className={`px-2.5 py-0.5 rounded-md font-bold border ${
                   isAdmin
                     ? 'bg-teal-100 dark:bg-teal-950/70 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800'
-                    : 'bg-blue-100 dark:bg-blue-950/70 text-[#1e3a8a] dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                    : 'bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                 }`}>
                   {offer.deliveryTerm ? `${offer.deliveryTerm.shortName} — ${offer.deliveryTerm.name}` : (lang === 'RU' ? 'По лотам' : 'Lotlar boýunça')}
                 </span>
@@ -255,7 +255,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
           <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
             isAdmin
               ? 'bg-teal-100 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300'
-              : 'bg-blue-100 dark:bg-blue-950/60 text-[#1e3a8a] dark:text-blue-300'
+              : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
           }`}>
             {lang === 'RU' ? `Лотов: ${lotGroups.length || 1} | Позиций: ${rawSpecs.length}` : `Lot: ${lotGroups.length || 1} | Haryt: ${rawSpecs.length}`}
           </span>
@@ -288,7 +288,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                         <strong className={`px-2.5 py-0.5 rounded-md font-bold border ${
                           isAdmin
                             ? 'bg-teal-100 dark:bg-teal-950/70 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800'
-                            : 'bg-blue-100 dark:bg-blue-950/70 text-[#1e3a8a] dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                            : 'bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                         }`}>
                           {lotDeliveryTerm}
                         </strong>

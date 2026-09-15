@@ -356,12 +356,13 @@ id (UUID PK), name (название организации-заказчика),
 | deadline              | DateTime                      | Дедлайн подачи предложений                     |
 | client_id             | String? FK → clients.id       | SetNull                                        |
 | category_id           | String? FK → categories.id    | SetNull                                        |
+| procurement_type      | String? default "GOODS"       | GOODS / SERVICES_WORKS / MIXED                 |
 | created_by_id         | String FK → users.id          | Cascade                                        |
 | createdAt / updatedAt | DateTime                      | —                                              |
 
 ### 4.9 Таблица: tender_lots
 
-id (UUID PK), tender_id (FK→tenders Cascade), name, delivery_term_id (FK→delivery_terms SetNull), createdAt, updatedAt
+id (UUID PK), tender_id (FK→tenders Cascade), name, lot_type (GOODS / WORKS / SERVICES), delivery_term_id (FK→delivery_terms SetNull), delivery_address?, work_address?, work_period?, license_required (Boolean default false), service_format? (REMOTE / ON_SITE / HYBRID), sla_period?, createdAt, updatedAt
 
 ### 4.10 Таблица: tender_specifications
 
@@ -452,10 +453,13 @@ id (PK), name, quantity (Int), unit (String), description?, tender_id (FK→tend
 | manufacturer_id    | String? FK → manufacturers.id        | SetNull                       |
 | name               | String?                              | —                             |
 | position_number    | Int?                                 | —                             |
-| quantity           | Float default 1                      | —                             |
-| unit_price         | Float default 0                      | Цена за единицу               |
-| description        | String?                              | —                             |
-| is_awarded         | Boolean default false                | Признак победителя по позиции |
+| quantity                 | Float default 1                      | —                             |
+| unit_price               | Float default 0                      | Цена за единицу               |
+| description              | String?                              | —                             |
+| is_awarded               | Boolean default false                | Признак победителя по позиции |
+| is_equivalent            | Boolean default false                | Предложен аналог/эквивалент   |
+| equivalent_name          | String?                              | Торговое название аналога     |
+| equivalent_justification | String?                              | Обоснование эквивалентности   |
 
 ### 4.15 Таблица: offer_exchange_rates
 

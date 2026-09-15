@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Save, Trash2, ChevronDown, AlertCircle, RefreshCw, FileText, AlignLeft, Paperclip, Calendar, Check } from 'lucide-react';
+import { Plus, Save, Trash2, ChevronDown, AlertCircle, RefreshCw, FileText, AlignLeft, Paperclip, Calendar, Check, Package, Wrench, Settings2 } from 'lucide-react';
 import API from '../services/api';
-import { getRoleTheme } from '../utils/themeUtils';
+import { getRoleTheme, getCurrencyLabel } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import CatalogFormModal from '../components/CatalogFormModal';
 import CustomDatePicker from '../components/CustomDatePicker';
@@ -407,6 +407,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     categoryId: '',
     clientId: '',
     type: 'YERLI',
+    procurementType: 'GOODS',
     announcementDate: new Date().toISOString().split('T')[0],
     deadline: '',
     description: '',
@@ -420,7 +421,14 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     {
       id: Date.now(),
       name: 'Лот 1',
+      lotType: 'GOODS',
       deliveryTermId: '',
+      deliveryAddress: '',
+      workAddress: '',
+      workPeriod: '',
+      licenseRequired: false,
+      serviceFormat: 'ON_SITE',
+      slaPeriod: '',
       specs: [
         { id: Date.now(), hk: '1', haryt: '', unit: '', brand: '', mukdar: 1, desc: '' }
       ]
@@ -699,7 +707,14 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       {
         id: Date.now(),
         name: `Лот ${lots.length + 1}`,
+        lotType: formData.procurementType === 'SERVICES_WORKS' ? 'WORKS' : 'GOODS',
         deliveryTermId: '',
+        deliveryAddress: '',
+        workAddress: '',
+        workPeriod: '',
+        licenseRequired: false,
+        serviceFormat: 'ON_SITE',
+        slaPeriod: '',
         specs: [
           { id: Date.now() + 1, hk: '1', haryt: '', unit: defaultUnitId, brand: '', mukdar: 1, desc: '' }
         ]
@@ -869,11 +884,19 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
         visibility: formData.visibility,
         categoryId: formData.categoryId !== '' ? formData.categoryId : undefined,
         clientId: formData.clientId !== '' ? formData.clientId : undefined,
+        procurementType: formData.procurementType || 'GOODS',
         announcementDate: new Date(formData.announcementDate).toISOString(),
         deadline: new Date(formData.deadline).toISOString(),
         lots: lots.map((lot, lotIdx) => ({
           name: sanitizeInputText(lot.name),
-          deliveryTermId: lot.deliveryTermId || undefined,
+          lotType: lot.lotType || 'GOODS',
+          deliveryTermId: lot.lotType === 'GOODS' ? (lot.deliveryTermId || undefined) : undefined,
+          deliveryAddress: lot.deliveryAddress ? sanitizeInputText(lot.deliveryAddress).trim() : undefined,
+          workAddress: lot.workAddress ? sanitizeInputText(lot.workAddress).trim() : undefined,
+          workPeriod: lot.workPeriod ? sanitizeInputText(lot.workPeriod).trim() : undefined,
+          licenseRequired: Boolean(lot.licenseRequired),
+          serviceFormat: lot.serviceFormat || undefined,
+          slaPeriod: lot.slaPeriod ? sanitizeInputText(lot.slaPeriod).trim() : undefined,
           specs: lot.specs
             .filter(s => s.haryt && s.haryt.trim() !== '')
             .map((s, idx) => ({
@@ -1031,8 +1054,8 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
               </div>
             </div>
 
-            {/* Строка 2: Категория, Заказчик, Тип */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Строка 2: Категория, Направление закупки, Заказчик, Тип */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block font-semibold mb-1">{t('category', 'Kategoriýa')}*</label>
                 <CustomSelect 
@@ -1043,6 +1066,23 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                   searchable={true}
                   isDarkMode={isDarkMode} 
                   theme={theme} 
+                  t={t}
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-1">{lang === 'RU' ? 'Направление закупки' : 'Satyn alyş ugry'}*</label>
+                <CustomSelect
+                  options={[
+                    { id: 'GOODS', name: lang === 'RU' ? 'Поставка товаров' : 'Haryt üpjünçiligi' },
+                    { id: 'SERVICES_WORKS', name: lang === 'RU' ? 'Работы и услуги' : 'Işler we hyzmatlar' },
+                    { id: 'MIXED', name: lang === 'RU' ? 'Смешанный (Комплексный)' : 'Gatyşyk (Toplumlaýyn)' }
+                  ]}
+                  value={formData.procurementType}
+                  onChange={(val) => handleFormChange('procurementType', val)}
+                  placeholder={lang === 'RU' ? 'Направление закупки' : 'Satyn alyş ugry'}
+                  isDarkMode={isDarkMode}
+                  theme={theme}
                   t={t}
                 />
               </div>
@@ -1110,7 +1150,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
               <div>
                 <label className="block font-semibold mb-1">{t('currency', 'Walýuta')}*</label>
                 <CustomSelect
-                  options={currencies.map(c => ({ id: c.code, name: `${c.code} - ${c.name}` }))}
+                  options={currencies.map(c => ({ id: c.code, name: getCurrencyLabel(c) }))}
                   value={formData.currency}
                   onChange={(val) => handleFormChange('currency', val)}
                   placeholder={t('currency', 'Walýuta')}
@@ -1218,50 +1258,191 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
           </div>
         </div>
 
-        {lots.map((lot, lotIdx) => (
-          <div key={lot.id} className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
-            <div className={`p-4 border-b flex items-end justify-between gap-4 ${isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-100 bg-slate-50/70'}`}>
-               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div>
-                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                     {lang === 'RU' ? 'Название лота' : 'Lot ady'}*
-                   </label>
-                   <input
-                     type="text"
-                     required
-                     value={lot.name}
-                     onChange={(e) => handleLotChange(lotIdx, 'name', e.target.value, e)}
-                     placeholder={lang === 'RU' ? 'Напр: Лот 1: Оборудование' : 'Meselem: Lot 1'}
-                     className={`w-full px-3 py-2 rounded-lg text-sm font-semibold ${theme.inputBg}`}
-                   />
-                 </div>
-                 <div>
-                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">{lang === 'RU' ? 'Условия поставки' : 'Eltip beriş şerti'}*</label>
-                   <CustomSelect
-                     options={deliveryTerms.map(dt => ({ id: dt.id, name: `${dt.shortName} — ${dt.name}` }))}
-                     value={lot.deliveryTermId}
-                     onChange={(val) => handleLotChange(lotIdx, 'deliveryTermId', val)}
-                     placeholder={lang === 'RU' ? 'Выберите условие поставки...' : 'Eltip beriş şertini saýlaň...'}
-                     searchable={deliveryTerms.length > 5}
-                     isDarkMode={isDarkMode}
-                     theme={theme}
-                     t={t}
-                   />
-                 </div>
-               </div>
-               {lots.length > 1 && (
-                 <div className="flex items-center gap-2 mt-4 md:mt-0">
-                   <button
-                      type="button"
-                      onClick={() => handleRemoveLot(lotIdx)}
-                      className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95 cursor-pointer"
-                      title={lang === 'RU' ? 'Удалить лот' : 'Loty pozmak'}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                 </div>
-               )}
-            </div>
+        {lots.map((lot, lotIdx) => {
+          const currentLotType = lot.lotType || 'GOODS';
+
+          return (
+            <div key={lot.id} className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
+              <div className={`p-4 border-b space-y-3.5 ${isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-100 bg-slate-50/70'}`}>
+                {/* 1. Верхняя линия лота: Название + Переключатель типа + Кнопка удаления */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-1">
+                    <span className="w-7 h-7 rounded-lg bg-emerald-600/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-black text-xs flex items-center justify-center shrink-0">
+                      {lotIdx + 1}
+                    </span>
+                    <input
+                      type="text"
+                      required
+                      value={lot.name}
+                      onChange={(e) => handleLotChange(lotIdx, 'name', e.target.value, e)}
+                      placeholder={lang === 'RU' ? 'Напр: Лот 1: Оборудование' : 'Meselem: Lot 1'}
+                      className={`w-full max-w-sm px-3 py-1.5 rounded-lg text-sm font-bold ${theme.inputBg}`}
+                    />
+                  </div>
+
+                  {/* Переключатель типа предмета лота (Товары, Работы, Услуги) */}
+                  <div className="flex items-center gap-2">
+                    <div className="inline-flex p-1 rounded-xl bg-slate-200/70 dark:bg-slate-800 text-[11px] font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => handleLotChange(lotIdx, 'lotType', 'GOODS')}
+                        className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                          currentLotType === 'GOODS'
+                            ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-300 font-bold shadow-xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                        }`}
+                      >
+                        <Package size={13} />
+                        <span>{lang === 'RU' ? 'Товары / Материалы' : 'Harytlar'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleLotChange(lotIdx, 'lotType', 'WORKS')}
+                        className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                          currentLotType === 'WORKS'
+                            ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-300 font-bold shadow-xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                        }`}
+                      >
+                        <Wrench size={13} />
+                        <span>{lang === 'RU' ? 'Работы / Ремонт' : 'Işler / Remont'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleLotChange(lotIdx, 'lotType', 'SERVICES')}
+                        className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                          currentLotType === 'SERVICES'
+                            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 font-bold shadow-xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                        }`}
+                      >
+                        <Settings2 size={13} />
+                        <span>{lang === 'RU' ? 'Услуги / Сервис' : 'Hyzmatlar'}</span>
+                      </button>
+                    </div>
+
+                    {lots.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLot(lotIdx)}
+                        className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95 cursor-pointer"
+                        title={lang === 'RU' ? 'Удалить лот' : 'Loty pozmak'}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Динамические поля лота в зависимости от типа */}
+                {currentLotType === 'GOODS' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-800">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                        {lang === 'RU' ? 'Условия поставки (Incoterms)' : 'Eltip beriş şerti (Incoterms)'}*
+                      </label>
+                      <CustomSelect
+                        options={deliveryTerms.map(dt => ({ id: dt.id, name: `${dt.shortName} — ${dt.name}` }))}
+                        value={lot.deliveryTermId}
+                        onChange={(val) => handleLotChange(lotIdx, 'deliveryTermId', val)}
+                        placeholder={lang === 'RU' ? 'Выберите условие поставки...' : 'Eltip beriş şertini saýlaň...'}
+                        searchable={deliveryTerms.length > 5}
+                        isDarkMode={isDarkMode}
+                        theme={theme}
+                        t={t}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                        {lang === 'RU' ? 'Склад / Адрес доставки' : 'Eltip bermeli salgysy'}
+                      </label>
+                      <input
+                        type="text"
+                        value={lot.deliveryAddress || ''}
+                        onChange={(e) => handleLotChange(lotIdx, 'deliveryAddress', e.target.value, e)}
+                        placeholder={lang === 'RU' ? 'Напр: г. Ашхабад, Центр кардиологии, Склад №2' : 'Salgysy...'}
+                        className={`w-full px-3 py-2 rounded-lg text-xs font-medium ${theme.inputBg}`}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {currentLotType === 'WORKS' && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-800">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                        {lang === 'RU' ? 'Адрес объекта выполнения работ' : 'Iş geçiriljek ýeri'}*
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={lot.workAddress || ''}
+                        onChange={(e) => handleLotChange(lotIdx, 'workAddress', e.target.value, e)}
+                        placeholder={lang === 'RU' ? 'Напр: г. Аркадаг, Корпус Б' : 'Obýekt salgysy...'}
+                        className={`w-full px-3 py-2 rounded-lg text-xs font-medium ${theme.inputBg}`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                        {lang === 'RU' ? 'Срок выполнения (график)' : 'Ýerine ýetiriş möhleti'}
+                      </label>
+                      <input
+                        type="text"
+                        value={lot.workPeriod || ''}
+                        onChange={(e) => handleLotChange(lotIdx, 'workPeriod', e.target.value, e)}
+                        placeholder={lang === 'RU' ? 'Напр: 45 календарных дней' : 'Möhleti...'}
+                        className={`w-full px-3 py-2 rounded-lg text-xs font-medium ${theme.inputBg}`}
+                      />
+                    </div>
+                    <div className="flex items-center pt-5">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(lot.licenseRequired)}
+                          onChange={(e) => handleLotChange(lotIdx, 'licenseRequired', e.target.checked)}
+                          className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                        />
+                        <span>{lang === 'RU' ? 'Требуется строительная лицензия' : 'Gurluşyk ygtyýarnamasy talap edilýär'}</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {currentLotType === 'SERVICES' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-800">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                        {lang === 'RU' ? 'Формат оказания услуг' : 'Hyzmatyň görnüşi'}*
+                      </label>
+                      <CustomSelect
+                        options={[
+                          { id: 'ON_SITE', name: lang === 'RU' ? 'На объекте заказчика' : 'Sargyt edijiniň ýerinde' },
+                          { id: 'REMOTE', name: lang === 'RU' ? 'Удаленно' : 'Alysda / Onlaýn' },
+                          { id: 'HYBRID', name: lang === 'RU' ? 'Гибридный формат' : 'Gatyşyk' }
+                        ]}
+                        value={lot.serviceFormat || 'ON_SITE'}
+                        onChange={(val) => handleLotChange(lotIdx, 'serviceFormat', val)}
+                        placeholder={lang === 'RU' ? 'Формат оказания' : 'Hyzmat görnüşi'}
+                        isDarkMode={isDarkMode}
+                        theme={theme}
+                        t={t}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                        {lang === 'RU' ? 'Срок действия / регламент SLA' : 'SLA tertibi / Möhleti'}
+                      </label>
+                      <input
+                        type="text"
+                        value={lot.slaPeriod || ''}
+                        onChange={(e) => handleLotChange(lotIdx, 'slaPeriod', e.target.value, e)}
+                        placeholder={lang === 'RU' ? 'Напр: 12 месяцев, реагирование 24/7' : 'SLA şertleri...'}
+                        className={`w-full px-3 py-2 rounded-lg text-xs font-medium ${theme.inputBg}`}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse min-w-180">
@@ -1413,7 +1594,8 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
               </button>
             </div>
           </div>
-        ))}
+        );
+      })}
 
         {/* Кнопка "Добавить лот" под всеми лотами */}
         <button

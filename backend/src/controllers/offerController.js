@@ -108,9 +108,13 @@ const createOffer = async (req, res) => {
                 generalProductId: item.generalProductId || null,
                 unitId: item.unitId || null,
                 manufacturerId: item.manufacturerId || null,
+                name: item.name || null,
                 quantity: parseFloat(item.quantity),
                 unitPrice: parseFloat(item.unitPrice),
                 description: item.description || null,
+                isEquivalent: Boolean(item.isEquivalent),
+                equivalentName: item.equivalentName || null,
+                equivalentJustification: item.equivalentJustification || null,
             };
         });
 

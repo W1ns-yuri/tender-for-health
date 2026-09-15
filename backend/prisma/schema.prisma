@@ -365,6 +365,8 @@ model Tender {
   categoryId String?   @map("category_id")
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
+  procurementType String? @default("GOODS") @map("procurement_type") // GOODS | SERVICES_WORKS | MIXED
+
   createdById String @map("created_by_id")
   createdBy   User   @relation("CreatedTenders", fields: [createdById], references: [id], onDelete: Cascade)
 
@@ -391,8 +393,15 @@ model TenderLot {
   tenderId        String         @map("tender_id")
   tender          Tender         @relation(fields: [tenderId], references: [id], onDelete: Cascade)
   name            String
+  lotType         String?        @default("GOODS") @map("lot_type") // GOODS | WORKS | SERVICES
   deliveryTermId  String?        @map("delivery_term_id")
   deliveryTerm    DeliveryTerm?  @relation(fields: [deliveryTermId], references: [id], onDelete: SetNull)
+  deliveryAddress String?        @map("delivery_address")
+  workAddress     String?        @map("work_address")
+  workPeriod      String?        @map("work_period")
+  licenseRequired Boolean?       @default(false) @map("license_required")
+  serviceFormat   String?        @map("service_format") // REMOTE | ON_SITE | HYBRID
+  slaPeriod       String?        @map("sla_period")
   
   specs           TenderSpecification[]
 
@@ -535,12 +544,15 @@ model OfferSpecification {
   manufacturerId   String?             @map("manufacturer_id")
   manufacturer     Manufacturer?       @relation(fields: [manufacturerId], references: [id], onDelete: SetNull)
 
-  name           String?
-  positionNumber Int?    @map("position_number")
-  quantity       Float   @default(1)
-  unitPrice      Float   @default(0) @map("unit_price")
-  description    String?
-  isAwarded      Boolean @default(false) @map("is_awarded")
+  name                    String?
+  positionNumber          Int?     @map("position_number")
+  quantity                Float    @default(1)
+  unitPrice               Float    @default(0) @map("unit_price")
+  description             String?
+  isAwarded               Boolean  @default(false) @map("is_awarded")
+  isEquivalent            Boolean? @default(false) @map("is_equivalent")
+  equivalentName          String?  @map("equivalent_name")
+  equivalentJustification String?  @map("equivalent_justification")
 
   @@map("offer_specifications")
 }

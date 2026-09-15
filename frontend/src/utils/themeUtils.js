@@ -53,3 +53,57 @@ export const safeString = (val, fallback = '') => {
   }
   return fallback;
 };
+
+/**
+ * Генерация двухбуквенных инициалов для аватарок (например: Test Testow -> TT, Winfinity -> WI, Admin -> AD)
+ */
+export const getAvatarInitials = (userOrName, role = 'SUPPLIER') => {
+  let nameStr = '';
+  if (typeof userOrName === 'string') {
+    nameStr = userOrName.trim();
+  } else if (userOrName && typeof userOrName === 'object') {
+    const compName = (userOrName.companies?.[0] || userOrName.suppliers?.[0])?.name;
+    if (compName && role !== 'ADMIN') {
+      nameStr = compName.trim();
+    } else if (userOrName.firstName || userOrName.lastName) {
+      nameStr = `${userOrName.firstName || ''} ${userOrName.lastName || ''}`.trim();
+    } else if (userOrName.username) {
+      nameStr = userOrName.username.trim();
+    }
+  }
+
+  if (!nameStr) {
+    return role === 'ADMIN' ? 'AD' : 'SU';
+  }
+
+  const parts = nameStr.split(/[\s_\-]+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  if (parts[0].length >= 2) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  return (parts[0][0] + (role === 'ADMIN' ? 'D' : 'U')).toUpperCase();
+};
+
+/**
+ * Получение текстового формата валюты без эмодзи флагов для надежного отображения в Windows
+ */
+export const getCurrencyLabel = (currencyObjOrCode) => {
+  const code = (typeof currencyObjOrCode === 'string' 
+    ? currencyObjOrCode 
+    : (currencyObjOrCode?.code || 'TMT')).toUpperCase();
+
+  const labels = {
+    TMT: 'TMT — Государственный манат Туркменистана',
+    USD: 'USD — Доллар США',
+    EUR: 'EUR — Евро',
+    RUB: 'RUB — Российский рубль',
+  };
+
+  if (labels[code]) return labels[code];
+  if (typeof currencyObjOrCode === 'object' && currencyObjOrCode?.name) {
+    return `${code} — ${currencyObjOrCode.name.replace(/[\uD83C-\uDBFF\uDC00-\uDFFF]+/g, '').trim()}`;
+  }
+  return code;
+};

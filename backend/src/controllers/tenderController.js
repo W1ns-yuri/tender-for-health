@@ -78,7 +78,8 @@ const createTender = async (req, res) => {
                     deadline: new Date(deadline),
                     categoryId: (categoryId && categoryId !== '') ? categoryId : null,
                     clientId: (clientId && clientId !== '') ? clientId : null,
-                    createdById
+                    procurementType: req.body.procurementType || 'GOODS',
+                    createdById: req.user.id,
                 }
             });
 
@@ -97,7 +98,14 @@ const createTender = async (req, res) => {
                     data: {
                         name: lot.name || 'Без названия',
                         tenderId: newTender.id,
-                        deliveryTermId: (lot.deliveryTermId && lot.deliveryTermId !== '') ? lot.deliveryTermId : null
+                        lotType: lot.lotType || 'GOODS',
+                        deliveryTermId: (lot.deliveryTermId && lot.deliveryTermId !== '') ? lot.deliveryTermId : null,
+                        deliveryAddress: lot.deliveryAddress || null,
+                        workAddress: lot.workAddress || null,
+                        workPeriod: lot.workPeriod || null,
+                        licenseRequired: Boolean(lot.licenseRequired),
+                        serviceFormat: lot.serviceFormat || null,
+                        slaPeriod: lot.slaPeriod || null,
                     }
                 });
 

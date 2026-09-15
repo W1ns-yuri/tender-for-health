@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Bell, Settings, ChevronLeft, ChevronRight, Globe, ChevronDown, User, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getRoleTheme } from '../utils/themeUtils';
+import { getRoleTheme, getAvatarInitials } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 
 export default function Header({ user, role, setRole, isDarkMode, lang, setLang, onNavigate }) {
@@ -95,8 +95,8 @@ export default function Header({ user, role, setRole, isDarkMode, lang, setLang,
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className={`flex items-center space-x-1 cursor-pointer p-1 rounded-full hover:bg-slate-100 ${isDarkMode ? 'hover:bg-slate-800' : ''}`}
           >
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white ${isAdmin ? 'bg-emerald-600 shadow-sm shadow-emerald-500/30' : 'bg-blue-600 shadow-sm shadow-blue-500/30'}`}>
-              {((user?.companies?.[0] || user?.suppliers?.[0])?.name && role !== 'ADMIN') ? (user.companies?.[0] || user.suppliers?.[0]).name[0].toUpperCase() : (user?.firstName ? user.firstName[0].toUpperCase() : (role === 'ADMIN' ? 'A' : 'Ü'))}
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs tracking-wider text-white ${isAdmin ? 'bg-emerald-600 shadow-sm shadow-emerald-500/30' : 'bg-blue-600 shadow-sm shadow-blue-500/30'}`}>
+              {getAvatarInitials(user, role)}
             </div>
             <ChevronDown size={16} className="text-slate-500" />
           </div>
