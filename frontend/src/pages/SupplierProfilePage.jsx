@@ -35,6 +35,7 @@ import API from '../services/api';
 import { getTranslation } from '../utils/translations';
 import { getRoleTheme } from '../utils/themeUtils';
 import RejectSupplierModal from '../components/RejectSupplierModal';
+import { useAlert } from '../context/AlertContext';
 
 // Список официальных регионов Туркменистана (юридические наименования)
 const REGIONS = [
@@ -63,6 +64,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   const navigate = useNavigate();
   const t = (key, fallback) => getTranslation(lang, key, fallback);
   const theme = getRoleTheme(role, isDarkMode);
+  const { showAlert, showConfirm } = useAlert();
 
   const [supplier, setSupplier] = useState(null);
   const [stats, setStats] = useState({ totalOffers: 0, wonOffers: 0 });
@@ -122,19 +124,34 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     if (!supplier) return;
     const confirmText = t('approveConfirmText', 'Вы уверены, что хотите одобрить верификацию компании «{name}»?')
       .replace('{name}', supplier.name || '');
-    if (window.confirm(confirmText)) {
-      try {
-        setIsModerating(true);
-        await API.post(`/suppliers/${supplier.id}/approve`);
-        setSupplier(prev => ({ ...prev, verificationStatus: 'VERIFIED', rejectionReason: null }));
-        alert(lang === 'RU' ? 'Верификация компании успешно одобрена!' : 'Kompaniýanyň barlagy üstünlikli tassyklandy!');
-        navigate('/suppliers', { state: { activeTab: 'pending' } });
-      } catch (err) {
-        console.error('Ошибка при одобрении:', err);
-        alert(err?.response?.data?.error || 'Ошибка при одобрении');
-      } finally {
-        setIsModerating(false);
-      }
+    const isConfirmed = await showConfirm({
+      title: t('approveVerificationTitle', 'Одобрение верификации'),
+      message: confirmText,
+      type: 'success',
+      confirmText: t('approve', 'Одобрить'),
+      cancelText: t('cancel', 'Отмена'),
+    });
+    if (!isConfirmed) return;
+
+    try {
+      setIsModerating(true);
+      await API.post(`/suppliers/${supplier.id}/approve`);
+      setSupplier(prev => ({ ...prev, verificationStatus: 'VERIFIED', rejectionReason: null }));
+      await showAlert({
+        title: t('success', 'Успешно'),
+        message: lang === 'RU' ? 'Верификация компании успешно одобрена!' : 'Kompaniýanyň barlagy üstünlikli tassyklandy!',
+        type: 'success'
+      });
+      navigate('/suppliers', { state: { activeTab: 'pending' } });
+    } catch (err) {
+      console.error('Ошибка при одобрении:', err);
+      showAlert({
+        title: t('error', 'Ошибка'),
+        message: err?.response?.data?.error || 'Ошибка при одобрении',
+        type: 'error'
+      });
+    } finally {
+      setIsModerating(false);
     }
   };
 
@@ -145,11 +162,19 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       await API.post(`/suppliers/${supplier.id}/reject`, { rejectionReason: reason });
       setSupplier(prev => ({ ...prev, verificationStatus: 'REJECTED', rejectionReason: reason }));
       setIsRejectModalOpen(false);
-      alert(lang === 'RU' ? 'Заявка отклонена. Замечания переданы поставщику.' : 'Arza ret edildi.');
+      await showAlert({
+        title: t('rejected', 'Отклонено'),
+        message: lang === 'RU' ? 'Заявка отклонена. Замечания переданы поставщику.' : 'Arza ret edildi.',
+        type: 'info'
+      });
       navigate('/suppliers', { state: { activeTab: 'pending' } });
     } catch (err) {
       console.error('Ошибка при отклонении:', err);
-      alert(err?.response?.data?.error || 'Ошибка при отклонении');
+      showAlert({
+        title: t('error', 'Ошибка'),
+        message: err?.response?.data?.error || 'Ошибка при отклонении',
+        type: 'error'
+      });
     } finally {
       setIsModerating(false);
     }
@@ -594,7 +619,11 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!documents || documents.length === 0) {
-      alert(t('attachDocsToSubmit', 'Прикрепите документы для отправки на проверку'));
+      showAlert({
+        title: t('attention', 'Внимание'),
+        message: t('attachDocsToSubmit', 'Прикрепите документы для отправки на проверку'),
+        type: 'warning'
+      });
       return;
     }
 
@@ -602,17 +631,26 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     if (formData.passportSeries) {
       const passportRegex = /^([I|V|X]+-[A-ZА-Я]{2}\s\d{6})$/i;
       if (!passportRegex.test(formData.passportSeries.trim())) {
-        setPassportError(t('passportInvalid', 'Некорректный номер паспорта (формат: I-XX 123456)'));
-        alert(t('passportInvalid', 'Некорректный номер паспорта (формат: I-XX 123456)'));
+        const pErr = t('passportInvalid', 'Некорректный номер паспорта (формат: I-XX 123456)');
+        setPassportError(pErr);
+        showAlert({
+          title: t('validationError', 'Ошибка валидации'),
+          message: pErr,
+          type: 'warning'
+        });
         return;
       }
     }
 
     const isVerifiedSupplier = supplier?.verificationStatus === 'VERIFIED';
     if (isVerifiedSupplier && hasChanges) {
-      const confirmed = window.confirm(
-        t('resubmitWarning', 'При изменении юридических или банковских реквизитов статус верификации будет временно приостановлен до проверки администратором. Продолжить?')
-      );
+      const confirmed = await showConfirm({
+        title: t('resubmitWarningTitle', 'Повторная модерация'),
+        message: t('resubmitWarning', 'При изменении юридических или банковских реквизитов статус верификации будет временно приостановлен до проверки администратором. Продолжить?'),
+        type: 'warning',
+        confirmText: t('continue', 'Продолжить'),
+        cancelText: t('cancel', 'Отмена')
+      });
       if (!confirmed) return;
     }
 
@@ -652,10 +690,18 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       setInitialPhoneDigits(phoneDigits);
       setInitialDocuments([...documents]);
       setIsEditing(false);
-      alert(t('profileSentSuccess', 'Профиль успешно отправлен на модерацию!'));
+      showAlert({
+        title: t('success', 'Успешно'),
+        message: t('profileSentSuccess', 'Профиль успешно отправлен на модерацию!'),
+        type: 'success'
+      });
     } catch (error) {
       console.error(error);
-      alert(t('profileSaveError', 'Ошибка при сохранении'));
+      showAlert({
+        title: t('error', 'Ошибка'),
+        message: t('profileSaveError', 'Ошибка при сохранении'),
+        type: 'error'
+      });
     } finally {
       setSaving(false);
     }

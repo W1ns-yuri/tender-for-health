@@ -18,12 +18,14 @@ import {
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
+import { useAlert } from '../context/AlertContext';
 
 export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 'RU' }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const t = (key, fallback) => getTranslation(lang, key, fallback);
   const theme = getRoleTheme(role, isDarkMode);
+  const { showAlert, showConfirm } = useAlert();
 
   const [tender, setTender] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -130,7 +132,11 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
       setUploadedFiles(prev => [...prev, res.data]);
     } catch (err) {
       console.error(err);
-      alert(lang === 'RU' ? 'Ошибка загрузки файла' : 'Faýl ýüklemekde ýalňyşlyk');
+      showAlert({
+        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
+        message: lang === 'RU' ? 'Ошибка загрузки файла' : 'Faýl ýüklemekde ýalňyşlyk',
+        type: 'error'
+      });
     }
     
     e.target.value = '';
@@ -215,10 +221,15 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
     // 3. Проверка: нет ли выбранных позиций с ценой 0 в активных лотах
     const unpricedItems = allActiveItems.filter(item => !item.price || parseFloat(item.price) <= 0);
     if (unpricedItems.length > 0) {
-      const confirmSend = window.confirm(lang === 'RU'
-        ? `Внимание: для ${unpricedItems.length} поз. не указана цена. Вы хотите отправить предложение только по ${specsWithPrices.length} оцененным позициям?`
-        : `Üns beriň: ${unpricedItems.length} haryt üçin baha girizilmedi. Diňe baha berlen harytlary ibermek isleýärsiňizmi?`
-      );
+      const confirmSend = await showConfirm({
+        title: lang === 'RU' ? 'Неоцененные позиции' : 'Bahasysyz harytlar',
+        message: lang === 'RU'
+          ? `Внимание: для ${unpricedItems.length} поз. не указана цена. Вы хотите отправить предложение только по ${specsWithPrices.length} оцененным позициям?`
+          : `Üns beriň: ${unpricedItems.length} haryt üçin baha girizilmedi. Diňe baha berlen harytlary ibermek isleýärsiňizmi?`,
+        type: 'warning',
+        confirmText: lang === 'RU' ? 'Отправить' : 'Ugrat',
+        cancelText: lang === 'RU' ? 'Отмена' : 'Ýatyr'
+      });
       if (!confirmSend) return;
     }
 
@@ -245,7 +256,11 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
         specs: specsToSubmit
       });
 
-      alert(`✅ ${lang === 'RU' ? 'Коммерческое предложение успешно отправлено!' : 'Teklip üstünlikli iberildi!'}`);
+      await showAlert({
+        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
+        message: lang === 'RU' ? 'Коммерческое предложение успешно отправлено!' : 'Teklip üstünlikli iberildi!',
+        type: 'success'
+      });
       navigate('/offers');
     } catch (err) {
       console.error(err);
@@ -270,7 +285,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
   return (
     <div className="space-y-6 pb-6 text-sm">
       {/* 1. Верхняя навигация и заголовок */}
-      <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex items-center justify-between pb-1">
         <div className="flex items-center gap-3">
           <h1 className={`text-2xl font-black tracking-tight ${theme.primaryText}`}>
             {lang === 'RU' ? 'Подача коммерческого предложения' : 'Tender teklibi tabşyrmak'}

@@ -5,12 +5,14 @@ import API from '../services/api';
 import { getTranslation } from '../utils/translations';
 import { useNavigate } from 'react-router-dom';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
+import { useAlert } from '../context/AlertContext';
 
 export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
   const isAdmin = role === 'ADMIN';
   const t = (key, fallback) => getTranslation(lang, key, fallback);
   const navigate = useNavigate();
+  const { showAlert, showConfirm } = useAlert();
   
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,16 +42,31 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
   };
 
   const handleDeleteOffer = async (offerId) => {
-    if (!window.confirm(lang === 'RU' ? 'Вы действительно хотите отозвать/удалить это коммерческое предложение?' : 'Siz hakykatdan hem bu teklibi pozmak isleýärsiňizmi?')) {
-      return;
-    }
+    const isConfirmed = await showConfirm({
+      title: lang === 'RU' ? 'Отзыв предложения' : 'Teklibi yzyna almak',
+      message: lang === 'RU' ? 'Вы действительно хотите отозвать/удалить это коммерческое предложение?' : 'Siz hakykatdan hem bu teklibi pozmak isleýärsiňizmi?',
+      type: 'danger',
+      confirmText: lang === 'RU' ? 'Удалить' : 'Pozmak',
+      cancelText: lang === 'RU' ? 'Отмена' : 'Ýatyr',
+      isDanger: true,
+    });
+    if (!isConfirmed) return;
+
     try {
       await API.delete(`/offers/${offerId}`);
       setOffers(prev => prev.filter(o => o.id !== offerId));
-      alert(lang === 'RU' ? 'Коммерческое предложение успешно удалено' : 'Teklip üstünlikli pozuldy');
+      showAlert({
+        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
+        message: lang === 'RU' ? 'Коммерческое предложение успешно удалено' : 'Teklip üstünlikli pozuldy',
+        type: 'success'
+      });
     } catch (err) {
       console.error('Error deleting offer', err);
-      alert(err.response?.data?.error || (lang === 'RU' ? 'Ошибка при удалении предложения' : 'Teklip pozulanda ýalňyşlyk ýüze çykdy'));
+      showAlert({
+        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
+        message: err.response?.data?.error || (lang === 'RU' ? 'Ошибка при удалении предложения' : 'Teklip pozulanda ýalňyşlyk ýüze çykdy'),
+        type: 'error'
+      });
     }
   };
 

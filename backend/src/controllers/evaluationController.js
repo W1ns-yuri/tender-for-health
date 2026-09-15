@@ -188,7 +188,7 @@ const getEvaluationTenders = async (req, res) => {
             include: {
                 client: true,
                 category: true,
-                _count: { select: { offers: true } }
+                _count: { select: { offers: true, lots: true } }
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -227,6 +227,7 @@ const getTenderEvaluationDetails = async (req, res) => {
                 offers: {
                     include: {
                         supplier: true,
+                        baseCurrency: true,
                         specs: {
                             include: {
                                 generalProduct: true,
@@ -279,6 +280,15 @@ const awardLot = async (req, res) => {
                         offerId: offerId 
                     },
                     data: { isAwarded: true }
+                });
+            }
+
+            // 3. Если статус тендера был YENIJI_YGLAN_EDILDI, но выбор лотов меняется, переводим обратно в статус оценки
+            const tender = await prisma.tender.findUnique({ where: { id: tenderId } });
+            if (tender && tender.status === 'YENIJI_YGLAN_EDILDI') {
+                await prisma.tender.update({
+                    where: { id: tenderId },
+                    data: { status: 'BAHALANDYRYLDY' }
                 });
             }
         });

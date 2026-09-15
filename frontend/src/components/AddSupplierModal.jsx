@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { X, Check } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
+import { useAlert } from '../context/AlertContext';
 
 export default function AddSupplierModal({ onClose, onSuccess, lang = 'RU', isDarkMode, countries = [] }) {
   const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const { showAlert } = useAlert();
   const [formData, setFormData] = useState({
     name: '',
     inn: '',
@@ -20,17 +22,30 @@ export default function AddSupplierModal({ onClose, onSuccess, lang = 'RU', isDa
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.inn || !formData.username || !formData.password) {
-      alert(t('fillRequired', 'Заполните обязательные поля'));
+      showAlert({
+        title: t('validationError', 'Ошибка валидации'),
+        message: t('fillRequired', 'Заполните обязательные поля'),
+        type: 'warning'
+      });
       return;
     }
     setIsSubmitting(true);
     try {
       await API.post('/companies', formData);
+      await showAlert({
+        title: t('success', 'Успешно'),
+        message: t('supplierCreated', 'Поставщик успешно добавлен'),
+        type: 'success'
+      });
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
       const errorMsg = err.response?.data?.error || t('errorCreateSupplier', 'Ошибка при добавлении поставщика');
-      alert(errorMsg);
+      showAlert({
+        title: t('error', 'Ошибка'),
+        message: errorMsg,
+        type: 'error'
+      });
     } finally {
       setIsSubmitting(false);
     }

@@ -24,12 +24,14 @@ import AddSupplierModal from '../components/AddSupplierModal';
 import EditSupplierModal from '../components/EditSupplierModal';
 import RejectSupplierModal from '../components/RejectSupplierModal';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAlert } from '../context/AlertContext';
 
 export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
   const navigate = useNavigate();
   const location = useLocation();
+  const { showAlert, showConfirm } = useAlert();
 
   const [suppliers, setSuppliers] = useState([]);
   const [pendingSuppliers, setPendingSuppliers] = useState([]);
@@ -118,30 +120,63 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm(t('deleteConfirm', 'Вы действительно хотите удалить этого поставщика?'))) {
-      try {
-        await API.delete(`/companies/${id}`);
-        fetchSuppliers();
-      } catch (err) {
-        console.error('Failed to delete company', err);
-        alert(t('errorCreateSupplier', 'Ошибка при удалении'));
-      }
+    const isConfirmed = await showConfirm({
+      title: t('deleteSupplierTitle', 'Удаление поставщика'),
+      message: t('deleteConfirm', 'Вы действительно хотите удалить этого поставщика?'),
+      type: 'danger',
+      confirmText: t('delete', 'Удалить'),
+      cancelText: t('cancel', 'Отмена'),
+      isDanger: true,
+    });
+    if (!isConfirmed) return;
+
+    try {
+      await API.delete(`/companies/${id}`);
+      fetchSuppliers();
+      showAlert({
+        title: t('success', 'Успешно'),
+        message: t('supplierDeleted', 'Поставщик успешно удален'),
+        type: 'success'
+      });
+    } catch (err) {
+      console.error('Failed to delete company', err);
+      showAlert({
+        title: t('error', 'Ошибка'),
+        message: t('errorCreateSupplier', 'Ошибка при удалении'),
+        type: 'error'
+      });
     }
   };
 
   const handleApprove = async (supplier) => {
     const confirmText = t('approveConfirmText', 'Вы уверены, что хотите одобрить верификацию компании «{name}»?')
       .replace('{name}', supplier.name || '');
-    if (window.confirm(confirmText)) {
-      try {
-        await API.post(`/suppliers/${supplier.id}/approve`);
-        fetchPendingSuppliers();
-        fetchSuppliers();
-        fetchModerationArchive();
-      } catch (err) {
-        console.error(err);
-        alert(err?.response?.data?.error || 'Ошибка при одобрении');
-      }
+    const isConfirmed = await showConfirm({
+      title: t('approveVerificationTitle', 'Одобрение верификации'),
+      message: confirmText,
+      type: 'success',
+      confirmText: t('approve', 'Одобрить'),
+      cancelText: t('cancel', 'Отмена'),
+    });
+    if (!isConfirmed) return;
+
+    try {
+      await API.post(`/suppliers/${supplier.id}/approve`);
+      fetchPendingSuppliers();
+      fetchSuppliers();
+      fetchModerationArchive();
+      showAlert({
+        title: t('success', 'Успешно'),
+        message: t('approvedSuccess', 'Верификация компании успешно одобрена'),
+        type: 'success'
+      });
+    } catch (err) {
+      console.error(err);
+      showAlert({
+        title: t('error', 'Ошибка'),
+        message: err?.response?.data?.error || 'Ошибка при одобрении',
+        type: 'error'
+      });
     }
   };
 

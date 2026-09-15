@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Save, Trash2, ArrowLeft, X, Upload, ChevronDown, AlertCircle, RefreshCw, FileText, AlignLeft, Paperclip } from 'lucide-react';
+import { Plus, Save, Trash2, ChevronDown, AlertCircle, RefreshCw, FileText, AlignLeft, Paperclip, Calendar, Check } from 'lucide-react';
 import API from '../services/api';
-import { getRoleTheme, safeString } from '../utils/themeUtils';
+import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import CatalogFormModal from '../components/CatalogFormModal';
+import CustomDatePicker from '../components/CustomDatePicker';
+import { useAlert } from '../context/AlertContext';
 
 // Запрещенные спецсимволы (<, >, {, }, |, ^, ~, `, \)
 const FORBIDDEN_CHARS_REGEX = /[<>{}\|^~`\\]/g;
@@ -14,66 +16,193 @@ const sanitizeInputText = (text) => {
   return text.replace(FORBIDDEN_CHARS_REGEX, '');
 };
 
-const SearchableSelect = ({ options, value, onChange, placeholder, isDarkMode, theme, t }) => {
+// Универсальный выпадающий список (Portal-based, не обрезается overflow-hidden и карточками)
+const CustomSelect = ({
+  options = [],
+  value,
+  onChange,
+  placeholder,
+  isDarkMode,
+  theme,
+  searchable = false,
+  t,
+  size = 'md', // 'md' | 'sm'
+  className = '',
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, maxHeight: 260 });
   const wrapperRef = useRef(null);
+  const dropdownRef = useRef(null);
+
+  const normalizedOptions = options.map(opt => {
+    if (typeof opt === 'object' && opt !== null) {
+      return { 
+        id: opt.id !== undefined ? opt.id : (opt.value !== undefined ? opt.value : opt.code), 
+        name: opt.name !== undefined ? opt.name : (opt.label !== undefined ? opt.label : opt.code ?? String(opt.id)) 
+      };
+    }
+    return { id: opt, name: String(opt) };
+  });
+
+  const updateCoords = () => {
+    if (wrapperRef.current) {
+      const rect = wrapperRef.current.getBoundingClientRect();
+      const dropdownHeight = Math.min(260, Math.max(70, normalizedOptions.length * 36 + (searchable ? 46 : 0)));
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUpwards = spaceBelow < 210 && rect.top > 210;
+
+      const minW = size === 'sm' ? Math.max(rect.width, 140) : Math.max(rect.width, 180);
+      let left = rect.left;
+      if (left + minW > window.innerWidth - 10) {
+        left = window.innerWidth - minW - 10;
+      }
+      left = Math.max(10, left);
+
+      setCoords({
+        top: openUpwards ? (rect.top - dropdownHeight - 4) : (rect.bottom + 4),
+        left,
+        width: Math.max(rect.width, minW),
+        maxHeight: dropdownHeight,
+      });
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+      if (
+        wrapperRef.current && !wrapperRef.current.contains(event.target) &&
+        dropdownRef.current && !dropdownRef.current.contains(event.target)
+      ) {
         setIsOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [wrapperRef]);
+  }, []);
 
-  const filteredOptions = options.filter(opt => opt.name.toLowerCase().includes(search.toLowerCase()));
-  const selectedOption = options.find(opt => opt.id === value);
+  useEffect(() => {
+    if (isOpen) {
+      updateCoords();
+      const handleScroll = (e) => {
+        if (dropdownRef.current && dropdownRef.current.contains(e.target)) return;
+        updateCoords();
+      };
+      window.addEventListener('resize', updateCoords);
+      window.addEventListener('scroll', handleScroll, true);
+      return () => {
+        window.removeEventListener('resize', updateCoords);
+        window.removeEventListener('scroll', handleScroll, true);
+      };
+    }
+  }, [isOpen]);
+
+  const filteredOptions = normalizedOptions.filter(opt =>
+    (opt.name || '').toLowerCase().includes(search.toLowerCase())
+  );
+  const selectedOption = normalizedOptions.find(opt => String(opt.id) === String(value));
 
   return (
-    <div ref={wrapperRef} className="relative w-full">
+    <div ref={wrapperRef} className={`relative w-full ${className}`}>
       <div 
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full px-3 py-2 rounded-lg text-xs cursor-pointer flex justify-between items-center ${theme.inputBg}`}
+        onClick={() => {
+          const next = !isOpen;
+          if (next) {
+            setSearch('');
+            updateCoords();
+          }
+          setIsOpen(next);
+        }}
+        className={`w-full cursor-pointer flex justify-between items-center transition-all duration-150 rounded-lg text-xs ${
+          size === 'sm' ? 'px-2.5 py-1.5' : 'px-3 py-2'
+        } ${theme.inputBg} ${
+          isOpen ? '!border-emerald-500 !ring-2 !ring-emerald-500/25 shadow-xs' : ''
+        }`}
       >
-        <span className={!selectedOption ? 'opacity-50' : ''}>{selectedOption ? selectedOption.name : placeholder}</span>
-        <ChevronDown size={14} className="opacity-50" />
+        <span className={`truncate mr-1 ${!selectedOption || selectedOption.id === '' ? 'opacity-50 text-slate-400' : 'text-slate-800 dark:text-slate-100 font-medium'}`}>
+          {selectedOption && selectedOption.id !== '' ? selectedOption.name : (placeholder || '—')}
+        </span>
+        <ChevronDown size={14} className={`opacity-50 shrink-0 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} />
       </div>
-      
-      {isOpen && (
-        <div className={`absolute z-50 w-full mt-1 rounded-lg border shadow-lg ${theme.cardBg} ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} max-h-60 flex flex-col overflow-hidden`}>
-          <div className="p-2 border-b border-slate-200/20">
-            <input
-              type="text"
-              autoFocus
-              className={`w-full px-2 py-1.5 rounded text-xs ${theme.inputBg} focus:outline-none focus:ring-1 focus:ring-emerald-500`}
-              placeholder={t('search', 'Поиск...')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <div className="overflow-y-auto">
-            {filteredOptions.length > 0 ? filteredOptions.map(opt => (
-              <div
-                key={opt.id}
-                className={`px-3 py-2 text-xs cursor-pointer hover:bg-emerald-500/10 ${value === opt.id ? 'bg-emerald-500/20 font-semibold' : ''}`}
-                onClick={() => {
-                  onChange(opt.id);
-                  setIsOpen(false);
-                  setSearch('');
-                }}
-              >
-                {opt.name}
+
+      {isOpen && coords.width > 0 && createPortal(
+        <div 
+          ref={dropdownRef}
+          style={{
+            position: 'fixed',
+            top: `${coords.top}px`,
+            left: `${coords.left}px`,
+            width: `${coords.width}px`,
+            maxHeight: `${coords.maxHeight || 260}px`,
+            zIndex: 9999,
+          }}
+          className={`rounded-xl border shadow-2xl ${
+            isDarkMode ? 'border-slate-700 bg-slate-900 shadow-black/70 text-slate-100' : 'border-slate-200 bg-white shadow-slate-400/40 text-slate-800'
+          } flex flex-col overflow-hidden animate-in fade-in-50 zoom-in-95 duration-100`}
+        >
+          {searchable && (
+            <div className={`p-2 border-b ${isDarkMode ? 'border-slate-800 bg-slate-800/60' : 'border-slate-100 bg-slate-50/70'}`}>
+              <input
+                type="text"
+                autoFocus
+                className={`w-full px-2.5 py-1 rounded-md text-xs ${theme.inputBg} border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500`}
+                placeholder={t ? t('search', 'Поиск...') : 'Поиск...'}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          )}
+          <div className="overflow-y-auto flex-1 divide-y divide-slate-100 dark:divide-slate-800/60">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map(opt => (
+                <div
+                  key={String(opt.id)}
+                  className={`px-3 py-2 text-xs cursor-pointer flex items-center justify-between transition-colors ${
+                    String(value) === String(opt.id)
+                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold' 
+                      : 'hover:bg-emerald-500/10 text-slate-700 dark:text-slate-200'
+                  }`}
+                  onClick={() => {
+                    onChange(opt.id);
+                    setIsOpen(false);
+                    setSearch('');
+                  }}
+                >
+                  <span className="truncate">{opt.name}</span>
+                  {String(value) === String(opt.id) && (
+                    <Check size={13} className="text-emerald-600 dark:text-emerald-400 font-bold ml-1 shrink-0" />
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="px-3 py-3 text-xs text-center opacity-50">
+                {t ? t('noResults', 'Нет совпадений') : 'Нет совпадений'}
               </div>
-            )) : (
-              <div className="px-3 py-3 text-xs text-center opacity-50">{t('noResults', 'Нет совпадений')}</div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
+  );
+};
+
+// Кастомное поле выбора даты с модальным календарем в админском стиле
+const CustomDateInput = ({ value, onChange, placeholder, isDarkMode, theme, required, min, max, lang, size = 'md', className = '' }) => {
+  return (
+    <CustomDatePicker
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      isDarkMode={isDarkMode}
+      theme={theme}
+      required={required}
+      min={min}
+      max={max}
+      lang={lang}
+      size={size}
+      className={className}
+    />
   );
 };
 
@@ -167,10 +296,10 @@ const ProductSearchableSelect = ({
               updateCoords();
             }
           }}
-          className={`flex-1 px-2.5 py-1.5 rounded-md text-xs cursor-pointer flex justify-between items-center border font-medium transition-colors ${
+          className={`flex-1 px-2.5 py-1.5 rounded-md text-xs cursor-pointer flex justify-between items-center transition-all duration-150 font-medium ${
             isDuplicate
-              ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300'
-              : `focus:ring-1 focus:ring-teal-500 ${theme.inputBg}`
+              ? 'border border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 ring-1 ring-rose-500/30'
+              : `${theme.inputBg} ${isOpen ? '!border-emerald-500 !ring-2 !ring-emerald-500/25 shadow-xs' : ''}`
           }`}
         >
           <span className={`truncate ${!value && !selectedProduct ? 'opacity-50' : 'text-slate-800 dark:text-slate-100 font-semibold'}`}>
@@ -183,7 +312,7 @@ const ProductSearchableSelect = ({
         <button
           type="button"
           onClick={() => handleOpenModalAndCloseDropdown(search || '')}
-          className="p-1.5 rounded-md bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/50 dark:hover:bg-teal-900/50 text-teal-600 dark:text-teal-400 border border-teal-200 dark:border-teal-800 shrink-0 transition-colors"
+          className="p-1.5 rounded-md bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shrink-0 transition-colors"
           title={lang === 'RU' ? 'Добавить новый товар в справочник (+)' : 'Kataloga täze haryt goşmak (+)'}
         >
           <Plus size={14} />
@@ -206,7 +335,7 @@ const ProductSearchableSelect = ({
             <input
               type="text"
               autoFocus
-              className={`w-full px-2.5 py-1.5 rounded-lg text-xs ${theme.inputBg} border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/30`}
+              className={`w-full px-2.5 py-1.5 rounded-lg text-xs ${theme.inputBg} border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30`}
               placeholder={lang === 'RU' ? 'Поиск товара...' : 'Haryt gözle...'}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -218,8 +347,8 @@ const ProductSearchableSelect = ({
               filteredProducts.map(p => (
                 <div
                   key={p.id}
-                  className={`px-3 py-2 text-xs cursor-pointer hover:bg-teal-500/10 flex items-center justify-between gap-2 transition-colors ${
-                    (generalProductId === p.id || value === p.name) ? 'bg-teal-500/20 font-bold text-teal-700 dark:text-teal-300' : 'text-slate-700 dark:text-slate-200'
+                  className={`px-3 py-2 text-xs cursor-pointer hover:bg-emerald-500/10 flex items-center justify-between gap-2 transition-colors ${
+                    (generalProductId === p.id || value === p.name) ? 'bg-emerald-500/20 font-bold text-emerald-700 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-200'
                   }`}
                   onClick={() => handleSelect(p)}
                 >
@@ -236,10 +365,10 @@ const ProductSearchableSelect = ({
             {/* Если введен поиск и его нет в результатах - открываем модальное окно с предзаполненным именем */}
             {search.trim().length > 0 && !filteredProducts.some(p => p.name.toLowerCase() === search.trim().toLowerCase()) && (
               <div
-                className="p-2.5 text-xs bg-teal-50/80 hover:bg-teal-100 dark:bg-teal-950/60 dark:hover:bg-teal-900/80 text-teal-700 dark:text-teal-300 cursor-pointer font-bold flex items-center gap-2 border-t border-teal-200/50 dark:border-teal-800/50 transition-colors"
+                className="p-2.5 text-xs bg-emerald-50/80 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 cursor-pointer font-bold flex items-center gap-2 border-t border-emerald-200/50 dark:border-emerald-800/50 transition-colors"
                 onClick={() => handleOpenModalAndCloseDropdown(search.trim())}
               >
-                <Plus size={14} className="shrink-0 text-teal-600 dark:text-teal-400" />
+                <Plus size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <span className="truncate">
                   {lang === 'RU' ? `Добавить в справочник: "${search.trim()}"` : `Kataloga goş: "${search.trim()}"`}
                 </span>
@@ -266,6 +395,7 @@ const getInitialDraft = () => {
 };
 
 export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 'RU' }) {
+  const { showAlert, showConfirm } = useAlert();
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
 
@@ -408,7 +538,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       }
     } catch (err) {
       console.error('Failed to create product', err);
-      alert(err.response?.data?.error || (lang === 'RU' ? 'Ошибка сохранения товара' : 'Ýalňyşlyk'));
+      showAlert({ message: err.response?.data?.error || (lang === 'RU' ? 'Ошибка сохранения товара' : 'Ýalňyşlyk'), type: 'error' });
     }
   };
 
@@ -437,8 +567,16 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     API.get('/catalogs/clients').then(res => { if (Array.isArray(res.data)) setClients(res.data.filter(c => c.isActive)); }).catch(() => {});
   }, []);
 
-  const handleClearDraft = () => {
-    if (window.confirm(lang === 'RU' ? 'Вы уверены, что хотите сбросить форму и очистить черновик?' : 'Formany arassalamak we täzeden başlamak isleýärsiňizmi?')) {
+  const handleClearDraft = async () => {
+    const isConfirmed = await showConfirm({
+      title: lang === 'RU' ? 'Сбросить черновик?' : 'Arassalamak isleýärsiňizmi?',
+      message: lang === 'RU' ? 'Вы уверены, что хотите сбросить форму и очистить черновик?' : 'Formany arassalamak we täzeden başlamak isleýärsiňizmi?',
+      type: 'danger',
+      isDanger: true,
+      confirmText: lang === 'RU' ? 'Да, очистить' : 'Hawa, arassala',
+      cancelText: lang === 'RU' ? 'Отмена' : 'Ýatyr'
+    });
+    if (isConfirmed) {
       sessionStorage.removeItem(DRAFT_KEY);
       const defaultUnit = units.length > 0 ? units[0].id : '';
       setFormData({
@@ -571,7 +709,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
   
   // Удаление лота
   const handleRemoveLot = (lotIdx) => {
-    if (lots.length === 1) return alert(lang === 'RU' ? 'Должен быть хотя бы один лот' : 'Iň bolmanda bir lot bolmaly');
+    if (lots.length === 1) return showAlert({ message: lang === 'RU' ? 'Должен быть хотя бы один лот' : 'Iň bolmanda bir lot bolmaly', type: 'warning' });
     setLots(lots.filter((_, i) => i !== lotIdx));
   };
   
@@ -751,7 +889,11 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
         documents: docs.map(d => d.id).filter(Boolean)
       });
 
-      alert(t('tenderCreatedSuccess', 'Тендер успешно создан!'));
+      await showAlert({
+        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
+        message: t('tenderCreatedSuccess', 'Тендер успешно создан!'),
+        type: 'success'
+      });
       sessionStorage.removeItem(DRAFT_KEY);
       if (onNavigate) onNavigate('tenders');
     } catch (err) {
@@ -764,7 +906,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
   };
 
   return (
-    <div className="space-y-6 pb-12 relative">
+    <div className="space-y-6 relative">
       {/* Аккуратное всплывающее окошко прямо над активным полем при попытке ввода запрещенного символа */}
       {forbiddenBadge && (
         <div
@@ -819,8 +961,8 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       {/* 2. Форма ввода данных, упакованная в аккуратные белые блоки-карточки */}
       <form id="create-tender-form" onSubmit={handleSubmit} className="space-y-6">
         {/* Карточка 1: Основные параметры */}
-        <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
-          <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-100 bg-slate-50/70'}`}>
+        <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm ${theme.tableCardBorderTop}`}>
+          <div className={`p-4 border-b flex items-center justify-between rounded-t-2xl ${isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-100 bg-slate-50/70'}`}>
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
                 <FileText size={16} />
@@ -856,10 +998,10 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                   placeholder="TNDR-2026-08-001"
                   value={formData.tenderNumber}
                   onChange={(e) => handleFormChange('tenderNumber', e.target.value, e)}
-                  className={`w-full px-3 py-2 rounded-lg text-xs font-mono font-bold tracking-wide border transition-colors ${
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-mono font-bold tracking-wide transition-all duration-150 ${
                     isTenderNumberDuplicate
-                      ? 'border-rose-500 bg-rose-50/60 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 focus:ring-1 focus:ring-rose-500'
-                      : `border-transparent ${theme.inputBg}`
+                      ? 'border border-rose-500 bg-rose-50/60 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/25'
+                      : `${theme.inputBg}`
                   }`}
                 />
                 {isTenderNumberDuplicate && (
@@ -884,7 +1026,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                   placeholder={lang === 'RU' ? 'Введите название предмета тендера...' : 'Tender adyny giriziň...'}
                   value={formData.title}
                   onChange={(e) => handleFormChange('title', e.target.value, e)}
-                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
+                  className={`w-full px-3 py-2 rounded-lg text-xs transition-all duration-150 ${theme.inputBg}`}
                 />
               </div>
             </div>
@@ -893,44 +1035,46 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block font-semibold mb-1">{t('category', 'Kategoriýa')}*</label>
-                <div className="flex space-x-1.5">
-                  <SearchableSelect 
-                    t={t}
-                    options={categories} 
-                    value={formData.categoryId} 
-                    onChange={(val) => handleFormChange('categoryId', val)} 
-                    placeholder={t('selectCategory', 'Выберите категорию')} 
-                    isDarkMode={isDarkMode} 
-                    theme={theme} 
-                  />
-                </div>
+                <CustomSelect 
+                  options={categories} 
+                  value={formData.categoryId} 
+                  onChange={(val) => handleFormChange('categoryId', val)} 
+                  placeholder={t('selectCategory', 'Выберите категорию')} 
+                  searchable={true}
+                  isDarkMode={isDarkMode} 
+                  theme={theme} 
+                  t={t}
+                />
               </div>
 
               <div>
                 <label className="block font-semibold mb-1">{t('client', 'Sargyt ediji')}*</label>
-                <div className="flex space-x-1.5">
-                  <SearchableSelect 
-                    t={t}
-                    options={clients} 
-                    value={formData.clientId} 
-                    onChange={(val) => handleFormChange('clientId', val)} 
-                    placeholder={t('select', 'Saýlaň...')} 
-                    isDarkMode={isDarkMode} 
-                    theme={theme} 
-                  />
-                </div>
+                <CustomSelect 
+                  options={clients} 
+                  value={formData.clientId} 
+                  onChange={(val) => handleFormChange('clientId', val)} 
+                  placeholder={t('select', 'Saýlaň...')} 
+                  searchable={true}
+                  isDarkMode={isDarkMode} 
+                  theme={theme} 
+                  t={t}
+                />
               </div>
 
               <div>
                 <label className="block font-semibold mb-1">{t('type', 'Görnüşi')}*</label>
-                <select
+                <CustomSelect
+                  options={[
+                    { id: 'YERLI', name: t('typeLocal', 'Ýerli') },
+                    { id: 'HALKARA', name: t('typeGlobal', 'Halkara') }
+                  ]}
                   value={formData.type}
-                  onChange={(e) => handleFormChange('type', e.target.value)}
-                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
-                >
-                  <option value="YERLI">{t('typeLocal', 'Ýerli')}</option>
-                  <option value="HALKARA">{t('typeGlobal', 'Halkara')}</option>
-                </select>
+                  onChange={(val) => handleFormChange('type', val)}
+                  placeholder={t('type', 'Görnüşi')}
+                  isDarkMode={isDarkMode}
+                  theme={theme}
+                  t={t}
+                />
               </div>
             </div>
 
@@ -938,35 +1082,43 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block font-semibold mb-1">{t('announcementDate', 'Yglan edilen senesi')}*</label>
-                <input
-                  type="date"
+                <CustomDateInput
                   required
                   value={formData.announcementDate}
-                  onChange={(e) => handleFormChange('announcementDate', e.target.value)}
-                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
+                  onChange={(val) => handleFormChange('announcementDate', val)}
+                  isDarkMode={isDarkMode}
+                  theme={theme}
+                  lang={lang}
+                  placeholder={lang === 'RU' ? 'ДД.ММ.ГГГГ' : 'GG.AA.ÝÝÝÝ'}
                 />
               </div>
 
               <div>
                 <label className="block font-semibold mb-1">{t('deadline', 'Soňky möhleti')}*</label>
-                <input
-                  type="date"
+                <CustomDateInput
                   required
                   value={formData.deadline}
-                  onChange={(e) => handleFormChange('deadline', e.target.value)}
-                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
+                  onChange={(val) => handleFormChange('deadline', val)}
+                  isDarkMode={isDarkMode}
+                  theme={theme}
+                  lang={lang}
+                  min={formData.announcementDate || undefined}
+                  placeholder={lang === 'RU' ? 'ДД.ММ.ГГГГ' : 'GG.AA.ÝÝÝÝ'}
                 />
               </div>
 
               <div>
                 <label className="block font-semibold mb-1">{t('currency', 'Walýuta')}*</label>
-                <select
+                <CustomSelect
+                  options={currencies.map(c => ({ id: c.code, name: `${c.code} - ${c.name}` }))}
                   value={formData.currency}
-                  onChange={(e) => handleFormChange('currency', e.target.value)}
-                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
-                >
-                  {currencies.map(c => (<option key={c.id} value={c.code}>{c.code} - {c.name}</option>))}
-                </select>
+                  onChange={(val) => handleFormChange('currency', val)}
+                  placeholder={t('currency', 'Walýuta')}
+                  searchable={currencies.length > 5}
+                  isDarkMode={isDarkMode}
+                  theme={theme}
+                  t={t}
+                />
               </div>
             </div>
 
@@ -974,27 +1126,35 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block font-semibold mb-1">{t('status', 'Status')}*</label>
-                <select
+                <CustomSelect
+                  options={[
+                    { id: 'ACYK', name: t('statusAcyk', 'Açyk') },
+                    { id: 'TASLAMA', name: t('statusTaslama', 'Taslama') },
+                    { id: 'YAPYK', name: t('statusYapyk', 'Ýapyk') }
+                  ]}
                   value={formData.status}
-                  onChange={(e) => handleFormChange('status', e.target.value)}
-                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
-                >
-                  <option value="ACYK">{t('statusAcyk', 'Açyk')}</option>
-                  <option value="TASLAMA">{t('statusTaslama', 'Taslama')}</option>
-                  <option value="YAPYK">{t('statusYapyk', 'Ýapyk')}</option>
-                </select>
+                  onChange={(val) => handleFormChange('status', val)}
+                  placeholder={t('status', 'Status')}
+                  isDarkMode={isDarkMode}
+                  theme={theme}
+                  t={t}
+                />
               </div>
 
               <div>
                 <label className="block font-semibold mb-1">{t('visibility', 'Açyklygy')}*</label>
-                <select
+                <CustomSelect
+                  options={[
+                    { id: 'ACYK', name: t('visibilityPublic', 'Açyk') },
+                    { id: 'YAPYK', name: t('visibilityPrivate', 'Ýapyk') }
+                  ]}
                   value={formData.visibility}
-                  onChange={(e) => handleFormChange('visibility', e.target.value)}
-                  className={`w-full px-3 py-2 rounded-lg text-xs ${theme.inputBg}`}
-                >
-                  <option value="ACYK">{t('visibilityPublic', 'Açyk')}</option>
-                  <option value="YAPYK">{t('visibilityPrivate', 'Ýapyk')}</option>
-                </select>
+                  onChange={(val) => handleFormChange('visibility', val)}
+                  placeholder={t('visibility', 'Açyklygy')}
+                  isDarkMode={isDarkMode}
+                  theme={theme}
+                  t={t}
+                />
               </div>
             </div>
           </div>
@@ -1052,7 +1212,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <h3 className={`font-bold text-lg ${theme.primaryText}`}>{lang === 'RU' ? 'Лоты и позиции' : 'Lotlar we pozisiýalar'}</h3>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300">
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
               {lots.length} {lang === 'RU' ? (lots.length === 1 ? 'лот' : 'лота') : 'lot'}
             </span>
           </div>
@@ -1077,17 +1237,16 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                  </div>
                  <div>
                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">{lang === 'RU' ? 'Условия поставки' : 'Eltip beriş şerti'}*</label>
-                   <select
-                     required
+                   <CustomSelect
+                     options={deliveryTerms.map(dt => ({ id: dt.id, name: `${dt.shortName} — ${dt.name}` }))}
                      value={lot.deliveryTermId}
-                     onChange={(e) => handleLotChange(lotIdx, 'deliveryTermId', e.target.value)}
-                     className={`w-full px-3 py-2 rounded-lg text-sm ${theme.inputBg}`}
-                   >
-                     <option value="">{lang === 'RU' ? 'Выберите условие поставки...' : 'Eltip beriş şertini saýlaň...'}</option>
-                     {deliveryTerms.map(dt => (
-                       <option key={dt.id} value={dt.id}>{dt.shortName} — {dt.name}</option>
-                     ))}
-                   </select>
+                     onChange={(val) => handleLotChange(lotIdx, 'deliveryTermId', val)}
+                     placeholder={lang === 'RU' ? 'Выберите условие поставки...' : 'Eltip beriş şertini saýlaň...'}
+                     searchable={deliveryTerms.length > 5}
+                     isDarkMode={isDarkMode}
+                     theme={theme}
+                     t={t}
+                   />
                  </div>
                </div>
                {lots.length > 1 && (
@@ -1112,7 +1271,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                     <th className="py-3 px-3 min-w-50">{t('specProduct', 'Haryt')} *</th>
                     <th className="py-3 px-3 w-40 text-center">{t('specUnit', 'Ölçeg birligi')} *</th>
                     <th className="py-3 px-3 w-48 text-center">{t('specBrand', 'Öndüriji')}</th>
-                    <th className="py-3 px-3 w-28 text-center">{t('specQty', 'Mukdar')} *</th>
+                    <th className="py-3 px-3 w-32 text-center whitespace-nowrap">{t('specQty', 'Mukdar')} *</th>
                     <th className="py-3 px-3 min-w-55">{t('specDesc', 'Mazmuny')}</th>
                     <th className="py-3 px-3 w-12 text-center">{t('action', 'Amal')}</th>
                   </tr>
@@ -1125,7 +1284,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                         <button
                           type="button"
                           onClick={() => handleAddSpecRow(lotIdx)}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-teal-600 bg-teal-50 dark:bg-teal-950/40 rounded-lg hover:bg-teal-100 transition-colors shadow-xs"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg hover:bg-emerald-100 transition-colors shadow-xs"
                         >
                           <Plus size={14} /> {lang === 'RU' ? 'Добавить первую позицию' : 'Ilkinji harydy goş'}
                         </button>
@@ -1147,7 +1306,6 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                             placeholder={lang === 'RU' ? 'Выберите или найдите товар...' : 'Haryt saýlaň...'}
                             onChange={(prodName, prodId) => handleSpecChange(lotIdx, idx, 'productSelect', prodName, prodId)}
                             onOpenCreateModal={(initialText) => handleOpenProductModal(initialText, lotIdx, idx)}
-                            onQuickAdd={(name) => handleQuickAddProduct(name, lotIdx, idx)}
                             isDarkMode={isDarkMode}
                             theme={theme}
                             lang={lang}
@@ -1162,31 +1320,35 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
 
                         {/* Поле 2: Ед. изм. */}
                         <td className="py-2.5 px-3">
-                          <select
-                            required
+                          <CustomSelect
+                            size="sm"
+                            options={units.map(u => ({ id: u.id, name: `${u.name} (${u.shortName})` }))}
                             value={item.unit}
-                            onChange={(e) => handleSpecChange(lotIdx, idx, 'unit', e.target.value)}
-                            className={`w-full px-2.5 py-1.5 rounded-md text-xs border focus:outline-none focus:ring-1 focus:ring-teal-500 ${theme.inputBg}`}
-                          >
-                            <option value="">{lang === 'RU' ? 'Выберите...' : 'Saýlaň...'}</option>
-                            {units.map(u => (
-                              <option key={u.id} value={u.id}>{u.name} ({u.shortName})</option>
-                            ))}
-                          </select>
+                            onChange={(val) => handleSpecChange(lotIdx, idx, 'unit', val)}
+                            placeholder={lang === 'RU' ? 'Выберите...' : 'Saýlaň...'}
+                            searchable={units.length > 6}
+                            isDarkMode={isDarkMode}
+                            theme={theme}
+                            t={t}
+                          />
                         </td>
 
                         {/* Поле 3: Производитель */}
                         <td className="py-2.5 px-3">
-                          <select
-                            value={item.brand}
-                            onChange={(e) => handleSpecChange(lotIdx, idx, 'brand', e.target.value)}
-                            className={`w-full px-2.5 py-1.5 rounded-md text-xs border focus:outline-none focus:ring-1 focus:ring-teal-500 ${theme.inputBg}`}
-                          >
-                            <option value="">{lang === 'RU' ? 'Не указан' : 'Görkezilmedik'}</option>
-                            {manufacturers.map(m => (
-                              <option key={m.id} value={m.id}>{m.name}</option>
-                            ))}
-                          </select>
+                          <CustomSelect
+                            size="sm"
+                            options={[
+                              { id: '', name: lang === 'RU' ? 'Не указан' : 'Görkezilmedik' },
+                              ...manufacturers.map(m => ({ id: m.id, name: m.name }))
+                            ]}
+                            value={item.brand || ''}
+                            onChange={(val) => handleSpecChange(lotIdx, idx, 'brand', val)}
+                            placeholder={lang === 'RU' ? 'Не указан' : 'Görkezilmedik'}
+                            searchable={manufacturers.length > 5}
+                            isDarkMode={isDarkMode}
+                            theme={theme}
+                            t={t}
+                          />
                         </td>
 
                         {/* Поле 4: Количество */}
@@ -1198,7 +1360,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                             required
                             value={item.mukdar}
                             onChange={(e) => handleSpecChange(lotIdx, idx, 'mukdar', Number(e.target.value))}
-                            className={`w-full px-2.5 py-1.5 rounded-md text-xs text-center font-bold border focus:outline-none focus:ring-1 focus:ring-teal-500 ${theme.inputBg}`}
+                            className={`w-full px-2.5 py-1.5 rounded-md text-xs text-center font-bold border focus:outline-none focus:ring-1 focus:ring-emerald-500 ${theme.inputBg}`}
                           />
                         </td>
 
@@ -1218,7 +1380,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                               e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
                             }}
                             style={{ minHeight: '34px', maxHeight: '120px' }}
-                            className={`w-full px-2.5 py-1.5 rounded-md text-xs border focus:outline-none focus:ring-1 focus:ring-teal-500 leading-normal resize-y ${theme.inputBg}`}
+                            className={`w-full px-2.5 py-1.5 rounded-md text-xs border focus:outline-none focus:ring-1 focus:ring-emerald-500 leading-normal resize-y ${theme.inputBg}`}
                           />
                         </td>
 
@@ -1245,7 +1407,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
               <button
                 type="button"
                 onClick={() => handleAddSpecRow(lotIdx)}
-                className="px-6 py-2 text-xs rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold transition-all flex items-center justify-center gap-2 shadow-xs hover:shadow-md active:scale-95"
+                className="px-6 py-2 text-xs rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all flex items-center justify-center gap-2 shadow-xs hover:shadow-md active:scale-95 cursor-pointer"
               >
                 <Plus size={15} /> <span>{lang === 'RU' ? 'Добавить позицию в лот' : 'Lota haryt goş'}</span>
               </button>
@@ -1257,13 +1419,13 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
         <button
           type="button"
           onClick={handleAddLot}
-          className={`w-full py-3.5 px-6 rounded-xl border-2 border-dashed transition-all flex items-center justify-center gap-2 text-sm font-bold group shadow-xs hover:shadow-sm active:scale-[0.99] ${
+          className={`w-full py-3.5 px-6 rounded-xl border-2 border-dashed transition-all flex items-center justify-center gap-2 text-sm font-bold group shadow-xs hover:shadow-sm active:scale-[0.99] cursor-pointer ${
             isDarkMode
-              ? 'border-teal-500/30 hover:border-teal-400 bg-teal-950/20 hover:bg-teal-900/30 text-teal-400 hover:text-teal-300'
-              : 'border-teal-500/40 hover:border-teal-600 bg-teal-50/40 hover:bg-teal-50 text-teal-700 hover:text-teal-800'
+              ? 'border-emerald-500/30 hover:border-emerald-400 bg-emerald-950/20 hover:bg-emerald-900/30 text-emerald-400 hover:text-emerald-300'
+              : 'border-emerald-500/40 hover:border-emerald-600 bg-emerald-50/40 hover:bg-emerald-50 text-emerald-700 hover:text-emerald-800'
           }`}
         >
-          <div className="w-6 h-6 rounded-full bg-teal-600 group-hover:bg-teal-700 text-white flex items-center justify-center transition-colors shadow-xs">
+          <div className="w-6 h-6 rounded-full bg-emerald-600 group-hover:bg-emerald-700 text-white flex items-center justify-center transition-colors shadow-xs">
             <Plus size={15} />
           </div>
           <span>{lang === 'RU' ? 'Добавить новый лот' : 'Täze lot goşmak'}</span>
@@ -1274,7 +1436,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
         <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-100 bg-slate-50/70'}`}>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
               <Paperclip size={16} />
             </div>
             <div>
@@ -1319,7 +1481,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                   <td className="py-3 px-4 text-center text-slate-400 font-semibold">{idx + 1}</td>
                   <td className="py-3 px-4 font-semibold truncate max-w-xs">{doc.name}</td>
                   <td className="py-3 px-4 text-slate-500 max-w-xs truncate">{doc.desc}</td>
-                  <td className="py-3 px-4 text-center font-bold text-teal-600">{doc.type}</td>
+                  <td className="py-3 px-4 text-center font-bold text-emerald-600">{doc.type}</td>
                   <td className="py-3 px-4 text-center text-slate-400">{doc.size}</td>
                   <td className="py-3 px-4 text-center text-slate-400">{doc.date}</td>
                   <td className="py-3 px-4 text-center">
@@ -1349,7 +1511,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       )}
 
       {/* 5. Плавающая нижняя панель сохранения (Sticky footer) */}
-      <div className="sticky bottom-0 z-40 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3.5 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 rounded-b-2xl">
+      <div className="sticky bottom-0 z-40 -mx-4 sm:-mx-6 -mb-6 px-4 sm:px-6 py-3 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
         <div className="flex items-center gap-2 text-xs">
           <span className={`w-2 h-2 rounded-full transition-colors ${
             isFormValid

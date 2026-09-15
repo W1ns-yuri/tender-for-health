@@ -198,15 +198,15 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
             <table className="w-full text-left text-xs border-collapse">
               <thead className={theme.tableHeaderBg}>
                 <tr className="border-b border-slate-200 dark:border-slate-800">
-                  <th className="py-3 px-4 w-28 text-center">{t('lotNo', 'Lot №')}</th>
-                  <th className="py-3 px-4 w-44 text-left">{t('title', 'Ady')}</th>
-                  <th className="py-3 px-4 max-w-xs text-left">{t('description', 'Mazmuny')}</th>
-                  <th className="py-3 px-3 text-center">{t('type', 'Görnüşi')}</th>
-                  <th className="py-3 px-3 text-center">{t('status', 'Status')}</th>
-                  <th className="py-3 px-3 text-center">{t('announcementDate', 'Yglan edilen senesi')}</th>
-                  <th className="py-3 px-3 text-center">{t('deadline', 'Soňky möhleti')}</th>
-                  <th className="py-3 px-4 max-w-xs text-left">{t('technicalSpecs', 'Tehniki şartler')}</th>
-                  <th className="py-3 px-4 text-center">{t('action', 'Amal')}</th>
+                  <th className="py-3.5 px-4 w-28 text-center">{t('lotNo', 'Lot №')}</th>
+                  <th className="py-3.5 px-4 w-48 text-center">{t('title', 'Ady')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('description', 'Mazmuny')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('type', 'Görnüşi')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('status', 'Status')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('announcementDate', 'Yglan edilen senesi')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('deadline', 'Soňky möhleti')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('technicalSpecs', 'Tehniki şartler')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('action', 'Amal')}</th>
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -222,23 +222,13 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                   tenders.map((item, idx) => (
                     <tr key={item.id || idx} className={`${theme.tableRowHover} transition-colors`}>
                       <td className="py-3.5 px-4 text-center font-semibold font-mono tabular-nums">{safeString(item.tenderNumber)}</td>
-                      <td className="py-3.5 px-4 text-left font-medium max-w-[180px]">
-                        <span className="line-clamp-2" title={safeString(item.title)}>{safeString(item.title)}</span>
-                      </td>
-                      <td className="py-3.5 px-4 text-left max-w-xs">
-                        <div className={`line-clamp-2 text-xs leading-relaxed ${theme.subText}`} title={safeString(item.description)}>
-                          {safeString(item.description)}
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-3 text-center">{getTypeBadge(item.type, lang, isDarkMode)}</td>
-                      <td className="py-3.5 px-3 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
-                      <td className={`py-3.5 px-3 text-center tabular-nums ${theme.subText}`}>{formatDate(item.announcementDate || item.date)}</td>
-                      <td className={`py-3.5 px-3 text-center tabular-nums ${theme.subText}`}>{formatDate(item.deadline)}</td>
-                      <td className="py-3.5 px-4 text-left max-w-xs">
-                        <div className={`line-clamp-2 text-xs leading-relaxed ${theme.subText}`} title={renderTechSpecs(item)}>
-                          {renderTechSpecs(item)}
-                        </div>
-                      </td>
+                      <td className="py-3.5 px-4 text-center font-medium">{safeString(item.title)}</td>
+                      <td className={`py-3.5 px-4 text-center w-auto min-w-55 whitespace-normal text-wrap ${theme.subText}`}>{safeString(item.description)}</td>
+                      <td className="py-3.5 px-4 text-center">{getTypeBadge(item.type, lang, isDarkMode)}</td>
+                      <td className="py-3.5 px-4 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
+                      <td className={`py-3.5 px-4 text-center tabular-nums ${theme.subText}`}>{formatDate(item.announcementDate || item.date)}</td>
+                      <td className={`py-3.5 px-4 text-center tabular-nums ${theme.subText}`}>{formatDate(item.deadline)}</td>
+                      <td className={`py-3.5 px-4 text-center w-auto min-w-45 whitespace-normal text-wrap ${theme.subText}`}>{renderTechSpecs(item)}</td>
                       <td className="py-3.5 px-4 text-center">
                         <div className="flex items-center justify-center">
                           <button

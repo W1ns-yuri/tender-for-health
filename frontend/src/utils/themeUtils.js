@@ -11,7 +11,13 @@ export const getRoleTheme = (role, isDarkMode) => {
 
     cardBg: isDarkMode ? 'bg-[#111827] border-slate-800 text-slate-100' : 'bg-white border-slate-200/80 text-slate-800',
     cardHeaderBg: isDarkMode ? 'bg-[#1f2937] border-slate-800' : 'bg-slate-50 border-slate-100',
-    inputBg: isDarkMode ? 'bg-[#1f2937] border border-slate-700 text-slate-100 placeholder:text-slate-500' : 'bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400',
+    inputBg: isDarkMode
+      ? (isAdmin
+          ? 'bg-[#1f2937] border border-slate-700 text-slate-100 placeholder:text-slate-500 hover:border-emerald-500/70 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25 active:border-emerald-500 transition-all duration-150'
+          : 'bg-[#1f2937] border border-slate-700 text-slate-100 placeholder:text-slate-500 hover:border-blue-500/70 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25 active:border-blue-500 transition-all duration-150')
+      : (isAdmin
+          ? 'bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 hover:border-emerald-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 active:border-emerald-500 transition-all duration-150'
+          : 'bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 hover:border-blue-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 active:border-blue-500 transition-all duration-150'),
 
     // Тонкая цветная акцентная полоска на самой карточке таблицы (4px)
     tableCardBorderTop: isAdmin ? 'border-t-4 border-t-emerald-500' : 'border-t-4 border-t-blue-500',

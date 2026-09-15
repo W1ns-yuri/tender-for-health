@@ -1,414 +1,429 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, CheckCircle, ChevronDown, ChevronUp, Award, AlertCircle, FileText, Eye, ExternalLink, CornerDownRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Trophy, CheckCircle2, ChevronRight, FileText, Search, X, Filter, ArrowUpDown, Clock, Building2, Layers, AlertCircle, ArrowRight, Eye } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import API from '../services/api';
-import { getRoleTheme, safeString } from '../utils/themeUtils';
+import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { getStatusBadge } from '../utils/statusUtils';
 
 export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
-  
+  const navigate = useNavigate();
+
   const [tenders, setTenders] = useState([]);
-  const [selectedTenderId, setSelectedTenderId] = useState('');
-  const [tenderDetails, setTenderDetails] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [expandedOffers, setExpandedOffers] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedClient, setSelectedClient] = useState('ALL');
+  const [selectedStatus, setSelectedStatus] = useState('ALL');
+  const [sortBy, setSortBy] = useState('DEADLINE_ASC'); // 'DEADLINE_ASC' | 'DEADLINE_DESC' | 'NEWEST' | 'OFFERS_DESC'
 
-  const toggleOfferDetails = (offerId) => {
-    setExpandedOffers(prev => ({ ...prev, [offerId]: !prev[offerId] }));
-  };
-
-  // Fetch list of tenders available for evaluation
   useEffect(() => {
     fetchTenders();
   }, []);
 
   const fetchTenders = async () => {
-    try {
-      const res = await API.get('/evaluation/tenders');
-      setTenders(res.data);
-    } catch (e) {
-      console.error('Failed to fetch evaluation tenders', e);
-    }
-  };
-
-  // Fetch details when a tender is selected
-  useEffect(() => {
-    if (selectedTenderId) {
-      fetchTenderDetails(selectedTenderId);
-    } else {
-      setTenderDetails(null);
-    }
-  }, [selectedTenderId]);
-
-  const fetchTenderDetails = async (id) => {
     setLoading(true);
     try {
-      const res = await API.get(`/evaluation/tenders/${id}/details`);
-      setTenderDetails(res.data);
+      const res = await API.get('/evaluation/tenders');
+      setTenders(res.data || []);
     } catch (e) {
-      console.error('Failed to fetch tender details', e);
+      console.error('Failed to fetch evaluation tenders', e);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAwardLot = async (lotId, offerId) => {
-    if (!window.confirm(lang === 'RU' ? 'Вы уверены, что хотите выбрать этого поставщика победителем для данного Лота?' : 'Bu lot boýunça şu üpjün edijini ýeňiji edip saýlamakçymy?')) {
-      return;
-    }
-    try {
-      await API.post('/evaluation/award-lot', { tenderId: selectedTenderId, lotId, offerId });
-      // Refresh details to show updated UI
-      fetchTenderDetails(selectedTenderId);
-    } catch (e) {
-      alert(lang === 'RU' ? 'Ошибка при выборе победителя' : 'Ýalňyşlyk ýüze çykdy');
-    }
-  };
+  // Unique clients for filter
+  const uniqueClients = Array.from(
+    new Set(
+      tenders
+        .map(t => t.client?.name)
+        .filter(Boolean)
+    )
+  ).sort();
 
-  const handleCompleteEvaluation = async () => {
-    if (!window.confirm(lang === 'RU' ? 'Вы уверены, что хотите завершить оценку? Всем поставщикам будут разосланы уведомления о результатах.' : 'Baha bermegi tamamlamakçymy? Netijeler yglan ediler.')) {
-      return;
+  // Filter & sort tenders
+  const filteredTenders = tenders
+    .filter(t => {
+      // Text search
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const num = (t.tenderNumber || '').toLowerCase();
+        const title = (t.title || '').toLowerCase();
+        const client = (t.client?.name || '').toLowerCase();
+        const cat = (t.category?.name || '').toLowerCase();
+        if (!num.includes(q) && !title.includes(q) && !client.includes(q) && !cat.includes(q)) {
+          return false;
+        }
+      }
+
+      // Client filter
+      if (selectedClient !== 'ALL' && t.client?.name !== selectedClient) {
+        return false;
+      }
+
+      // Status filter
+      if (selectedStatus !== 'ALL') {
+        if (selectedStatus === 'IN_PROGRESS' && t.status === 'YENIJI_YGLAN_EDILDI') return false;
+        if (selectedStatus === 'COMPLETED' && t.status !== 'YENIJI_YGLAN_EDILDI') return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'DEADLINE_ASC') {
+        return new Date(a.deadline) - new Date(b.deadline);
+      }
+      if (sortBy === 'DEADLINE_DESC') {
+        return new Date(b.deadline) - new Date(a.deadline);
+      }
+      if (sortBy === 'OFFERS_DESC') {
+        return (b._count?.offers || 0) - (a._count?.offers || 0);
+      }
+      // NEWEST
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    });
+
+  // Summary statistics
+  const totalTendersCount = tenders.length;
+  const inProgressCount = tenders.filter(t => t.status !== 'YENIJI_YGLAN_EDILDI').length;
+  const completedCount = tenders.filter(t => t.status === 'YENIJI_YGLAN_EDILDI').length;
+  const totalOffersCount = tenders.reduce((sum, t) => sum + (t._count?.offers || 0), 0);
+
+  const getDeadlineBadge = (deadlineStr) => {
+    if (!deadlineStr) return null;
+    const deadline = new Date(deadlineStr);
+    const now = new Date();
+    const diffMs = deadline - now;
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return (
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60">
+          {lang === 'RU' ? 'Срок истёк' : 'Möhleti geçdi'}
+        </span>
+      );
     }
-    try {
-      await API.post(`/evaluation/complete/${selectedTenderId}`);
-      alert(lang === 'RU' ? 'Оценка успешно завершена! Победители объявлены.' : 'Baha bermek tamamlandy! Ýeňijiler yglan edildi.');
-      fetchTenders();
-      setSelectedTenderId('');
-    } catch (e) {
-      alert(lang === 'RU' ? 'Ошибка при завершении оценки' : 'Ýalňyşlyk ýüze çykdy');
+    if (diffDays === 0) {
+      return (
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60 animate-pulse">
+          {lang === 'RU' ? 'Сегодня' : 'Şugün'}
+        </span>
+      );
     }
+    if (diffDays <= 3) {
+      return (
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
+          {lang === 'RU' ? `Осталось ${diffDays} дн.` : `${diffDays} gün galdy`}
+        </span>
+      );
+    }
+    return (
+      <span className="text-[10px] font-medium text-slate-400">
+        {lang === 'RU' ? `${diffDays} дн.` : `${diffDays} gün`}
+      </span>
+    );
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-[1600px] mx-auto">
+      {/* 1. Page Title & Overview */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('winners', 'Оценка заявок')}</h2>
-          <p className="text-xs text-slate-400 font-medium">
-            {lang === 'RU' ? 'Процедура выбора победителей по каждой позиции (лоту)' : 'Harytlar boýunça ýeňijileri saýlamak'}
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5">
+            <Trophy size={26} className="text-emerald-600 dark:text-emerald-400" />
+            {lang === 'RU' ? 'Оценка заявок и определение победителей' : 'Tekliplere baha bermek we ýeňijileri kesgitlemek'}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {lang === 'RU' 
+              ? 'Полноэкранный реестр закупочных процедур. Выберите тендер для перехода в специализированный рабочий стол сравнения лотов.' 
+              : 'Doly ekran baha bermek sanawy. Lotlary deňeşdirmek üçin tenderi saýlaň.'}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Sidebar: Tender Selection */}
-        <div className={`lg:col-span-1 rounded-xl border shadow-xs ${theme.cardBg} flex flex-col`}>
-          <div className={`p-4 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-            <h3 className="font-bold text-sm">{lang === 'RU' ? 'Тендеры на оценку' : 'Baha berilmeli tenderler'}</h3>
+      {/* 2. Top Metric Counters */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className={`p-4 rounded-xl border shadow-xs ${theme.cardBg} flex items-center gap-3.5`}>
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+            <Layers size={20} />
           </div>
-          <div className="p-2 space-y-1 overflow-y-auto max-h-150">
-            {tenders.length === 0 ? (
-              <p className="text-center text-sm text-slate-400 p-4">{lang === 'RU' ? 'Нет тендеров' : 'Tender ýok'}</p>
-            ) : (
-              tenders.map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => setSelectedTenderId(t.id)}
-                  className={`w-full text-left p-3 rounded-lg text-sm transition-colors ${
-                    selectedTenderId === t.id 
-                      ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 font-medium border border-teal-200 dark:border-teal-800' 
-                      : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border border-transparent'
-                  }`}
-                >
-                  <div className="font-bold mb-1 truncate">{t.tenderNumber}</div>
-                  <div className="text-xs truncate opacity-80">{t.title}</div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">
-                      {t._count.offers} {lang === 'RU' ? 'заявок' : 'teklip'}
-                    </span>
-                  </div>
-                </button>
-              ))
-            )}
+          <div>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              {lang === 'RU' ? 'Всего тендеров' : 'Jemi tenderler'}
+            </div>
+            <div className="text-xl font-bold text-slate-800 dark:text-slate-100">{totalTendersCount}</div>
           </div>
         </div>
 
-        {/* Right Content: Evaluation Board */}
-        <div className="lg:col-span-3">
-          {!selectedTenderId ? (
-            <div className="h-full min-h-100 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-400">
-              <Trophy size={48} className="mb-4 opacity-20" />
-              <p>{lang === 'RU' ? 'Выберите тендер из списка слева для начала оценки' : 'Baha bermek üçin çepden tender saýlaň'}</p>
+        <div className={`p-4 rounded-xl border shadow-xs ${theme.cardBg} flex items-center gap-3.5`}>
+          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+            <Clock size={20} />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              {lang === 'RU' ? 'На рассмотрении' : 'Baha berilýär'}
             </div>
-          ) : loading ? (
-            <div className="h-full min-h-100 flex items-center justify-center border rounded-xl bg-white dark:bg-[#0f172a]">
-              <div className="text-slate-400 animate-pulse">{lang === 'RU' ? 'Загрузка данных...' : 'Ýüklenýär...'}</div>
+            <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{inProgressCount}</div>
+          </div>
+        </div>
+
+        <div className={`p-4 rounded-xl border shadow-xs ${theme.cardBg} flex items-center gap-3.5`}>
+          <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+            <FileText size={20} />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              {lang === 'RU' ? 'Подано предложений' : 'Gowşurylan teklipler'}
             </div>
-          ) : tenderDetails ? (
-            <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
-              <div className={`p-5 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'} flex flex-col gap-4`}>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-teal-700 dark:text-teal-400">{tenderDetails.tenderNumber}</h2>
-                    <p className="text-sm font-medium mt-1">{tenderDetails.title}</p>
-                  </div>
-                  <div>
-                    <Link
-                      to={`/tenders/${tenderDetails.id}`}
-                      target="_blank"
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md text-xs font-medium transition-colors"
-                    >
-                      <ExternalLink size={14} />
-                      {lang === 'RU' ? 'Открыть тендер' : 'Tenderi aç'}
-                    </Link>
-                  </div>
-                  <div>
-                    {getStatusBadge(tenderDetails.status, lang, isDarkMode)}
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50">
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">{lang === 'RU' ? 'Заказчик' : 'Sargyt ediji'}</p>
-                    <p className="text-sm font-semibold">{tenderDetails.client?.name || 'Н/Д'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">{lang === 'RU' ? 'Категория' : 'Kategoriýa'}</p>
-                    <p className="text-sm font-semibold">{tenderDetails.category?.name || 'Н/Д'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">{lang === 'RU' ? 'Тип тендера' : 'Tenderiň görnüşi'}</p>
-                    <p className="text-sm font-semibold">
-                      {tenderDetails.type === 'YERLI' ? (lang === 'RU' ? 'Местный' : 'Ýerli') : (lang === 'RU' ? 'Международный' : 'Halkara')}
-                      {' / '}
-                      {tenderDetails.visibility === 'ACYK' ? (lang === 'RU' ? 'Открытый' : 'Açyk') : (lang === 'RU' ? 'Закрытый' : 'Ýapyk')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">{lang === 'RU' ? 'Крайний срок' : 'Soňky möhlet'}</p>
-                    <p className="text-sm font-semibold text-rose-600 dark:text-rose-400">{new Date(tenderDetails.deadline).toLocaleDateString('ru-RU')}</p>
-                  </div>
-                </div>
-              </div>
+            <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{totalOffersCount}</div>
+          </div>
+        </div>
 
-              <div className="p-0">
-                {(!tenderDetails.lots || tenderDetails.lots.length === 0) && tenderDetails.specs.length === 0 ? (
-                  <div className="p-8 text-center text-slate-400">{lang === 'RU' ? 'В этом тендере нет позиций/лотов' : 'Haryt ýok'}</div>
-                ) : (
-                  <div className="divide-y dark:divide-slate-800">
-                    {tenderDetails.lots && tenderDetails.lots.map((lot, index) => {
-                      // Collect all offers that have bid on this lot
-                      const lotSpecIds = lot.specs.map(s => s.id);
-                      
-                      const competingOffers = [];
-                      tenderDetails.offers.forEach(offer => {
-                        const offerSpecsForLot = offer.specs.filter(os => lotSpecIds.includes(os.tenderSpecId));
-                        if (offerSpecsForLot.length > 0) {
-                          // Calculate total lot price for this offer
-                          const totalLotPrice = offerSpecsForLot.reduce((sum, os) => sum + (os.quantity * os.unitPrice), 0);
-                          const isAwarded = offerSpecsForLot.some(os => os.isAwarded);
-                          
-                          competingOffers.push({
-                            offerId: offer.id,
-                            supplierId: offer.supplier?.id || offer.supplierId,
-                            supplierName: offer.supplier?.name || 'Unknown',
-                            totalLotPrice: totalLotPrice.toFixed(2),
-                            isAwarded: isAwarded,
-                            itemsCount: offerSpecsForLot.length,
-                            totalItems: lot.specs.length,
-                            offerSpecs: offerSpecsForLot
-                          });
-                        }
-                      });
+        <div className={`p-4 rounded-xl border shadow-xs ${theme.cardBg} flex items-center gap-3.5`}>
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+            <CheckCircle2 size={20} />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              {lang === 'RU' ? 'Итоги оглашены' : 'Tamamlanan'}
+            </div>
+            <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{completedCount}</div>
+          </div>
+        </div>
+      </div>
 
-                      // Check if a winner is selected for this lot
-                      const hasWinner = competingOffers.some(o => o.isAwarded);
+      {/* 3. Comprehensive Filter Toolbar */}
+      <div className={`p-4 rounded-xl border shadow-xs ${theme.cardBg} flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3`}>
+        {/* Search */}
+        <div className="relative flex-1 min-w-[240px] max-w-md">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={lang === 'RU' ? 'Поиск по номеру, названию, заказчику...' : 'Tender belgisi, ady boýunça gözleg...'}
+            className={`w-full pl-9 pr-8 py-2 text-xs rounded-lg ${theme.inputBg}`}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              <X size={13} />
+            </button>
+          )}
+        </div>
 
-                      return (
-                        <div key={lot.id} className="p-5">
-                          <div className="mb-4">
-                            <h4 className="font-bold text-base flex items-center gap-2">
-                              <span className="text-slate-400">{lang === 'RU' ? 'Лот' : 'Lot'} #{index + 1}:</span> 
-                              {lot.name}
-                              {hasWinner && <CheckCircle size={16} className="text-teal-500 ml-2" />}
-                            </h4>
-                            <div className="flex items-center gap-4 text-xs text-slate-500 mt-1">
-                              <p>
-                                {lang === 'RU' ? 'Кол-во товаров в лоте' : 'Harytlaryň sany'}: <strong className="text-slate-700 dark:text-slate-300">{lot.specs.length}</strong>
-                              </p>
-                              {lot.deliveryTerm && (
-                                <p className="flex items-center gap-1 border-l border-slate-300 dark:border-slate-700 pl-4">
-                                  <span className="uppercase text-[10px] tracking-wider">{lang === 'RU' ? 'Условия поставки:' : 'Gowşuryş şertleri:'}</span>
-                                  <strong className="text-[#1e3a8a] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">{lot.deliveryTerm.name || lot.deliveryTerm.code}</strong>
-                                </p>
-                              )}
-                            </div>
-                          </div>
+        {/* Dropdowns */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Client filter */}
+          <div className="min-w-[170px]">
+            <select
+              value={selectedClient}
+              onChange={(e) => setSelectedClient(e.target.value)}
+              className={`w-full px-3 py-2 text-xs rounded-lg ${theme.inputBg}`}
+            >
+              <option value="ALL">{lang === 'RU' ? 'Все заказчики' : 'Ähli sargyt edijiler'}</option>
+              {uniqueClients.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
 
-                          {competingOffers.length === 0 ? (
-                            <div className="text-sm text-rose-500 bg-rose-50 dark:bg-rose-900/10 p-3 rounded-lg flex items-center gap-2">
-                              <AlertCircle size={14} />
-                              {lang === 'RU' ? 'Нет предложений по этому лоту' : 'Bu lot üçin teklip ýok'}
-                            </div>
-                          ) : (
-                            <div className="overflow-x-auto rounded-lg border dark:border-slate-700">
-                              <table className="w-full text-left text-xs border-collapse">
-                                <thead>
-                                  <tr className={theme.tableHeaderBg}>
-                                    <th className="py-2.5 px-3 font-semibold">{lang === 'RU' ? 'Поставщик' : 'Üpjün ediji'}</th>
-                                    <th className="py-2.5 px-3 font-semibold text-center">{lang === 'RU' ? 'Покрытие лота' : 'Lotuň dolulygy'}</th>
-                                    <th className="py-2.5 px-3 font-semibold text-right">{lang === 'RU' ? 'Общая стоимость лота' : 'Lotuň jemi bahasy'}</th>
-                                    <th className="py-2.5 px-3 font-semibold w-24 text-center">{lang === 'RU' ? 'Победитель' : 'Ýeňiji'}</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                  {competingOffers.map(co => (
-                                    <React.Fragment key={co.offerId}>
-                                      <tr className={`${co.isAwarded ? 'bg-teal-50/50 dark:bg-teal-900/20' : theme.tableRowHover}`}>
-                                        <td className="py-2.5 px-3 font-medium flex items-center gap-2">
-                                          <button onClick={() => toggleOfferDetails(co.offerId)} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700">
-                                            {expandedOffers[co.offerId] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                          </button>
-                                          {co.isAwarded && <Trophy size={14} className="text-amber-500" />}
-                                          <Link 
-                                            to={`/suppliers/${co.supplierId}`} 
-                                            className={`${co.isAwarded ? 'font-bold text-teal-700 dark:text-teal-400' : 'text-slate-700 dark:text-slate-200'} hover:text-teal-600 dark:hover:text-teal-300 transition-colors underline decoration-dotted underline-offset-4`}
-                                          >
-                                            {co.supplierName}
-                                          </Link>
-                                        </td>
-                                        <td className="py-2.5 px-3 text-center">
-                                          <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${co.itemsCount === co.totalItems ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'}`}>
-                                            {co.itemsCount} / {co.totalItems} {lang === 'RU' ? 'поз.' : 'poz.'}
-                                          </span>
-                                        </td>
-                                        <td className="py-2.5 px-3 text-right font-bold text-emerald-600 dark:text-emerald-400">{co.totalLotPrice}</td>
-                                        <td className="py-2.5 px-3 text-center w-40">
-                                          <div className="flex items-center justify-end gap-2">
-                                            <Link
-                                              to={`/offers/${co.offerId}`}
-                                              className="p-1.5 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded transition-colors"
-                                              title={lang === 'RU' ? 'Посмотреть полную заявку' : 'Doly teklibi gör'}
-                                            >
-                                              <Eye size={16} />
-                                            </Link>
-                                            <button
-                                              onClick={() => handleAwardLot(lot.id, co.offerId)}
-                                              className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors flex-1 ${
-                                                co.isAwarded 
-                                                  ? 'bg-teal-500 text-white shadow-sm hover:bg-teal-600' 
-                                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
-                                              }`}
-                                            >
-                                              {co.isAwarded ? (lang === 'RU' ? 'Выбран' : 'Saýlandy') : (lang === 'RU' ? 'Выбрать' : 'Saýla')}
-                                            </button>
-                                          </div>
-                                        </td>
-                                      </tr>
-                                      
-                                      {/* EXPANDABLE DETAILS ROW */}
-                                      {expandedOffers[co.offerId] && (
-                                        <tr>
-                                          <td colSpan="4" className="bg-slate-50/80 dark:bg-slate-800/40 p-4 border-t border-slate-200 dark:border-slate-700/50">
-                                             <div className="text-xs space-y-3">
-                                               <h5 className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                                 <FileText size={14} className="text-teal-600 dark:text-teal-400" />
-                                                 {lang === 'RU' ? 'Спецификация предложения от' : 'Teklibiň spesifikasiýasy:'} {co.supplierName}
-                                               </h5>
-                                               <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-                                                 <table className="w-full text-left bg-white dark:bg-[#0f172a] text-xs">
-                                                   <thead className="bg-teal-600 dark:bg-teal-700 text-white">
-                                                     <tr>
-                                                       <th className="p-2.5 font-medium w-8 text-center">#</th>
-                                                       <th className="p-2.5 font-medium">{lang === 'RU' ? 'Товар / Предложение' : 'Haryt / Teklip'}</th>
-                                                       <th className="p-2.5 font-medium text-center w-20">{lang === 'RU' ? 'Ед. изм.' : 'Ölçeg'}</th>
-                                                       <th className="p-2.5 font-medium text-center w-20">{lang === 'RU' ? 'Кол-во' : 'Mukdar'}</th>
-                                                       <th className="p-2.5 font-medium text-right w-28">{lang === 'RU' ? 'Цена за ед.' : 'Birlik bahasy'}</th>
-                                                       <th className="p-2.5 font-medium text-right w-32">{lang === 'RU' ? 'Сумма' : 'Jemi'}</th>
-                                                       <th className="p-2.5 font-medium w-48">{lang === 'RU' ? 'Характеристики / Производитель' : 'Häsiýetnamalar'}</th>
-                                                     </tr>
-                                                   </thead>
-                                                   <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                                                     {co.offerSpecs.map((os, idx) => {
-                                                       const originalSpec = lot.specs.find(s => s.id === os.tenderSpecId);
-                                                       const requestedName = originalSpec ? (originalSpec.generalProduct?.name || originalSpec.name) : 'Н/Д';
-                                                       const requestedUnit = originalSpec?.unit?.name || 'шт';
-                                                       const requestedDesc = originalSpec ? originalSpec.description : '';
-                                                       
-                                                       const offeredName = os.generalProduct?.name || os.name || 'Н/Д';
-                                                       const offeredUnit = os.unit?.name || 'шт';
-                                                       const offeredBrand = os.manufacturer?.name || os.brand || '';
-                                                       const isDifferent = (requestedName !== offeredName) && (offeredName !== 'Н/Д');
-                                                       
-                                                       return (
-                                                         <React.Fragment key={os.id}>
-                                                           {/* Запрос */}
-                                                           <tr className="bg-slate-50 dark:bg-slate-800/40">
-                                                             <td className="p-2.5 text-center font-bold text-slate-400" rowSpan="2">{idx + 1}</td>
-                                                             <td className="p-2.5">
-                                                               <div className="flex items-center gap-2">
-                                                                 <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[9px] uppercase font-bold rounded tracking-wider">{lang === 'RU' ? 'Запрос' : 'Talap'}</span>
-                                                                 <span className="font-semibold text-slate-700 dark:text-slate-300">{requestedName}</span>
-                                                               </div>
-                                                             </td>
-                                                             <td className="p-2.5 text-center text-slate-500">{requestedUnit}</td>
-                                                             <td className="p-2.5 text-center font-bold">{os.quantity}</td>
-                                                             <td className="p-2.5 text-right text-slate-400">—</td>
-                                                             <td className="p-2.5 text-right text-slate-400">—</td>
-                                                             <td className="p-2.5 text-slate-500 italic">{requestedDesc || '—'}</td>
-                                                           </tr>
-                                                           {/* Предложение */}
-                                                           <tr className={isDifferent ? 'bg-amber-50/30 dark:bg-amber-900/10' : ''}>
-                                                             <td className="p-2.5 pl-0">
-                                                               <div className="flex items-start gap-2">
-                                                                 <CornerDownRight size={16} className="text-teal-500 ml-1 mt-0.5" />
-                                                                 <div>
-                                                                   <span className="px-1.5 py-0.5 bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-400 text-[9px] uppercase font-bold rounded tracking-wider mb-1 inline-block">{lang === 'RU' ? 'Ваше КП' : 'Teklibiňiz'}</span>
-                                                                   <div className="font-medium">
-                                                                     {offeredName}
-                                                                     {isDifferent && <span className="ml-2 px-1 py-0.5 bg-amber-100 text-amber-700 text-[9px] rounded uppercase font-bold tracking-wider">{lang === 'RU' ? 'Замена' : 'Üýtgetme'}</span>}
-                                                                   </div>
-                                                                 </div>
-                                                               </div>
-                                                             </td>
-                                                             <td className="p-2.5 text-center font-medium">{offeredUnit}</td>
-                                                             <td className="p-2.5 text-center font-bold text-teal-700 dark:text-teal-400">{os.quantity}</td>
-                                                             <td className="p-2.5 text-right font-mono font-medium">{os.unitPrice.toLocaleString('ru-RU', {minimumFractionDigits: 2})}</td>
-                                                             <td className="p-2.5 text-right font-mono font-bold text-teal-700 dark:text-teal-400">{(os.quantity * os.unitPrice).toLocaleString('ru-RU', {minimumFractionDigits: 2})}</td>
-                                                             <td className="p-2.5 text-slate-600 dark:text-slate-300">
-                                                               {offeredBrand && <div className="font-medium text-[10px] uppercase text-slate-400 mb-0.5">{offeredBrand}</div>}
-                                                               {os.description ? <span>{os.description}</span> : <span className="text-slate-400 italic">{'—'}</span>}
-                                                             </td>
-                                                           </tr>
-                                                         </React.Fragment>
-                                                       );
-                                                     })}
-                                                   </tbody>
-                                                 </table>
-                                               </div>
-                                             </div>
-                                          </td>
-                                        </tr>
-                                      )}
-                                    </React.Fragment>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
+          {/* Status filter */}
+          <div className="min-w-[160px]">
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className={`w-full px-3 py-2 text-xs rounded-lg ${theme.inputBg}`}
+            >
+              <option value="ALL">{lang === 'RU' ? 'Все статусы' : 'Ähli statuslar'}</option>
+              <option value="IN_PROGRESS">{lang === 'RU' ? 'На рассмотрении' : 'Baha berilýänler'}</option>
+              <option value="COMPLETED">{lang === 'RU' ? 'Итоги подведены' : 'Ýeňiji yglan edilen'}</option>
+            </select>
+          </div>
+
+          {/* Sort */}
+          <div className="min-w-[180px]">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className={`w-full px-3 py-2 text-xs rounded-lg ${theme.inputBg}`}
+            >
+              <option value="DEADLINE_ASC">{lang === 'RU' ? 'Срок: сначала срочные' : 'Möhlet: ilki ýakynlar'}</option>
+              <option value="DEADLINE_DESC">{lang === 'RU' ? 'Срок: по убыванию' : 'Möhlet: uzaklar'}</option>
+              <option value="OFFERS_DESC">{lang === 'RU' ? 'Заявки: больше предложений' : 'Teklip: köp bolanlar'}</option>
+              <option value="NEWEST">{lang === 'RU' ? 'Дата: сначала новые' : 'Döredilen: täzeler'}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Full-Width 100% Registry Table */}
+      <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
+        {loading ? (
+          <div className="p-16 text-center text-slate-400">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-3 border-emerald-500 border-t-transparent mb-3" />
+            <p className="text-sm font-medium">{lang === 'RU' ? 'Загрузка реестра тендеров...' : 'Tenderler ýüklenýär...'}</p>
+          </div>
+        ) : filteredTenders.length === 0 ? (
+          <div className="p-16 text-center text-slate-400">
+            <AlertCircle size={40} className="mx-auto mb-3 opacity-30 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+              {searchQuery || selectedClient !== 'ALL' || selectedStatus !== 'ALL'
+                ? (lang === 'RU' ? 'Ничего не найдено по заданным фильтрам' : 'Gözleg boýunça netije tapylmady')
+                : (lang === 'RU' ? 'Нет тендеров, ожидающих оценки заявок' : 'Baha berilmeli tender ýok')}
+            </p>
+            <p className="text-xs text-slate-400 mt-1">
+              {lang === 'RU' ? 'Попробуйте сбросить параметры поиска' : 'Gözleg parametrlerini üýtgedip görüň'}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className={theme.tableHeaderBg}>
+                  <th className="py-3 px-4 font-semibold w-40">{lang === 'RU' ? 'Номер тендера' : 'Tender belgisi'}</th>
+                  <th className="py-3 px-4 font-semibold">{lang === 'RU' ? 'Наименование закупки' : 'Satyn alyş ady'}</th>
+                  <th className="py-3 px-4 font-semibold w-52">{lang === 'RU' ? 'Заказчик' : 'Sargyt ediji'}</th>
+                  <th className="py-3 px-4 font-semibold text-center w-28">{lang === 'RU' ? 'Лоты' : 'Lotlar'}</th>
+                  <th className="py-3 px-4 font-semibold text-center w-36">{lang === 'RU' ? 'Подано заявок' : 'Gowşurylan teklipler'}</th>
+                  <th className="py-3 px-4 font-semibold w-40">{lang === 'RU' ? 'Крайний срок' : 'Soňky möhlet'}</th>
+                  <th className="py-3 px-4 font-semibold text-center w-36">{lang === 'RU' ? 'Статус' : 'Status'}</th>
+                  <th className="py-3 px-4 font-semibold text-right w-44">{lang === 'RU' ? 'Действие' : 'Hereket'}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {filteredTenders.map(t => {
+                  const offersCount = t._count?.offers || 0;
+                  const lotsCount = t._count?.lots || 0;
+                  const isExpired = new Date(t.deadline) < new Date();
+                  const isCompleted = t.status === 'YENIJI_YGLAN_EDILDI';
+                  const isFailed = offersCount === 0 && (isExpired || t.status === 'YAPYK');
+
+                  return (
+                    <tr key={t.id} className={`${theme.tableRowHover} transition-colors group`}>
+                      {/* Номер тендера */}
+                      <td className="py-3 px-4 font-mono font-bold text-xs text-emerald-700 dark:text-emerald-400">
+                        <Link
+                          to={offersCount === 0 ? `/tenders/${t.id}` : `/evaluation/${t.id}`}
+                          className="hover:underline flex items-center gap-1.5"
+                        >
+                          {t.tenderNumber}
+                        </Link>
+                      </td>
+
+                      {/* Наименование закупки */}
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-slate-800 dark:text-slate-100 text-xs line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                          {t.title}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          {t.category?.name && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-medium">
+                              {t.category.name}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-slate-400">
+                            {t.type === 'YERLI' ? (lang === 'RU' ? 'Местный' : 'Ýerli') : (lang === 'RU' ? 'Международный' : 'Halkara')}
+                          </span>
+                        </div>
+                      </td>
 
-              {/* Action Bar */}
-              {tenderDetails.specs.length > 0 && tenderDetails.status !== 'YENIJI_YGLAN_EDILDI' && (
-                <div className={`p-5 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-slate-50'} flex justify-end`}>
-                  <button
-                    onClick={handleCompleteEvaluation}
-                    className={`px-6 py-2.5 rounded-lg font-bold text-sm shadow-md transition-transform hover:-translate-y-0.5 ${theme.primaryBtn}`}
-                  >
-                    {lang === 'RU' ? 'Завершить оценку и огласить результаты' : 'Baha bermegi tamamla we yglan et'}
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : null}
+                      {/* Заказчик */}
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
+                        <div className="flex items-center gap-1.5">
+                          <Building2 size={13} className="text-slate-400 shrink-0" />
+                          <span className="truncate font-medium">{t.client?.name || '—'}</span>
+                        </div>
+                      </td>
+
+                      {/* Количество лотов */}
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs">
+                          {lotsCount > 0 ? `${lotsCount} ${lang === 'RU' ? 'лот.' : 'lot'}` : `1 ${lang === 'RU' ? 'лот' : 'lot'}`}
+                        </span>
+                      </td>
+
+                      {/* Подано предложений */}
+                      <td className="py-3 px-4 text-center">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            offersCount > 0
+                              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                              : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+                          }`}
+                        >
+                          <FileText size={12} />
+                          {offersCount} {lang === 'RU' ? 'заявок' : 'teklip'}
+                        </span>
+                      </td>
+
+                      {/* Крайний срок */}
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-slate-700 dark:text-slate-200">
+                          {new Date(t.deadline).toLocaleDateString('ru-RU')}
+                        </div>
+                        <div className="mt-0.5">{getDeadlineBadge(t.deadline)}</div>
+                      </td>
+
+                      {/* Статус */}
+                      <td className="py-3 px-4 text-center">
+                        {isFailed ? (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                            {lang === 'RU' ? 'Не состоялся' : 'Geçirilmedi'}
+                          </span>
+                        ) : (
+                          getStatusBadge(t.status, lang, isDarkMode)
+                        )}
+                      </td>
+
+                      {/* Действие */}
+                      <td className="py-3 px-4 text-right">
+                        {isCompleted ? (
+                          <Link
+                            to={`/evaluation/${t.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors"
+                          >
+                            <FileText size={13} className="text-slate-400" />
+                            <span>{lang === 'RU' ? 'Итоги / Протокол' : 'Protokol'}</span>
+                          </Link>
+                        ) : isFailed ? (
+                          <Link
+                            to={`/tenders/${t.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors"
+                          >
+                            <Eye size={13} />
+                            <span>{lang === 'RU' ? 'Подробнее' : 'Jikme-jik'}</span>
+                          </Link>
+                        ) : (
+                          <Link
+                            to={`/evaluation/${t.id}`}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer"
+                          >
+                            <span>{lang === 'RU' ? 'Оценить заявки' : 'Baha ber'}</span>
+                            <ArrowRight size={13} />
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Footer info bar */}
+        <div className="p-3.5 bg-slate-50/70 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+          <div>
+            {lang === 'RU' ? 'Отображено тендеров' : 'Görkezilen'}: <strong className="text-slate-700 dark:text-slate-200">{filteredTenders.length}</strong> {lang === 'RU' ? 'из' : '/'} {totalTendersCount}
+          </div>
+          <div className="text-[11px] text-slate-400">
+            {lang === 'RU' ? 'Нажмите на кнопку «Оценить заявки» для перехода на полноэкранный рабочий стол' : 'Baha bermek üçin düwmä basyň'}
+          </div>
         </div>
       </div>
     </div>

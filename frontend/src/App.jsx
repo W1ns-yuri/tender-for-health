@@ -11,6 +11,7 @@ import Tenders from './pages/Tenders';
 import TenderDetails from './pages/TenderDetails';
 import MyOffers from './pages/MyOffers';
 import Evaluation from './pages/Evaluation';
+import EvaluationDetailsPage from './pages/EvaluationDetailsPage';
 import SupplierWins from './pages/SupplierWins';
 import AdminCatalogs from './pages/AdminCatalogs';
 import AdminLogs from './pages/AdminLogs';
@@ -20,6 +21,7 @@ import SupplierProfilePage from './pages/SupplierProfilePage';
 import CreateOfferPage from './pages/CreateOfferPage';
 import OfferDetailsPage from './pages/OfferDetailsPage';
 import { getRoleTheme } from './utils/themeUtils';
+import { AlertProvider } from './context/AlertContext';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('tender_token') || '');
@@ -117,15 +119,18 @@ export default function App() {
 
   if (!token) {
     return (
-    <Routes>
-      <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} lang={lang} setLang={setLang} />} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
-  );
+      <AlertProvider isDarkMode={isDarkMode} lang={lang}>
+        <Routes>
+          <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} lang={lang} setLang={setLang} />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </AlertProvider>
+    );
   }
 
   return (
-    <div className={`h-screen w-screen overflow-hidden flex font-sans ${isDarkMode ? 'bg-[#0b0f17] text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
+    <AlertProvider isDarkMode={isDarkMode} lang={lang}>
+      <div className={`h-screen w-screen overflow-hidden flex font-sans ${isDarkMode ? 'bg-[#0b0f17] text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
       {/* 1. Боковое меню */}
       <Sidebar
         activeTab={activeTab}
@@ -177,6 +182,8 @@ export default function App() {
               <Route path="/offers" element={<MyOffers role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/offers/:id" element={<OfferDetailsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/evaluation" element={role === 'SUPPLIER' ? <SupplierWins role={role} isDarkMode={isDarkMode} lang={lang} /> : <Evaluation role={role} isDarkMode={isDarkMode} lang={lang} />} />
+              <Route path="/evaluation/:id" element={role === 'SUPPLIER' ? <SupplierWins role={role} isDarkMode={isDarkMode} lang={lang} /> : <EvaluationDetailsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
+              <Route path="/admin/evaluations/:id" element={role === 'SUPPLIER' ? <SupplierWins role={role} isDarkMode={isDarkMode} lang={lang} /> : <EvaluationDetailsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/umumy" element={role === 'ADMIN' ? <AdminCatalogs section="umumy" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/haryt" element={role === 'ADMIN' ? <AdminCatalogs section="haryt" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/administrasiya" element={role === 'ADMIN' ? <AdminCatalogs section="administrasiya" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
@@ -211,6 +218,7 @@ export default function App() {
           </ErrorBoundary>
         </main>
       </div>
-    </div>
+      </div>
+    </AlertProvider>
   );
 }

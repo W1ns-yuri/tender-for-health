@@ -4,29 +4,50 @@ import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
+import { useAlert } from '../context/AlertContext';
+import CustomDatePicker from '../components/CustomDatePicker';
 
 export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
   const [tenders, setTenders] = useState([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [announcementDateFilter, setAnnouncementDateFilter] = useState('');
+  const [deadlineFilter, setDeadlineFilter] = useState('');
 
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const { showAlert, showConfirm } = useAlert();
 
   const [loading, setLoading] = useState(false);
 
 
   const handleDelete = async (id) => {
-    const isConfirmed = window.confirm(lang === 'RU' ? 'Вы уверены, что хотите безвозвратно удалить этот тендер?' : 'Siz bu tenderi pozjakdygyňyza ynamyňyz barmy?');
+    const isConfirmed = await showConfirm({
+      title: lang === 'RU' ? 'Удаление тендера' : 'Tenderi pozmak',
+      message: lang === 'RU' ? 'Вы уверены, что хотите безвозвратно удалить этот тендер?' : 'Siz bu tenderi pozjakdygyňyza ynamyňyz barmy?',
+      type: 'danger',
+      confirmText: lang === 'RU' ? 'Удалить' : 'Pozmak',
+      cancelText: lang === 'RU' ? 'Отмена' : 'Ýatyr',
+      isDanger: true,
+    });
     if (!isConfirmed) return;
 
     try {
       await API.delete(`/tenders/${id}`);
       fetchTenders();
+      showAlert({
+        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
+        message: lang === 'RU' ? 'Тендер успешно удален' : 'Tender üstünlikli pozuldy',
+        type: 'success'
+      });
     } catch (error) {
       console.error(error);
-      alert(lang === 'RU' ? 'Ошибка при удалении' : 'Pozmakda säwlik ýüze çykdy');
+      showAlert({
+        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
+        message: lang === 'RU' ? 'Ошибка при удалении' : 'Pozmakda säwlik ýüze çykdy',
+        type: 'error'
+      });
     }
   };
 
@@ -38,7 +59,17 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
     return () => clearTimeout(delayDebounceFn);
   }, [statusFilter, typeFilter, search]);
 
-  const list = tenders; // Серверный поиск, данные уже отфильтрованы
+  const list = tenders.filter(item => {
+    if (announcementDateFilter) {
+      const itemDate = item.announcementDate ? item.announcementDate.slice(0, 10) : '';
+      if (itemDate !== announcementDateFilter) return false;
+    }
+    if (deadlineFilter) {
+      const itemDeadline = item.deadline ? item.deadline.slice(0, 10) : '';
+      if (itemDeadline !== deadlineFilter) return false;
+    }
+    return true;
+  });
 
   const fetchTenders = async () => {
     setLoading(true);
@@ -117,12 +148,28 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
 
           <div>
             <label className={`block text-[11px] font-medium mb-1 ${theme.subText}`}>{t('announcementDate', 'Yglan edilen senesi')}</label>
-            <input type="text" placeholder="../../...." className={`w-full px-2.5 py-1.5 rounded-lg text-xs ${theme.inputBg}`} />
+            <CustomDatePicker
+              size="sm"
+              value={announcementDateFilter}
+              onChange={setAnnouncementDateFilter}
+              isDarkMode={isDarkMode}
+              lang={lang}
+              theme={theme}
+              placeholder={lang === 'RU' ? 'ДД.ММ.ГГГГ' : 'GG.AA.ÝÝÝÝ'}
+            />
           </div>
 
           <div>
             <label className={`block text-[11px] font-medium mb-1 ${theme.subText}`}>{t('deadline', 'Soňky möhleti')}</label>
-            <input type="text" placeholder="../../...." className={`w-full px-2.5 py-1.5 rounded-lg text-xs ${theme.inputBg}`} />
+            <CustomDatePicker
+              size="sm"
+              value={deadlineFilter}
+              onChange={setDeadlineFilter}
+              isDarkMode={isDarkMode}
+              lang={lang}
+              theme={theme}
+              placeholder={lang === 'RU' ? 'ДД.ММ.ГГГГ' : 'GG.AA.ÝÝÝÝ'}
+            />
           </div>
 
           <div className="flex items-end">
@@ -189,7 +236,11 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                         {(role === 'ADMIN' || role === 'PURCHASING_SPECIALIST') && (
                           <>
                             <button
-                              onClick={() => alert(lang === 'RU' ? 'Редактирование пока недоступно' : 'Üýtgetmek häzirlikçe elýeterli däl')}
+                              onClick={() => showAlert({
+                                title: lang === 'RU' ? 'Редактирование' : 'Üýtgetmek',
+                                message: lang === 'RU' ? 'Редактирование пока недоступно' : 'Üýtgetmek häzirlikçe elýeterli däl',
+                                type: 'info'
+                              })}
                               className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 transition-all active:scale-95 cursor-pointer"
                               title={t('edit', 'Изменить')}
                             >

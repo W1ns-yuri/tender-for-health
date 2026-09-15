@@ -3,10 +3,12 @@ import { X, Plus, Trash2, Check, Paperclip } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
+import { useAlert } from '../context/AlertContext';
 
 export default function OfferModal({ tender, onClose, onSuccess, role, isDarkMode, lang = 'RU' }) {
   const t = (key, fallback) => getTranslation(lang, key, fallback);
   const theme = getRoleTheme(role, isDarkMode);
+  const { showAlert } = useAlert();
   
   const [currency, setCurrency] = useState('TMT');
   const [deliveryTerm, setDeliveryTerm] = useState('CIP');
@@ -64,11 +66,19 @@ export default function OfferModal({ tender, onClose, onSuccess, role, isDarkMod
           description: item.desc
         }))
       });
-      alert(`✅ ${t('successOffer', 'Kommerçiýa teklibi üstünlikli iberildi!')}`);
+      await showAlert({
+        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
+        message: t('successOffer', 'Коммерческое предложение успешно отправлено!'),
+        type: 'success'
+      });
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      alert(`❌ ${t('errorOffer', 'Ýalňyşlyk: Teklip iberilmedi! ')}` + (err.response?.data?.error || err.message));
+      showAlert({
+        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
+        message: `${t('errorOffer', 'Ошибка: Предложение не отправлено! ')} ${err.response?.data?.error || err.message}`,
+        type: 'error'
+      });
     } finally {
       setIsSubmitting(false);
     }

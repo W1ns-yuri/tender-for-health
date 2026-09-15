@@ -10,6 +10,7 @@ import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import CatalogFormModal from '../components/CatalogFormModal';
 import AdminLogs from './AdminLogs';
+import { useAlert } from '../context/AlertContext';
 
 export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lang = 'RU' }) {
   if (section === 'administrasiya') {
@@ -18,6 +19,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
 
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const { showAlert, showConfirm } = useAlert();
   
   const [searchParams, setSearchParams] = useSearchParams();
   const activeCatalog = searchParams.get('catalog');
@@ -47,7 +49,11 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
       fetchCatalogData(activeCatalog);
     } catch (e) {
       console.error(e);
-      alert('Ошибка при сохранении');
+      showAlert({
+        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
+        message: lang === 'RU' ? 'Ошибка при сохранении' : 'Ýatda saklamakda säwlik',
+        type: 'error'
+      });
     }
   };
 
@@ -58,20 +64,41 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
       fetchCatalogData(activeCatalog);
     } catch (e) {
       console.error(e);
-      alert('Ошибка при изменении статуса');
+      showAlert({
+        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
+        message: lang === 'RU' ? 'Ошибка при изменении статуса' : 'Ýagdaýy üýtgetmekde säwlik',
+        type: 'error'
+      });
     }
   };
 
   const handleDelete = async (itemId) => {
-    if (window.confirm('Вы уверены, что хотите удалить эту запись?')) {
-      try {
-        const endpoint = activeCatalog === 'productsMNN' ? 'products' : activeCatalog === 'delivery' ? 'delivery-terms' : activeCatalog;
-        await API.delete(`/catalogs/${endpoint}/${itemId}`);
-        fetchCatalogData(activeCatalog);
-      } catch (e) {
-        console.error(e);
-        alert('Ошибка при удалении');
-      }
+    const isConfirmed = await showConfirm({
+      title: lang === 'RU' ? 'Удаление записи' : 'Ýazgyny pozmak',
+      message: lang === 'RU' ? 'Вы уверены, что хотите удалить эту запись?' : 'Bu ýazgyny pozjakdygyňyza ynamyňyz barmy?',
+      type: 'danger',
+      confirmText: lang === 'RU' ? 'Удалить' : 'Pozmak',
+      cancelText: lang === 'RU' ? 'Отмена' : 'Ýatyr',
+      isDanger: true
+    });
+    if (!isConfirmed) return;
+
+    try {
+      const endpoint = activeCatalog === 'productsMNN' ? 'products' : activeCatalog === 'delivery' ? 'delivery-terms' : activeCatalog;
+      await API.delete(`/catalogs/${endpoint}/${itemId}`);
+      fetchCatalogData(activeCatalog);
+      showAlert({
+        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
+        message: lang === 'RU' ? 'Запись успешно удалена' : 'Ýazgy üstünlikli pozuldy',
+        type: 'success'
+      });
+    } catch (e) {
+      console.error(e);
+      showAlert({
+        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
+        message: lang === 'RU' ? 'Ошибка при удалении' : 'Pozmakda säwlik',
+        type: 'error'
+      });
     }
   };
 
