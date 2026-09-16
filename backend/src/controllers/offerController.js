@@ -165,17 +165,9 @@ const createOffer = async (req, res) => {
                 specs: true,
                 exchangeRates: { include: { currency: true } },
                 supplier: true,
+                files: { include: { document: true } },
             },
         });
-
-        // Привязываем загруженные документы к предложению
-        if (attachedDocumentIds && Array.isArray(attachedDocumentIds) && attachedDocumentIds.length > 0) {
-            const offerFilesData = attachedDocumentIds.map(docId => ({
-                offerId: offer.id,
-                documentId: docId
-            }));
-            await prisma.offerFile.createMany({ data: offerFilesData });
-        }
 
         res.status(201).json(offer);
     } catch (error) {

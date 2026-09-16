@@ -6,6 +6,7 @@ import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { useAlert } from '../context/AlertContext';
 import CustomDatePicker from '../components/CustomDatePicker';
+import CustomSelect from '../components/CustomSelect';
 
 export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
   const [tenders, setTenders] = useState([]);
@@ -120,30 +121,40 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
           <div>
             <label className={`block text-[11px] font-medium mb-1 ${theme.subText}`}>{t('type', 'Görnüşi')}</label>
-            <select
+            <CustomSelect
+              role={role}
+              size="sm"
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className={`w-full px-2.5 py-1.5 rounded-lg text-xs ${theme.inputBg}`}
-            >
-              <option value="">{lang === 'RU' ? 'Все' : 'Ählisi'}</option>
-              <option value="YERLI">{lang === 'RU' ? 'Местный' : 'Ýerli'}</option>
-              <option value="HALKARA">{lang === 'RU' ? 'Международный' : 'Halkara'}</option>
-            </select>
+              onChange={(val) => setTypeFilter(val)}
+              options={[
+                { id: '', name: lang === 'RU' ? 'Все' : 'Ählisi' },
+                { id: 'YERLI', name: lang === 'RU' ? 'Местный' : 'Ýerli' },
+                { id: 'HALKARA', name: lang === 'RU' ? 'Международный' : 'Halkara' }
+              ]}
+              isDarkMode={isDarkMode}
+              theme={theme}
+              t={t}
+            />
           </div>
 
           <div>
             <label className={`block text-[11px] font-medium mb-1 ${theme.subText}`}>{t('status', 'Status')}</label>
-            <select
+            <CustomSelect
+              role={role}
+              size="sm"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className={`w-full px-2.5 py-1.5 rounded-lg text-xs ${theme.inputBg}`}
-            >
-              <option value="">{lang === 'RU' ? 'Все' : 'Ählisi'}</option>
-              <option value="ACYK">{lang === 'RU' ? 'Открыт' : 'Açyk'}</option>
-              <option value="YAPYK">{lang === 'RU' ? 'Закрыт' : 'Ýapyk'}</option>
-              <option value="BAHALANDYRYLDY">{lang === 'RU' ? 'На рассмотрении' : 'Bahalandyryldy'}</option>
-              <option value="YENIJI_YGLAN_EDILDI">{lang === 'RU' ? 'Победитель' : 'Ýeňiji yglan edildi'}</option>
-            </select>
+              onChange={(val) => setStatusFilter(val)}
+              options={[
+                { id: '', name: lang === 'RU' ? 'Все' : 'Ählisi' },
+                { id: 'ACYK', name: lang === 'RU' ? 'Открыт' : 'Açyk' },
+                { id: 'YAPYK', name: lang === 'RU' ? 'Закрыт' : 'Ýapyk' },
+                { id: 'BAHALANDYRYLDY', name: lang === 'RU' ? 'На рассмотрении' : 'Bahalandyryldy' },
+                { id: 'YENIJI_YGLAN_EDILDI', name: lang === 'RU' ? 'Победитель' : 'Ýeňiji yglan edildi' }
+              ]}
+              isDarkMode={isDarkMode}
+              theme={theme}
+              t={t}
+            />
           </div>
 
           <div>

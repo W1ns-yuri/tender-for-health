@@ -1,0 +1,252 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { ChevronDown, Check, Search } from 'lucide-react';
+
+/**
+ * Universal CustomSelect component with Portal rendering (won't get clipped by overflow-hidden).
+ * Supports:
+ * - Admin (Emerald) and Supplier (Blue) role-based accent themes
+ * - Light and Dark modes
+ * - Searchable filtering
+ * - Array of objects ({ id, name }, { value, label }, etc.) or plain strings
+ * - Children `<option>` auto-extraction for drop-in replacement
+ * - Dropdown auto-positioning (flips up if near bottom)
+ */
+export const CustomSelect = ({
+  options = [],
+  value,
+  onChange,
+  placeholder,
+  isDarkMode,
+  theme,
+  role = 'ADMIN', // 'ADMIN' | 'SUPPLIER'
+  searchable = false,
+  t,
+  size = 'md', // 'md' | 'sm' | 'xs'
+  className = '',
+  disabled = false,
+  children,
+  name,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, maxHeight: 260 });
+  const wrapperRef = useRef(null);
+  const dropdownRef = useRef(null);
+
+  const isDark = isDarkMode !== undefined 
+    ? isDarkMode 
+    : (typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
+  
+  const isSupplier = role === 'SUPPLIER';
+
+  // If children <option> elements are passed, parse them
+  let resolvedOptions = options;
+  if ((!resolvedOptions || resolvedOptions.length === 0) && children) {
+    resolvedOptions = React.Children.toArray(children)
+      .filter(child => React.isValidElement(child) && (child.type === 'option' || child.props?.value !== undefined))
+      .map(child => ({
+        id: child.props.value !== undefined ? child.props.value : child.props.children,
+        name: child.props.children || child.props.label || String(child.props.value)
+      }));
+  }
+
+  const normalizedOptions = (resolvedOptions || []).map(opt => {
+    if (typeof opt === 'object' && opt !== null) {
+      const id = opt.id !== undefined ? opt.id : (opt.value !== undefined ? opt.value : opt.code);
+      const name = opt.name !== undefined ? opt.name : (opt.label !== undefined ? opt.label : (opt.title ?? opt.code ?? String(id)));
+      return { id, name };
+    }
+    return { id: opt, name: String(opt) };
+  });
+
+  const updateCoords = () => {
+    if (wrapperRef.current) {
+      const rect = wrapperRef.current.getBoundingClientRect();
+      const dropdownHeight = Math.min(260, Math.max(70, normalizedOptions.length * 36 + (searchable ? 46 : 0)));
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUpwards = spaceBelow < 210 && rect.top > 210;
+
+      const minW = size === 'sm' || size === 'xs' ? Math.max(rect.width, 140) : Math.max(rect.width, 180);
+      let left = rect.left;
+      if (left + minW > window.innerWidth - 10) {
+        left = window.innerWidth - minW - 10;
+      }
+      left = Math.max(10, left);
+
+      setCoords({
+        top: openUpwards ? (rect.top - dropdownHeight - 4) : (rect.bottom + 4),
+        left,
+        width: Math.max(rect.width, minW),
+        maxHeight: dropdownHeight,
+      });
+    }
+  };
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        wrapperRef.current && !wrapperRef.current.contains(event.target) &&
+        dropdownRef.current && !dropdownRef.current.contains(event.target)
+      ) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      updateCoords();
+      const handleScroll = (e) => {
+        if (dropdownRef.current && dropdownRef.current.contains(e.target)) return;
+        updateCoords();
+      };
+      window.addEventListener('resize', updateCoords);
+      window.addEventListener('scroll', handleScroll, true);
+      return () => {
+        window.removeEventListener('resize', updateCoords);
+        window.removeEventListener('scroll', handleScroll, true);
+      };
+    }
+  }, [isOpen]);
+
+  const filteredOptions = normalizedOptions.filter(opt =>
+    (opt.name || '').toLowerCase().includes(search.toLowerCase())
+  );
+  
+  const selectedOption = normalizedOptions.find(opt => String(opt.id) === String(value));
+
+  const handleSelect = (optId) => {
+    if (disabled) return;
+    setIsOpen(false);
+    setSearch('');
+    if (onChange) {
+      const syntheticEvent = {
+        target: { value: optId, name },
+        currentTarget: { value: optId, name },
+        value: optId
+      };
+      onChange(optId, syntheticEvent);
+    }
+  };
+
+  // Base background and border styling
+  const defaultInputBg = isDark
+    ? 'bg-slate-800/90 text-slate-100 border border-slate-700/80 hover:border-slate-600'
+    : 'bg-white text-slate-800 border border-slate-200 hover:border-slate-300 shadow-xs';
+
+  const triggerInputStyle = theme?.inputBg || defaultInputBg;
+
+  const activeFocusStyle = isSupplier
+    ? '!border-blue-500 !ring-2 !ring-blue-500/25 shadow-xs'
+    : '!border-emerald-500 !ring-2 !ring-emerald-500/25 shadow-xs';
+
+  const sizePadding = size === 'xs'
+    ? 'px-2 py-1 text-[11px]'
+    : size === 'sm'
+    ? 'px-2.5 py-1.5 text-xs'
+    : 'px-3 py-2 text-xs sm:text-sm';
+
+  return (
+    <div ref={wrapperRef} className={`relative inline-block w-full ${className}`}>
+      <div
+        onClick={() => {
+          if (disabled) return;
+          const next = !isOpen;
+          if (next) {
+            setSearch('');
+            updateCoords();
+          }
+          setIsOpen(next);
+        }}
+        className={`w-full cursor-pointer flex justify-between items-center transition-all duration-150 rounded-lg ${sizePadding} ${triggerInputStyle} ${
+          isOpen ? activeFocusStyle : ''
+        } ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800/50' : ''}`}
+      >
+        <span className={`truncate mr-1.5 ${!selectedOption || selectedOption.id === '' ? 'opacity-50 text-slate-400' : 'font-medium'}`}>
+          {selectedOption && selectedOption.id !== '' ? selectedOption.name : (placeholder || '—')}
+        </span>
+        <ChevronDown 
+          size={size === 'xs' ? 12 : 14} 
+          className={`opacity-50 shrink-0 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} 
+        />
+      </div>
+
+      {isOpen && coords.width > 0 && createPortal(
+        <div
+          ref={dropdownRef}
+          style={{
+            position: 'fixed',
+            top: `${coords.top}px`,
+            left: `${coords.left}px`,
+            width: `${coords.width}px`,
+            maxHeight: `${coords.maxHeight || 260}px`,
+            zIndex: 9999,
+          }}
+          className={`rounded-xl border shadow-2xl ${
+            isDark 
+              ? 'border-slate-700 bg-slate-900 shadow-black/70 text-slate-100' 
+              : 'border-slate-200 bg-white shadow-slate-400/40 text-slate-800'
+          } flex flex-col overflow-hidden animate-in fade-in-50 zoom-in-95 duration-100`}
+        >
+          {searchable && (
+            <div className={`p-2 border-b flex items-center gap-1.5 ${isDark ? 'border-slate-800 bg-slate-800/60' : 'border-slate-100 bg-slate-50/70'}`}>
+              <Search size={13} className="text-slate-400 shrink-0 ml-1" />
+              <input
+                type="text"
+                autoFocus
+                className={`w-full px-2 py-1 rounded-md text-xs bg-transparent border-0 focus:outline-none ${
+                  isDark ? 'text-slate-100 placeholder-slate-500' : 'text-slate-800 placeholder-slate-400'
+                }`}
+                placeholder={t ? t('search', 'Поиск...') : 'Поиск...'}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          )}
+          <div className="overflow-y-auto flex-1 divide-y divide-slate-100 dark:divide-slate-800/60">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map(opt => {
+                const isSelected = String(value) === String(opt.id);
+                const selectedClass = isSelected
+                  ? (isSupplier 
+                      ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300 font-bold' 
+                      : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold')
+                  : (isSupplier
+                      ? 'hover:bg-blue-500/10 text-slate-700 dark:text-slate-200'
+                      : 'hover:bg-emerald-500/10 text-slate-700 dark:text-slate-200');
+                
+                return (
+                  <div
+                    key={String(opt.id)}
+                    className={`px-3 py-2 text-xs cursor-pointer flex items-center justify-between transition-colors ${selectedClass}`}
+                    onClick={() => handleSelect(opt.id)}
+                  >
+                    <span className="truncate">{opt.name}</span>
+                    {isSelected && (
+                      <Check 
+                        size={13} 
+                        className={`font-bold ml-1.5 shrink-0 ${
+                          isSupplier ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'
+                        }`} 
+                      />
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="px-3 py-3 text-xs text-center opacity-50">
+                {t ? t('noResults', 'Нет совпадений') : 'Нет совпадений'}
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
+
+export default CustomSelect;

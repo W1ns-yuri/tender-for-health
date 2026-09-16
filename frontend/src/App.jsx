@@ -22,6 +22,7 @@ import CreateOfferPage from './pages/CreateOfferPage';
 import OfferDetailsPage from './pages/OfferDetailsPage';
 import { getRoleTheme } from './utils/themeUtils';
 import { AlertProvider } from './context/AlertContext';
+import CustomSelect from './components/CustomSelect';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('tender_token') || '');
@@ -129,7 +130,7 @@ export default function App() {
   }
 
   return (
-    <AlertProvider isDarkMode={isDarkMode} lang={lang}>
+    <AlertProvider isDarkMode={isDarkMode} lang={lang} role={role}>
       <div className={`h-screen w-screen overflow-hidden flex font-sans ${isDarkMode ? 'bg-[#0b0f17] text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
       {/* 1. Боковое меню */}
       <Sidebar
@@ -200,15 +201,18 @@ export default function App() {
                       <label className={`block font-semibold mb-1 ${theme.subText}`}>
                         {lang === 'RU' ? 'Язык интерфейса приложения' : 'Выбор языка интерфейса'}
                       </label>
-                      <select
+                      <CustomSelect
+                        role={role}
                         value={lang}
-                        onChange={(e) => setLang(e.target.value)}
-                        className={`w-full p-2.5 rounded-lg border text-xs ${theme.inputBg}`}
-                      >
-                        <option value="RU">Русский (По умолчанию)</option>
-                        <option value="TM">Türkmençe</option>
-                        <option value="EN">English</option>
-                      </select>
+                        onChange={(val) => setLang(val)}
+                        options={[
+                          { id: 'RU', name: 'Русский (По умолчанию)' },
+                          { id: 'TM', name: 'Türkmençe' },
+                          { id: 'EN', name: 'English' }
+                        ]}
+                        isDarkMode={isDarkMode}
+                        theme={theme}
+                      />
                     </div>
                   </div>
                 </div>

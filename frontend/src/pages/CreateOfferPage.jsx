@@ -29,6 +29,7 @@ import API from '../services/api';
 import { getTranslation } from '../utils/translations';
 import { getRoleTheme, safeString, getCurrencyLabel } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
+import CustomSelect from '../components/CustomSelect';
 
 export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 'RU' }) {
   const { id } = useParams();
@@ -357,14 +358,6 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
       {/* 1. Верхняя навигация и заголовок */}
       <div className="flex items-center justify-between pb-1">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
-            title={lang === 'RU' ? 'Назад' : 'Yza'}
-          >
-            <ArrowLeft size={18} />
-          </button>
           <h1 className={`text-2xl font-black tracking-tight ${theme.primaryText}`}>
             {lang === 'RU' ? 'Подача коммерческого предложения' : 'Tender teklibi tabşyrmak'}
           </h1>
@@ -449,17 +442,15 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
             <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
               {t('currency', 'Валюта предложения')}*
             </label>
-            <select
+            <CustomSelect
+              role="SUPPLIER"
+              options={currencies.map(c => ({ id: c.id, name: getCurrencyLabel(c) }))}
               value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className={`w-full px-3 py-2.5 rounded-xl border font-bold ${theme.inputBg}`}
-            >
-              {currencies.map(c => (
-                <option key={c.id} value={c.id}>
-                  {getCurrencyLabel(c)}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setCurrency(val)}
+              isDarkMode={isDarkMode}
+              theme={theme}
+              t={t}
+            />
             <span className="text-[10px] text-slate-400 mt-1 block">
               {lang === 'RU' ? 'Цены по всем лотам будут рассчитаны в этой валюте' : 'Bahalar şu walýutada hasaplanar'}
             </span>
@@ -567,19 +558,20 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
 
                           <span className="text-slate-300 dark:text-slate-600 font-bold">➔</span>
 
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-slate-600 dark:text-slate-300 font-semibold">{lang === 'RU' ? 'Ваше условие:' : 'Teklip şerti:'}</span>
-                            <select
+                          <div className="flex items-center gap-1.5 min-w-44">
+                            <span className="text-slate-600 dark:text-slate-300 font-semibold shrink-0">{lang === 'RU' ? 'Ваше условие:' : 'Teklip şerti:'}</span>
+                            <CustomSelect
+                              role="SUPPLIER"
+                              size="sm"
+                              className="min-w-36"
+                              options={deliveryTerms.map(dt => ({ id: dt.id, name: `${dt.shortName} — ${dt.name}` }))}
                               value={lotDeliveryTerms[lot.id] || ''}
-                              onChange={(e) => setLotDeliveryTerms(prev => ({ ...prev, [lot.id]: e.target.value }))}
-                              className={`px-2.5 py-1 rounded-lg border text-xs font-bold text-blue-700 dark:text-blue-300 ${theme.inputBg} focus:ring-1 focus:ring-blue-500`}
-                            >
-                              {deliveryTerms.map(dt => (
-                                <option key={dt.id} value={dt.id}>
-                                  {dt.shortName} — {dt.name}
-                                </option>
-                              ))}
-                            </select>
+                              onChange={(val) => setLotDeliveryTerms(prev => ({ ...prev, [lot.id]: val }))}
+                              searchable={deliveryTerms.length > 5}
+                              isDarkMode={isDarkMode}
+                              theme={theme}
+                              t={t}
+                            />
                           </div>
 
                           {lot.deliveryAddress && (
@@ -661,12 +653,28 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                       <thead>
                         <tr className={`font-semibold ${theme.tableHeaderBg}`}>
                           <th className="py-3 px-3.5 w-12 text-center">#</th>
-                          <th className="py-3 px-3.5 min-w-60">{lang === 'RU' ? 'Товар / Предложение' : 'Haryt / Teklip'}</th>
+                          <th className="py-3 px-3.5 min-w-60">
+                            {lotType === 'WORKS' 
+                              ? (lang === 'RU' ? 'Этап / вид работ' : 'Işiň tapgyry / görnüşi')
+                              : lotType === 'SERVICES'
+                              ? (lang === 'RU' ? 'Наименование услуги' : 'Hyzmatyň ady')
+                              : (lang === 'RU' ? 'Товар / Предложение' : 'Haryt / Teklip')}
+                          </th>
                           <th className="py-3 px-3.5 w-28 text-center">{lang === 'RU' ? 'Ед. изм.' : 'Ölçeg birligi'}</th>
-                          <th className="py-3 px-3.5 w-28 text-center">{lang === 'RU' ? 'Количество' : 'Mukdary'}*</th>
+                          <th className="py-3 px-3.5 w-28 text-center">
+                            {lotType === 'SERVICES' 
+                              ? (lang === 'RU' ? 'Объем / Период' : 'Möçberi / Möhleti') 
+                              : (lang === 'RU' ? 'Количество' : 'Mukdary')}*
+                          </th>
                           <th className="py-3 px-3.5 w-36 text-center">{lang === 'RU' ? `Цена за ед. (${currencyCode})` : 'Birlik bahasy'}*</th>
                           <th className="py-3 px-3.5 w-36 text-right">{lang === 'RU' ? `Сумма (${currencyCode})` : 'Jemi baha'}</th>
-                          <th className="py-3 px-3.5 min-w-45">{lang === 'RU' ? 'Характеристики / Обоснование' : 'Mazmuny / Esaslandyrma'}</th>
+                          <th className="py-3 px-3.5 min-w-45">
+                            {lotType === 'WORKS'
+                              ? (lang === 'RU' ? 'Состав и спецификация работ' : 'Işiň düzümi')
+                              : lotType === 'SERVICES'
+                              ? (lang === 'RU' ? 'Регламент и описание услуги' : 'Hyzmatyň tertibi')
+                              : (lang === 'RU' ? 'Характеристики / Обоснование' : 'Mazmuny / Esaslandyrma')}
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y-2 divide-slate-200 dark:divide-slate-700">
@@ -757,16 +765,18 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                         {lang === 'RU' ? 'Ваше КП' : 'Teklip'}
                                       </span>
 
-                                      {/* Чекбокс эквивалента / аналога */}
-                                      <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-                                        <input
-                                          type="checkbox"
-                                          checked={isEq}
-                                          onChange={(e) => handleSpecFieldChange(lot.id, idx, 'isEquivalent', e.target.checked)}
-                                          className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                                        />
-                                        <span>{lang === 'RU' ? 'Предложить эквивалент / аналог' : 'Meňzeş haryt teklip et'}</span>
-                                      </label>
+                                      {/* Чекбокс эквивалента / аналога (только для товаров) */}
+                                      {lotType === 'GOODS' && (
+                                        <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline">
+                                          <input
+                                            type="checkbox"
+                                            checked={isEq}
+                                            onChange={(e) => handleSpecFieldChange(lot.id, idx, 'isEquivalent', e.target.checked)}
+                                            className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                          />
+                                          <span>{lang === 'RU' ? 'Предложить эквивалент / аналог' : 'Meňzeş haryt teklip et'}</span>
+                                        </label>
+                                      )}
                                     </div>
 
                                     {isEq ? (
@@ -784,7 +794,13 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                         required
                                         value={item.haryt || item.requestedName}
                                         onChange={(e) => handleSpecFieldChange(lot.id, idx, 'haryt', e.target.value)}
-                                        placeholder={lang === 'RU' ? 'Наименование товара...' : 'Haryt ady...'}
+                                        placeholder={
+                                          lotType === 'WORKS'
+                                            ? (lang === 'RU' ? 'Наименование / состав выполняемых работ...' : 'Işiň ady...')
+                                            : lotType === 'SERVICES'
+                                            ? (lang === 'RU' ? 'Наименование оказываемой услуги...' : 'Hyzmatyň ady...')
+                                            : (lang === 'RU' ? 'Наименование товара...' : 'Haryt ady...')
+                                        }
                                         className={`w-full px-3 py-2 rounded-lg border text-xs font-semibold ${theme.inputBg}`}
                                       />
                                     )}

@@ -5,6 +5,7 @@ import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { getStatusBadge } from '../utils/statusUtils';
+import CustomSelect from '../components/CustomSelect';
 
 export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
@@ -220,43 +221,54 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Client filter */}
           <div className="min-w-[170px]">
-            <select
+            <CustomSelect
+              role="ADMIN"
               value={selectedClient}
-              onChange={(e) => setSelectedClient(e.target.value)}
-              className={`w-full px-3 py-2 text-xs rounded-lg ${theme.inputBg}`}
-            >
-              <option value="ALL">{lang === 'RU' ? 'Все заказчики' : 'Ähli sargyt edijiler'}</option>
-              {uniqueClients.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+              onChange={(val) => setSelectedClient(val)}
+              options={[
+                { id: 'ALL', name: lang === 'RU' ? 'Все заказчики' : 'Ähli sargyt edijiler' },
+                ...uniqueClients.map(c => ({ id: c, name: c }))
+              ]}
+              searchable={uniqueClients.length > 5}
+              isDarkMode={isDarkMode}
+              theme={theme}
+              t={t}
+            />
           </div>
 
           {/* Status filter */}
           <div className="min-w-[160px]">
-            <select
+            <CustomSelect
+              role="ADMIN"
               value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className={`w-full px-3 py-2 text-xs rounded-lg ${theme.inputBg}`}
-            >
-              <option value="ALL">{lang === 'RU' ? 'Все статусы' : 'Ähli statuslar'}</option>
-              <option value="IN_PROGRESS">{lang === 'RU' ? 'На рассмотрении' : 'Baha berilýänler'}</option>
-              <option value="COMPLETED">{lang === 'RU' ? 'Итоги подведены' : 'Ýeňiji yglan edilen'}</option>
-            </select>
+              onChange={(val) => setSelectedStatus(val)}
+              options={[
+                { id: 'ALL', name: lang === 'RU' ? 'Все статусы' : 'Ähli statuslar' },
+                { id: 'IN_PROGRESS', name: lang === 'RU' ? 'На рассмотрении' : 'Baha berilýänler' },
+                { id: 'COMPLETED', name: lang === 'RU' ? 'Итоги подведены' : 'Ýeňiji yglan edilen' }
+              ]}
+              isDarkMode={isDarkMode}
+              theme={theme}
+              t={t}
+            />
           </div>
 
           {/* Sort */}
           <div className="min-w-[180px]">
-            <select
+            <CustomSelect
+              role="ADMIN"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className={`w-full px-3 py-2 text-xs rounded-lg ${theme.inputBg}`}
-            >
-              <option value="DEADLINE_ASC">{lang === 'RU' ? 'Срок: сначала срочные' : 'Möhlet: ilki ýakynlar'}</option>
-              <option value="DEADLINE_DESC">{lang === 'RU' ? 'Срок: по убыванию' : 'Möhlet: uzaklar'}</option>
-              <option value="OFFERS_DESC">{lang === 'RU' ? 'Заявки: больше предложений' : 'Teklip: köp bolanlar'}</option>
-              <option value="NEWEST">{lang === 'RU' ? 'Дата: сначала новые' : 'Döredilen: täzeler'}</option>
-            </select>
+              onChange={(val) => setSortBy(val)}
+              options={[
+                { id: 'DEADLINE_ASC', name: lang === 'RU' ? 'Срок: сначала срочные' : 'Möhlet: ilki ýakynlar' },
+                { id: 'DEADLINE_DESC', name: lang === 'RU' ? 'Срок: по убыванию' : 'Möhlet: uzaklar' },
+                { id: 'OFFERS_DESC', name: lang === 'RU' ? 'Заявки: больше предложений' : 'Teklip: köp bolanlar' },
+                { id: 'NEWEST', name: lang === 'RU' ? 'Дата: сначала новые' : 'Döredilen: täzeler' }
+              ]}
+              isDarkMode={isDarkMode}
+              theme={theme}
+              t={t}
+            />
           </div>
         </div>
       </div>

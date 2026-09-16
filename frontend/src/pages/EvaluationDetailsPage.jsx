@@ -350,7 +350,8 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                   isAwarded,
                   itemsCount: offerSpecsForLot.length,
                   totalItems: lot.specs.length,
-                  offerSpecs: offerSpecsForLot
+                  offerSpecs: offerSpecsForLot,
+                  deliveryTerm: offer.deliveryTerm,
                 });
               }
             });
@@ -495,6 +496,30 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                         {co.supplierName}
                                       </Link>
                                     </div>
+
+                                    {/* Условия поставки поставщика */}
+                                    {co.deliveryTerm && (
+                                      <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                                        <span className="text-[10px] text-slate-400 font-medium">
+                                          {lang === 'RU' ? 'Поставка:' : 'Gowşuryş:'}
+                                        </span>
+                                        <span 
+                                          className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                                            lot.deliveryTerm && (co.deliveryTerm?.shortName || '').toLowerCase() !== (lot.deliveryTerm?.shortName || '').toLowerCase()
+                                              ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700/80'
+                                              : 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                                          }`}
+                                          title={co.deliveryTerm?.name}
+                                        >
+                                          {co.deliveryTerm?.shortName || co.deliveryTerm?.name}
+                                          {lot.deliveryTerm && (co.deliveryTerm?.shortName || '').toLowerCase() !== (lot.deliveryTerm?.shortName || '').toLowerCase() && (
+                                            <span className="ml-1 text-[9px] font-sans font-normal opacity-90">
+                                              ({lang === 'RU' ? 'отличается от ТЗ' : 'üýtgeşik'})
+                                            </span>
+                                          )}
+                                        </span>
+                                      </div>
+                                    )}
                                   </td>
 
                                   {/* Compliance Coverage */}
@@ -708,7 +733,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
       </div>
 
       {/* 4. Sticky Bottom Action Bar (Утверждение протокола & экспорт) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-3.5 px-6 shadow-2xl transition-all">
+      <div className="sticky bottom-0 z-30 -mx-6 -mb-6 px-6 sm:px-8 py-3.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-2xl transition-all">
         <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Progress on left */}
           <div className="flex items-center gap-3">

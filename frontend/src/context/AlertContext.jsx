@@ -4,8 +4,8 @@ import { CheckCircle2, AlertTriangle, AlertOctagon, XCircle, Info, X } from 'luc
 
 const AlertContext = createContext(null);
 
-export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU' }) => {
-  const [dialog, setDialog] = useState(null); // { isOpen, mode, title, message, type, confirmText, cancelText, isDanger, resolve }
+export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU', role = 'ADMIN' }) => {
+  const [dialog, setDialog] = useState(null); // { isOpen, mode, title, message, type, confirmText, cancelText, isDanger, role, resolve }
 
   const closeDialog = useCallback((result) => {
     if (dialog && dialog.resolve) {
@@ -20,6 +20,7 @@ export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU' }) => 
       const msg = isString ? options : (options.message || '');
       const isDanger = !isString && Boolean(options.isDanger);
       const type = isString ? (isDanger ? 'danger' : 'warning') : (options.type || (isDanger ? 'danger' : 'warning'));
+      const activeRole = !isString && options.role ? options.role : role;
 
       setDialog({
         isOpen: true,
@@ -30,16 +31,18 @@ export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU' }) => 
         confirmText: !isString && options.confirmText ? options.confirmText : null,
         cancelText: !isString && options.cancelText ? options.cancelText : null,
         isDanger,
+        role: activeRole,
         resolve,
       });
     });
-  }, []);
+  }, [role]);
 
   const showAlert = useCallback((options) => {
     return new Promise((resolve) => {
       const isString = typeof options === 'string';
       const msg = isString ? options : (options.message || '');
       const type = isString ? 'info' : (options.type || 'info');
+      const activeRole = !isString && options.role ? options.role : role;
 
       setDialog({
         isOpen: true,
@@ -48,10 +51,11 @@ export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU' }) => 
         message: msg,
         type,
         confirmText: !isString && options.confirmText ? options.confirmText : null,
+        role: activeRole,
         resolve,
       });
     });
-  }, []);
+  }, [role]);
 
   // Экспорт в window для удобства прямого вызова
   useEffect(() => {
@@ -115,10 +119,15 @@ export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU' }) => 
     return lang === 'RU' ? 'Отмена' : 'Ýatyr';
   };
 
-  const getIconInfo = (type) => {
+  const getIconInfo = (type, activeRole) => {
+    const isSupplier = activeRole === 'SUPPLIER';
+
     switch (type) {
       case 'success':
-        return {
+        return isSupplier ? {
+          icon: <CheckCircle2 size={24} className="text-blue-600 dark:text-blue-400" />,
+          bg: 'bg-blue-50 dark:bg-blue-950/50 border border-blue-200/70 dark:border-blue-800/70'
+        } : {
           icon: <CheckCircle2 size={24} className="text-emerald-600 dark:text-emerald-400" />,
           bg: 'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/70 dark:border-emerald-800/70'
         };
@@ -164,8 +173,8 @@ export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU' }) => 
           >
             <div className="flex items-start gap-4">
               {/* Бейдж иконки */}
-              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${getIconInfo(dialog.type).bg}`}>
-                {getIconInfo(dialog.type).icon}
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${getIconInfo(dialog.type, dialog.role).bg}`}>
+                {getIconInfo(dialog.type, dialog.role).icon}
               </div>
 
               {/* Содержимое диалога */}
@@ -206,6 +215,8 @@ export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU' }) => 
                 className={`px-5 py-2 text-xs font-bold rounded-xl text-white shadow-sm transition-all active:scale-95 cursor-pointer ${
                   dialog.isDanger || dialog.type === 'danger' || dialog.type === 'error'
                     ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/30'
+                    : dialog.role === 'SUPPLIER'
+                    ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/30'
                     : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30'
                 }`}
               >

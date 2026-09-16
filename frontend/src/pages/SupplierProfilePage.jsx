@@ -36,6 +36,7 @@ import { getTranslation } from '../utils/translations';
 import { getRoleTheme } from '../utils/themeUtils';
 import RejectSupplierModal from '../components/RejectSupplierModal';
 import { useAlert } from '../context/AlertContext';
+import CustomSelect from '../components/CustomSelect';
 
 // Список официальных регионов Туркменистана (юридические наименования)
 const REGIONS = [
@@ -1002,20 +1003,20 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       {t('companyLegalForm', 'Организационно-правовая форма')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
                     {isEditable ? (
-                      <div className="relative flex items-center">
-                        <select
-                          value={formData.type}
-                          onChange={e => setFormData(prev => ({ ...prev, type: e.target.value }))}
-                          className={`w-full pl-4 pr-10 py-3 rounded-xl text-sm font-medium border appearance-none ${inputBg}`}
-                        >
-                          <option value="ENTREPRENEUR">ИП (Hususy telekeçi)</option>
-                          <option value="BUSINESS_SOCIETY">ХО (Hojalyk jemgyýeti)</option>
-                          <option value="PRIVATE_ENTERPRISE">ЧП (Hususy kärhana)</option>
-                          <option value="DAÝHAN_HOJALYGY">DH (Daýhan hojalygy)</option>
-                          <option value="GOVERNMENT">Гос. предприятие (Döwlet kärhanasy)</option>
-                        </select>
-                        <ChevronDown size={18} className="absolute right-4 text-slate-400 pointer-events-none" />
-                      </div>
+                      <CustomSelect
+                        role={role}
+                        value={formData.type}
+                        onChange={(val) => setFormData(prev => ({ ...prev, type: val }))}
+                        options={[
+                          { id: 'ENTREPRENEUR', name: 'ИП (Hususy telekeçi)' },
+                          { id: 'BUSINESS_SOCIETY', name: 'ХО (Hojalyk jemgyýeti)' },
+                          { id: 'PRIVATE_ENTERPRISE', name: 'ЧП (Hususy kärhana)' },
+                          { id: 'DAÝHAN_HOJALYGY', name: 'DH (Daýhan hojalygy)' },
+                          { id: 'GOVERNMENT', name: 'Гос. предприятие (Döwlet kärhanasy)' }
+                        ]}
+                        isDarkMode={isDarkMode}
+                        size="md"
+                      />
                     ) : (
                       <div className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`}>
                         {getCompanyTypeBadge(formData.type)}

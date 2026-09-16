@@ -6,6 +6,7 @@ import { getRoleTheme, getCurrencyLabel } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import CatalogFormModal from '../components/CatalogFormModal';
 import CustomDatePicker from '../components/CustomDatePicker';
+import CustomSelect from '../components/CustomSelect';
 import { useAlert } from '../context/AlertContext';
 
 // Запрещенные спецсимволы (<, >, {, }, |, ^, ~, `, \)
@@ -14,177 +15,6 @@ const FORBIDDEN_CHARS_REGEX = /[<>{}\|^~`\\]/g;
 const sanitizeInputText = (text) => {
   if (typeof text !== 'string') return text;
   return text.replace(FORBIDDEN_CHARS_REGEX, '');
-};
-
-// Универсальный выпадающий список (Portal-based, не обрезается overflow-hidden и карточками)
-const CustomSelect = ({
-  options = [],
-  value,
-  onChange,
-  placeholder,
-  isDarkMode,
-  theme,
-  searchable = false,
-  t,
-  size = 'md', // 'md' | 'sm'
-  className = '',
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, maxHeight: 260 });
-  const wrapperRef = useRef(null);
-  const dropdownRef = useRef(null);
-
-  const normalizedOptions = options.map(opt => {
-    if (typeof opt === 'object' && opt !== null) {
-      return { 
-        id: opt.id !== undefined ? opt.id : (opt.value !== undefined ? opt.value : opt.code), 
-        name: opt.name !== undefined ? opt.name : (opt.label !== undefined ? opt.label : opt.code ?? String(opt.id)) 
-      };
-    }
-    return { id: opt, name: String(opt) };
-  });
-
-  const updateCoords = () => {
-    if (wrapperRef.current) {
-      const rect = wrapperRef.current.getBoundingClientRect();
-      const dropdownHeight = Math.min(260, Math.max(70, normalizedOptions.length * 36 + (searchable ? 46 : 0)));
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const openUpwards = spaceBelow < 210 && rect.top > 210;
-
-      const minW = size === 'sm' ? Math.max(rect.width, 140) : Math.max(rect.width, 180);
-      let left = rect.left;
-      if (left + minW > window.innerWidth - 10) {
-        left = window.innerWidth - minW - 10;
-      }
-      left = Math.max(10, left);
-
-      setCoords({
-        top: openUpwards ? (rect.top - dropdownHeight - 4) : (rect.bottom + 4),
-        left,
-        width: Math.max(rect.width, minW),
-        maxHeight: dropdownHeight,
-      });
-    }
-  };
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (
-        wrapperRef.current && !wrapperRef.current.contains(event.target) &&
-        dropdownRef.current && !dropdownRef.current.contains(event.target)
-      ) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      updateCoords();
-      const handleScroll = (e) => {
-        if (dropdownRef.current && dropdownRef.current.contains(e.target)) return;
-        updateCoords();
-      };
-      window.addEventListener('resize', updateCoords);
-      window.addEventListener('scroll', handleScroll, true);
-      return () => {
-        window.removeEventListener('resize', updateCoords);
-        window.removeEventListener('scroll', handleScroll, true);
-      };
-    }
-  }, [isOpen]);
-
-  const filteredOptions = normalizedOptions.filter(opt =>
-    (opt.name || '').toLowerCase().includes(search.toLowerCase())
-  );
-  const selectedOption = normalizedOptions.find(opt => String(opt.id) === String(value));
-
-  return (
-    <div ref={wrapperRef} className={`relative w-full ${className}`}>
-      <div 
-        onClick={() => {
-          const next = !isOpen;
-          if (next) {
-            setSearch('');
-            updateCoords();
-          }
-          setIsOpen(next);
-        }}
-        className={`w-full cursor-pointer flex justify-between items-center transition-all duration-150 rounded-lg text-xs ${
-          size === 'sm' ? 'px-2.5 py-1.5' : 'px-3 py-2'
-        } ${theme.inputBg} ${
-          isOpen ? '!border-emerald-500 !ring-2 !ring-emerald-500/25 shadow-xs' : ''
-        }`}
-      >
-        <span className={`truncate mr-1 ${!selectedOption || selectedOption.id === '' ? 'opacity-50 text-slate-400' : 'text-slate-800 dark:text-slate-100 font-medium'}`}>
-          {selectedOption && selectedOption.id !== '' ? selectedOption.name : (placeholder || '—')}
-        </span>
-        <ChevronDown size={14} className={`opacity-50 shrink-0 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} />
-      </div>
-
-      {isOpen && coords.width > 0 && createPortal(
-        <div 
-          ref={dropdownRef}
-          style={{
-            position: 'fixed',
-            top: `${coords.top}px`,
-            left: `${coords.left}px`,
-            width: `${coords.width}px`,
-            maxHeight: `${coords.maxHeight || 260}px`,
-            zIndex: 9999,
-          }}
-          className={`rounded-xl border shadow-2xl ${
-            isDarkMode ? 'border-slate-700 bg-slate-900 shadow-black/70 text-slate-100' : 'border-slate-200 bg-white shadow-slate-400/40 text-slate-800'
-          } flex flex-col overflow-hidden animate-in fade-in-50 zoom-in-95 duration-100`}
-        >
-          {searchable && (
-            <div className={`p-2 border-b ${isDarkMode ? 'border-slate-800 bg-slate-800/60' : 'border-slate-100 bg-slate-50/70'}`}>
-              <input
-                type="text"
-                autoFocus
-                className={`w-full px-2.5 py-1 rounded-md text-xs ${theme.inputBg} border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500`}
-                placeholder={t ? t('search', 'Поиск...') : 'Поиск...'}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          )}
-          <div className="overflow-y-auto flex-1 divide-y divide-slate-100 dark:divide-slate-800/60">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map(opt => (
-                <div
-                  key={String(opt.id)}
-                  className={`px-3 py-2 text-xs cursor-pointer flex items-center justify-between transition-colors ${
-                    String(value) === String(opt.id)
-                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold' 
-                      : 'hover:bg-emerald-500/10 text-slate-700 dark:text-slate-200'
-                  }`}
-                  onClick={() => {
-                    onChange(opt.id);
-                    setIsOpen(false);
-                    setSearch('');
-                  }}
-                >
-                  <span className="truncate">{opt.name}</span>
-                  {String(value) === String(opt.id) && (
-                    <Check size={13} className="text-emerald-600 dark:text-emerald-400 font-bold ml-1 shrink-0" />
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="px-3 py-3 text-xs text-center opacity-50">
-                {t ? t('noResults', 'Нет совпадений') : 'Нет совпадений'}
-              </div>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
-    </div>
-  );
 };
 
 // Кастомное поле выбора даты с модальным календарем в админском стиле
@@ -702,12 +532,17 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
   // Добавление нового лота
   const handleAddLot = () => {
     const defaultUnitId = units.length > 0 ? units[0].id : '';
+    const initialLotType = formData.procurementType === 'SERVICES_WORKS' ? 'WORKS' : 'GOODS';
+    let initialHaryt = '';
+    if (initialLotType === 'WORKS') initialHaryt = lang === 'RU' ? 'Выполнение комплекса работ согласно ТЗ и смете' : 'Tehniki şertlere laýyklykda işleri ýerine ýetirmek';
+    if (initialLotType === 'SERVICES') initialHaryt = lang === 'RU' ? 'Оказание услуг согласно техническому заданию' : 'Tehniki şertlere laýyklykda hyzmat etmek';
+
     setLots([
       ...lots,
       {
         id: Date.now(),
         name: `Лот ${lots.length + 1}`,
-        lotType: formData.procurementType === 'SERVICES_WORKS' ? 'WORKS' : 'GOODS',
+        lotType: initialLotType,
         deliveryTermId: '',
         deliveryAddress: '',
         workAddress: '',
@@ -716,7 +551,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
         serviceFormat: 'ON_SITE',
         slaPeriod: '',
         specs: [
-          { id: Date.now() + 1, hk: '1', haryt: '', unit: defaultUnitId, brand: '', mukdar: 1, desc: '' }
+          { id: Date.now() + 1, hk: '1', haryt: initialHaryt, unit: defaultUnitId, brand: '', mukdar: 1, desc: '' }
         ]
       }
     ]);
@@ -728,7 +563,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     setLots(lots.filter((_, i) => i !== lotIdx));
   };
   
-  // Изменение полей лота (название, условия поставки)
+  // Изменение полей лота (название, условия поставки, тип лота)
   const handleLotChange = (lotIdx, field, value, e) => {
     let sanitizedValue = value;
     if (typeof value === 'string' && FORBIDDEN_CHARS_REGEX.test(value)) {
@@ -739,6 +574,23 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     }
     const updated = [...lots];
     updated[lotIdx][field] = sanitizedValue;
+
+    // При смене типа лота на Работы или Услуги, гарантируем наличие дефолтной позиции, если список пуст
+    if (field === 'lotType') {
+      const defaultUnitId = units.length > 0 ? units[0].id : '';
+      if (!updated[lotIdx].specs || updated[lotIdx].specs.length === 0) {
+        let initialHaryt = '';
+        if (sanitizedValue === 'WORKS') initialHaryt = lang === 'RU' ? 'Выполнение комплекса работ согласно ТЗ и смете' : 'Tehniki şertlere laýyklykda işleri ýerine ýetirmek';
+        if (sanitizedValue === 'SERVICES') initialHaryt = lang === 'RU' ? 'Оказание услуг согласно техническому заданию' : 'Tehniki şertlere laýyklykda hyzmat etmek';
+        updated[lotIdx].specs = [
+          { id: Date.now(), hk: '1', haryt: initialHaryt, unit: defaultUnitId, brand: '', mukdar: 1, desc: '' }
+        ];
+      } else if (updated[lotIdx].specs.length === 1 && !updated[lotIdx].specs[0].haryt) {
+        if (sanitizedValue === 'WORKS') updated[lotIdx].specs[0].haryt = lang === 'RU' ? 'Выполнение комплекса работ согласно ТЗ и смете' : 'Tehniki şertlere laýyklykda işleri ýerine ýetirmek';
+        if (sanitizedValue === 'SERVICES') updated[lotIdx].specs[0].haryt = lang === 'RU' ? 'Оказание услуг согласно техническому заданию' : 'Tehniki şertlere laýyklykda hyzmat etmek';
+      }
+    }
+
     setLots(updated);
   };
 
@@ -835,13 +687,19 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       return;
     }
 
-    // 1. Проверка заполненности позиций
-    const hasSpecs = lots.some(lot => lot.specs.some(s => s.haryt && s.haryt.trim() !== ''));
-    if (!hasSpecs) {
-      setErrorMsg(t('specRequired', 'Добавьте хотя бы один лот с заполненными товарами'));
-      setLoading(false);
-      scrollToError();
-      return;
+    // 1. Проверка заполненности позиций в каждом лоте
+    for (let lotIdx = 0; lotIdx < lots.length; lotIdx++) {
+      const lot = lots[lotIdx];
+      const validSpecs = (lot.specs || []).filter(s => s.haryt && s.haryt.trim() !== '');
+      if (validSpecs.length === 0) {
+        setErrorMsg(lang === 'RU'
+          ? `В лоте "${lot.name}" нет заполненных позиций. В каждом лоте должна быть хотя бы одна позиция / этап работ.`
+          : `"${lot.name}" lotunda pozisiýa ýok. Her lotda iň bolmanda bir pozisiýa bolmaly.`
+        );
+        setLoading(false);
+        scrollToError();
+        return;
+      }
     }
 
     // 2. Проверка дубликатов внутри каждого лота
@@ -1449,53 +1307,99 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                 <thead className={theme.tableHeaderBg}>
                   <tr className="border-b border-slate-200 dark:border-slate-800">
                     <th className="py-3 px-3 w-10 text-center">#</th>
-                    <th className="py-3 px-3 min-w-50">{t('specProduct', 'Haryt')} *</th>
+                    <th className="py-3 px-3 min-w-50">
+                      {currentLotType === 'WORKS' 
+                        ? (lang === 'RU' ? 'Этап / вид работ *' : 'Işiň tapgyry / görnüşi *')
+                        : currentLotType === 'SERVICES'
+                        ? (lang === 'RU' ? 'Наименование услуги *' : 'Hyzmatyň ady *')
+                        : `${t('specProduct', 'Haryt')} *`}
+                    </th>
                     <th className="py-3 px-3 w-40 text-center">{t('specUnit', 'Ölçeg birligi')} *</th>
-                    <th className="py-3 px-3 w-48 text-center">{t('specBrand', 'Öndüriji')}</th>
-                    <th className="py-3 px-3 w-32 text-center whitespace-nowrap">{t('specQty', 'Mukdar')} *</th>
-                    <th className="py-3 px-3 min-w-55">{t('specDesc', 'Mazmuny')}</th>
+                    {currentLotType === 'GOODS' && (
+                      <th className="py-3 px-3 w-48 text-center">{t('specBrand', 'Öndüriji')}</th>
+                    )}
+                    <th className="py-3 px-3 w-32 text-center whitespace-nowrap">
+                      {currentLotType === 'SERVICES' 
+                        ? (lang === 'RU' ? 'Объем / Период *' : 'Möçberi / Möhleti *')
+                        : `${t('specQty', 'Mukdar')} *`}
+                    </th>
+                    <th className="py-3 px-3 min-w-55">
+                      {currentLotType === 'WORKS'
+                        ? (lang === 'RU' ? 'Состав и спецификация работ' : 'Işiň düzümi we häsiýetnamasy')
+                        : currentLotType === 'SERVICES'
+                        ? (lang === 'RU' ? 'Регламент и описание услуги' : 'Hyzmatyň tertibi we mazmuny')
+                        : t('specDesc', 'Mazmuny')}
+                    </th>
                     <th className="py-3 px-3 w-12 text-center">{t('action', 'Amal')}</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
                   {lot.specs.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="py-8 text-center text-slate-400">
-                        <p className="text-xs mb-2.5">{lang === 'RU' ? 'В этом лоте пока нет позиций' : 'Bu lota entek haryt goşulmady'}</p>
+                      <td colSpan={currentLotType === 'GOODS' ? 7 : 6} className="py-8 text-center text-slate-400">
+                        <p className="text-xs mb-2.5">
+                          {currentLotType === 'WORKS'
+                            ? (lang === 'RU' ? 'В этом лоте пока нет этапов работ' : 'Bu lota entek iş tapgyry goşulmady')
+                            : currentLotType === 'SERVICES'
+                            ? (lang === 'RU' ? 'В этом лоте пока нет позиций услуг' : 'Bu lota entek hyzmat goşulmady')
+                            : (lang === 'RU' ? 'В этом лоте пока нет позиций' : 'Bu lota entek haryt goşulmady')}
+                        </p>
                         <button
                           type="button"
                           onClick={() => handleAddSpecRow(lotIdx)}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg hover:bg-emerald-100 transition-colors shadow-xs"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg hover:bg-emerald-100 transition-colors shadow-xs cursor-pointer"
                         >
-                          <Plus size={14} /> {lang === 'RU' ? 'Добавить первую позицию' : 'Ilkinji harydy goş'}
+                          <Plus size={14} />
+                          {currentLotType === 'WORKS'
+                            ? (lang === 'RU' ? 'Добавить этап / вид работ' : 'Iş tapgyryny goş')
+                            : currentLotType === 'SERVICES'
+                            ? (lang === 'RU' ? 'Добавить позицию услуги' : 'Hyzmat goş')
+                            : (lang === 'RU' ? 'Добавить первую позицию' : 'Ilkinji harydy goş')}
                         </button>
                       </td>
                     </tr>
                   ) : lot.specs.map((item, idx) => {
-                    const isDup = isDuplicateProduct(lotIdx, idx, item.haryt);
+                    const isDup = currentLotType === 'GOODS' && isDuplicateProduct(lotIdx, idx, item.haryt);
 
                     return (
                       <tr key={item.id || idx} className={`${theme.tableRowHover} transition-colors ${isDup ? 'bg-rose-50/20' : ''}`}>
                         <td className="py-2.5 px-3 font-bold text-slate-400 text-center">{idx + 1}</td>
                         
-                        {/* Поле 1: Товар из справочника с поиском и кнопкой (+) */}
+                        {/* Поле 1: Для товаров - каталог MNN, для работ и услуг - свободный ввод наименования */}
                         <td className="py-2.5 px-3 min-w-60">
-                          <ProductSearchableSelect
-                            products={products}
-                            value={item.haryt}
-                            generalProductId={item.generalProductId}
-                            placeholder={lang === 'RU' ? 'Выберите или найдите товар...' : 'Haryt saýlaň...'}
-                            onChange={(prodName, prodId) => handleSpecChange(lotIdx, idx, 'productSelect', prodName, prodId)}
-                            onOpenCreateModal={(initialText) => handleOpenProductModal(initialText, lotIdx, idx)}
-                            isDarkMode={isDarkMode}
-                            theme={theme}
-                            lang={lang}
-                            isDuplicate={isDup}
-                          />
-                          {isDup && (
-                            <span className="block text-[10px] text-rose-500 font-semibold mt-1">
-                              ⚠️ {lang === 'RU' ? 'Этот товар уже есть в данном лоте' : 'Bu haryt eýýäm bar'}
-                            </span>
+                          {currentLotType === 'GOODS' ? (
+                            <>
+                              <ProductSearchableSelect
+                                products={products}
+                                value={item.haryt}
+                                generalProductId={item.generalProductId}
+                                placeholder={lang === 'RU' ? 'Выберите или найдите товар...' : 'Haryt saýlaň...'}
+                                onChange={(prodName, prodId) => handleSpecChange(lotIdx, idx, 'productSelect', prodName, prodId)}
+                                onOpenCreateModal={(initialText) => handleOpenProductModal(initialText, lotIdx, idx)}
+                                isDarkMode={isDarkMode}
+                                theme={theme}
+                                lang={lang}
+                                isDuplicate={isDup}
+                              />
+                              {isDup && (
+                                <span className="block text-[10px] text-rose-500 font-semibold mt-1">
+                                  ⚠️ {lang === 'RU' ? 'Этот товар уже есть в данном лоте' : 'Bu haryt eýýäm bar'}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <input
+                              type="text"
+                              required
+                              value={item.haryt}
+                              onChange={(e) => handleSpecChange(lotIdx, idx, 'haryt', e.target.value, e)}
+                              placeholder={
+                                currentLotType === 'WORKS'
+                                  ? (lang === 'RU' ? 'Напр: Демонтажные работы, монтаж системы...' : 'Işiň ady...')
+                                  : (lang === 'RU' ? 'Напр: Сервисное и техническое обслуживание...' : 'Hyzmatyň ady...')
+                              }
+                              className={`w-full px-3 py-1.5 rounded-lg text-xs font-medium border focus:outline-none focus:ring-1 focus:ring-emerald-500 ${theme.inputBg}`}
+                            />
                           )}
                         </td>
 
@@ -1514,25 +1418,27 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                           />
                         </td>
 
-                        {/* Поле 3: Производитель */}
-                        <td className="py-2.5 px-3">
-                          <CustomSelect
-                            size="sm"
-                            options={[
-                              { id: '', name: lang === 'RU' ? 'Не указан' : 'Görkezilmedik' },
-                              ...manufacturers.map(m => ({ id: m.id, name: m.name }))
-                            ]}
-                            value={item.brand || ''}
-                            onChange={(val) => handleSpecChange(lotIdx, idx, 'brand', val)}
-                            placeholder={lang === 'RU' ? 'Не указан' : 'Görkezilmedik'}
-                            searchable={manufacturers.length > 5}
-                            isDarkMode={isDarkMode}
-                            theme={theme}
-                            t={t}
-                          />
-                        </td>
+                        {/* Поле 3: Производитель (только для товаров, для работ/услуг скрыто) */}
+                        {currentLotType === 'GOODS' && (
+                          <td className="py-2.5 px-3">
+                            <CustomSelect
+                              size="sm"
+                              options={[
+                                { id: '', name: lang === 'RU' ? 'Не указан' : 'Görkezilmedik' },
+                                ...manufacturers.map(m => ({ id: m.id, name: m.name }))
+                              ]}
+                              value={item.brand || ''}
+                              onChange={(val) => handleSpecChange(lotIdx, idx, 'brand', val)}
+                              placeholder={lang === 'RU' ? 'Не указан' : 'Görkezilmedik'}
+                              searchable={manufacturers.length > 5}
+                              isDarkMode={isDarkMode}
+                              theme={theme}
+                              t={t}
+                            />
+                          </td>
+                        )}
 
-                        {/* Поле 4: Количество */}
+                        {/* Поле 4: Количество / Объем */}
                         <td className="py-2.5 px-3">
                           <input
                             type="number"
@@ -1549,7 +1455,13 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                         <td className="py-2.5 px-3">
                           <textarea
                             rows={1}
-                            placeholder={lang === 'RU' ? 'Характеристики / Описание...' : 'Mazmuny...'}
+                            placeholder={
+                              currentLotType === 'WORKS'
+                                ? (lang === 'RU' ? 'Состав работ / ТЗ...' : 'Işiň beýany...')
+                                : currentLotType === 'SERVICES'
+                                ? (lang === 'RU' ? 'Регламент обслуживания...' : 'Hyzmatyň tertibi...')
+                                : (lang === 'RU' ? 'Характеристики / Описание...' : 'Mazmuny...')
+                            }
                             value={item.desc}
                             onChange={(e) => {
                               handleSpecChange(lotIdx, idx, 'desc', e.target.value, e);
@@ -1590,7 +1502,14 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                 onClick={() => handleAddSpecRow(lotIdx)}
                 className="px-6 py-2 text-xs rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all flex items-center justify-center gap-2 shadow-xs hover:shadow-md active:scale-95 cursor-pointer"
               >
-                <Plus size={15} /> <span>{lang === 'RU' ? 'Добавить позицию в лот' : 'Lota haryt goş'}</span>
+                <Plus size={15} />
+                <span>
+                  {currentLotType === 'WORKS'
+                    ? (lang === 'RU' ? 'Добавить этап / вид работ' : 'Iş tapgyryny goş')
+                    : currentLotType === 'SERVICES'
+                    ? (lang === 'RU' ? 'Добавить позицию услуги' : 'Hyzmat goş')
+                    : (lang === 'RU' ? 'Добавить позицию в лот' : 'Lota haryt goş')}
+                </span>
               </button>
             </div>
           </div>

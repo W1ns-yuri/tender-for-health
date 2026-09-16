@@ -6,6 +6,7 @@ import { getTranslation } from '../utils/translations';
 import { useNavigate } from 'react-router-dom';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
+import CustomSelect from '../components/CustomSelect';
 
 export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
@@ -165,16 +166,21 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
             onChange={(e) => setFilterLot(e.target.value)}
             className={`px-2.5 py-1.5 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20 ${theme.inputBg}`}
           />
-          <select
+          <CustomSelect
+            role={role}
+            size="sm"
             value={filterCurrency}
-            onChange={(e) => setFilterCurrency(e.target.value)}
-            className={`px-2.5 py-1.5 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20 ${theme.inputBg}`}
-          >
-            <option value="">{t('currency', 'Walýuta')}: {lang === 'RU' ? 'Все' : 'Ählisi'}</option>
-            <option value="TMT">TMT (Манат)</option>
-            <option value="USD">USD ($ Доллар)</option>
-            <option value="EUR">EUR (€ Евро)</option>
-          </select>
+            onChange={(val) => setFilterCurrency(val)}
+            options={[
+              { id: '', name: `${t('currency', 'Walýuta')}: ${lang === 'RU' ? 'Все' : 'Ählisi'}` },
+              { id: 'TMT', name: 'TMT (Манат)' },
+              { id: 'USD', name: 'USD ($ Доллар)' },
+              { id: 'EUR', name: 'EUR (€ Евро)' }
+            ]}
+            isDarkMode={isDarkMode}
+            theme={theme}
+            t={t}
+          />
           <input
             type="text"
             placeholder={`${t('code', 'Belgisi')}: ...`}
@@ -182,17 +188,22 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
             onChange={(e) => setFilterCode(e.target.value)}
             className={`px-2.5 py-1.5 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20 ${theme.inputBg}`}
           />
-          <select
+          <CustomSelect
+            role={role}
+            size="sm"
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className={`px-2.5 py-1.5 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20 ${theme.inputBg}`}
-          >
-            <option value="">{t('status', 'Status')}: {lang === 'RU' ? 'Все' : 'Ählisi'}</option>
-            <option value="TABSARYLDY">{t('statusTabsyryldy', 'Подано')}</option>
-            <option value="YENIJI">{t('statusYeniji', 'Победитель')}</option>
-            <option value="RET_EDILDI">{t('statusRet', 'Отклонено')}</option>
-            <option value="TASLAMA">{t('statusTaslama', 'Черновик')}</option>
-          </select>
+            onChange={(val) => setFilterStatus(val)}
+            options={[
+              { id: '', name: `${t('status', 'Status')}: ${lang === 'RU' ? 'Все' : 'Ählisi'}` },
+              { id: 'TABSARYLDY', name: t('statusTabsyryldy', 'Подано') },
+              { id: 'YENIJI', name: t('statusYeniji', 'Победитель') },
+              { id: 'RET_EDILDI', name: t('statusRet', 'Отклонено') },
+              { id: 'TASLAMA', name: t('statusTaslama', 'Черновик') }
+            ]}
+            isDarkMode={isDarkMode}
+            theme={theme}
+            t={t}
+          />
           <div className="relative">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
