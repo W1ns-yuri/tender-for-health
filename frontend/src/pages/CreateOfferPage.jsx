@@ -302,7 +302,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
 
     const specsToSubmit = specsWithPrices.map(item => ({
       tenderSpecId: item.tenderSpecId,
-      name: item.isEquivalent ? (item.equivalentName?.trim() || item.requestedName) : item.requestedName,
+      name: item.isEquivalent ? (item.equivalentName?.trim() || item.requestedName) : (item.haryt?.trim() || item.requestedName),
       quantity: parseFloat(item.requestedQty) || 1, // Зафиксировано строго по заказчику!
       unitPrice: parseFloat(item.price) || 0,
       description: item.desc || null,
@@ -357,6 +357,14 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
       {/* 1. Верхняя навигация и заголовок */}
       <div className="flex items-center justify-between pb-1">
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-xl border border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
+            title={lang === 'RU' ? 'Назад' : 'Yza'}
+          >
+            <ArrowLeft size={18} />
+          </button>
           <h1 className={`text-2xl font-black tracking-tight ${theme.primaryText}`}>
             {lang === 'RU' ? 'Подача коммерческого предложения' : 'Tender teklibi tabşyrmak'}
           </h1>
@@ -408,6 +416,23 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
               <span>{lang === 'RU' ? `Оценено: ${pricedItemsCount} из ${totalActiveItemsCount} позиций` : `${pricedItemsCount} / ${totalActiveItemsCount} haryt`}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Памятка об эквивалентах и процедуре равных условий */}
+      <div className="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 text-xs text-blue-800 dark:text-blue-300 flex items-start gap-3 shadow-2xs">
+        <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 flex items-center justify-center shrink-0 mt-0.5">
+          <Info size={16} />
+        </div>
+        <div className="space-y-1">
+          <div className="font-bold text-slate-800 dark:text-slate-100 text-sm">
+            {lang === 'RU' ? 'Процедура предложения аналогов и эквивалентов' : 'Meňzeş we ekwiwalent harytlary teklip etmek tertibi'}
+          </div>
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs">
+            {lang === 'RU' 
+              ? 'Количество позиций зафиксировано в строгом соответствии с потребностью заказчика. Если вы предлагаете сертифицированный эквивалент/аналог, включите опцию «Предложить эквивалент / аналог» в строке позиции и подробно укажите торговое наименование и обоснование (МНН, характеристики, дозировка). Все заявки с эквивалентами оцениваются экспертной комиссией на общих основаниях.'
+              : 'Mukdar sargyt edijiniň talaplaryna görä bellenendir. Meňzeş haryt teklip edýän bolsaňyz, degişli belligi goýup, tehniki esaslandyrmany görkeziň.'}
+          </p>
         </div>
       </div>
 
@@ -1046,19 +1071,31 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
           )}
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
-            {/* Левая часть: сумма и статистика */}
+            {/* Левая часть: сумма, индикатор готовности и статистика */}
             <div className="flex items-center gap-5">
-              <div>
-                <span className="text-[10px] text-slate-400 uppercase font-bold block tracking-wider">
-                  {lang === 'RU' ? 'Итоговая сумма заявки' : 'Jemi teklip bahasy'}:
-                </span>
-                <span className="text-2xl font-black text-blue-600 dark:text-blue-400">
-                  {grandTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}
-                </span>
+              <div className="flex items-center gap-3">
+                <span className={`w-3 h-3 rounded-full transition-all shrink-0 ${
+                  grandTotal > 0 && pricedItemsCount > 0
+                    ? 'bg-blue-600 shadow-sm shadow-blue-500/50 ring-4 ring-blue-100 dark:ring-blue-900/40'
+                    : 'bg-amber-400 ring-4 ring-amber-100 dark:ring-amber-900/30'
+                }`} />
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block tracking-wider">
+                    {lang === 'RU' ? 'Итоговая сумма заявки' : 'Jemi teklip bahasy'}:
+                  </span>
+                  <span className="text-2xl font-black text-blue-600 dark:text-blue-400">
+                    {grandTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}
+                  </span>
+                </div>
               </div>
               <div className="hidden md:block pl-5 border-l border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500">
-                <div>{lang === 'RU' ? `Выбрано лотов: ${activeLotIds.length}` : `Lotlar: ${activeLotIds.length}`}</div>
-                <div className="text-[11px] text-slate-400">{lang === 'RU' ? `Оценено: ${pricedItemsCount} позиций` : `Bahalandyrylan: ${pricedItemsCount}`}</div>
+                <div className="font-semibold text-slate-700 dark:text-slate-300">
+                  {lang === 'RU' ? `Выбрано лотов: ${activeLotIds.length}` : `Lotlar: ${activeLotIds.length}`}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
+                  <CheckCircle2 size={12} className={pricedItemsCount > 0 ? "text-emerald-500" : "text-slate-400"} />
+                  <span>{lang === 'RU' ? `Оценено: ${pricedItemsCount} из ${totalActiveItemsCount} позиций` : `Bahalandyrylan: ${pricedItemsCount} / ${totalActiveItemsCount}`}</span>
+                </div>
               </div>
             </div>
 
