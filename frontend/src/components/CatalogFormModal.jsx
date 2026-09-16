@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
+import CustomSelect from './CustomSelect';
 
 export default function CatalogFormModal({
   isOpen,
@@ -162,17 +163,19 @@ export default function CatalogFormModal({
               </label>
               
               {field.type === 'select' ? (
-                <select
+                <CustomSelect
+                  role="ADMIN"
                   value={formData[field.name] || ''}
-                  onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                  required={field.required}
-                  className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all ${inputBg}`}
-                >
-                  <option value="">{t('select', 'Выберите...')}</option>
-                  {field.options?.map(opt => (
-                    <option key={opt.id} value={opt.id}>{opt.name}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setFormData(prev => ({ ...prev, [field.name]: val }))}
+                  options={[
+                    { id: '', name: t ? t('select', 'Выберите...') : 'Выберите...' },
+                    ...(field.options || [])
+                  ]}
+                  searchable={(field.options || []).length > 5}
+                  isDarkMode={isDarkMode}
+                  theme={theme}
+                  t={t}
+                />
               ) : field.type === 'textarea' ? (
                 <textarea
                   value={formData[field.name] || ''}

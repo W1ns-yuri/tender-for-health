@@ -870,7 +870,7 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
 
 ### 7.5 Компоненты интерфейса и дизайн-система
 
-- **CustomSelect (`src/components/CustomSelect.jsx`)**: Универсальный выпадающий список (Portal-based, не обрезается карточками и `overflow-hidden`), с поддержкой роли (`ADMIN` — изумрудные акценты, `SUPPLIER` — синие акценты), поиска, темной темы и плавной анимации. Применен во всех фильтрах и формах системы (Evaluation, MyOffers, Tenders, CreateOfferPage, Settings, SupplierProfilePage, CreateTenderPage).
+- **CustomSelect (`src/components/CustomSelect.jsx`)**: Универсальный выпадающий список (Portal-based, не обрезается карточками и `overflow-hidden`), с поддержкой роли (`ADMIN` — изумрудные акценты, `SUPPLIER` — синие акценты), поиска, темной темы и плавной анимации. Применен во всех фильтрах, формах и модальных окнах системы (Evaluation, MyOffers, Tenders, CreateOfferPage, Settings, SupplierProfilePage, CreateTenderPage, OfferModal, CatalogFormModal, AddSupplierModal, EditSupplierModal, LoginPage).
 - **Поддержка предметов закупки (Товары, Работы, Услуги)**:
   - `GOODS` (Товары): выбор из справочника МНН с поиском, производитель, Incoterms, фасовка и количество.
   - `WORKS` (Работы / Ремонт): этап/вид работ со свободным текстовым вводом, скрыт производитель, объем, состав работ, адрес объекта, график, требование строительной лицензии, валидация отсутствия пустых лотов.

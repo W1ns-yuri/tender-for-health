@@ -3,6 +3,7 @@ import { X, Check } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
 import { useAlert } from '../context/AlertContext';
+import CustomSelect from './CustomSelect';
 
 export default function EditSupplierModal({ supplier, onClose, onSuccess, lang = 'RU', isDarkMode, countries = [] }) {
   const t = (key, fallback) => getTranslation(lang, key, fallback);
@@ -155,16 +156,18 @@ export default function EditSupplierModal({ supplier, onClose, onSuccess, lang =
           
           <div>
             <label className="block font-semibold mb-1">{t('colCountry', 'Страна')}</label>
-            <select
+            <CustomSelect
+              role="ADMIN"
               value={formData.countryId}
-              onChange={(e) => setFormData({ ...formData, countryId: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
-            >
-              <option value="">{t('select', 'Выберите...')}</option>
-              {countries.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              onChange={(val) => setFormData(prev => ({ ...prev, countryId: val }))}
+              options={[
+                { id: '', name: t('select', 'Выберите...') },
+                ...countries.map(c => ({ id: c.id, name: c.name }))
+              ]}
+              searchable={countries.length > 5}
+              isDarkMode={isDarkMode}
+              t={t}
+            />
           </div>
 
           <div>

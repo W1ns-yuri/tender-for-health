@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Lock, User, LogIn, AlertCircle, Globe, Building2, Eye, EyeOff, ChevronRight, Mail, Phone, FileText } from 'lucide-react';
 import { getTranslation } from '../utils/translations';
 import API from '../services/api';
+import CustomSelect from '../components/CustomSelect';
 
 export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
   const t = (key, fallback) => getTranslation(lang, key, fallback);
@@ -455,20 +456,19 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
                       {lang === 'RU' ? 'Тип участника' : 'Gatnaşyjy görnüşi'}*
                     </label>
-                    <div className="relative flex items-center">
-                      <select
-                        value={regData.companyType}
-                        onChange={(e) => setRegData({ ...regData, companyType: e.target.value })}
-                        className="w-full pl-4 pr-10 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 appearance-none font-medium"
-                      >
-                        <option value="ENTREPRENEUR">{lang === 'RU' ? 'ИП (Hususy telekeçi)' : 'Hususy telekeçi'}</option>
-                        <option value="BUSINESS_SOCIETY">{lang === 'RU' ? 'ХО / HJ (Hojalyk jemgyýeti)' : 'Hojalyk jemgyýeti'}</option>
-                        <option value="BUSINESS_COMPANY">{lang === 'RU' ? 'ЧП / HK (Hususy kärhana)' : 'Hususy kärhana'}</option>
-                        <option value="FARMER_ASSOCIATION">{lang === 'RU' ? 'ДХ / DH (Daýhan hojalygy)' : 'Daýhan hojalygy'}</option>
-                        <option value="GOVERNMENT">{lang === 'RU' ? 'Гос. предприятие (Döwlet kärhanasy)' : 'Döwlet kärhanasy'}</option>
-                      </select>
-                      <ChevronRight size={18} className="absolute right-4 text-slate-400 rotate-90 pointer-events-none" />
-                    </div>
+                    <CustomSelect
+                      role="SUPPLIER"
+                      value={regData.companyType}
+                      onChange={(val) => setRegData(prev => ({ ...prev, companyType: val }))}
+                      options={[
+                        { id: 'ENTREPRENEUR', name: lang === 'RU' ? 'ИП (Hususy telekeçi)' : 'Hususy telekeçi' },
+                        { id: 'BUSINESS_SOCIETY', name: lang === 'RU' ? 'ХО / HJ (Hojalyk jemgyýeti)' : 'Hojalyk jemgyýeti' },
+                        { id: 'BUSINESS_COMPANY', name: lang === 'RU' ? 'ЧП / HK (Hususy kärhana)' : 'Hususy kärhana' },
+                        { id: 'FARMER_ASSOCIATION', name: lang === 'RU' ? 'ДХ / DH (Daýhan hojalygy)' : 'Daýhan hojalygy' },
+                        { id: 'GOVERNMENT', name: lang === 'RU' ? 'Гос. предприятие (Döwlet kärhanasy)' : 'Döwlet kärhanasy' }
+                      ]}
+                      size="md"
+                    />
                   </div>
 
                   <div>

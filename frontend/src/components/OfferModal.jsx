@@ -4,6 +4,7 @@ import API from '../services/api';
 import { getTranslation } from '../utils/translations';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
+import CustomSelect from './CustomSelect';
 
 export default function OfferModal({ tender, onClose, onSuccess, role, isDarkMode, lang = 'RU' }) {
   const t = (key, fallback) => getTranslation(lang, key, fallback);
@@ -118,28 +119,34 @@ export default function OfferModal({ tender, onClose, onSuccess, role, isDarkMod
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div>
               <label className={`block font-semibold mb-1 ${theme.subText}`}>{t('currency', 'Walýuta')}*</label>
-              <select
+              <CustomSelect
+                role={role}
                 value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className={`w-full p-2.5 rounded-lg focus:ring-2 focus:ring-teal-500/20 border ${theme.inputBg}`}
-              >
-                <option value="TMT">TMT</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-              </select>
+                onChange={(val) => setCurrency(val)}
+                options={[
+                  { id: 'TMT', name: 'TMT' },
+                  { id: 'USD', name: 'USD' },
+                  { id: 'EUR', name: 'EUR' }
+                ]}
+                isDarkMode={isDarkMode}
+                theme={theme}
+              />
             </div>
 
             <div>
               <label className={`block font-semibold mb-1 ${theme.subText}`}>{t('deliveryTerm', 'Eltip beriş şerti')}*</label>
-              <select
+              <CustomSelect
+                role={role}
                 value={deliveryTerm}
-                onChange={(e) => setDeliveryTerm(e.target.value)}
-                className={`w-full p-2.5 rounded-lg focus:ring-2 focus:ring-teal-500/20 border ${theme.inputBg}`}
-              >
-                <option value="CIP">CIP</option>
-                <option value="DAP">DAP</option>
-                <option value="DDP">DDP</option>
-              </select>
+                onChange={(val) => setDeliveryTerm(val)}
+                options={[
+                  { id: 'CIP', name: 'CIP' },
+                  { id: 'DAP', name: 'DAP' },
+                  { id: 'DDP', name: 'DDP' }
+                ]}
+                isDarkMode={isDarkMode}
+                theme={theme}
+              />
             </div>
 
             <div>
