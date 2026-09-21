@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, AlertTriangle, AlertOctagon, XCircle, Info, X } from 'lucide-react';
+import { getTranslation } from '../utils/translations';
 
 const AlertContext = createContext(null);
 
@@ -92,31 +93,32 @@ export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU', role 
   // Тексты по умолчанию в зависимости от языка и типа
   const getDefaultTitle = (type, mode) => {
     if (mode === 'confirm') {
-      return lang === 'RU' ? 'Подтверждение действия' : 'Hereketi tassyklaň';
+      return getTranslation(lang, 'confirmActionTitle', 'Подтверждение действия');
     }
     switch (type) {
       case 'success':
-        return lang === 'RU' ? 'Успешно' : 'Üstünlikli';
+        return getTranslation(lang, 'successTitle', 'Успешно');
       case 'error':
+        return getTranslation(lang, 'errorTitle', 'Ошибка');
       case 'danger':
-        return lang === 'RU' ? 'Внимание' : 'Üns beriň';
+        return getTranslation(lang, 'attentionTitle', 'Внимание');
       case 'warning':
-        return lang === 'RU' ? 'Предупреждение' : 'Duýduryş';
+        return getTranslation(lang, 'warningTitle', 'Предупреждение');
       default:
-        return lang === 'RU' ? 'Сообщение системы' : 'Ulgam habarnamasy';
+        return getTranslation(lang, 'systemMessageTitle', 'Сообщение системы');
     }
   };
 
   const getDefaultConfirmText = (type, mode, isDanger) => {
     if (mode === 'confirm') {
-      if (isDanger) return lang === 'RU' ? 'Да, продолжить' : 'Hawa, dowam et';
-      return lang === 'RU' ? 'Подтвердить' : 'Tassykla';
+      if (isDanger) return getTranslation(lang, 'confirmDangerBtn', 'Да, продолжить');
+      return getTranslation(lang, 'confirmBtn', 'Подтвердить');
     }
-    return lang === 'RU' ? 'Понятно' : 'Düşnükli';
+    return getTranslation(lang, 'gotItBtn', 'Понятно');
   };
 
   const getDefaultCancelText = () => {
-    return lang === 'RU' ? 'Отмена' : 'Ýatyr';
+    return getTranslation(lang, 'cancelBtn', 'Отмена');
   };
 
   const getIconInfo = (type, activeRole) => {

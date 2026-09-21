@@ -140,7 +140,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       setSupplier(prev => ({ ...prev, verificationStatus: 'VERIFIED', rejectionReason: null }));
       await showAlert({
         title: t('success', 'Успешно'),
-        message: lang === 'RU' ? 'Верификация компании успешно одобрена!' : 'Kompaniýanyň barlagy üstünlikli tassyklandy!',
+        message: t('companyVerifiedSuccess', 'Верификация компании успешно одобрена!'),
         type: 'success'
       });
       navigate('/suppliers', { state: { activeTab: 'pending' } });
@@ -165,7 +165,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       setIsRejectModalOpen(false);
       await showAlert({
         title: t('rejected', 'Отклонено'),
-        message: lang === 'RU' ? 'Заявка отклонена. Замечания переданы поставщику.' : 'Arza ret edildi.',
+        message: t('applicationRejectedSuccess', 'Заявка отклонена. Замечания переданы поставщику.'),
         type: 'info'
       });
       navigate('/suppliers', { state: { activeTab: 'pending' } });
@@ -387,7 +387,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
 
           // Загрузка статистики
           try {
-            const statsRes = await API.get(`/offers/suppliers/${currentSupplier.id}/stats`).catch(() => ({ data: { totalOffers: 0, wonOffers: 0 } }));
+            const statsRes = await API.get(`/suppliers/${currentSupplier.id}/stats`).catch(() => ({ data: { totalOffers: 0, wonOffers: 0 } }));
             setStats(statsRes.data || { totalOffers: 0, wonOffers: 0 });
           } catch (statsErr) {
             console.error('Не удалось загрузить статистику:', statsErr);
@@ -816,7 +816,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
         <button onClick={() => navigate(-1)} className="flex items-center text-slate-500 hover:text-blue-600 mb-6 transition-colors">
           <ArrowLeft size={16} className="mr-2" /> {t('back', 'Назад')}
         </button>
-        <div className="text-center py-10 text-slate-500 text-lg">{lang === 'RU' ? 'Профиль не найден' : 'Profil tapylmady'}</div>
+        <div className="text-center py-10 text-slate-500 text-lg">{t('profileNotFoundTitle', 'Профиль не найден')}</div>
       </div>
     );
   }
@@ -830,15 +830,15 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
           <div className="flex items-start space-x-3">
             <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-bold text-emerald-800">{lang === 'RU' ? 'Компания верифицирована' : 'Kompaniýa tassyklanan'}</h3>
-              <p className="text-emerald-600 text-sm mt-0.5">{lang === 'RU' ? 'Доступ к торгам открыт. Вы можете подавать заявки на тендеры.' : 'Söwdalara girmäge rugsat berildi.'}</p>
+              <h3 className="font-bold text-emerald-800">{t('companyVerifiedBadge', 'Компания верифицирована')}</h3>
+              <p className="text-emerald-600 text-sm mt-0.5">{t('biddingAccessGrantedNotice', 'Доступ к торгам открыт. Вы можете подавать заявки на тендеры.')}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={handleDismissBanner}
             className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100/80 rounded-xl transition-colors cursor-pointer shrink-0"
-            title={lang === 'RU' ? 'Закрыть уведомление' : 'Ýapmak'}
+            title={t('closeNotificationBtn', 'Закрыть уведомление')}
           >
             <X size={18} />
           </button>
@@ -865,7 +865,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   {t('rejectionReasonLabel', 'Причина отклонения')}:
                 </span>
                 <p className="text-sm font-semibold text-rose-950 dark:text-rose-100 whitespace-pre-wrap">
-                  {supplier.rejectionReason || (lang === 'RU' ? 'Причина не указана' : 'Sebäp görkezilmedi')}
+                  {supplier.rejectionReason || (t('reasonNotSpecifiedNotice', 'Причина не указана'))}
                 </p>
               </div>
 
@@ -893,8 +893,8 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
         <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-start space-x-3 mb-6">
           <Clock className="text-amber-500 shrink-0 mt-0.5" />
           <div>
-            <h3 className="font-bold text-amber-800">{lang === 'RU' ? 'Документы на проверке' : 'Resminamalar barlanýar'}</h3>
-            <p className="text-amber-600 text-sm mt-1">{lang === 'RU' ? 'Ваши документы находятся на проверке администратором. Ожидайте подтверждения.' : 'Resminamalaryňyz dolandyryjy tarapyndan barlanýar.'}</p>
+            <h3 className="font-bold text-amber-800">{t('docsUnderReviewTitle', 'Документы на проверке')}</h3>
+            <p className="text-amber-600 text-sm mt-1">{t('docsUnderReviewNotice', 'Ваши документы находятся на проверке администратором. Ожидайте подтверждения.')}</p>
           </div>
         </div>
       );
@@ -906,8 +906,8 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       <div className="bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-start space-x-3 mb-6">
         <AlertCircle className="text-blue-500 shrink-0 mt-0.5" />
         <div>
-          <h3 className="font-bold text-blue-800">{lang === 'RU' ? 'Требуется верификация профиля' : 'Tassyklamak talap edilýär'}</h3>
-          <p className="text-blue-600 text-sm mt-1">{lang === 'RU' ? 'Пожалуйста, заполните профиль и загрузите сканы документов для участия в электронных торгах.' : 'Elektron söwdalara gatnaşmak üçin profili dolduryň.'}</p>
+          <h3 className="font-bold text-blue-800">{t('profileVerificationRequiredTitle', 'Требуется верификация профиля')}</h3>
+          <p className="text-blue-600 text-sm mt-1">{t('completeProfileVerificationNotice', 'Пожалуйста, заполните профиль и загрузите сканы документов для участия в электронных торгах.')}</p>
         </div>
       </div>
     );
@@ -929,7 +929,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
           className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer mb-2"
         >
           <ArrowLeft size={16} />
-          <span>{lang === 'RU' ? 'Назад к списку поставщиков' : 'Üpjün edijileriň sanawyna gaýtmak'}</span>
+          <span>{t('backToSuppliersListBtn', 'Назад к списку поставщиков')}</span>
         </button>
       )}
 
@@ -1109,7 +1109,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                                   <p className={`text-xs ${isSelected ? 'font-bold text-blue-700' : 'font-semibold text-slate-800 group-hover:text-blue-700'}`}>
                                     {translatedLabel}
                                   </p>
-                                  {lang === 'RU' && (
+                                  {r.defaultName && r.defaultName !== r.name && (
                                     <p className="text-[11px] text-slate-400 font-normal">{r.defaultName}</p>
                                   )}
                                 </div>
@@ -1379,7 +1379,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       disabled={!isEditable}
                       value={formData.passportIssuedBy}
                       onChange={e => setFormData({ ...formData, passportIssuedBy: e.target.value })}
-                      placeholder={isEditable ? (lang === 'RU' ? 'Ашхабадским ГОВД, 15.05.2018' : 'Aşgabat ş. IIB, 15.05.2018') : ''}
+                      placeholder={isEditable ? (t('samplePassportAuthority', 'Ашхабадским ГОВД, 15.05.2018')) : ''}
                       className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
                     />
                   </div>
@@ -1447,7 +1447,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                               title={t('downloadDocTooltip', 'Скачать / открыть документ')}
                             >
                               <ExternalLink size={14} />
-                              <span className="hidden sm:inline">{lang === 'RU' ? 'Открыть' : 'Açmak'}</span>
+                              <span className="hidden sm:inline">{t('openActionBtn', 'Открыть')}</span>
                             </a>
 
                             {isEditable && (
@@ -1495,7 +1495,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                             {uploading ? t('uploadingDocs', 'Загрузка документов...') : t('addMoreDocsBtn', '+ Прикрепить дополнительный документ')}
                           </p>
                           <p className="text-[11px] text-slate-400">
-                            {lang === 'RU' ? 'PDF, JPG, PNG до 15 МБ (перетащите или нажмите)' : 'PDF, JPG, PNG 15 MB çenli'}
+                            {t('upload15MBNotice', 'PDF, JPG, PNG до 15 МБ (перетащите или нажмите)')}
                           </p>
                         </div>
                       </div>
@@ -1630,7 +1630,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                             </button>
                           ) : (
                             <div className="text-xs text-slate-400 italic px-2">
-                              {lang === 'RU' ? 'Измените поля, чтобы отправить на повторную проверку' : 'Gaýtadan barlaga ibermek üçin maglumatlary üýtgediň'}
+                              {t('editFieldsToResubmitPrompt', 'Измените поля, чтобы отправить на повторную проверку')}
                             </div>
                           )}
                         </div>
@@ -1718,7 +1718,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                             {t('verifiedDossierStatus', '🟢 Профиль поставщика верифицирован')}
                           </h4>
                           <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
-                            {lang === 'RU' ? 'Компания имеет полный доступ к участию в электронных торгах.' : 'Kompaniýanyň elektron söwdalara gatnaşmaga doly hukugy bar.'}
+                            {t('fullAuthorizationNotice', 'Компания имеет полный доступ к участию в электронных торгах.')}
                           </p>
                         </div>
                       </div>
@@ -1787,7 +1787,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       {t('adminReviewDossier', 'Анкета поставщика')}
                     </h3>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      {lang === 'RU' ? 'Проверка профиля' : 'Profili barlamak'}
+                      {t('profileVerificationHeader', 'Проверка профиля')}
                     </p>
                   </div>
                 </div>
@@ -1795,7 +1795,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                 {/* Текущий статус */}
                 <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                    {lang === 'RU' ? 'Текущий статус' : 'Häzirki statusy'}
+                    {t('currentStatusLabel', 'Текущий статус')}
                   </span>
                   <div className="flex items-center gap-2">
                     {supplier.verificationStatus === 'VERIFIED' ? (
@@ -1834,7 +1834,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
                     <span className="text-slate-400">{t('uploadedDocsCount', 'Документы')}:</span>
-                    <span className="font-bold text-blue-600">{documents.length} {lang === 'RU' ? 'прикреплено' : 'sany'}</span>
+                    <span className="font-bold text-blue-600">{documents.length} {t('attachedCountSuffix', 'прикреплено')}</span>
                   </div>
                 </div>
 
@@ -1879,7 +1879,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                         {t('profileVerified100', '🟢 Профиль активен на 100%')}
                       </p>
                       <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
-                        {lang === 'RU' ? 'Верификация подтверждена' : 'Barlag tassyklandy'}
+                        {t('verificationConfirmedStatus', 'Верификация подтверждена')}
                       </p>
                       <button
                         type="button"
@@ -1976,7 +1976,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   <div>
                     <p className="text-4xl font-black text-slate-800 dark:text-white">{stats.totalOffers}</p>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">
-                      {lang === 'RU' ? 'Всего заявок' : 'Jemi teklipler'}
+                      {t('totalProposalsCount', 'Всего заявок')}
                     </p>
                   </div>
                 </div>
@@ -1988,7 +1988,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   <div>
                     <p className="text-4xl font-black text-slate-800 dark:text-white">{stats.wonOffers}</p>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">
-                      {lang === 'RU' ? 'Побед в тендерах' : 'Ýeňilen tenderler'}
+                      {t('tenderWinsCount', 'Побед в тендерах')}
                     </p>
                   </div>
                 </div>
@@ -2081,7 +2081,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                     {t('verifiedStateBadge', 'Верифицированный участник электронных торгов')}
                   </span>
                   <p className="text-[11px] text-slate-400 mt-1 font-mono">
-                    {lang === 'RU' ? 'Дата выгрузки' : 'Döredilen senesi'}: {new Date().toLocaleDateString()}
+                    {t('exportDateLabel', 'Дата выгрузки')}: {new Date().toLocaleDateString()}
                   </p>
                 </div>
               </div>
@@ -2174,9 +2174,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
               {/* Официальный подвал с электронной подписью системы */}
               <div className="pt-5 border-t-2 border-slate-200 flex flex-col sm:flex-row items-center justify-between text-[10px] text-slate-400 gap-2">
                 <p>
-                  {lang === 'RU' 
-                    ? 'Электронная торговая площадка Министерства здравоохранения Туркменистана • Сформировано автоматически' 
-                    : 'Türkmenistanyň Saglygy goraýyş ministrliginiň elektron söwda meýdançasy • Awtomatiki döredildi'}
+                  {t('ePlatformFooterOfficial', 'Электронная торговая площадка Министерства здравоохранения Туркменистана • Сформировано автоматически')}
                 </p>
                 <p className="font-mono">ID: {supplier.id} • STŞK: {supplier.taxId}</p>
               </div>

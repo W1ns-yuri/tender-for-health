@@ -74,14 +74,14 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
       case 'ADMIN':
         return <span className="px-2.5 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 rounded-full font-bold text-xs">ADMIN</span>;
       case 'CLIENT':
-        return <span className="px-2.5 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-full font-bold text-xs">{lang === 'RU' ? 'ЗАКАЗЧИК' : 'SARGYTÇY'}</span>;
+        return <span className="px-2.5 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-full font-bold text-xs">{t('client', 'ЗАКАЗЧИК')}</span>;
       case 'PURCHASING_SPECIALIST':
-        return <span className="px-2.5 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 rounded-full font-bold text-xs">{lang === 'RU' ? 'СПЕЦИАЛИСТ' : 'HÜNÄRMEN'}</span>;
+        return <span className="px-2.5 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 rounded-full font-bold text-xs">{t('roleSpecialist', 'СПЕЦИАЛИСТ')}</span>;
       case 'COMMISSION_MEMBER':
-        return <span className="px-2.5 py-1 bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300 rounded-full font-bold text-xs">{lang === 'RU' ? 'КОМИССИЯ' : 'KOMISSIÝA'}</span>;
+        return <span className="px-2.5 py-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 rounded-full font-bold text-xs">{t('roleCommission', 'КОМИССИЯ')}</span>;
       case 'SUPPLIER':
       default:
-        return <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-full font-bold text-xs">{lang === 'RU' ? 'ПОСТАВЩИК' : 'ÜPJÜNÇI'}</span>;
+        return <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-full font-bold text-xs">{t('supplierStr', 'ПОСТАВЩИК')}</span>;
     }
   };
 
@@ -102,20 +102,20 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
   };
 
   const systemRoles = [
-    { code: 'ADMIN', name: lang === 'RU' ? 'Администратор системы' : 'Ulgam admini', desc: lang === 'RU' ? 'Полный доступ ко всем справочникам, пользователям, логам аудита и настройкам' : 'Ähli maglumatnamalara, ulanyjylara, loglara we sazlamalara doly ygtyýarlyk' },
-    { code: 'CLIENT', name: lang === 'RU' ? 'Заказчик (Минздрав / Больницы)' : 'Sargyt ediji edara', desc: lang === 'RU' ? 'Создание тендеров, утверждение условий, публикация и открытие предложений' : 'Tenderleri döretmek, şertleri tassyklamak we teklipleri açmak' },
-    { code: 'PURCHASING_SPECIALIST', name: lang === 'RU' ? 'Специалист по закупкам' : 'Satyn alyş hünärmeni', desc: lang === 'RU' ? 'Подготовка спецификаций, проверка требований и координация тендеров' : 'Spesifikasiýalary taýýarlamak we barlamak' },
-    { code: 'COMMISSION_MEMBER', name: lang === 'RU' ? 'Член тендерной комиссии' : 'Tender toparynyň agzasy', desc: lang === 'RU' ? 'Оценка коммерческих предложений, ранжирование и выбор победителя' : 'Tekliplere baha bermek we ýeňijini kesgitlemek' },
-    { code: 'SUPPLIER', name: lang === 'RU' ? 'Поставщик (Участник торгов)' : 'Üpjün ediji (Gatnaşyjy)', desc: lang === 'RU' ? 'Просмотр открытых тендеров, подача и отслеживание коммерческих предложений' : 'Tenderleri görmek, teklipleri bermek we yzarlamak' }
+    { code: 'ADMIN', name: t('systemAdminRole', 'Администратор системы'), desc: t('adminRoleDescription', 'Полный доступ ко всем справочникам, пользователям, логам аудита и настройкам') },
+    { code: 'CLIENT', name: t('customerRoleTitle', 'Заказчик (Минздрав / Больницы)'), desc: t('customerRoleDescription', 'Создание тендеров, утверждение условий, публикация и открытие предложений') },
+    { code: 'PURCHASING_SPECIALIST', name: t('procurementSpecialistTitle', 'Специалист по закупкам'), desc: t('procurementSpecialistDescription', 'Подготовка спецификаций, проверка требований и координация тендеров') },
+    { code: 'COMMISSION_MEMBER', name: t('commissionMemberTitle', 'Член тендерной комиссии'), desc: t('commissionMemberDescription', 'Оценка коммерческих предложений, ранжирование и выбор победителя') },
+    { code: 'SUPPLIER', name: t('supplierRoleTitle', 'Поставщик (Участник торгов)'), desc: t('supplierRoleDescription', 'Просмотр открытых тендеров, подача и отслеживание коммерческих предложений') }
   ];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold">{lang === 'RU' ? 'Администрирование и Аудит' : 'Administrasiýa we Loglar'}</h2>
+          <h2 className="text-xl font-bold">{t('adminAndAuditTitle', 'Администрирование и Аудит')}</h2>
           <p className={`text-xs ${theme.subText} font-medium`}>
-            {lang === 'RU' ? 'Безопасность системы, журнал действий и управление учетными записями' : 'Ulgam howpsuzlygy, amallaryň ýazgysy we ulanyjylar'}
+            {t('adminAndAuditSubtitle', 'Безопасность системы, журнал действий и управление учетными записями')}
           </p>
         </div>
         <button
@@ -124,7 +124,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
           className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-xs font-semibold transition-colors self-start sm:self-auto"
         >
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          <span>{lang === 'RU' ? 'Обновить данные' : 'Täzele'}</span>
+          <span>{t('refreshDataBtn', 'Обновить данные')}</span>
         </button>
       </div>
 
@@ -133,57 +133,57 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
         <button
           onClick={() => { setActiveTab('logs'); setSearch(''); }}
           className={`p-4 rounded-xl border text-left transition-all ${
-            activeTab === 'logs' ? 'bg-teal-50 border-teal-500 shadow-sm dark:bg-teal-950/30 dark:border-teal-600' : cardBg
+            activeTab === 'logs' ? 'bg-emerald-50 border-emerald-500 shadow-sm dark:bg-emerald-950/30 dark:border-emerald-600' : cardBg
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <ShieldAlert size={20} className={activeTab === 'logs' ? 'text-teal-600' : 'text-slate-400'} />
+            <ShieldAlert size={20} className={activeTab === 'logs' ? 'text-emerald-600' : 'text-slate-400'} />
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">{logs.length}</span>
           </div>
-          <p className="font-bold text-sm">{lang === 'RU' ? 'Журнал аудита' : 'Loglar'}</p>
-          <p className="text-[11px] text-slate-400">{lang === 'RU' ? 'Логи всех событий' : 'Ulgam wakalary'}</p>
+          <p className="font-bold text-sm">{t('catLogs', 'Журнал аудита')}</p>
+          <p className="text-[11px] text-slate-400">{t('allEventLogsTab', 'Логи всех событий')}</p>
         </button>
 
         <button
           onClick={() => { setActiveTab('users'); setSearch(''); }}
           className={`p-4 rounded-xl border text-left transition-all ${
-            activeTab === 'users' ? 'bg-teal-50 border-teal-500 shadow-sm dark:bg-teal-950/30 dark:border-teal-600' : cardBg
+            activeTab === 'users' ? 'bg-emerald-50 border-emerald-500 shadow-sm dark:bg-emerald-950/30 dark:border-emerald-600' : cardBg
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <Users size={20} className={activeTab === 'users' ? 'text-teal-600' : 'text-slate-400'} />
+            <Users size={20} className={activeTab === 'users' ? 'text-emerald-600' : 'text-slate-400'} />
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">{users.length}</span>
           </div>
-          <p className="font-bold text-sm">{lang === 'RU' ? 'Пользователи' : 'Ulanyjylar'}</p>
-          <p className="text-[11px] text-slate-400">{lang === 'RU' ? 'Учетные записи' : 'Hasaplar'}</p>
+          <p className="font-bold text-sm">{t('catUsers', 'Пользователи')}</p>
+          <p className="text-[11px] text-slate-400">{t('userAccountsTab', 'Учетные записи')}</p>
         </button>
 
         <button
           onClick={() => { setActiveTab('roles'); setSearch(''); }}
           className={`p-4 rounded-xl border text-left transition-all ${
-            activeTab === 'roles' ? 'bg-teal-50 border-teal-500 shadow-sm dark:bg-teal-950/30 dark:border-teal-600' : cardBg
+            activeTab === 'roles' ? 'bg-emerald-50 border-emerald-500 shadow-sm dark:bg-emerald-950/30 dark:border-emerald-600' : cardBg
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <Key size={20} className={activeTab === 'roles' ? 'text-teal-600' : 'text-slate-400'} />
+            <Key size={20} className={activeTab === 'roles' ? 'text-emerald-600' : 'text-slate-400'} />
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">5</span>
           </div>
-          <p className="font-bold text-sm">{lang === 'RU' ? 'Роли и права' : 'Rollar'}</p>
-          <p className="text-[11px] text-slate-400">{lang === 'RU' ? 'Модель RBAC' : 'Ygtyýarlyklar'}</p>
+          <p className="font-bold text-sm">{t('catRolesSub', 'Роли и права')}</p>
+          <p className="text-[11px] text-slate-400">{t('rbacModelTab', 'Модель RBAC')}</p>
         </button>
 
         <button
           onClick={() => { setActiveTab('backup'); setSearch(''); }}
           className={`p-4 rounded-xl border text-left transition-all ${
-            activeTab === 'backup' ? 'bg-teal-50 border-teal-500 shadow-sm dark:bg-teal-950/30 dark:border-teal-600' : cardBg
+            activeTab === 'backup' ? 'bg-emerald-50 border-emerald-500 shadow-sm dark:bg-emerald-950/30 dark:border-emerald-600' : cardBg
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <Database size={20} className={activeTab === 'backup' ? 'text-teal-600' : 'text-slate-400'} />
+            <Database size={20} className={activeTab === 'backup' ? 'text-emerald-600' : 'text-slate-400'} />
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
           </div>
           <p className="font-bold text-sm">Backup</p>
-          <p className="text-[11px] text-slate-400">{lang === 'RU' ? 'Резервные копии' : 'Ätiýaçlyk nusgalar'}</p>
+          <p className="text-[11px] text-slate-400">{t('backupsTab', 'Резервные копии')}</p>
         </button>
       </div>
 
@@ -191,10 +191,10 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
       <div className={`rounded-xl border shadow-sm overflow-hidden ${cardBg}`}>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h3 className="font-bold text-base">
-            {activeTab === 'logs' && (lang === 'RU' ? 'Журнал аудита системы (Loglar)' : 'Ulgam loglary (Audit)')}
-            {activeTab === 'users' && (lang === 'RU' ? 'Пользователи системы (Ulanyjylar)' : 'Ulgamyň ulanyjylary')}
-            {activeTab === 'roles' && (lang === 'RU' ? 'Системные роли и права доступа (RBAC)' : 'Rollar we ygtyýarlyklar')}
-            {activeTab === 'backup' && (lang === 'RU' ? 'Резервное копирование базы данных' : 'Maglumatlar binýadynyň ätiýaçlyk nusgasy')}
+            {activeTab === 'logs' && (t('auditLogSectionTitle', 'Журнал аудита системы (Loglar)'))}
+            {activeTab === 'users' && (t('systemUsersSectionTitle', 'Пользователи системы (Ulanyjylar)'))}
+            {activeTab === 'roles' && (t('rbacSectionTitle', 'Системные роли и права доступа (RBAC)'))}
+            {activeTab === 'backup' && (t('backupSectionTitle', 'Резервное копирование базы данных'))}
           </h3>
 
           {(activeTab === 'logs' || activeTab === 'users') && (
@@ -205,7 +205,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
                 placeholder={t('searchPlaceholder', 'Gözleg...')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className={`w-full pl-9 pr-3 py-1.5 rounded-lg text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/20 border ${inputBg}`}
+                className={`w-full pl-9 pr-3 py-1.5 rounded-lg text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/20 border ${inputBg}`}
               />
             </div>
           )}
@@ -237,7 +237,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
                 ) : filteredLogs.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="py-8 text-center text-slate-400">
-                      {lang === 'RU' ? 'Записи журнала аудита не найдены' : 'Log ýazgylary tapylmady'}
+                      {t('noAuditLogsFound', 'Записи журнала аудита не найдены')}
                     </td>
                   </tr>
                 ) : (
@@ -248,7 +248,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
 
                     return (
                       <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                        <td className="py-3 px-4 font-bold text-teal-600 dark:text-teal-400">{userLogin}</td>
+                        <td className="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">{userLogin}</td>
                         <td className="py-3 px-4 font-medium">{userName || '-'}</td>
                         <td className="py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">{log.eventType || 'SYSTEM'}</td>
                         <td className="py-3 px-4 text-center">{getOperationBadge(log.operationType)}</td>
@@ -258,7 +258,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
                           {log.data ? (
                             <button
                               onClick={() => setSelectedLog(log)}
-                              className="p-1 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+                              className="p-1 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                               title="Просмотр payload"
                             >
                               <Eye size={15} />
@@ -299,7 +299,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
                 ) : filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="py-8 text-center text-slate-400">
-                      {lang === 'RU' ? 'Пользователи не найдены' : 'Ulanyjylar tapylmady'}
+                      {t('noUsersFound', 'Пользователи не найдены')}
                     </td>
                   </tr>
                 ) : (
@@ -309,14 +309,14 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
 
                     return (
                       <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                        <td className="py-3.5 px-4 font-bold text-teal-600 dark:text-teal-400">{u.username}</td>
+                        <td className="py-3.5 px-4 font-bold text-emerald-600 dark:text-emerald-400">{u.username}</td>
                         <td className="py-3.5 px-4 font-semibold">{fullName || '-'}</td>
                         <td className="py-3.5 px-4 text-center">{getRoleBadge(u.roleType)}</td>
                         <td className="py-3.5 px-4 text-slate-500">{u.position || u.companies?.[0]?.name || '-'}</td>
                         <td className="py-3.5 px-4 text-center">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
                             <CheckCircle size={12} className="mr-1" />
-                            {lang === 'RU' ? 'Активен' : 'Işjeň'}
+                            {t('active', 'Активен')}
                           </span>
                         </td>
                         <td className="py-3.5 px-4 text-center text-slate-500">{dateStr}</td>
@@ -333,16 +333,14 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
         {activeTab === 'roles' && (
           <div className="p-6 space-y-4">
             <p className="text-xs text-slate-500 font-medium">
-              {lang === 'RU'
-                ? 'Ролевая модель доступа определяет права пользователей при работе с тендерами, коммерческими предложениями и оценкой:'
-                : 'Ulgamdaky rollar ulanyjylaryň tenderler we teklipler bilen işlemegine gözegçilik edýär:'}
+              {t('rbacModelIntro', 'Ролевая модель доступа определяет права пользователей при работе с тендерами, коммерческими предложениями и оценкой:')}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {systemRoles.map((r) => (
                 <div key={r.code} className={`p-4 rounded-xl border ${cardBg} space-y-2`}>
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-sm flex items-center gap-2">
-                      <ShieldCheck size={16} className="text-teal-600" />
+                      <ShieldCheck size={16} className="text-emerald-600" />
                       {r.name}
                     </h4>
                     {getRoleBadge(r.code)}
@@ -360,29 +358,27 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
             <div className="flex items-center space-x-3 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300 rounded-xl">
               <CheckCircle size={24} className="shrink-0" />
               <div>
-                <h4 className="font-bold text-sm">{lang === 'RU' ? 'База данных PostgreSQL активна и защищена' : 'Maglumatlar binýady işjeň ýagdaýda'}</h4>
+                <h4 className="font-bold text-sm">{t('databaseActiveStatus', 'База данных PostgreSQL активна и защищена')}</h4>
                 <p className="text-xs opacity-90 mt-0.5">
-                  {lang === 'RU'
-                    ? 'Автоматические снапшоты базы создаются регулярно. Журнал аудита фиксирует каждое мутирующее действие.'
-                    : 'Ulgam awtomatiki ýagdaýda ätiýaçlyk nusgalaryny döredýär.'}
+                  {t('backupSnapshotsNotice', 'Автоматические снапшоты базы создаются регулярно. Журнал аудита фиксирует каждое мутирующее действие.')}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className={`p-4 rounded-xl border ${cardBg} space-y-1`}>
-                <p className="text-xs text-slate-400 font-semibold uppercase">{lang === 'RU' ? 'Всего записей аудита' : 'Jemi loglar'}</p>
-                <p className="text-2xl font-bold text-teal-600">{logs.length}</p>
+                <p className="text-xs text-slate-400 font-semibold uppercase">{t('totalAuditLogsCount', 'Всего записей аудита')}</p>
+                <p className="text-2xl font-bold text-emerald-600">{logs.length}</p>
               </div>
               <div className={`p-4 rounded-xl border ${cardBg} space-y-1`}>
-                <p className="text-xs text-slate-400 font-semibold uppercase">{lang === 'RU' ? 'Активных учетных записей' : 'Ulanyjylar sany'}</p>
+                <p className="text-xs text-slate-400 font-semibold uppercase">{t('activeAccountsCount', 'Активных учетных записей')}</p>
                 <p className="text-2xl font-bold text-blue-600">{users.length}</p>
               </div>
               <div className={`p-4 rounded-xl border ${cardBg} space-y-1`}>
-                <p className="text-xs text-slate-400 font-semibold uppercase">{lang === 'RU' ? 'Состояние репликации' : 'Ýagdaýy'}</p>
+                <p className="text-xs text-slate-400 font-semibold uppercase">{t('replicationState', 'Состояние репликации')}</p>
                 <p className="text-base font-bold text-emerald-600 flex items-center gap-1.5 mt-1">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
-                  {lang === 'RU' ? 'Синхронизировано' : 'Ylalaşykly'}
+                  {t('synchronizedStatus', 'Синхронизировано')}
                 </p>
               </div>
             </div>
@@ -396,14 +392,14 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
           <div className={`w-full max-w-lg rounded-2xl shadow-2xl border ${cardBg} p-6 space-y-4 animate-in zoom-in-95`}>
             <div className="flex items-center justify-between border-b pb-3 border-slate-100 dark:border-slate-800">
               <h3 className="font-bold text-base flex items-center gap-2">
-                <FileText size={18} className="text-teal-600" />
-                {lang === 'RU' ? 'Детали события аудита' : 'Waka maglumaty'}
+                <FileText size={18} className="text-emerald-600" />
+                {t('auditEventDetailsTitle', 'Детали события аудита')}
               </h3>
               <button onClick={() => setSelectedLog(null)} className="text-slate-400 hover:text-slate-600">✕</button>
             </div>
             <div className="space-y-3 text-xs">
               <div>
-                <p className="text-slate-400 font-semibold">{lang === 'RU' ? 'Событие' : 'Waka'}</p>
+                <p className="text-slate-400 font-semibold">{t('eventLabel', 'Событие')}</p>
                 <p className="font-bold text-sm">{selectedLog.eventType} ({selectedLog.operationType})</p>
               </div>
               <div>

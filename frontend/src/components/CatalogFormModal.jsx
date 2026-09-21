@@ -143,7 +143,7 @@ export default function CatalogFormModal({
         
         {/* Header */}
         <div className="flex items-center justify-between p-4 md:p-6 border-b border-slate-100/10">
-          <h2 className={`text-xl font-bold ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+          <h2 className={`text-xl font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
             {editingItem ? config.editTitle : config.title}
           </h2>
           <button 
@@ -182,7 +182,7 @@ export default function CatalogFormModal({
                   onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
                   required={field.required}
                   rows={3}
-                  className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all ${inputBg}`}
+                  className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all ${inputBg}`}
                 />
               ) : (
                 <input
@@ -190,7 +190,7 @@ export default function CatalogFormModal({
                   value={formData[field.name] || ''}
                   onChange={(e) => setFormData({ ...formData, [field.name]: field.type === 'number' ? Number(e.target.value) : e.target.value })}
                   required={field.required}
-                  className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all ${inputBg}`}
+                  className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all ${inputBg}`}
                 />
               )}
             </div>

@@ -50,6 +50,16 @@ const createTender = async (req, res) => {
             return res.status(401).json({ error: 'Пользователь не авторизован' });
         }
 
+        // Проверка корректности дедлайна и даты объявления в соответствии с регламентом закупок
+        if (!deadline || isNaN(new Date(deadline).getTime())) {
+            return res.status(400).json({ error: 'Пожалуйста, укажите корректный крайний срок подачи заявок (дедлайн)' });
+        }
+        const deadlineDate = new Date(deadline);
+        const announcementDate = req.body.announcementDate ? new Date(req.body.announcementDate) : new Date();
+        if (deadlineDate <= announcementDate) {
+            return res.status(400).json({ error: 'Крайний срок подачи заявок (дедлайн) должен быть позже даты объявления тендера' });
+        }
+
         const tender = await prisma.$transaction(async (tx) => {
             // 1. Проверяем уникальность номера тендера
             const finalTenderNumber = (tenderNumber && tenderNumber.trim() !== '')
@@ -74,8 +84,8 @@ const createTender = async (req, res) => {
                     type: req.body.type || 'YERLI',
                     visibility: req.body.visibility || 'ACYK',
                     status: status || 'ACYK',
-                    announcementDate: req.body.announcementDate ? new Date(req.body.announcementDate) : new Date(),
-                    deadline: new Date(deadline),
+                    announcementDate: announcementDate,
+                    deadline: deadlineDate,
                     categoryId: (categoryId && categoryId !== '') ? categoryId : null,
                     clientId: (clientId && clientId !== '') ? clientId : null,
                     procurementType: req.body.procurementType || 'GOODS',
@@ -242,15 +252,52 @@ const getTenders = async (req, res) => {
 const getTenderById = async (req, res) => {
     try {
         const { id } = req.params;
+        const tenderBase = await prisma.tender.findUnique({
+            where: { id },
+            select: { status: true }
+        });
 
-        const includeOffers = req.user && req.user.roleType !== 'ADMIN'
-            ? {
-                where: { supplier: { userId: req.user.id } },
-                include: { supplier: true, specs: true, exchangeRates: { include: { currency: true } } }
+        if (!tenderBase) {
+            return res.status(404).json({ error: 'Тендер не найден' });
+        }
+
+        // Защита коммерческой тайны и процедура "запечатанных конвертов":
+        // 1. Если тендер открыт (ACYK) или в черновике (TASLAMA):
+        //    - Поставщик видит ТОЛЬКО свою собственную поданную заявку.
+        //    - Администратор видит только обезличенные метаданные (без коммерческих цен/спецификаций),
+        //      так как вскрытие предложений до дедлайна запрещено регламентом закупок.
+        // 2. Если тендер на рассмотрении (BAHALANDYRYLDY):
+        //    - Администратор и комиссия видят все вскрытые заявки с позициями.
+        //    - Поставщик видит только свою заявку.
+        // 3. Если победитель объявлен (YENIJI_YGLAN_EDILDI):
+        //    - Заявки и победители открыты для прозрачности результатов.
+        let includeOffers = false;
+        const isSealedState = tenderBase.status === 'ACYK' || tenderBase.status === 'TASLAMA';
+
+        if (req.user) {
+            if (req.user.roleType === 'ADMIN') {
+                if (isSealedState) {
+                    includeOffers = {
+                        select: { id: true, bidderCode: true, createdAt: true, status: true, version: true }
+                    };
+                } else {
+                    includeOffers = {
+                        include: { supplier: true, specs: true, exchangeRates: { include: { currency: true } } }
+                    };
+                }
+            } else {
+                if (tenderBase.status === 'YENIJI_YGLAN_EDILDI') {
+                    includeOffers = {
+                        include: { supplier: true, specs: true, exchangeRates: { include: { currency: true } } }
+                    };
+                } else {
+                    includeOffers = {
+                        where: { supplier: { userId: req.user.id } },
+                        include: { supplier: true, specs: true, exchangeRates: { include: { currency: true } } }
+                    };
+                }
             }
-            : {
-                include: { supplier: true, specs: true, exchangeRates: { include: { currency: true } } }
-            };
+        }
 
         const tender = await prisma.tender.findUnique({
             where: { id },
@@ -299,7 +346,8 @@ const deleteTender = async (req, res) => {
         });
         res.json({ message: 'Тендер успешно удален' });
     } catch (error) {
-        console.error(error); res.status(500).json({});
+        console.error('Delete tender error:', error);
+        res.status(500).json({ error: 'Ошибка при удалении тендера', details: error.message });
     }
 };
 

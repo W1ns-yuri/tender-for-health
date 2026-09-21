@@ -111,7 +111,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
             <span className={`ml-3 ${theme.subText}`}>{t('status', 'Status')}:</span> {getStatusBadge(data?.status, lang, isDarkMode)}
             <span className={`ml-3 ${theme.subText}`}>{t('visibility', 'Açyklygy')}:</span>
             <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
-              {data?.visibility === 'YAPYK' ? (lang === 'RU' ? 'Закрытый' : 'Ýapyk') : (lang === 'RU' ? 'Открытый' : 'Açyk')}
+              {data?.visibility === 'YAPYK' ? (t('visibilityPrivate', 'Закрытый')) : (t('openVisibility', 'Открытый'))}
             </span>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
           </div>
           <div className="flex items-center space-x-1.5">
             <LayoutGrid size={16} className="opacity-75" />
-            <span>{lang === 'RU' ? 'Категория' : 'Kategoriýa'}: <strong className={isDarkMode ? 'text-slate-200' : 'text-slate-700 font-medium'}>{getCategoryName(data)}</strong></span>
+            <span>{t('category', 'Категория')}: <strong className={isDarkMode ? 'text-slate-200' : 'text-slate-700 font-medium'}>{getCategoryName(data)}</strong></span>
           </div>
         </div>
 
@@ -149,7 +149,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
       <div className="space-y-6">
         {(!data?.lots || data.lots.length === 0) && (!data?.specs || data.specs.length === 0) ? (
           <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg} p-6 text-center text-slate-400`}>
-            {lang === 'RU' ? 'Нет лотов и спецификаций' : 'Lot we haryt ýok'}
+            {t('noLotsOrSpecs', 'Нет лотов и спецификаций')}
           </div>
         ) : data?.lots && data.lots.length > 0 ? (
           data.lots.map((lot, lotIdx) => {
@@ -172,7 +172,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
                 <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-white'}`}>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-base">{lang === 'RU' ? 'Лот' : 'Lot'} #{lotIdx + 1}: {lot.name}</h3>
+                      <h3 className="font-bold text-base">{t('lotUpperLabel', 'Лот')} #{lotIdx + 1}: {lot.name}</h3>
                       <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
                         isWorks 
                           ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' 
@@ -180,22 +180,22 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
                           ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
                           : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
                       }`}>
-                        {isWorks ? (lang === 'RU' ? 'Работы' : 'Işler') : isServices ? (lang === 'RU' ? 'Услуги' : 'Hyzmatlar') : (lang === 'RU' ? 'Товары' : 'Harytlar')}
+                        {isWorks ? (t('worksType', 'Работы')) : isServices ? (t('servicesType', 'Услуги')) : (t('catProducts', 'Товары'))}
                       </span>
                     </div>
                     {isGoods && lot.deliveryTerm && (
-                      <p className="text-xs text-slate-500 mt-1">{lang === 'RU' ? 'Условие поставки' : 'Eltip beriş şerti'}: {lot.deliveryTerm.shortName}</p>
+                      <p className="text-xs text-slate-500 mt-1">{t('deliveryTerm', 'Условие поставки')}: {lot.deliveryTerm.shortName}</p>
                     )}
                     {isWorks && (
                       <div className="text-xs text-slate-500 mt-1 flex flex-wrap gap-x-4 gap-y-1">
-                        {lot.workAddress && <span>📍 {lang === 'RU' ? 'Объект' : 'Ýeri'}: {lot.workAddress}</span>}
-                        {lot.workPeriod && <span>⏱️ {lang === 'RU' ? 'Срок' : 'Möhleti'}: {lot.workPeriod}</span>}
-                        {lot.licenseRequired && <span className="text-amber-600 font-semibold">📜 {lang === 'RU' ? 'Требуется лицензия' : 'Ygtyýarnama talap edilýär'}</span>}
+                        {lot.workAddress && <span>📍 {t('siteLabel', 'Объект')}: {lot.workAddress}</span>}
+                        {lot.workPeriod && <span>⏱️ {t('termLabel', 'Срок')}: {lot.workPeriod}</span>}
+                        {lot.licenseRequired && <span className="text-amber-600 font-semibold">📜 {t('licenseRequired', 'Требуется лицензия')}</span>}
                       </div>
                     )}
                     {isServices && (
                       <div className="text-xs text-slate-500 mt-1 flex flex-wrap gap-x-4 gap-y-1">
-                        {lot.serviceFormat && <span>🏢 {lang === 'RU' ? 'Формат' : 'Görnüşi'}: {lot.serviceFormat}</span>}
+                        {lot.serviceFormat && <span>🏢 {t('fileType', 'Формат')}: {lot.serviceFormat}</span>}
                         {lot.slaPeriod && <span>⏱️ SLA: {lot.slaPeriod}</span>}
                       </div>
                     )}
@@ -204,7 +204,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
                     <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-800">
                       <Trophy size={16} className="text-emerald-500" />
                       <div>
-                        <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">{lang === 'RU' ? 'Победитель' : 'Ýeňiji'}</div>
+                        <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">{t('winnerBadge', 'Победитель')}</div>
                         <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{winningOffer.supplier?.name}</div>
                       </div>
                     </div>
@@ -218,21 +218,21 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
                         <th className="py-3 px-4 w-16 text-center">H/K</th>
                         <th className="py-3 px-4 text-center min-w-48">
                           {isWorks 
-                            ? (lang === 'RU' ? 'Этап / вид работ' : 'Işiň tapgyry / görnüşi') 
+                            ? (t('workStages', 'Этап / вид работ')) 
                             : isServices 
-                            ? (lang === 'RU' ? 'Наименование услуги' : 'Hyzmatyň ady') 
-                            : (lang === 'RU' ? 'Товар' : 'Haryt')}
+                            ? (t('serviceName', 'Наименование услуги')) 
+                            : (t('product', 'Товар'))}
                         </th>
                         <th className="py-3 px-4 text-center w-28">{t('unit', 'Ölçeg birligi')}</th>
                         {isGoods && <th className="py-3 px-4 text-center w-36">{t('manufacturer', 'Öndüriji')}</th>}
                         <th className="py-3 px-4 text-center w-28">
-                          {isServices ? (lang === 'RU' ? 'Объем / Период' : 'Möçberi / Möhleti') : t('quantity', 'Mukdar')}
+                          {isServices ? (t('volumePeriod', 'Объем / Период')) : t('quantity', 'Mukdar')}
                         </th>
                         <th className="py-3 px-4 text-center">
                           {isWorks 
-                            ? (lang === 'RU' ? 'Состав и спецификация работ' : 'Işiň düzümi we häsiýetnamasy') 
+                            ? (t('scopeOfWork', 'Состав и спецификация работ')) 
                             : isServices 
-                            ? (lang === 'RU' ? 'Регламент и описание услуги' : 'Hyzmatyň tertibi') 
+                            ? (t('serviceRegulations', 'Регламент и описание услуги')) 
                             : t('description', 'Mazmuny')}
                         </th>
                       </tr>
@@ -242,10 +242,10 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
                         <tr>
                           <td colSpan={isGoods ? 6 : 5} className="py-6 text-center text-slate-400">
                             {isWorks 
-                              ? (lang === 'RU' ? 'В этом лоте нет этапов работ' : 'Bu lotda iş tapgyry ýok') 
+                              ? (t('noWorkStagesInLot', 'В этом лоте нет этапов работ')) 
                               : isServices 
-                              ? (lang === 'RU' ? 'В этом лоте нет позиций услуг' : 'Bu lotda hyzmat ýok') 
-                              : (lang === 'RU' ? 'В этом лоте нет товаров' : 'Bu lotda haryt ýok')}
+                              ? (t('noServicesInLot', 'В этом лоте нет позиций услуг')) 
+                              : (t('noGoodsInLot', 'В этом лоте нет товаров'))}
                           </td>
                         </tr>
                       ) : lot.specs.map((spec, idx) => (
@@ -269,19 +269,19 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
         ) : (
           <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
             <div className={`p-4 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-              <h3 className="font-bold text-base">{lang === 'RU' ? 'Товары/Спецификация' : 'Tender spesifikasiýasy'}</h3>
+              <h3 className="font-bold text-base">{t('tenderSpecs', 'Товары/Спецификация')}</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className={theme.tableHeaderBg}>
                     <th className="py-3 px-4 w-16 text-center">H/K</th>
-                    <th className="py-3 px-4 text-center w-48">{lang === 'RU' ? 'Товар' : 'Haryt'}</th>
+                    <th className="py-3 px-4 text-center w-48">{t('product', 'Товар')}</th>
                     <th className="py-3 px-4 text-center w-28">{t('unit', 'Ölçeg birligi')}</th>
                     <th className="py-3 px-4 text-center w-36">{t('manufacturer', 'Öndüriji')}</th>
                     <th className="py-3 px-4 text-center w-24">{t('quantity', 'Mukdar')}</th>
                     <th className="py-3 px-4 text-center">{t('description', 'Mazmuny')}</th>
-                    {data?.status === 'YENIJI_YGLAN_EDILDI' && <th className="py-3 px-4 text-center w-36">{lang === 'RU' ? 'Победитель' : 'Ýeňiji'}</th>}
+                    {data?.status === 'YENIJI_YGLAN_EDILDI' && <th className="py-3 px-4 text-center w-36">{t('winnerBadge', 'Победитель')}</th>}
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -330,7 +330,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
       {/* 4. Таблица документов */}
       <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
         <div className={`p-4 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-          <h3 className="font-bold text-base">{lang === 'RU' ? 'Документы' : 'Resminamalar'}</h3>
+          <h3 className="font-bold text-base">{t('documents', 'Документы')}</h3>
         </div>
 
         <div className="overflow-x-auto">
@@ -342,7 +342,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
                 <th className="py-3 px-4 text-center">{t('description', 'Mazmuny')}</th>
                 <th className="py-3 px-4 text-center w-24">{t('type', 'Görnüşi')}</th>
                 <th className="py-3 px-4 text-center w-24">{t('size', 'Ölçegi')}</th>
-                <th className="py-3 px-4 text-center w-32">{lang === 'RU' ? 'Дата' : 'Ýüklenen senesi'}</th>
+                <th className="py-3 px-4 text-center w-32">{t('uploadDate', 'Дата')}</th>
                 <th className="py-3 px-4 text-center w-16">{t('action', 'Amal')}</th>
               </tr>
             </thead>
@@ -350,7 +350,7 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
               {docsList.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="py-6 text-center text-slate-400">
-                    {lang === 'RU' ? 'Документы отсутствуют' : 'Resminama ýok'}
+                    {t('noDocumentsAttached', 'Документы отсутствуют')}
                   </td>
                 </tr>
               ) : docsList.map((doc, idx) => (

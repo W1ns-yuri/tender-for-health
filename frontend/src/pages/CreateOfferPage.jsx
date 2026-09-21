@@ -48,7 +48,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
 
   // Поля коммерческого предложения
   const [currency, setCurrency] = useState('');
-  const [paymentTerms, setPaymentTerms] = useState(lang === 'RU' ? '100% оплата' : '100% töleg');
+  const [paymentTerms, setPaymentTerms] = useState(t('payment100Percent', '100% оплата'));
   const [comment, setComment] = useState('');
 
   // Выбранные лоты и условия поставки по каждому лоту
@@ -130,7 +130,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
     })
       .catch(e => {
         console.error(e);
-        setErrorMsg(lang === 'RU' ? 'Ошибка загрузки данных тендера' : 'Tender maglumatlary ýüklenmedi');
+        setErrorMsg(t('tenderLoadError', 'Ошибка загрузки данных тендера'));
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -146,15 +146,11 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
     for (const file of filesToUpload) {
       const ext = file.name.split('.').pop()?.toLowerCase();
       if (!ALLOWED_EXTS.includes(ext)) {
-        setFileUploadError(lang === 'RU' 
-          ? `Файл "${file.name}" имеет недопустимый формат. Разрешены: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG.`
-          : `"${file.name}" faýlyň formaty rugsat berilmeýär.`);
+        setFileUploadError(t('fileInvalidFormatError', `Файл "${file.name}" имеет недопустимый формат. Разрешены: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG.`, { fileName: file.name }));
         continue;
       }
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        setFileUploadError(lang === 'RU'
-          ? `Файл "${file.name}" превышает допустимый размер ${MAX_FILE_SIZE_MB} МБ.`
-          : `"${file.name}" faýlyň göwrümi ${MAX_FILE_SIZE_MB} MB-dan uly.`);
+        setFileUploadError(t('fileExceedsSizeError', `Файл "${file.name}" превышает допустимый размер ${MAX_FILE_SIZE_MB} МБ.`, { fileName: file.name, maxMb: MAX_FILE_SIZE_MB }));
         continue;
       }
 
@@ -172,7 +168,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
         setUploadedFiles(prev => [...prev, docData]);
       } catch (err) {
         console.error('File upload error', err);
-        setFileUploadError(lang === 'RU' ? `Ошибка загрузки "${file.name}"` : `Faýl ýüklemekde ýalňyşlyk`);
+        setFileUploadError(t('fileUploadErrorWithName', 'Ошибка загрузки "${file.name}"'));
       }
     }
   };
@@ -265,12 +261,22 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
     if (e) e.preventDefault();
     setErrorMsg('');
 
+    // 0. Проверка статуса тендера и крайнего срока
+    if (tender?.status !== 'ACYK') {
+      setErrorMsg(t('tenderClosedForOffersError', 'Тендер закрыт или не принимает коммерческие предложения.'));
+      scrollToError();
+      return;
+    }
+
+    if (tender?.deadline && new Date() > new Date(tender.deadline)) {
+      setErrorMsg(t('tenderDeadlinePassedError', 'Срок подачи заявок по данному тендеру истек (дедлайн прошел)!'));
+      scrollToError();
+      return;
+    }
+
     // 1. Проверка выбора хотя бы одного лота
     if (activeLotIds.length === 0) {
-      setErrorMsg(lang === 'RU' 
-        ? 'Пожалуйста, выберите хотя бы один лот для участия в тендере' 
-        : 'Gatnaşmak üçin iň bolmanda bir lot saýlaň'
-      );
+      setErrorMsg(t('selectAtLeastOneLotError', 'Пожалуйста, выберите хотя бы один лот для участия в тендере'));
       scrollToError();
       return;
     }
@@ -278,10 +284,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
     // 2. Строгая проверка на непустое предложение (хотя бы один товар с ценой > 0)
     const specsWithPrices = allActiveItems.filter(item => parseFloat(item.price) > 0);
     if (specsWithPrices.length === 0) {
-      setErrorMsg(lang === 'RU' 
-        ? 'Вы не указали цену ни для одного товара! Введите цены в поле "Цена за ед." для отправки предложения.' 
-        : 'Harytlaryň bahasyny giriziň! Teklip bahasy 0 bolup bilmeýär.'
-      );
+      setErrorMsg(t('noPricesSpecifiedError', 'Вы не указали цену ни для одного товара! Введите цены в поле "Цена за ед." для отправки предложения.'));
       scrollToError();
       return;
     }
@@ -290,13 +293,11 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
     const unpricedItems = allActiveItems.filter(item => !item.price || parseFloat(item.price) <= 0);
     if (unpricedItems.length > 0) {
       const confirmSend = await showConfirm({
-        title: lang === 'RU' ? 'Неоцененные позиции' : 'Bahasysyz harytlar',
-        message: lang === 'RU'
-          ? `Внимание: для ${unpricedItems.length} поз. не указана цена. Вы хотите отправить предложение только по ${specsWithPrices.length} оцененным позициям?`
-          : `Üns beriň: ${unpricedItems.length} haryt üçin baha girizilmedi. Diňe baha berlen harytlary ibermek isleýärsiňizmi?`,
+        title: t('unpricedItemsTitle', 'Неоцененные позиции'),
+        message: t('unpricedItemsConfirmPrompt', `Внимание: для ${unpricedItems.length} поз. не указана цена. Вы хотите отправить предложение только по ${specsWithPrices.length} оцененным позициям?`, { unpricedCount: unpricedItems.length, pricedCount: specsWithPrices.length }),
         type: 'warning',
-        confirmText: lang === 'RU' ? 'Отправить' : 'Ugrat',
-        cancelText: lang === 'RU' ? 'Отмена' : 'Ýatyr'
+        confirmText: t('submitBtn', 'Отправить'),
+        cancelText: t('cancelEditBtn', 'Отмена')
       });
       if (!confirmSend) return;
     }
@@ -321,15 +322,15 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
         tenderId: id,
         deliveryTermId: primaryDeliveryTermId,
         baseCurrencyId: currency || null,
-        paymentTerms: paymentTerms.trim() || (lang === 'RU' ? '100% оплата' : '100% töleg'),
+        paymentTerms: paymentTerms.trim() || (t('payment100Percent', '100% оплата')),
         comment,
         attachedDocumentIds: uploadedFiles.map(f => f.id).filter(Boolean),
         specs: specsToSubmit
       });
 
       await showAlert({
-        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
-        message: lang === 'RU' ? 'Коммерческое предложение успешно отправлено!' : 'Teklip üstünlikli iberildi!',
+        title: t('successTitle', 'Успешно'),
+        message: t('successOffer', 'Коммерческое предложение успешно отправлено!'),
         type: 'success'
       });
       navigate('/offers');
@@ -359,7 +360,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
       <div className="flex items-center justify-between pb-1">
         <div className="flex items-center gap-3">
           <h1 className={`text-2xl font-black tracking-tight ${theme.primaryText}`}>
-            {lang === 'RU' ? 'Подача коммерческого предложения' : 'Tender teklibi tabşyrmak'}
+            {t('offerDetailsTitle', 'Подача коммерческого предложения')}
           </h1>
           <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-mono">
             {tender?.tenderNumber}
@@ -379,19 +380,19 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-slate-500 font-medium pt-1">
               {tender?.client?.name && (
                 <span>
-                  <span className="text-slate-400">{lang === 'RU' ? 'Заказчик:' : 'Sargyt ediji:'}</span>{' '}
+                  <span className="text-slate-400">{t('clientWithColon', 'Заказчик:')}</span>{' '}
                   <strong className="text-slate-700 dark:text-slate-200 font-semibold">{tender.client.name}</strong>
                 </span>
               )}
               {tender?.deadline && (
                 <span>
-                  <span className="text-slate-400">{lang === 'RU' ? 'Срок подачи до:' : 'Soňky möhleti:'}</span>{' '}
+                  <span className="text-slate-400">{t('deadlineUntilLabel', 'Срок подачи до:')}</span>{' '}
                   <strong className="text-slate-700 dark:text-slate-200 font-semibold">{new Date(tender.deadline).toLocaleDateString('ru-RU')}</strong>
                 </span>
               )}
               <span>
-                <span className="text-slate-400">{lang === 'RU' ? 'Статус:' : 'Status:'}</span>{' '}
-                <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">{lang === 'RU' ? 'Прием заявок открыт' : 'Açyk'}</strong>
+                <span className="text-slate-400">{t('statusWithColon', 'Статус:')}</span>{' '}
+                <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">{t('visibilityPublic', 'Прием заявок открыт')}</strong>
               </span>
             </div>
           </div>
@@ -399,14 +400,14 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
           {/* Виджет итоговой суммы предложения (компактный, расширяется по контенту) */}
           <div className="shrink-0 px-5 py-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 text-right shadow-xs">
             <span className="text-[11px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider block">
-              {lang === 'RU' ? 'Итоговая стоимость заявки' : 'Jemi teklip bahasy'}
+              {t('totalOfferCost', 'Итоговая стоимость заявки')}
             </span>
             <div className="text-xl font-black text-blue-600 dark:text-blue-400 my-0.5 whitespace-nowrap">
               {grandTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}
             </div>
             <div className="text-[11px] text-slate-500 font-medium flex items-center justify-end gap-1.5 whitespace-nowrap">
               <CheckCircle2 size={13} className={pricedItemsCount > 0 ? "text-emerald-600" : "text-slate-400"} />
-              <span>{lang === 'RU' ? `Оценено: ${pricedItemsCount} из ${totalActiveItemsCount} позиций` : `${pricedItemsCount} / ${totalActiveItemsCount} haryt`}</span>
+              <span>{t('pricedItemsProgress', 'Оценено: ${pricedItemsCount} из ${totalActiveItemsCount} позиций')}</span>
             </div>
           </div>
         </div>
@@ -419,12 +420,10 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
         </div>
         <div className="space-y-1">
           <div className="font-bold text-slate-800 dark:text-slate-100 text-sm">
-            {lang === 'RU' ? 'Процедура предложения аналогов и эквивалентов' : 'Meňzeş we ekwiwalent harytlary teklip etmek tertibi'}
+            {t('analogsProcedureNotice', 'Процедура предложения аналогов и эквивалентов')}
           </div>
           <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs">
-            {lang === 'RU' 
-              ? 'Количество позиций зафиксировано в строгом соответствии с потребностью заказчика. Если вы предлагаете сертифицированный эквивалент/аналог, включите опцию «Предложить эквивалент / аналог» в строке позиции и подробно укажите торговое наименование и обоснование (МНН, характеристики, дозировка). Все заявки с эквивалентами оцениваются экспертной комиссией на общих основаниях.'
-              : 'Mukdar sargyt edijiniň talaplaryna görä bellenendir. Meňzeş haryt teklip edýän bolsaňyz, degişli belligi goýup, tehniki esaslandyrmany görkeziň.'}
+            {t('analogsGuidelinesText', 'Количество позиций зафиксировано в строгом соответствии с потребностью заказчика. Если вы предлагаете сертифицированный эквивалент/аналог, включите опцию «Предложить эквивалент / аналог» в строке позиции и подробно укажите торговое наименование и обоснование (МНН, характеристики, дозировка). Все заявки с эквивалентами оцениваются экспертной комиссией на общих основаниях.')}
           </p>
         </div>
       </div>
@@ -433,7 +432,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
       <div className={`p-6 rounded-2xl border shadow-xs space-y-4 ${theme.cardBg}`}>
         <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
           <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
-            {lang === 'RU' ? 'Основные параметры вашего предложения' : 'Teklibiň esasy şertleri'}
+            {t('offerMainParamsTitle', 'Основные параметры вашего предложения')}
           </h3>
         </div>
 
@@ -452,13 +451,13 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
               t={t}
             />
             <span className="text-[10px] text-slate-400 mt-1 block">
-              {lang === 'RU' ? 'Цены по всем лотам будут рассчитаны в этой валюте' : 'Bahalar şu walýutada hasaplanar'}
+              {t('currencyNotice', 'Цены по всем лотам будут рассчитаны в этой валюте')}
             </span>
           </div>
 
           <div>
             <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
-              {lang === 'RU' ? 'Условия оплаты' : 'Töleg şertleri'}
+              {t('paymentTerms', 'Условия оплаты')}
             </label>
             <input
               type="text"
@@ -470,7 +469,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
 
           <div>
             <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
-              {lang === 'RU' ? 'Срок действия предложения / Примечание' : 'Bellikler'}
+              {t('offerValidityNotes', 'Срок действия предложения / Примечание')}
             </label>
             <input
               type="text"
@@ -486,7 +485,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
-            {lang === 'RU' ? 'Цены и спецификации по лотам' : 'Lotlar we bahalar'}
+            {t('lotsPricesSpecsTitle', 'Цены и спецификации по лотам')}
           </h3>
         </div>
 
@@ -518,27 +517,27 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                       className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0"
                     />
                     <label htmlFor={`lot-toggle-${lot.id}`} className="font-extrabold text-base cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-2">
-                      <span>{lang === 'RU' ? 'Лот' : 'Lot'} #{lotIdx + 1}: {lot.name}</span>
-                      {!isSelected && <span className="text-xs font-normal text-slate-400">({lang === 'RU' ? 'отключен' : 'öçürilen'})</span>}
+                      <span>{t('lotUpperLabel', 'Лот')} #{lotIdx + 1}: {lot.name}</span>
+                      {!isSelected && <span className="text-xs font-normal text-slate-400">({t('disabledBadge', 'отключен')})</span>}
                     </label>
 
                     {/* Бейдж типа предмета лота */}
                     {lotType === 'GOODS' && (
                       <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1 border border-emerald-200 dark:border-emerald-800/60">
                         <Package size={12} />
-                        <span>{lang === 'RU' ? 'Товары' : 'Harytlar'}</span>
+                        <span>{t('catProducts', 'Товары')}</span>
                       </span>
                     )}
                     {lotType === 'WORKS' && (
                       <span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-bold text-[11px] flex items-center gap-1 border border-amber-200 dark:border-amber-800/60">
                         <Wrench size={12} />
-                        <span>{lang === 'RU' ? 'Работы' : 'Işler'}</span>
+                        <span>{t('worksType', 'Работы')}</span>
                       </span>
                     )}
                     {lotType === 'SERVICES' && (
                       <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold text-[11px] flex items-center gap-1 border border-blue-200 dark:border-blue-800/60">
                         <Settings2 size={12} />
-                        <span>{lang === 'RU' ? 'Услуги' : 'Hyzmatlar'}</span>
+                        <span>{t('servicesType', 'Услуги')}</span>
                       </span>
                     )}
                   </div>
@@ -550,7 +549,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                       {lotType === 'GOODS' && (
                         <div className="flex flex-wrap items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 shadow-xs text-xs">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-slate-500 dark:text-slate-400 font-medium">{lang === 'RU' ? 'Условие заказчика:' : 'Sargyt şerti:'}</span>
+                            <span className="text-slate-500 dark:text-slate-400 font-medium">{t('customerConditionLabel', 'Условие заказчика:')}</span>
                             <strong className="px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-extrabold border border-blue-200 dark:border-blue-800">
                               {customerDeliveryTerm}
                             </strong>
@@ -559,7 +558,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                           <span className="text-slate-300 dark:text-slate-600 font-bold">➔</span>
 
                           <div className="flex items-center gap-1.5 min-w-44">
-                            <span className="text-slate-600 dark:text-slate-300 font-semibold shrink-0">{lang === 'RU' ? 'Ваше условие:' : 'Teklip şerti:'}</span>
+                            <span className="text-slate-600 dark:text-slate-300 font-semibold shrink-0">{t('yourConditionLabel', 'Ваше условие:')}</span>
                             <CustomSelect
                               role="SUPPLIER"
                               size="sm"
@@ -589,21 +588,21 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                           {lot.workAddress && (
                             <div className="flex items-center gap-1 text-slate-700 dark:text-slate-300">
                               <MapPin size={13} className="text-amber-500 shrink-0" />
-                              <span className="text-slate-400">{lang === 'RU' ? 'Объект:' : 'Ýer:'}</span>
+                              <span className="text-slate-400">{t('siteWithColon', 'Объект:')}</span>
                               <strong className="truncate max-w-45" title={lot.workAddress}>{lot.workAddress}</strong>
                             </div>
                           )}
                           {lot.workPeriod && (
                             <div className="flex items-center gap-1 text-slate-700 dark:text-slate-300 pl-2 border-l border-slate-200 dark:border-slate-700">
                               <Clock size={13} className="text-slate-400 shrink-0" />
-                              <span className="text-slate-400">{lang === 'RU' ? 'Срок:' : 'Möhleti:'}</span>
+                              <span className="text-slate-400">{t('termWithColon', 'Срок:')}</span>
                               <strong>{lot.workPeriod}</strong>
                             </div>
                           )}
                           {lot.licenseRequired && (
                             <span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 font-bold text-[10px] flex items-center gap-1 border border-amber-200 dark:border-amber-800">
                               <ShieldCheck size={12} />
-                              <span>{lang === 'RU' ? 'Требуется строительная лицензия' : 'Ygtyýarnama talap edilýär'}</span>
+                              <span>{t('constructionLicenseRequired', 'Требуется строительная лицензия')}</span>
                             </span>
                           )}
                         </div>
@@ -614,13 +613,13 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                         <div className="flex flex-wrap items-center gap-3 px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 shadow-xs text-xs">
                           <div className="flex items-center gap-1 text-slate-700 dark:text-slate-300">
                             <Settings2 size={13} className="text-blue-500 shrink-0" />
-                            <span className="text-slate-400">{lang === 'RU' ? 'Формат:' : 'Görnüşi:'}</span>
+                            <span className="text-slate-400">{t('formatWithColon', 'Формат:')}</span>
                             <strong>
                               {lot.serviceFormat === 'REMOTE'
-                                ? (lang === 'RU' ? 'Удаленно' : 'Alysda')
+                                ? (t('remoteFormat', 'Удаленно'))
                                 : lot.serviceFormat === 'HYBRID'
-                                ? (lang === 'RU' ? 'Гибридный' : 'Gatyşyk')
-                                : (lang === 'RU' ? 'На объекте заказчика' : 'Ýerinde')}
+                                ? (t('formatHybrid', 'Гибридный'))
+                                : (t('onCustomerSiteFormat', 'На объекте заказчика'))}
                             </strong>
                           </div>
                           {lot.slaPeriod && (
@@ -636,7 +635,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                       {/* Итого по лоту */}
                       <div className="text-right pl-3 border-l border-slate-200 dark:border-slate-700 shrink-0">
                         <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">
-                          {lang === 'RU' ? 'Итого по лоту' : 'Lot jemi'}
+                          {t('lotSubtotal', 'Итого по лоту')}
                         </span>
                         <span className="text-base font-black text-blue-600 dark:text-blue-400">
                           {lotTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}
@@ -655,25 +654,25 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                           <th className="py-3 px-3.5 w-12 text-center">#</th>
                           <th className="py-3 px-3.5 min-w-60">
                             {lotType === 'WORKS' 
-                              ? (lang === 'RU' ? 'Этап / вид работ' : 'Işiň tapgyry / görnüşi')
+                              ? (t('workStages', 'Этап / вид работ'))
                               : lotType === 'SERVICES'
-                              ? (lang === 'RU' ? 'Наименование услуги' : 'Hyzmatyň ady')
-                              : (lang === 'RU' ? 'Товар / Предложение' : 'Haryt / Teklip')}
+                              ? (t('serviceName', 'Наименование услуги'))
+                              : (t('itemOfferColumn', 'Товар / Предложение'))}
                           </th>
-                          <th className="py-3 px-3.5 w-28 text-center">{lang === 'RU' ? 'Ед. изм.' : 'Ölçeg birligi'}</th>
+                          <th className="py-3 px-3.5 w-28 text-center">{t('specUnit', 'Ед. изм.')}</th>
                           <th className="py-3 px-3.5 w-28 text-center">
                             {lotType === 'SERVICES' 
-                              ? (lang === 'RU' ? 'Объем / Период' : 'Möçberi / Möhleti') 
-                              : (lang === 'RU' ? 'Количество' : 'Mukdary')}*
+                              ? (t('volumePeriod', 'Объем / Период')) 
+                              : (t('specQty', 'Количество'))}*
                           </th>
-                          <th className="py-3 px-3.5 w-36 text-center">{lang === 'RU' ? `Цена за ед. (${currencyCode})` : 'Birlik bahasy'}*</th>
-                          <th className="py-3 px-3.5 w-36 text-right">{lang === 'RU' ? `Сумма (${currencyCode})` : 'Jemi baha'}</th>
+                          <th className="py-3 px-3.5 w-36 text-center">{t('unitPriceWithCurrency', 'Цена за ед. (${currencyCode})')}*</th>
+                          <th className="py-3 px-3.5 w-36 text-right">{t('totalSumWithCurrency', 'Сумма (${currencyCode})')}</th>
                           <th className="py-3 px-3.5 min-w-45">
                             {lotType === 'WORKS'
-                              ? (lang === 'RU' ? 'Состав и спецификация работ' : 'Işiň düzümi')
+                              ? (t('scopeOfWork', 'Состав и спецификация работ'))
                               : lotType === 'SERVICES'
-                              ? (lang === 'RU' ? 'Регламент и описание услуги' : 'Hyzmatyň tertibi')
-                              : (lang === 'RU' ? 'Характеристики / Обоснование' : 'Mazmuny / Esaslandyrma')}
+                              ? (t('serviceRegulations', 'Регламент и описание услуги'))
+                              : (t('specsJustificationColumn', 'Характеристики / Обоснование'))}
                           </th>
                         </tr>
                       </thead>
@@ -681,7 +680,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                         {lotItems.length === 0 ? (
                           <tr>
                             <td colSpan="7" className="py-6 text-center text-slate-400">
-                              {lang === 'RU' ? 'В этом лоте нет позиций' : 'Haryt ýok'}
+                              {t('noItemsInLot', 'В этом лоте нет позиций')}
                             </td>
                           </tr>
                         ) : (
@@ -705,7 +704,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                   <td className="py-3.5 px-3.5">
                                     <div className="flex items-center gap-2.5">
                                       <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
-                                        {lang === 'RU' ? 'Запрос' : 'Sargyt'}
+                                        {t('requestLabel', 'Запрос')}
                                       </span>
                                       <span className="font-extrabold text-slate-900 dark:text-slate-100 text-sm">
                                         {item.requestedName}
@@ -762,7 +761,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                   <td className="py-3.5 px-3.5">
                                     <div className="flex items-center justify-between gap-2 mb-1.5">
                                       <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
-                                        {lang === 'RU' ? 'Ваше КП' : 'Teklip'}
+                                        {t('yourBidColumn', 'Ваше КП')}
                                       </span>
 
                                       {/* Чекбокс эквивалента / аналога (только для товаров) */}
@@ -774,7 +773,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                             onChange={(e) => handleSpecFieldChange(lot.id, idx, 'isEquivalent', e.target.checked)}
                                             className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
                                           />
-                                          <span>{lang === 'RU' ? 'Предложить эквивалент / аналог' : 'Meňzeş haryt teklip et'}</span>
+                                          <span>{t('proposeAnalogBtn', 'Предложить эквивалент / аналог')}</span>
                                         </label>
                                       )}
                                     </div>
@@ -785,7 +784,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                         required
                                         value={item.equivalentName || ''}
                                         onChange={(e) => handleSpecFieldChange(lot.id, idx, 'equivalentName', e.target.value)}
-                                        placeholder={lang === 'RU' ? 'Торговое наименование предлагаемого аналога...' : 'Meňzeş harydyň söwda ady...'}
+                                        placeholder={t('analogTradeNamePlaceholder', 'Торговое наименование предлагаемого аналога...')}
                                         className={`w-full px-3 py-2 rounded-lg border text-xs font-bold text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 bg-blue-50/30 dark:bg-blue-950/30`}
                                       />
                                     ) : (
@@ -796,10 +795,10 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                         onChange={(e) => handleSpecFieldChange(lot.id, idx, 'haryt', e.target.value)}
                                         placeholder={
                                           lotType === 'WORKS'
-                                            ? (lang === 'RU' ? 'Наименование / состав выполняемых работ...' : 'Işiň ady...')
+                                            ? (t('workScopePlaceholder', 'Наименование / состав выполняемых работ...'))
                                             : lotType === 'SERVICES'
-                                            ? (lang === 'RU' ? 'Наименование оказываемой услуги...' : 'Hyzmatyň ady...')
-                                            : (lang === 'RU' ? 'Наименование товара...' : 'Haryt ady...')
+                                            ? (t('serviceNamePlaceholder', 'Наименование оказываемой услуги...'))
+                                            : (t('productNamePlaceholder', 'Наименование товара...'))
                                         }
                                         className={`w-full px-3 py-2 rounded-lg border text-xs font-semibold ${theme.inputBg}`}
                                       />
@@ -818,7 +817,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                         {item.requestedQty}
                                       </span>
                                       <span className="text-[9px] text-slate-400 mt-0.5 font-medium">
-                                        {lang === 'RU' ? 'фиксировано' : 'bellenen'}
+                                        {t('fixedBadge', 'фиксировано')}
                                       </span>
                                     </div>
                                   </td>
@@ -855,7 +854,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                         rows="2"
                                         value={item.equivalentJustification || ''}
                                         onChange={(e) => handleSpecFieldChange(lot.id, idx, 'equivalentJustification', e.target.value)}
-                                        placeholder={lang === 'RU' ? 'Обоснование эквивалентности (МНН, форма, дозировка, характеристики)...' : 'Ekwivalentlik esaslandyrmasy...'}
+                                        placeholder={t('equivalenceJustificationPlaceholder', 'Обоснование эквивалентности (МНН, форма, дозировка, характеристики)...')}
                                         className="w-full px-3 py-1.5 rounded-lg text-xs border border-blue-200 dark:border-blue-800 bg-blue-50/20 dark:bg-blue-950/20 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 resize-none"
                                       />
                                     ) : (
@@ -863,7 +862,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                         type="text"
                                         value={item.desc}
                                         onChange={(e) => handleSpecFieldChange(lot.id, idx, 'desc', e.target.value)}
-                                        placeholder={lang === 'RU' ? 'Производитель, страна, модель...' : 'Bellikler...'}
+                                        placeholder={t('manufacturerNotesPlaceholder', 'Производитель, страна, модель...')}
                                         className={`w-full px-3 py-2 rounded-lg text-xs border ${theme.inputBg}`}
                                       />
                                     )}
@@ -877,9 +876,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                       <div className="flex items-center gap-2 text-[11px] text-blue-700 dark:text-blue-300 font-medium">
                                         <Info size={13} className="shrink-0 text-blue-600" />
                                         <span>
-                                          {lang === 'RU' 
-                                            ? 'Предложен эквивалент / аналог. Заявка будет проверена экспертной комиссией на соответствие техническим и качественным характеристикам.'
-                                            : 'Ekwivalent haryt teklip edildi. Tehniki şertlere laýyklygy barlagdan geçiriler.'}
+                                          {t('analogOfferedNotice', 'Предложен эквивалент / аналог. Заявка будет проверена экспертной комиссией на соответствие техническим и качественным характеристикам.')}
                                         </span>
                                       </div>
                                     </td>
@@ -894,7 +891,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                   </div>
                 ) : (
                   <div className="p-5 text-center text-slate-400 text-xs font-medium bg-slate-50/50 dark:bg-slate-900/20">
-                    {lang === 'RU' ? 'Вы отключили участие в данном лоте' : 'Bu lot üçin teklip berilmeýär'}
+                    {t('optedOutOfLotNotice', 'Вы отключили участие в данном лоте')}
                   </div>
                 )}
               </div>
@@ -902,7 +899,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
           })
         ) : (
           <div className={`p-8 rounded-2xl border text-center text-slate-400 ${theme.cardBg}`}>
-            {lang === 'RU' ? 'В тендере отсутствуют лоты' : 'Lot tapylmady'}
+            {t('noLotsInTender', 'В тендере отсутствуют лоты')}
           </div>
         )}
       </div>
@@ -914,9 +911,9 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
           <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
             <h3 className="font-bold text-sm flex items-center gap-2">
               <FileText size={16} className="text-blue-600 dark:text-blue-400" />
-              <span>{lang === 'RU' ? 'Документы от заказчика' : 'Tender resminamalary'}</span>
+              <span>{t('customerDocsTitle', 'Документы от заказчика')}</span>
             </h3>
-            <span className="text-xs text-slate-400">{tender?.files?.length || 0} {lang === 'RU' ? 'файлов' : 'faýl'}</span>
+            <span className="text-xs text-slate-400">{tender?.files?.length || 0} {t('filesSuffix', 'файлов')}</span>
           </div>
 
           <div className="p-3">
@@ -953,7 +950,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
               </div>
             ) : (
               <div className="py-6 text-center text-xs text-slate-400 font-medium">
-                {lang === 'RU' ? 'Заказчик не прикрепил документы' : 'Resminama ýok'}
+                {t('noDocumentsAttached', 'Заказчик не прикрепил документы')}
               </div>
             )}
           </div>
@@ -965,10 +962,10 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
             <div>
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <Paperclip size={16} className="text-blue-600 dark:text-blue-400" />
-                <span>{lang === 'RU' ? 'Ваши сертификаты и документы' : 'Siziň resminamalaryňyz'}</span>
+                <span>{t('supplierDocsTitle', 'Ваши сертификаты и документы')}</span>
               </h3>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                {lang === 'RU' ? 'Сертификаты, лицензии, коммерческое предложение (до 25 МБ)' : 'Resminamalar, ygtyýarnamalar (25 MB çenli)'}
+                {t('supplierDocsSubtitle', 'Сертификаты, лицензии, коммерческое предложение (до 25 МБ)')}
               </p>
             </div>
             {uploadedFiles.length > 0 && (
@@ -978,7 +975,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                 className="px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 transition-all active:scale-95 cursor-pointer"
               >
                 <Plus size={14} />
-                <span>{lang === 'RU' ? 'Прикрепить еще документ' : 'Ýene faýl goş'}</span>
+                <span>{t('attachMoreDocsBtn', 'Прикрепить еще документ')}</span>
               </button>
             )}
           </div>
@@ -1021,10 +1018,10 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                   <UploadCloud size={24} />
                 </div>
                 <div className="font-bold text-sm text-slate-800 dark:text-slate-200">
-                  {lang === 'RU' ? 'Перетащите файлы сюда или нажмите для выбора' : 'Faýllary şu ýere süýräň ýa-da saýlaň'}
+                  {t('dragFilesNotice', 'Перетащите файлы сюда или нажмите для выбора')}
                 </div>
                 <div className="text-xs text-slate-400">
-                  {lang === 'RU' ? 'PDF, DOC, DOCX, XLS, XLSX, JPG, PNG до 25 МБ (до 10 файлов)' : 'PDF, DOC, XLS, JPG 25 MB çenli'}
+                  {t('supportedFileFormats25MB', 'PDF, DOC, DOCX, XLS, XLSX, JPG, PNG до 25 МБ (до 10 файлов)')}
                 </div>
               </div>
             ) : (
@@ -1048,7 +1045,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                           <span className="uppercase font-semibold">{doc.fileType || 'FILE'}</span>
                           {doc.size && <span>• {formatFileSize(doc.size)}</span>}
                           <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">
-                            <CheckCircle2 size={11} /> {lang === 'RU' ? 'Прикреплен' : 'Ýüklendi'}
+                            <CheckCircle2 size={11} /> {t('attachedBadge', 'Прикреплен')}
                           </span>
                         </div>
                       </div>
@@ -1057,7 +1054,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                       type="button"
                       onClick={() => handleRemoveFile(idx)} 
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
-                      title={lang === 'RU' ? 'Удалить файл' : 'Faýly aýyr'}
+                      title={t('deleteFileTooltip', 'Удалить файл')}
                     >
                       <Trash2 size={15} />
                     </button>
@@ -1082,7 +1079,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
           {!isVerified && (
             <div className="w-full p-2.5 bg-rose-50 text-rose-700 text-xs font-bold rounded-xl flex items-center gap-2 border border-rose-200">
               <AlertCircle size={15} />
-              {lang === 'RU' ? 'Ваш профиль не прошел верификацию. Подача предложений заблокирована.' : 'Siziň profiliňiz tassyklanmady. Teklip bermek gadagan.'}
+              {t('unverifiedProfileBlockNotice', 'Ваш профиль не прошел верификацию. Подача предложений заблокирована.')}
             </div>
           )}
           
@@ -1097,7 +1094,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                 }`} />
                 <div>
                   <span className="text-[10px] text-slate-400 uppercase font-bold block tracking-wider">
-                    {lang === 'RU' ? 'Итоговая сумма заявки' : 'Jemi teklip bahasy'}:
+                    {t('totalOfferAmountTitle', 'Итоговая сумма заявки')}:
                   </span>
                   <span className="text-2xl font-black text-blue-600 dark:text-blue-400">
                     {grandTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}
@@ -1106,11 +1103,11 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
               </div>
               <div className="hidden md:block pl-5 border-l border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500">
                 <div className="font-semibold text-slate-700 dark:text-slate-300">
-                  {lang === 'RU' ? `Выбрано лотов: ${activeLotIds.length}` : `Lotlar: ${activeLotIds.length}`}
+                  {t('selectedLotsCountStr', 'Выбрано лотов: ${activeLotIds.length}')}
                 </div>
                 <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
                   <CheckCircle2 size={12} className={pricedItemsCount > 0 ? "text-emerald-500" : "text-slate-400"} />
-                  <span>{lang === 'RU' ? `Оценено: ${pricedItemsCount} из ${totalActiveItemsCount} позиций` : `Bahalandyrylan: ${pricedItemsCount} / ${totalActiveItemsCount}`}</span>
+                  <span>{t('pricedItemsProgress', 'Оценено: ${pricedItemsCount} из ${totalActiveItemsCount} позиций')}</span>
                 </div>
               </div>
             </div>
@@ -1120,7 +1117,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
               {grandTotal <= 0 && isVerified && (
                 <div className="hidden lg:flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium">
                   <Info size={14} className="shrink-0" />
-                  <span>{lang === 'RU' ? 'Укажите цену хотя бы по одной позиции выбранного лота' : 'Iň bolmanda bir haryda baha belläň'}</span>
+                  <span>{t('specifyAtLeastOnePrice', 'Укажите цену хотя бы по одной позиции выбранного лота')}</span>
                 </div>
               )}
 
@@ -1146,7 +1143,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                 <span>
                   {isSubmitting 
                     ? t('saving', 'Iberilýär...') 
-                    : (lang === 'RU' ? 'Отправить коммерческое предложение' : 'Teklibi ibermek')
+                    : (t('submitProposalBtn', 'Отправить коммерческое предложение'))
                   }
                 </span>
               </button>

@@ -72,7 +72,7 @@ export default function AddSupplierModal({ onClose, onSuccess, lang = 'RU', isDa
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
 
@@ -82,7 +82,7 @@ export default function AddSupplierModal({ onClose, onSuccess, lang = 'RU', isDa
               type="text"
               value={formData.inn}
               onChange={(e) => setFormData({ ...formData, inn: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
 
@@ -92,7 +92,7 @@ export default function AddSupplierModal({ onClose, onSuccess, lang = 'RU', isDa
               type="text"
               value={formData.license}
               onChange={(e) => setFormData({ ...formData, license: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
 
@@ -102,7 +102,7 @@ export default function AddSupplierModal({ onClose, onSuccess, lang = 'RU', isDa
               type="text"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
 
@@ -112,7 +112,7 @@ export default function AddSupplierModal({ onClose, onSuccess, lang = 'RU', isDa
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
 
@@ -139,7 +139,7 @@ export default function AddSupplierModal({ onClose, onSuccess, lang = 'RU', isDa
               type="text"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
 
@@ -152,7 +152,7 @@ export default function AddSupplierModal({ onClose, onSuccess, lang = 'RU', isDa
                   type="text"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+                  className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
                 />
               </div>
               <div>
@@ -162,7 +162,7 @@ export default function AddSupplierModal({ onClose, onSuccess, lang = 'RU', isDa
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   autoComplete="new-password"
-                  className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+                  className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
                 />
               </div>
             </div>
@@ -179,7 +179,7 @@ export default function AddSupplierModal({ onClose, onSuccess, lang = 'RU', isDa
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center space-x-1"
+            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center space-x-1"
           >
             <Check size={16} />
             <span>{t('saveBtn', 'Сохранить')}</span>

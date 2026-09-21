@@ -18,8 +18,19 @@ const openTenderBids = async (req, res) => {
             return res.status(404).json({ error: 'Тендер не найден' });
         }
 
+        if (tender.status === 'TASLAMA') {
+            return res.status(400).json({ error: 'Нельзя производить вскрытие предложений по черновику тендера' });
+        }
+
         if (tender.status === 'BAHALANDYRYLDY' || tender.status === 'YENIJI_YGLAN_EDILDI') {
             return res.status(400).json({ error: 'Предложения по этому тендеру уже вскрыты и находятся на оценке' });
+        }
+
+        // Проверка регламента закупок: вскрытие предложений запрещено до наступления дедлайна
+        if (tender.status === 'ACYK' && new Date() < new Date(tender.deadline)) {
+            return res.status(400).json({ 
+                error: 'Срок приема заявок еще не окончен (дедлайн не наступил). Вскрытие предложений до дедлайна нарушает правила коммерческой тайны.' 
+            });
         }
 
         // Обновляем статус тендера на "BAHALANDYRYLDY" (Оценен / На рассмотрении комиссии)
@@ -260,6 +271,17 @@ const awardLot = async (req, res) => {
             include: { specs: true }
         });
         if (!lot) return res.status(404).json({ error: 'Лот не найден' });
+        if (lot.tenderId !== tenderId) {
+            return res.status(400).json({ error: 'Указанный лот не принадлежит данному тендеру' });
+        }
+
+        if (offerId) {
+            const offer = await prisma.offer.findUnique({ where: { id: offerId } });
+            if (!offer || offer.tenderId !== tenderId) {
+                return res.status(400).json({ error: 'Указанное предложение не принадлежит данному тендеру' });
+            }
+        }
+
         const specIds = lot.specs.map(s => s.id);
 
         await prisma.$transaction(async (prisma) => {
@@ -310,6 +332,26 @@ const completeEvaluation = async (req, res) => {
         });
 
         if (!tender) return res.status(404).json({ error: 'Тендер не найден' });
+
+        // Нельзя завершить оценку не вскрытого тендера
+        if (tender.status === 'TASLAMA' || tender.status === 'ACYK') {
+            return res.status(400).json({ 
+                error: 'Нельзя завершить оценку тендера, пока он находится в статусе черновика или открыт для приема заявок. Сначала вскройте предложения.' 
+            });
+        }
+
+        if (tender.offers.length === 0) {
+            return res.status(400).json({ 
+                error: 'Нельзя объявить результаты: на данный тендер не было подано ни одного предложения.' 
+            });
+        }
+
+        const anyAwarded = tender.offers.some(offer => offer.specs.some(s => s.isAwarded));
+        if (!anyAwarded) {
+            return res.status(400).json({ 
+                error: 'Нельзя утвердить протокол: не выбран ни один победитель ни по одному лоту тендера.' 
+            });
+        }
 
         await prisma.$transaction(async (prisma) => {
             for (const offer of tender.offers) {

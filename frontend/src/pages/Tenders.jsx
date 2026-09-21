@@ -25,11 +25,11 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
 
   const handleDelete = async (id) => {
     const isConfirmed = await showConfirm({
-      title: lang === 'RU' ? 'Удаление тендера' : 'Tenderi pozmak',
-      message: lang === 'RU' ? 'Вы уверены, что хотите безвозвратно удалить этот тендер?' : 'Siz bu tenderi pozjakdygyňyza ynamyňyz barmy?',
+      title: t('deleteTenderTitle', 'Удаление тендера'),
+      message: t('deleteTenderConfirm', 'Вы уверены, что хотите безвозвратно удалить этот тендер?'),
       type: 'danger',
-      confirmText: lang === 'RU' ? 'Удалить' : 'Pozmak',
-      cancelText: lang === 'RU' ? 'Отмена' : 'Ýatyr',
+      confirmText: t('delete', 'Удалить'),
+      cancelText: t('cancelEditBtn', 'Отмена'),
       isDanger: true,
     });
     if (!isConfirmed) return;
@@ -38,15 +38,15 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
       await API.delete(`/tenders/${id}`);
       fetchTenders();
       showAlert({
-        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
-        message: lang === 'RU' ? 'Тендер успешно удален' : 'Tender üstünlikli pozuldy',
+        title: t('successTitle', 'Успешно'),
+        message: t('tenderDeletedSuccess', 'Тендер успешно удален'),
         type: 'success'
       });
     } catch (error) {
       console.error(error);
       showAlert({
-        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
-        message: lang === 'RU' ? 'Ошибка при удалении' : 'Pozmakda säwlik ýüze çykdy',
+        title: t('errorTitle', 'Ошибка'),
+        message: t('deleteError', 'Ошибка при удалении'),
         type: 'error'
       });
     }
@@ -94,9 +94,9 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
     if (typeof item.technicalSpecs === 'string') return item.technicalSpecs;
     if (typeof item.specs === 'string') return item.specs;
     if (Array.isArray(item.specs)) {
-      return item.specs.map(s => s.description || s.generalProduct?.name || s.name).filter(Boolean).join(', ') || (lang === 'RU' ? 'Согласно стандартам' : 'TDS standartly');
+      return item.specs.map(s => s.description || s.generalProduct?.name || s.name).filter(Boolean).join(', ') || (t('accordingToStandards', 'Согласно стандартам'));
     }
-    return lang === 'RU' ? 'Согласно стандартам' : 'TDS standartly';
+    return t('accordingToStandards', 'Согласно стандартам');
   };
 
   const formatDate = (dateVal) => {
@@ -113,7 +113,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">{t('tendersListTitle', 'Tenderler')}</h2>
-        <span className={`text-xs font-medium ${theme.subText}`}>{lang === 'RU' ? 'Полный список доступных тендеров' : 'Ähli tenderlerin тизмеси'}</span>
+        <span className={`text-xs font-medium ${theme.subText}`}>{t('allAvailableTenders', 'Полный список доступных тендеров')}</span>
       </div>
 
       {/* Панель фильтров */}
@@ -127,9 +127,9 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
               value={typeFilter}
               onChange={(val) => setTypeFilter(val)}
               options={[
-                { id: '', name: lang === 'RU' ? 'Все' : 'Ählisi' },
-                { id: 'YERLI', name: lang === 'RU' ? 'Местный' : 'Ýerli' },
-                { id: 'HALKARA', name: lang === 'RU' ? 'Международный' : 'Halkara' }
+                { id: '', name: t('allBtn', 'Все') },
+                { id: 'YERLI', name: t('typeLocal', 'Местный') },
+                { id: 'HALKARA', name: t('typeGlobal', 'Международный') }
               ]}
               isDarkMode={isDarkMode}
               theme={theme}
@@ -145,11 +145,11 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
               value={statusFilter}
               onChange={(val) => setStatusFilter(val)}
               options={[
-                { id: '', name: lang === 'RU' ? 'Все' : 'Ählisi' },
-                { id: 'ACYK', name: lang === 'RU' ? 'Открыт' : 'Açyk' },
-                { id: 'YAPYK', name: lang === 'RU' ? 'Закрыт' : 'Ýapyk' },
-                { id: 'BAHALANDYRYLDY', name: lang === 'RU' ? 'На рассмотрении' : 'Bahalandyryldy' },
-                { id: 'YENIJI_YGLAN_EDILDI', name: lang === 'RU' ? 'Победитель' : 'Ýeňiji yglan edildi' }
+                { id: '', name: t('allBtn', 'Все') },
+                { id: 'ACYK', name: t('statusAcyk', 'Открыт') },
+                { id: 'YAPYK', name: t('statusYapyk', 'Закрыт') },
+                { id: 'BAHALANDYRYLDY', name: t('statusBahalandyryldy', 'На рассмотрении') },
+                { id: 'YENIJI_YGLAN_EDILDI', name: t('winnerBadge', 'Победитель') }
               ]}
               isDarkMode={isDarkMode}
               theme={theme}
@@ -166,7 +166,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
               isDarkMode={isDarkMode}
               lang={lang}
               theme={theme}
-              placeholder={lang === 'RU' ? 'ДД.ММ.ГГГГ' : 'GG.AA.ÝÝÝÝ'}
+              placeholder={t('dateFormatPlaceholder', 'ДД.ММ.ГГГГ')}
             />
           </div>
 
@@ -179,7 +179,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
               isDarkMode={isDarkMode}
               lang={lang}
               theme={theme}
-              placeholder={lang === 'RU' ? 'ДД.ММ.ГГГГ' : 'GG.AA.ÝÝÝÝ'}
+              placeholder={t('dateFormatPlaceholder', 'ДД.ММ.ГГГГ')}
             />
           </div>
 
@@ -248,8 +248,8 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                           <>
                             <button
                               onClick={() => showAlert({
-                                title: lang === 'RU' ? 'Редактирование' : 'Üýtgetmek',
-                                message: lang === 'RU' ? 'Редактирование пока недоступно' : 'Üýtgetmek häzirlikçe elýeterli däl',
+                                title: t('editingTitle', 'Редактирование'),
+                                message: t('editingUnavailable', 'Редактирование пока недоступно'),
                                 type: 'info'
                               })}
                               className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 transition-all active:scale-95 cursor-pointer"

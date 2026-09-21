@@ -314,7 +314,7 @@ export default function CustomDatePicker({
               role="button"
               onClick={handleClear}
               className="p-0.5 rounded-full text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors"
-              title={lang === 'RU' ? 'Очистить' : 'Arassala'}
+              title={getTranslation(lang, 'clearBtn', 'Очистить')}
             >
               <X size={13} />
             </span>
@@ -481,14 +481,14 @@ export default function CustomDatePicker({
                   onClick={handleClear}
                   className="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 font-semibold transition-colors cursor-pointer py-1 px-1.5 rounded"
                 >
-                  {lang === 'RU' ? 'Очистить' : 'Arassala'}
+                  {getTranslation(lang, 'clearBtn', 'Очистить')}
                 </button>
                 <button
                   type="button"
                   onClick={handleSelectToday}
                   className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold transition-colors cursor-pointer py-1 px-2 rounded hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                 >
-                  {lang === 'RU' ? 'Сегодня' : 'Şugün'}
+                  {getTranslation(lang, 'todayBtn', 'Сегодня')}
                 </button>
               </div>
             </>

@@ -93,7 +93,7 @@ export default function RejectSupplierModal({
         {/* Быстрые шаблоны причин */}
         <div>
           <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
-            {lang === 'RU' ? 'Быстрый выбор типовой причины:' : 'Ýygy duş gelýän sebäpler:'}
+            {t('quickRejectReasons', 'Быстрый выбор типовой причины:')}
           </label>
           <div className="flex flex-wrap gap-1.5">
             {quickReasons.map((qr, idx) => (
@@ -131,9 +131,7 @@ export default function RejectSupplierModal({
             </p>
           )}
           <p className="text-[11px] text-slate-400 mt-1">
-            {lang === 'RU' 
-              ? 'Поставщик увидит это сообщение в личном кабинете и сможет исправить указанные замечания.' 
-              : 'Üpjün ediji bu bellikleri şahsy otagynda görüp, düzediş girizip biler.'}
+            {t('supplierRejectNotice', 'Поставщик увидит это сообщение в личном кабинете и сможет исправить указанные замечания.')}
           </p>
         </div>
 
@@ -156,7 +154,7 @@ export default function RejectSupplierModal({
             {isSubmitting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>{lang === 'RU' ? 'Отклонение...' : 'Ret edilýär...'}</span>
+                <span>{t('rejectingAction', 'Отклонение...')}</span>
               </>
             ) : (
               <span>{t('rejectSupplier', 'Отклонить заявку')}</span>

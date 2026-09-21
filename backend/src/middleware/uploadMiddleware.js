@@ -21,26 +21,31 @@ const storage = multer.diskStorage({
     },
 });
 
-// Фильтр типов файлов (разрешаем строго PDF, JPG, JPEG, PNG для безопасности)
+// Фильтр типов файлов (разрешаем PDF, JPG, PNG, а также документы Word и Excel для спецификаций)
 const fileFilter = (req, file, cb) => {
     const allowedMimeTypes = [
         'application/pdf',
         'image/jpeg',
         'image/png',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/octet-stream', // некоторые клиенты отправляют xlsx как octet-stream
     ];
-    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png'];
+    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx'];
     const ext = path.extname(file.originalname).toLowerCase();
 
-    if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(ext)) {
+    if (allowedExtensions.includes(ext)) {
         cb(null, true);
     } else {
-        cb(new Error('Недопустимый формат файла. Разрешены только PDF, JPG и PNG'), false);
+        cb(new Error('Недопустимый формат файла. Разрешены PDF, JPG, PNG, Word (.doc, .docx) и Excel (.xls, .xlsx)'), false);
     }
 };
 
 const upload = multer({
     storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // Лимит: 10 МБ на файл
+    limits: { fileSize: 25 * 1024 * 1024 }, // Лимит: 25 МБ на файл по ТЗ
     fileFilter,
 });
 

@@ -49,7 +49,7 @@ export const getStatusBadge = (status, lang = 'RU', isDarkMode = false) => {
     case 'KABUL_EDILDI':
       return (
         <span className={`${baseClass} ${isDarkMode ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-          {lang === 'RU' ? 'Принято' : 'Kabul edildi'}
+          {getTranslation(lang, 'statusKabulEdildi', 'Принято')}
         </span>
       );
     case 'GOYBOLSUN_EDILDI':

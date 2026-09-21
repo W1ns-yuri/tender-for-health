@@ -14,8 +14,8 @@ router.get('/next-number', authMiddleware, getNextNumber);
 // 3. Посмотреть ОДИН тендер по ID со всеми позициями и заявками
 router.get('/:id', authMiddleware, getTenderById);
 
-// 3. Создать тендер (только для авторизованных)
-router.post('/', authMiddleware, createTender);
+// 3. Создать тендер (только для организатора / администратора)
+router.post('/', authMiddleware, checkRole(['ADMIN']), createTender);
 
 // 4. Удалить тендер (только для админа)
 router.delete('/:id', authMiddleware, checkRole(['ADMIN']), deleteTender);

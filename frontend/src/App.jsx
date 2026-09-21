@@ -173,8 +173,8 @@ export default function App() {
                 />
               } />
               
-              <Route path="/create-tender" element={<CreateTenderPage onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} />} />
-              <Route path="/suppliers" element={<SuppliersList role={role} isDarkMode={isDarkMode} lang={lang} />} />
+              <Route path="/create-tender" element={role === 'ADMIN' ? <CreateTenderPage onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
+              <Route path="/suppliers" element={role === 'ADMIN' ? <SuppliersList role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/suppliers/:id" element={<SupplierProfilePage role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/tenders" element={<Tenders onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/tenders/:id" element={<TenderDetails onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} />} />
@@ -195,11 +195,11 @@ export default function App() {
               
               <Route path="/settings" element={
                 <div className={`p-6 rounded-xl border shadow-xs max-w-xl ${theme.cardBg}`}>
-                  <h2 className="text-lg font-bold mb-4">{lang === 'RU' ? 'Системные настройки' : 'Ulgam sazlamalary'}</h2>
+                  <h2 className="text-lg font-bold mb-4">{getTranslation(lang, 'catSettings', 'Системные настройки')}</h2>
                   <div className="space-y-4 text-xs">
                     <div>
                       <label className={`block font-semibold mb-1 ${theme.subText}`}>
-                        {lang === 'RU' ? 'Язык интерфейса приложения' : 'Выбор языка интерфейса'}
+                        {getTranslation(lang, 'interfaceLanguage', 'Язык интерфейса приложения')}
                       </label>
                       <CustomSelect
                         role={role}

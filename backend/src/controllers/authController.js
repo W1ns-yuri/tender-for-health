@@ -17,41 +17,44 @@ const register = async (req, res) => {
             return res.status(400).json({ error: 'Пользователь с таким логином уже существует' });
         }
 
-        // Хешируем пароль (10 кругов соль)
+        // Хешируем пароль (10 раундов соли)
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Создаем пользователя в БД
-        
-        const newUser = await prisma.user.create({
-            data: {
-                username,
-                password: hashedPassword,
-                firstName,
-                lastName,
-                middleName: middleName || null,
-                roleType: 'SUPPLIER',
-                position: position || null,
-                phone: phone || null,
-            },
-        });
-
-        // Очищаем наименование от случайных приставок формы
+        // Очищаем наименование компании от случайных юридических приставок
         let cleanCompanyName = companyName ? companyName.trim() : '';
         if (cleanCompanyName) {
             cleanCompanyName = cleanCompanyName.replace(/^(ип|хо|ооо|чп|hj|dh|hk|telekeçi|hojalyk\s+jemgyýeti|hususy\s+telekeçi|hususy\s+kärhana)\s*["«'”]?\s*/i, '').replace(/["»'”]$/, '').trim() || cleanCompanyName;
         }
 
-        // Создаем профиль поставщика при регистрации
-        await prisma.supplier.create({
-            data: {
-                userId: newUser.id,
-                name: cleanCompanyName || (firstName + ' ' + lastName),
-                type: companyType || 'ENTREPRENEUR',
-                taxId: taxId || null,
-                verificationStatus: 'PENDING',
-            }
-        });
+        // Атомарное создание пользователя и профиля поставщика в одной транзакции
+        const newUser = await prisma.$transaction(async (tx) => {
+            const user = await tx.user.create({
+                data: {
+                    username,
+                    password: hashedPassword,
+                    firstName,
+                    lastName,
+                    middleName: middleName || null,
+                    roleType: 'SUPPLIER',
+                    position: position || null,
+                    phone: phone || null,
+                },
+            });
 
+            await tx.supplier.create({
+                data: {
+                    userId: user.id,
+                    name: cleanCompanyName || `${firstName} ${lastName}`,
+                    type: companyType || 'ENTREPRENEUR',
+                    taxId: taxId || null,
+                    phone: phone || null,
+                    email: username.includes('@') ? username : null,
+                    verificationStatus: 'PENDING',
+                },
+            });
+
+            return user;
+        });
 
         // Генерируем JWT-токен на 7 дней
         const token = jwt.sign(
@@ -60,9 +63,7 @@ const register = async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        // Не возвращаем хеш пароля в ответе
         const { password: _, ...userWithoutPassword } = newUser;
-
         res.status(201).json({ user: userWithoutPassword, token });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при регистрации', details: error.message });
@@ -73,48 +74,45 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     try {
         const { username, password } = req.body;
-        console.log(`[LOGIN ATTEMPT] username: "${username}", password: "${password}"`);
 
-        // Ищем пользователя в БД
-        const user = await prisma.user.findUnique({ where: { username }, include: { companies: true, suppliers: true } });
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Укажите логин и пароль' });
+        }
+
+        // Ищем пользователя в БД (пароль в лог сервера не пишется из соображений безопасности)
+        const user = await prisma.user.findUnique({ where: { username }, include: { suppliers: true } });
         if (!user) {
-            console.log(`[LOGIN FAILED] User not found: "${username}"`);
-            return res.status(401).json({ error: `Неверный логин или пароль (User not found: ${username})` });
+            return res.status(401).json({ error: 'Неверный логин или пароль' });
         }
 
         if (!user.isActive) {
-            console.log(`[LOGIN FAILED] Account inactive: "${username}"`);
             return res.status(403).json({ error: 'Аккаунт заблокирован' });
         }
 
         if (user.lockoutExpireDate && user.lockoutExpireDate > new Date()) {
-            return res.status(403).json({ error: 'Аккаунт временно заблокирован. Попробуйте позже.' });
+            return res.status(403).json({ error: 'Аккаунт временно заблокирован из-за превышения попыток входа. Попробуйте позже.' });
         }
 
-        // Сравниваем введенный пароль с хешем из базы
+        // Сравниваем введенный пароль с хешем
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            console.log(`[LOGIN FAILED] Password mismatch for: "${username}"`);
             let failedCount = user.failedCount + 1;
             let lockoutExpireDate = null;
             if (failedCount >= 5) {
-                lockoutExpireDate = new Date(Date.now() + 15 * 60 * 1000); // Блокировка на 15 минут
+                lockoutExpireDate = new Date(Date.now() + 15 * 60 * 1000); // 15 минут блокировки
             }
             await prisma.user.update({
                 where: { id: user.id },
                 data: { failedCount, lockoutExpireDate }
             });
-            return res.status(401).json({ error: 'Неверный логин или пароль (Password mismatch)' });
+            return res.status(401).json({ error: 'Неверный логин или пароль' });
         }
-
-        console.log(`[LOGIN SUCCESS] User authenticated: "${username}"`);
 
         await prisma.user.update({
             where: { id: user.id },
             data: { lastLogin: new Date(), failedCount: 0, lockoutExpireDate: null }
         });
 
-        // Создаем токен
         const token = jwt.sign(
             { userId: user.id, roleType: user.roleType },
             process.env.JWT_SECRET,
@@ -122,7 +120,6 @@ const login = async (req, res) => {
         );
 
         const { password: _, ...userWithoutPassword } = user;
-
         res.json({ user: userWithoutPassword, token });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при входе', details: error.message });

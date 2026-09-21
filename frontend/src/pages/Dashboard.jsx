@@ -117,7 +117,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
             </div>
             <div>
               <h3 className="text-2xl font-bold tabular-nums">{stats.openTenders}</h3>
-              <p className={`text-xs font-medium ${theme.subText}`}>{lang === 'RU' ? 'Открытых тендеров' : t('allTenders', 'Ähli tenderler')}</p>
+              <p className={`text-xs font-medium ${theme.subText}`}>{t('totalOpenTenders', 'Открытых тендеров')}</p>
             </div>
           </div>
 
@@ -127,7 +127,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
             </div>
             <div>
               <h3 className="text-2xl font-bold tabular-nums">{stats.totalOffers}</h3>
-              <p className={`text-xs font-medium ${theme.subText}`}>{lang === 'RU' ? 'Поданных предложений' : t('totalOffersSubmitted', 'Jemi tabşyrylan teklipler')}</p>
+              <p className={`text-xs font-medium ${theme.subText}`}>{t('totalOffersSubmitted', 'Поданных предложений')}</p>
             </div>
           </div>
 
@@ -137,7 +137,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
             </div>
             <div>
               <h3 className="text-2xl font-bold tabular-nums">{stats.totalSuppliers}</h3>
-              <p className={`text-xs font-medium ${theme.subText}`}>{lang === 'RU' ? 'Всех поставщиков' : t('allSuppliers', 'Ähli üpjün edijiler')}</p>
+              <p className={`text-xs font-medium ${theme.subText}`}>{t('allSuppliers', 'Всех поставщиков')}</p>
             </div>
           </div>
         </div>

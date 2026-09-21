@@ -44,14 +44,14 @@ export default function SupplierWins({ role, isDarkMode, lang = 'RU' }) {
           <Trophy size={24} />
         </div>
         <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-          {lang === 'RU' ? 'Мои победы' : 'Ýeňişlerim'}
+          {t('myWinsTitle', 'Мои победы')}
         </h2>
       </div>
 
       {wins.length === 0 ? (
         <div className={`p-16 rounded-2xl border text-center ${isDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200'}`}>
           <Trophy size={48} className="mx-auto text-slate-300 dark:text-slate-700 mb-4" />
-          <p className="text-slate-500 font-medium">{lang === 'RU' ? 'У вас пока нет выигранных тендеров' : 'Sizde häzirlikçe ýeňen tenderiňiz ýok'}</p>
+          <p className="text-slate-500 font-medium">{t('noWonTendersNotice', 'У вас пока нет выигранных тендеров')}</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -73,7 +73,7 @@ export default function SupplierWins({ role, isDarkMode, lang = 'RU' }) {
                         </span>
                       </div>
                       <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{tender.title}</h3>
-                      <p className="text-sm text-slate-500 mt-1">{lang === 'RU' ? 'Заказчик:' : 'Sargyt ediji:'} {tender.client?.name}</p>
+                      <p className="text-sm text-slate-500 mt-1">{t('clientWithColon', 'Заказчик:')} {tender.client?.name}</p>
                     </div>
                     
                     <Link
@@ -82,7 +82,7 @@ export default function SupplierWins({ role, isDarkMode, lang = 'RU' }) {
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${theme.lightBg} ${theme.primaryText} hover:brightness-95`}
                     >
                       <ExternalLink size={14} />
-                      {lang === 'RU' ? 'Открыть тендер' : 'Tenderi aç'}
+                      {t('openTenderAction', 'Открыть тендер')}
                     </Link>
                   </div>
                 </div>
@@ -92,10 +92,10 @@ export default function SupplierWins({ role, isDarkMode, lang = 'RU' }) {
                   <table className="w-full text-left text-sm min-w-150">
                     <thead className={`text-xs uppercase font-bold text-slate-500 ${isDarkMode ? 'bg-slate-800/50' : 'bg-slate-50'} border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
                       <tr>
-                        <th className="p-4">{lang === 'RU' ? 'Товар (Ваше предложение)' : 'Haryt'}</th>
-                        <th className="p-4 text-center">{lang === 'RU' ? 'Кол-во' : 'Mukdar'}</th>
-                        <th className="p-4 text-right">{lang === 'RU' ? 'Цена за ед.' : 'Birlik bahasy'}</th>
-                        <th className="p-4 text-right">{lang === 'RU' ? 'Сумма' : 'Jemi'}</th>
+                        <th className="p-4">{t('product', 'Товар (Ваше предложение)')}</th>
+                        <th className="p-4 text-center">{t('qty', 'Кол-во')}</th>
+                        <th className="p-4 text-right">{t('unitPricePlain', 'Цена за ед.')}</th>
+                        <th className="p-4 text-right">{t('totalAmount', 'Сумма')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -111,7 +111,7 @@ export default function SupplierWins({ role, isDarkMode, lang = 'RU' }) {
                                   {spec.generalProduct?.name || spec.name}
                                 </div>
                                 <div className="text-xs text-slate-500 mt-1">
-                                  {lang === 'RU' ? 'Запрос по тендеру:' : 'Tender talaby:'} {spec.tenderSpec?.generalProduct?.name || spec.tenderSpec?.name}
+                                  {t('tenderRequestWithColon', 'Запрос по тендеру:')} {spec.tenderSpec?.generalProduct?.name || spec.tenderSpec?.name}
                                 </div>
                                 {spec.tenderSpec?.lot?.name && (
                                   <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
@@ -139,7 +139,7 @@ export default function SupplierWins({ role, isDarkMode, lang = 'RU' }) {
                 
                 {/* Total Won for this Tender */}
                 <div className={`p-4 border-t flex justify-end items-center gap-4 ${isDarkMode ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-slate-50'}`}>
-                  <span className="text-sm font-semibold text-slate-500">{lang === 'RU' ? 'Итого по вашим позициям:' : 'Jemi:'}</span>
+                  <span className="text-sm font-semibold text-slate-500">{t('subtotalForYourItemsLabel', 'Итого по вашим позициям:')}</span>
                   <span className={`text-xl font-black ${theme.primaryText}`}>
                     {offer.specs.reduce((sum, spec) => sum + (spec.quantity * spec.unitPrice), 0).toLocaleString('ru-RU', {minimumFractionDigits: 2})}
                   </span>

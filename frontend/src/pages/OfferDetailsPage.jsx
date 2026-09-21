@@ -65,7 +65,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
   if (loading) {
     return (
       <div className="p-16 text-center text-slate-500 font-medium flex flex-col items-center justify-center space-y-3">
-        <div className={`w-8 h-8 border-3 rounded-full animate-spin border-t-transparent ${isAdmin ? 'border-teal-600' : 'border-blue-600'}`} />
+        <div className={`w-8 h-8 border-3 rounded-full animate-spin border-t-transparent ${isAdmin ? 'border-emerald-600' : 'border-blue-600'}`} />
         <span>{t('loading', 'Загрузка данных заявки...')}</span>
       </div>
     );
@@ -74,12 +74,12 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
   if (!offer) {
     return (
       <div className={`p-12 rounded-xl border text-center text-slate-500 ${theme.cardBg}`}>
-        <p className="text-base font-semibold">{lang === 'RU' ? 'Коммерческое предложение не найдено' : 'Teklip tapylmady'}</p>
+        <p className="text-base font-semibold">{t('offerNotFoundTitle', 'Коммерческое предложение не найдено')}</p>
         <button 
           onClick={() => navigate(-1)}
           className="mt-4 px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-colors"
         >
-          {lang === 'RU' ? 'Вернуться назад' : 'Yza gaýt'}
+          {t('goBackBtn', 'Вернуться назад')}
         </button>
       </div>
     );
@@ -135,13 +135,13 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-slate-500 font-medium">
               <span className="flex items-center gap-1.5">
                 <Calendar size={14} className="opacity-70" />
-                <span className="text-slate-400">{lang === 'RU' ? 'Дата подачи:' : 'Tabşyrylan senesi:'}</span>
+                <span className="text-slate-400">{t('submissionDateLabel', 'Дата подачи:')}</span>
                 <strong className="text-slate-700 dark:text-slate-200 font-semibold">{formatDate(offer.createdAt)}</strong>
               </span>
 
               <span className="flex items-center gap-1.5">
                 <Building2 size={14} className="opacity-70" />
-                <span className="text-slate-400">{lang === 'RU' ? 'Поставщик:' : 'Üpjün ediji:'}</span>
+                <span className="text-slate-400">{t('supplierLabel', 'Поставщик:')}</span>
                 <strong className="text-slate-700 dark:text-slate-200 font-semibold">{supplierName}</strong>
               </span>
 
@@ -156,22 +156,22 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
           {/* Виджет общей суммы предложения */}
           <div className={`shrink-0 px-5 py-3.5 rounded-xl border text-right shadow-xs ${
             isAdmin
-              ? 'bg-teal-50/80 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800/80 text-teal-700 dark:text-teal-300'
+              ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300'
               : 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/80 text-blue-700 dark:text-blue-300'
           }`}>
             <span className={`text-[11px] font-bold uppercase tracking-wider block ${
-              isAdmin ? 'text-teal-700 dark:text-teal-300' : 'text-blue-700 dark:text-blue-300'
+              isAdmin ? 'text-emerald-700 dark:text-emerald-300' : 'text-blue-700 dark:text-blue-300'
             }`}>
-              {lang === 'RU' ? 'Сумма предложения' : 'Teklip bahasy'}
+              {t('proposalAmountTitle', 'Сумма предложения')}
             </span>
             <div className={`text-2xl font-black my-0.5 whitespace-nowrap ${
-              isAdmin ? 'text-teal-700 dark:text-teal-300' : 'text-blue-600 dark:text-blue-400'
+              isAdmin ? 'text-emerald-700 dark:text-emerald-300' : 'text-blue-600 dark:text-blue-400'
             }`}>
               {(offer.offeredPrice || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}
             </div>
             <div className="text-[11px] text-slate-500 font-medium flex items-center justify-end gap-1.5 whitespace-nowrap">
-              <CheckCircle2 size={13} className={isAdmin ? "text-teal-600" : "text-blue-600"} />
-              <span>{rawSpecs.length} {lang === 'RU' ? 'позиций в заявке' : 'pozisiýa'}</span>
+              <CheckCircle2 size={13} className={isAdmin ? "text-emerald-600" : "text-blue-600"} />
+              <span>{rawSpecs.length} {t('itemsInBidCount', 'позиций в заявке')}</span>
             </div>
           </div>
         </div>
@@ -182,17 +182,17 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
           <div className="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-900/40 border border-slate-200/70 dark:border-slate-800 space-y-3">
             <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <FileText size={16} className={theme.primaryText} />
-              <span>{lang === 'RU' ? 'Связанный тендер' : 'Degişli tender'}</span>
+              <span>{t('relatedTenderTitle', 'Связанный тендер')}</span>
             </h3>
 
             <div className="space-y-2 text-xs">
               <div className="flex items-start justify-between gap-2">
-                <span className="text-slate-400 font-medium">{lang === 'RU' ? 'Номер тендера:' : 'Tender belgisi:'}</span>
+                <span className="text-slate-400 font-medium">{t('tenderNumberWithColon', 'Номер тендера:')}</span>
                 <span className="font-bold font-mono text-slate-700 dark:text-slate-200">{tenderNumber}</span>
               </div>
 
               <div className="flex items-start justify-between gap-2">
-                <span className="text-slate-400 font-medium">{lang === 'RU' ? 'Предмет тендера:' : 'Tender ady:'}</span>
+                <span className="text-slate-400 font-medium">{t('tenderSubjectWithColon', 'Предмет тендера:')}</span>
                 <span 
                   onClick={() => offer.tender?.id && navigate(`/tender-details/${offer.tender.id}`)}
                   className={`font-bold text-right hover:underline cursor-pointer transition-colors max-w-xs ${theme.primaryText}`}
@@ -202,7 +202,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
               </div>
 
               <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/50 dark:border-slate-800">
-                <span className="text-slate-400 font-medium">{lang === 'RU' ? 'Тип закупки:' : 'Görnüşi:'}</span>
+                <span className="text-slate-400 font-medium">{t('procurementTypeWithColon', 'Тип закупки:')}</span>
                 <div>{getTypeBadge(offer.tender?.type, lang, isDarkMode)}</div>
               </div>
             </div>
@@ -212,29 +212,29 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
           <div className="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-900/40 border border-slate-200/70 dark:border-slate-800 space-y-3">
             <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <MapPin size={16} className={theme.primaryText} />
-              <span>{lang === 'RU' ? 'Условия оплаты и поставки' : 'Töleg we eltip beriş şertleri'}</span>
+              <span>{t('paymentAndDeliveryTermsTitle', 'Условия оплаты и поставки')}</span>
             </h3>
 
             <div className="space-y-2 text-xs">
               <div className="flex items-start justify-between gap-2">
-                <span className="text-slate-400 font-medium">{lang === 'RU' ? 'Условие поставки (общее):' : 'Eltip beriş şerti:'}</span>
+                <span className="text-slate-400 font-medium">{t('generalDeliveryTermLabel', 'Условие поставки (общее):')}</span>
                 <span className={`px-2.5 py-0.5 rounded-md font-bold border ${
                   isAdmin
-                    ? 'bg-teal-100 dark:bg-teal-950/70 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800'
+                    ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                     : 'bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                 }`}>
-                  {offer.deliveryTerm ? `${offer.deliveryTerm.shortName} — ${offer.deliveryTerm.name}` : (lang === 'RU' ? 'По лотам' : 'Lotlar boýunça')}
+                  {offer.deliveryTerm ? `${offer.deliveryTerm.shortName} — ${offer.deliveryTerm.name}` : (t('byLotsBadge', 'По лотам'))}
                 </span>
               </div>
 
               <div className="flex items-start justify-between gap-2">
-                <span className="text-slate-400 font-medium">{lang === 'RU' ? 'Условия оплаты:' : 'Töleg şertleri:'}</span>
-                <span className="font-semibold text-slate-700 dark:text-slate-200 text-right">{offer.paymentTerms || (lang === 'RU' ? 'Не указаны' : 'Görkezilmedik')}</span>
+                <span className="text-slate-400 font-medium">{t('paymentTermsLabel', 'Условия оплаты:')}</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-200 text-right">{offer.paymentTerms || (t('notSpecifiedPlural', 'Не указаны'))}</span>
               </div>
 
               {offer.comment && (
                 <div className="pt-1.5 border-t border-slate-200/50 dark:border-slate-800">
-                  <span className="text-slate-400 font-medium block mb-0.5">{lang === 'RU' ? 'Примечание поставщика:' : 'Bellik:'}</span>
+                  <span className="text-slate-400 font-medium block mb-0.5">{t('supplierNotesLabel', 'Примечание поставщика:')}</span>
                   <p className="text-slate-600 dark:text-slate-300 italic">{offer.comment}</p>
                 </div>
               )}
@@ -249,15 +249,15 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
           <div className="flex items-center gap-2">
             <Package size={20} className={theme.primaryText} />
             <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">
-              {lang === 'RU' ? 'Предложенные товары по лотам' : 'Lotlar boýunça harytlar'}
+              {t('offeredItemsByLotsTitle', 'Предложенные товары по лотам')}
             </h3>
           </div>
           <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
             isAdmin
-              ? 'bg-teal-100 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300'
+              ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
               : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
           }`}>
-            {lang === 'RU' ? `Лотов: ${lotGroups.length || 1} | Позиций: ${rawSpecs.length}` : `Lot: ${lotGroups.length || 1} | Haryt: ${rawSpecs.length}`}
+            {t('lotsAndPositionsCountStr', 'Лотов: ${lotGroups.length || 1} | Позиций: ${rawSpecs.length}')}
           </span>
         </div>
 
@@ -277,17 +277,17 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                 }`}>
                   <div className="flex items-center gap-3">
                     <h4 className="font-extrabold text-base text-slate-800 dark:text-slate-100">
-                      {lang === 'RU' ? 'Лот' : 'Lot'} #{groupIdx + 1}: {group.lot.name}
+                      {t('lotUpperLabel', 'Лот')} #{groupIdx + 1}: {group.lot.name}
                     </h4>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-4">
                     {lotDeliveryTerm && (
                       <div className="flex items-center gap-1.5 text-xs">
-                        <span className="text-slate-400 font-medium">{lang === 'RU' ? 'Условие поставки:' : 'Şerti:'}</span>
+                        <span className="text-slate-400 font-medium">{t('deliveryConditionWithColon', 'Условие поставки:')}</span>
                         <strong className={`px-2.5 py-0.5 rounded-md font-bold border ${
                           isAdmin
-                            ? 'bg-teal-100 dark:bg-teal-950/70 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800'
+                            ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                             : 'bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                         }`}>
                           {lotDeliveryTerm}
@@ -297,7 +297,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
 
                     <div className="text-right pl-3 border-l border-slate-200 dark:border-slate-700">
                       <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">
-                        {lang === 'RU' ? 'Итого по лоту' : 'Lot jemi'}
+                        {t('lotSubtotal', 'Итого по лоту')}
                       </span>
                       <span className={`text-base font-black ${theme.primaryText}`}>
                         {lotTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}
@@ -312,12 +312,12 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                     <thead>
                       <tr className={`font-semibold ${theme.tableHeaderBg}`}>
                         <th className="py-2.5 px-3 w-12 text-center">H/K</th>
-                        <th className="py-2.5 px-3 min-w-60">{lang === 'RU' ? 'Наименование предложенного товара' : 'Harydyň ady'}</th>
-                        <th className="py-2.5 px-3 min-w-45">{lang === 'RU' ? 'Производитель / Модель' : 'Öndüriji'}</th>
-                        <th className="py-2.5 px-3 w-28 text-center">{lang === 'RU' ? 'Ед. изм.' : 'Ölçeg birligi'}</th>
-                        <th className="py-2.5 px-3 w-28 text-center">{lang === 'RU' ? 'Количество' : 'Mukdary'}</th>
-                        <th className="py-2.5 px-3 w-36 text-center">{lang === 'RU' ? `Цена за ед. (${currencyCode})` : 'Birlik bahasy'}</th>
-                        <th className="py-2.5 px-3 w-36 text-right">{lang === 'RU' ? `Сумма (${currencyCode})` : 'Jemi baha'}</th>
+                        <th className="py-2.5 px-3 min-w-60">{t('offeredProductName', 'Наименование предложенного товара')}</th>
+                        <th className="py-2.5 px-3 min-w-45">{t('specBrand', 'Производитель / Модель')}</th>
+                        <th className="py-2.5 px-3 w-28 text-center">{t('specUnit', 'Ед. изм.')}</th>
+                        <th className="py-2.5 px-3 w-28 text-center">{t('specQty', 'Количество')}</th>
+                        <th className="py-2.5 px-3 w-36 text-center">{t('unitPriceWithCurrency', 'Цена за ед. (${currencyCode})')}</th>
+                        <th className="py-2.5 px-3 w-36 text-right">{t('totalSumWithCurrency', 'Сумма (${currencyCode})')}</th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -327,7 +327,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                         const itemPrice = spec.unitPrice || 0;
                         const itemQty = spec.quantity || 0;
                         const lineTotal = itemPrice * itemQty;
-                        const productName = spec.name || spec.tenderSpec?.generalProduct?.name || spec.tenderSpec?.name || (lang === 'RU' ? 'Товар' : 'Haryt');
+                        const productName = spec.name || spec.tenderSpec?.generalProduct?.name || spec.tenderSpec?.name || (t('product', 'Товар'));
 
                         return (
                           <tr key={spec.id || index} className={`${theme.tableRowHover} transition-colors`}>
@@ -374,19 +374,19 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                 <thead>
                   <tr className={`font-semibold ${theme.tableHeaderBg}`}>
                     <th className="py-2.5 px-3 w-12 text-center">H/K</th>
-                    <th className="py-2.5 px-3 min-w-60">{lang === 'RU' ? 'Наименование предложенного товара' : 'Harydyň ady'}</th>
-                    <th className="py-2.5 px-3 min-w-45">{lang === 'RU' ? 'Производитель / Модель' : 'Öndüriji'}</th>
-                    <th className="py-2.5 px-3 w-28 text-center">{lang === 'RU' ? 'Ед. изм.' : 'Ölçeg birligi'}</th>
-                    <th className="py-2.5 px-3 w-28 text-center">{lang === 'RU' ? 'Количество' : 'Mukdary'}</th>
-                    <th className="py-2.5 px-3 w-36 text-center">{lang === 'RU' ? `Цена за ед. (${currencyCode})` : 'Birlik bahasy'}</th>
-                    <th className="py-2.5 px-3 w-36 text-right">{lang === 'RU' ? `Сумма (${currencyCode})` : 'Jemi baha'}</th>
+                    <th className="py-2.5 px-3 min-w-60">{t('offeredProductName', 'Наименование предложенного товара')}</th>
+                    <th className="py-2.5 px-3 min-w-45">{t('specBrand', 'Производитель / Модель')}</th>
+                    <th className="py-2.5 px-3 w-28 text-center">{t('specUnit', 'Ед. изм.')}</th>
+                    <th className="py-2.5 px-3 w-28 text-center">{t('specQty', 'Количество')}</th>
+                    <th className="py-2.5 px-3 w-36 text-center">{t('unitPriceWithCurrency', 'Цена за ед. (${currencyCode})')}</th>
+                    <th className="py-2.5 px-3 w-36 text-right">{t('totalSumWithCurrency', 'Сумма (${currencyCode})')}</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
                   {rawSpecs.length === 0 ? (
                     <tr>
                       <td colSpan="7" className="py-8 text-center text-slate-400">
-                        {lang === 'RU' ? 'В предложении нет позиций' : 'Haryt ýok'}
+                        {t('noItemsInProposal', 'В предложении нет позиций')}
                       </td>
                     </tr>
                   ) : (
@@ -396,7 +396,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                       const itemPrice = spec.unitPrice || 0;
                       const itemQty = spec.quantity || 0;
                       const lineTotal = itemPrice * itemQty;
-                      const productName = spec.name || spec.tenderSpec?.generalProduct?.name || spec.tenderSpec?.name || (lang === 'RU' ? 'Товар' : 'Haryt');
+                      const productName = spec.name || spec.tenderSpec?.generalProduct?.name || spec.tenderSpec?.name || (t('product', 'Товар'));
 
                       return (
                         <tr key={spec.id || index} className={`${theme.tableRowHover} transition-colors`}>
@@ -440,7 +440,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
         {unassignedSpecs.length > 0 && lotGroups.length > 0 && (
           <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
             <div className="p-3 border-b bg-slate-50 dark:bg-slate-900 font-bold text-xs">
-              {lang === 'RU' ? 'Дополнительные позиции' : 'Goşmaça harytlar'}
+              {t('additionalPositionsTitle', 'Дополнительные позиции')}
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
@@ -449,7 +449,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                     const itemPrice = spec.unitPrice || 0;
                     const itemQty = spec.quantity || 0;
                     const lineTotal = itemPrice * itemQty;
-                    const productName = spec.name || spec.tenderSpec?.generalProduct?.name || spec.tenderSpec?.name || (lang === 'RU' ? 'Товар' : 'Haryt');
+                    const productName = spec.name || spec.tenderSpec?.generalProduct?.name || spec.tenderSpec?.name || (t('product', 'Товар'));
 
                     return (
                       <tr key={spec.id || index} className={`${theme.tableRowHover} transition-colors`}>
@@ -473,7 +473,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
           isDarkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-200 bg-slate-50/80'
         }`}>
           <span className="text-xs uppercase tracking-wider font-bold text-slate-500">
-            {lang === 'RU' ? 'Итоговая стоимость коммерческого предложения:' : 'Jemi teklip bahasy:'}
+            {t('totalCommercialProposalCostLabel', 'Итоговая стоимость коммерческого предложения:')}
           </span>
           <span className={`text-xl font-black ${theme.primaryText}`}>
             {(offer.offeredPrice || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}
@@ -489,7 +489,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
             <h3 className="font-bold text-base">{t('attachedDocuments', 'Прикрепленные документы')}</h3>
           </div>
           <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-            {offer.files?.length || 0} {lang === 'RU' ? 'файлов' : 'faýl'}
+            {offer.files?.length || 0} {t('filesSuffix', 'файлов')}
           </span>
         </div>
 
@@ -508,7 +508,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
               {!offer.files || offer.files.length === 0 ? (
                 <tr>
                   <td colSpan="5" className="py-8 text-center text-slate-400">
-                    {lang === 'RU' ? 'Документы не прикреплены к заявке' : 'Resminama goşulmady'}
+                    {t('noDocsAttachedToProposal', 'Документы не прикреплены к заявке')}
                   </td>
                 </tr>
               ) : (

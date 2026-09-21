@@ -143,7 +143,7 @@ const ProductSearchableSelect = ({
           type="button"
           onClick={() => handleOpenModalAndCloseDropdown(search || '')}
           className="p-1.5 rounded-md bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shrink-0 transition-colors"
-          title={lang === 'RU' ? 'Добавить новый товар в справочник (+)' : 'Kataloga täze haryt goşmak (+)'}
+          title={t('addNewProductToCatalog', 'Добавить новый товар в справочник (+)')}
         >
           <Plus size={14} />
         </button>
@@ -166,7 +166,7 @@ const ProductSearchableSelect = ({
               type="text"
               autoFocus
               className={`w-full px-2.5 py-1.5 rounded-lg text-xs ${theme.inputBg} border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30`}
-              placeholder={lang === 'RU' ? 'Поиск товара...' : 'Haryt gözle...'}
+              placeholder={t('searchProductPlaceholder', 'Поиск товара...')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -188,7 +188,7 @@ const ProductSearchableSelect = ({
               ))
             ) : (
               <div className="p-3 text-center text-xs text-slate-400">
-                {lang === 'RU' ? 'Товар не найден в справочнике' : 'Haryt tapylmady'}
+                {t('productNotFoundInCatalog', 'Товар не найден в справочнике')}
               </div>
             )}
 
@@ -200,7 +200,7 @@ const ProductSearchableSelect = ({
               >
                 <Plus size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <span className="truncate">
-                  {lang === 'RU' ? `Добавить в справочник: "${search.trim()}"` : `Kataloga goş: "${search.trim()}"`}
+                  {t('addToCatalogPrompt', 'Добавить в справочник: "${search.trim()}"')}
                 </span>
               </div>
             )}
@@ -376,7 +376,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       }
     } catch (err) {
       console.error('Failed to create product', err);
-      showAlert({ message: err.response?.data?.error || (lang === 'RU' ? 'Ошибка сохранения товара' : 'Ýalňyşlyk'), type: 'error' });
+      showAlert({ message: err.response?.data?.error || (t('errorTitle', 'Ошибка сохранения товара')), type: 'error' });
     }
   };
 
@@ -407,12 +407,12 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
 
   const handleClearDraft = async () => {
     const isConfirmed = await showConfirm({
-      title: lang === 'RU' ? 'Сбросить черновик?' : 'Arassalamak isleýärsiňizmi?',
-      message: lang === 'RU' ? 'Вы уверены, что хотите сбросить форму и очистить черновик?' : 'Formany arassalamak we täzeden başlamak isleýärsiňizmi?',
+      title: t('resetDraftConfirmTitle', 'Сбросить черновик?'),
+      message: t('resetDraftConfirmMessage', 'Вы уверены, что хотите сбросить форму и очистить черновик?'),
       type: 'danger',
       isDanger: true,
-      confirmText: lang === 'RU' ? 'Да, очистить' : 'Hawa, arassala',
-      cancelText: lang === 'RU' ? 'Отмена' : 'Ýatyr'
+      confirmText: t('yesClearBtn', 'Да, очистить'),
+      cancelText: t('cancelEditBtn', 'Отмена')
     });
     if (isConfirmed) {
       sessionStorage.removeItem(DRAFT_KEY);
@@ -534,8 +534,8 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     const defaultUnitId = units.length > 0 ? units[0].id : '';
     const initialLotType = formData.procurementType === 'SERVICES_WORKS' ? 'WORKS' : 'GOODS';
     let initialHaryt = '';
-    if (initialLotType === 'WORKS') initialHaryt = lang === 'RU' ? 'Выполнение комплекса работ согласно ТЗ и смете' : 'Tehniki şertlere laýyklykda işleri ýerine ýetirmek';
-    if (initialLotType === 'SERVICES') initialHaryt = lang === 'RU' ? 'Оказание услуг согласно техническому заданию' : 'Tehniki şertlere laýyklykda hyzmat etmek';
+    if (initialLotType === 'WORKS') initialHaryt = t('worksScopeDefault', 'Выполнение комплекса работ согласно ТЗ и смете');
+    if (initialLotType === 'SERVICES') initialHaryt = t('servicesScopeDefault', 'Оказание услуг согласно техническому заданию');
 
     setLots([
       ...lots,
@@ -559,7 +559,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
   
   // Удаление лота
   const handleRemoveLot = (lotIdx) => {
-    if (lots.length === 1) return showAlert({ message: lang === 'RU' ? 'Должен быть хотя бы один лот' : 'Iň bolmanda bir lot bolmaly', type: 'warning' });
+    if (lots.length === 1) return showAlert({ message: t('atLeastOneLotRequired', 'Должен быть хотя бы один лот'), type: 'warning' });
     setLots(lots.filter((_, i) => i !== lotIdx));
   };
   
@@ -580,14 +580,14 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       const defaultUnitId = units.length > 0 ? units[0].id : '';
       if (!updated[lotIdx].specs || updated[lotIdx].specs.length === 0) {
         let initialHaryt = '';
-        if (sanitizedValue === 'WORKS') initialHaryt = lang === 'RU' ? 'Выполнение комплекса работ согласно ТЗ и смете' : 'Tehniki şertlere laýyklykda işleri ýerine ýetirmek';
-        if (sanitizedValue === 'SERVICES') initialHaryt = lang === 'RU' ? 'Оказание услуг согласно техническому заданию' : 'Tehniki şertlere laýyklykda hyzmat etmek';
+        if (sanitizedValue === 'WORKS') initialHaryt = t('worksScopeDefault', 'Выполнение комплекса работ согласно ТЗ и смете');
+        if (sanitizedValue === 'SERVICES') initialHaryt = t('servicesScopeDefault', 'Оказание услуг согласно техническому заданию');
         updated[lotIdx].specs = [
           { id: Date.now(), hk: '1', haryt: initialHaryt, unit: defaultUnitId, brand: '', mukdar: 1, desc: '' }
         ];
       } else if (updated[lotIdx].specs.length === 1 && !updated[lotIdx].specs[0].haryt) {
-        if (sanitizedValue === 'WORKS') updated[lotIdx].specs[0].haryt = lang === 'RU' ? 'Выполнение комплекса работ согласно ТЗ и смете' : 'Tehniki şertlere laýyklykda işleri ýerine ýetirmek';
-        if (sanitizedValue === 'SERVICES') updated[lotIdx].specs[0].haryt = lang === 'RU' ? 'Оказание услуг согласно техническому заданию' : 'Tehniki şertlere laýyklykda hyzmat etmek';
+        if (sanitizedValue === 'WORKS') updated[lotIdx].specs[0].haryt = t('worksScopeDefault', 'Выполнение комплекса работ согласно ТЗ и смете');
+        if (sanitizedValue === 'SERVICES') updated[lotIdx].specs[0].haryt = t('servicesScopeDefault', 'Оказание услуг согласно техническому заданию');
       }
     }
 
@@ -678,10 +678,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
 
     // 0. Проверка уникальности номера тендера
     if (isTenderNumberDuplicate) {
-      setErrorMsg(lang === 'RU'
-        ? `Тендер с номером "${formData.tenderNumber}" уже существует в системе! Пожалуйста, укажите другой номер или нажмите кнопку "Авто".`
-        : `"${formData.tenderNumber}" belgili tender eýýäm bar. Başga belgi giriziň ýa-da "Awtomat" basyň.`
-      );
+      setErrorMsg(t('tenderNumberDuplicateError', `Тендер с номером "${formData.tenderNumber}" уже существует в системе! Пожалуйста, укажите другой номер или нажмите кнопку "Авто".`, { tenderNumber: formData.tenderNumber }));
       setLoading(false);
       scrollToError();
       return;
@@ -692,10 +689,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       const lot = lots[lotIdx];
       const validSpecs = (lot.specs || []).filter(s => s.haryt && s.haryt.trim() !== '');
       if (validSpecs.length === 0) {
-        setErrorMsg(lang === 'RU'
-          ? `В лоте "${lot.name}" нет заполненных позиций. В каждом лоте должна быть хотя бы одна позиция / этап работ.`
-          : `"${lot.name}" lotunda pozisiýa ýok. Her lotda iň bolmanda bir pozisiýa bolmaly.`
-        );
+        setErrorMsg(t('lotEmptySpecsError', `В лоте "${lot.name}" нет заполненных позиций. В каждом лоте должна быть хотя бы одна позиция / этап работ.`, { lotName: lot.name }));
         setLoading(false);
         scrollToError();
         return;
@@ -710,10 +704,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
         const name = (spec.haryt || '').trim().toLowerCase();
         if (name) {
           if (seenNames.has(name)) {
-            setErrorMsg(lang === 'RU' 
-              ? `В лоте "${lot.name}" товар "${spec.haryt}" указан дважды. Пожалуйста, удалите или переименуйте дубликат.`
-              : `"${lot.name}" lotunda "${spec.haryt}" harydy gaýtalanýar. Gaýtalanýan harydy aýyryň.`
-            );
+            setErrorMsg(t('lotDuplicateItemError', `В лоте "${lot.name}" товар "${spec.haryt}" указан дважды. Пожалуйста, удалите или переименуйте дубликат.`, { lotName: lot.name, itemName: spec.haryt }));
             setLoading(false);
             scrollToError();
             return;
@@ -726,6 +717,16 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     // 3. Проверка обязательных полей
     if (!formData.title || !formData.announcementDate || !formData.deadline || !formData.clientId || !formData.categoryId) {
       setErrorMsg(t('fillRequired', 'Заполните обязательные поля (Название, Категория, Заказчик, Даты)'));
+      setLoading(false);
+      scrollToError();
+      return;
+    }
+
+    // 4. Проверка соотношения дат: дедлайн должен быть строго позже даты объявления
+    const announceDate = new Date(formData.announcementDate);
+    const deadlineDate = new Date(formData.deadline);
+    if (deadlineDate <= announceDate) {
+      setErrorMsg(t('deadlineMustBeAfterAnnouncementError', 'Крайний срок подачи заявок (дедлайн) должен быть позже даты объявления тендера!'));
       setLoading(false);
       scrollToError();
       return;
@@ -771,7 +772,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       });
 
       await showAlert({
-        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
+        title: t('successTitle', 'Успешно'),
         message: t('tenderCreatedSuccess', 'Тендер успешно создан!'),
         type: 'success'
       });
@@ -805,7 +806,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
           }`}
         >
           <span className="text-amber-500 font-bold text-xs">⚠️</span>
-          <span>{lang === 'RU' ? `Символ "${forbiddenBadge.char}" недопустим` : `"${forbiddenBadge.char}" simwoly gadagan`}</span>
+          <span>{t('forbiddenCharNotice', 'Символ "${forbiddenBadge.char}" недопустим')}</span>
           <div
             className={`absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent ${
               isDarkMode ? 'border-t-[#0f172a]' : 'border-t-white'
@@ -831,10 +832,10 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
             type="button"
             onClick={handleClearDraft}
             className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20 text-slate-500 transition-colors flex items-center gap-1.5 shadow-xs animate-in fade-in"
-            title={lang === 'RU' ? 'Очистить черновик и начать сначала' : 'Arassalamak'}
+            title={t('clearDraftAndRestart', 'Очистить черновик и начать сначала')}
           >
             <Trash2 size={14} />
-            <span>{lang === 'RU' ? 'Очистить черновик' : 'Arassala'}</span>
+            <span>{t('clearBtn', 'Очистить черновик')}</span>
           </button>
         )}
       </div>
@@ -849,8 +850,8 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                 <FileText size={16} />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">{lang === 'RU' ? 'Основные параметры' : 'Esasy parametrler'}</h3>
-                <p className="text-[11px] text-slate-400">{lang === 'RU' ? 'Номер, наименование, категория и сроки подачи' : 'Tender belgisi, ady we möhletleri'}</p>
+                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('mainParametersTitle', 'Основные параметры')}</h3>
+                <p className="text-[11px] text-slate-400">{t('mainParametersSubtitle', 'Номер, наименование, категория и сроки подачи')}</p>
               </div>
             </div>
           </div>
@@ -861,16 +862,16 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
               <div className="md:col-span-4">
                 <div className="flex items-center justify-between mb-1">
                   <label className="font-semibold flex items-center">
-                    {lang === 'RU' ? 'Номер тендера' : 'Tender belgisi'}*
+                    {t('tenderNumberTitle', 'Номер тендера')}*
                   </label>
                   <button
                     type="button"
                     onClick={fetchNextTenderNumber}
                     className="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1 cursor-pointer"
-                    title={lang === 'RU' ? 'Сгенерировать следующий системный номер' : 'Awtomatiki täzelemek'}
+                    title={t('generateNextNumberTooltip', 'Сгенерировать следующий системный номер')}
                   >
                     <RefreshCw size={11} />
-                    <span>{lang === 'RU' ? 'Авто' : 'Awtomat'}</span>
+                    <span>{t('autoGenerateBadge', 'Авто')}</span>
                   </button>
                 </div>
                 <input
@@ -889,9 +890,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                   <p className="text-[10px] text-rose-500 font-semibold mt-1 animate-in fade-in flex items-center gap-1">
                     <span>⚠️</span>
                     <span>
-                      {lang === 'RU' 
-                        ? `Номер "${formData.tenderNumber}" уже занят другим тендером!` 
-                        : `"${formData.tenderNumber}" belgili tender eýýäm bar!`}
+                      {t('tenderNumberTakenNotice', `Номер "${formData.tenderNumber}" уже занят другим тендером!`, { tenderNumber: formData.tenderNumber })}
                     </span>
                   </p>
                 )}
@@ -904,7 +903,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                 <input
                   type="text"
                   required
-                  placeholder={lang === 'RU' ? 'Введите название предмета тендера...' : 'Tender adyny giriziň...'}
+                  placeholder={t('tenderTitlePlaceholder', 'Введите название предмета тендера...')}
                   value={formData.title}
                   onChange={(e) => handleFormChange('title', e.target.value, e)}
                   className={`w-full px-3 py-2 rounded-lg text-xs transition-all duration-150 ${theme.inputBg}`}
@@ -929,16 +928,16 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
               </div>
 
               <div>
-                <label className="block font-semibold mb-1">{lang === 'RU' ? 'Направление закупки' : 'Satyn alyş ugry'}*</label>
+                <label className="block font-semibold mb-1">{t('procurementCategory', 'Направление закупки')}*</label>
                 <CustomSelect
                   options={[
-                    { id: 'GOODS', name: lang === 'RU' ? 'Поставка товаров' : 'Haryt üpjünçiligi' },
-                    { id: 'SERVICES_WORKS', name: lang === 'RU' ? 'Работы и услуги' : 'Işler we hyzmatlar' },
-                    { id: 'MIXED', name: lang === 'RU' ? 'Смешанный (Комплексный)' : 'Gatyşyk (Toplumlaýyn)' }
+                    { id: 'GOODS', name: t('supplyOfGoodsCategory', 'Поставка товаров') },
+                    { id: 'SERVICES_WORKS', name: t('worksAndServicesCategory', 'Работы и услуги') },
+                    { id: 'MIXED', name: t('mixedComplexCategory', 'Смешанный (Комплексный)') }
                   ]}
                   value={formData.procurementType}
                   onChange={(val) => handleFormChange('procurementType', val)}
-                  placeholder={lang === 'RU' ? 'Направление закупки' : 'Satyn alyş ugry'}
+                  placeholder={t('procurementCategory', 'Направление закупки')}
                   isDarkMode={isDarkMode}
                   theme={theme}
                   t={t}
@@ -987,7 +986,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                   isDarkMode={isDarkMode}
                   theme={theme}
                   lang={lang}
-                  placeholder={lang === 'RU' ? 'ДД.ММ.ГГГГ' : 'GG.AA.ÝÝÝÝ'}
+                  placeholder={t('dateFormatPlaceholder', 'ДД.ММ.ГГГГ')}
                 />
               </div>
 
@@ -1001,7 +1000,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                   theme={theme}
                   lang={lang}
                   min={formData.announcementDate || undefined}
-                  placeholder={lang === 'RU' ? 'ДД.ММ.ГГГГ' : 'GG.AA.ÝÝÝÝ'}
+                  placeholder={t('dateFormatPlaceholder', 'ДД.ММ.ГГГГ')}
                 />
               </div>
 
@@ -1066,8 +1065,8 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                 <AlignLeft size={16} />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">{lang === 'RU' ? 'Описание и технические требования' : 'Mazmuny we tehniki talaplar'}</h3>
-                <p className="text-[11px] text-slate-400">{lang === 'RU' ? 'Подробные условия закупки, стандарты качества и технические условия' : 'Satyn alyş şertleri we talaplary'}</p>
+                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('descAndTechSpecsTitle', 'Описание и технические требования')}</h3>
+                <p className="text-[11px] text-slate-400">{t('descAndTechSpecsSubtitle', 'Подробные условия закупки, стандарты качества и технические условия')}</p>
               </div>
             </div>
           </div>
@@ -1081,7 +1080,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
               <textarea
                 rows={3}
                 required
-                placeholder={lang === 'RU' ? 'Подробное описание предмета закупки...' : 'Tender barada giňişleýin maglumat...'}
+                placeholder={t('procurementDescriptionPlaceholder', 'Подробное описание предмета закупки...')}
                 value={formData.description}
                 onChange={(e) => handleFormChange('description', e.target.value, e)}
                 className={`w-full p-3 rounded-lg text-xs leading-relaxed ${theme.inputBg}`}
@@ -1096,7 +1095,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
               <textarea
                 rows={3}
                 required
-                placeholder={lang === 'RU' ? 'Технические требования к продукции...' : 'Önümlere bildirilýän tehniki talaplar...'}
+                placeholder={t('technicalRequirementsPlaceholder', 'Технические требования к продукции...')}
                 value={formData.technicalSpecs}
                 onChange={(e) => handleFormChange('technicalSpecs', e.target.value, e)}
                 className={`w-full p-3 rounded-lg text-xs leading-relaxed ${theme.inputBg}`}
@@ -1109,9 +1108,9 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <h3 className={`font-bold text-lg ${theme.primaryText}`}>{lang === 'RU' ? 'Лоты и позиции' : 'Lotlar we pozisiýalar'}</h3>
+            <h3 className={`font-bold text-lg ${theme.primaryText}`}>{t('lotsAndPositionsTitle', 'Лоты и позиции')}</h3>
             <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
-              {lots.length} {lang === 'RU' ? (lots.length === 1 ? 'лот' : 'лота') : 'lot'}
+              {lots.length} {t('lotLabel', 'лот')}
             </span>
           </div>
         </div>
@@ -1133,7 +1132,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                       required
                       value={lot.name}
                       onChange={(e) => handleLotChange(lotIdx, 'name', e.target.value, e)}
-                      placeholder={lang === 'RU' ? 'Напр: Лот 1: Оборудование' : 'Meselem: Lot 1'}
+                      placeholder={t('lotNamePlaceholder', 'Напр: Лот 1: Оборудование')}
                       className={`w-full max-w-sm px-3 py-1.5 rounded-lg text-sm font-bold ${theme.inputBg}`}
                     />
                   </div>
@@ -1151,7 +1150,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                         }`}
                       >
                         <Package size={13} />
-                        <span>{lang === 'RU' ? 'Товары / Материалы' : 'Harytlar'}</span>
+                        <span>{t('catProductsSub', 'Товары / Материалы')}</span>
                       </button>
                       <button
                         type="button"
@@ -1163,7 +1162,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                         }`}
                       >
                         <Wrench size={13} />
-                        <span>{lang === 'RU' ? 'Работы / Ремонт' : 'Işler / Remont'}</span>
+                        <span>{t('worksMaintenanceType', 'Работы / Ремонт')}</span>
                       </button>
                       <button
                         type="button"
@@ -1175,7 +1174,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                         }`}
                       >
                         <Settings2 size={13} />
-                        <span>{lang === 'RU' ? 'Услуги / Сервис' : 'Hyzmatlar'}</span>
+                        <span>{t('servicesType', 'Услуги / Сервис')}</span>
                       </button>
                     </div>
 
@@ -1184,7 +1183,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                         type="button"
                         onClick={() => handleRemoveLot(lotIdx)}
                         className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95 cursor-pointer"
-                        title={lang === 'RU' ? 'Удалить лот' : 'Loty pozmak'}
+                        title={t('deleteLotBtn', 'Удалить лот')}
                       >
                         <Trash2 size={15} />
                       </button>
@@ -1197,13 +1196,13 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-800">
                     <div>
                       <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                        {lang === 'RU' ? 'Условия поставки (Incoterms)' : 'Eltip beriş şerti (Incoterms)'}*
+                        {t('incotermsTermsTitle', 'Условия поставки (Incoterms)')}*
                       </label>
                       <CustomSelect
                         options={deliveryTerms.map(dt => ({ id: dt.id, name: `${dt.shortName} — ${dt.name}` }))}
                         value={lot.deliveryTermId}
                         onChange={(val) => handleLotChange(lotIdx, 'deliveryTermId', val)}
-                        placeholder={lang === 'RU' ? 'Выберите условие поставки...' : 'Eltip beriş şertini saýlaň...'}
+                        placeholder={t('selectIncotermsPlaceholder', 'Выберите условие поставки...')}
                         searchable={deliveryTerms.length > 5}
                         isDarkMode={isDarkMode}
                         theme={theme}
@@ -1212,13 +1211,13 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                     </div>
                     <div>
                       <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                        {lang === 'RU' ? 'Склад / Адрес доставки' : 'Eltip bermeli salgysy'}
+                        {t('warehouseAddressTitle', 'Склад / Адрес доставки')}
                       </label>
                       <input
                         type="text"
                         value={lot.deliveryAddress || ''}
                         onChange={(e) => handleLotChange(lotIdx, 'deliveryAddress', e.target.value, e)}
-                        placeholder={lang === 'RU' ? 'Напр: г. Ашхабад, Центр кардиологии, Склад №2' : 'Salgysy...'}
+                        placeholder={t('deliveryAddressPlaceholder', 'Напр: г. Ашхабад, Центр кардиологии, Склад №2')}
                         className={`w-full px-3 py-2 rounded-lg text-xs font-medium ${theme.inputBg}`}
                       />
                     </div>
@@ -1229,26 +1228,26 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-800">
                     <div>
                       <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                        {lang === 'RU' ? 'Адрес объекта выполнения работ' : 'Iş geçiriljek ýeri'}*
+                        {t('workSiteAddressTitle', 'Адрес объекта выполнения работ')}*
                       </label>
                       <input
                         type="text"
                         required
                         value={lot.workAddress || ''}
                         onChange={(e) => handleLotChange(lotIdx, 'workAddress', e.target.value, e)}
-                        placeholder={lang === 'RU' ? 'Напр: г. Аркадаг, Корпус Б' : 'Obýekt salgysy...'}
+                        placeholder={t('workSiteAddressPlaceholder', 'Напр: г. Аркадаг, Корпус Б')}
                         className={`w-full px-3 py-2 rounded-lg text-xs font-medium ${theme.inputBg}`}
                       />
                     </div>
                     <div>
                       <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                        {lang === 'RU' ? 'Срок выполнения (график)' : 'Ýerine ýetiriş möhleti'}
+                        {t('executionTimelineTitle', 'Срок выполнения (график)')}
                       </label>
                       <input
                         type="text"
                         value={lot.workPeriod || ''}
                         onChange={(e) => handleLotChange(lotIdx, 'workPeriod', e.target.value, e)}
-                        placeholder={lang === 'RU' ? 'Напр: 45 календарных дней' : 'Möhleti...'}
+                        placeholder={t('executionTimelinePlaceholder', 'Напр: 45 календарных дней')}
                         className={`w-full px-3 py-2 rounded-lg text-xs font-medium ${theme.inputBg}`}
                       />
                     </div>
@@ -1260,7 +1259,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                           onChange={(e) => handleLotChange(lotIdx, 'licenseRequired', e.target.checked)}
                           className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                         />
-                        <span>{lang === 'RU' ? 'Требуется строительная лицензия' : 'Gurluşyk ygtyýarnamasy talap edilýär'}</span>
+                        <span>{t('constructionLicenseRequired', 'Требуется строительная лицензия')}</span>
                       </label>
                     </div>
                   </div>
@@ -1270,17 +1269,17 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-800">
                     <div>
                       <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                        {lang === 'RU' ? 'Формат оказания услуг' : 'Hyzmatyň görnüşi'}*
+                        {t('serviceFormatTitle', 'Формат оказания услуг')}*
                       </label>
                       <CustomSelect
                         options={[
-                          { id: 'ON_SITE', name: lang === 'RU' ? 'На объекте заказчика' : 'Sargyt edijiniň ýerinde' },
-                          { id: 'REMOTE', name: lang === 'RU' ? 'Удаленно' : 'Alysda / Onlaýn' },
-                          { id: 'HYBRID', name: lang === 'RU' ? 'Гибридный формат' : 'Gatyşyk' }
+                          { id: 'ON_SITE', name: t('onCustomerSiteFormat', 'На объекте заказчика') },
+                          { id: 'REMOTE', name: t('remoteFormat', 'Удаленно') },
+                          { id: 'HYBRID', name: t('hybridFormatOption', 'Гибридный формат') }
                         ]}
                         value={lot.serviceFormat || 'ON_SITE'}
                         onChange={(val) => handleLotChange(lotIdx, 'serviceFormat', val)}
-                        placeholder={lang === 'RU' ? 'Формат оказания' : 'Hyzmat görnüşi'}
+                        placeholder={t('deliveryFormatTitle', 'Формат оказания')}
                         isDarkMode={isDarkMode}
                         theme={theme}
                         t={t}
@@ -1288,13 +1287,13 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                     </div>
                     <div>
                       <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                        {lang === 'RU' ? 'Срок действия / регламент SLA' : 'SLA tertibi / Möhleti'}
+                        {t('slaRegulationTitle', 'Срок действия / регламент SLA')}
                       </label>
                       <input
                         type="text"
                         value={lot.slaPeriod || ''}
                         onChange={(e) => handleLotChange(lotIdx, 'slaPeriod', e.target.value, e)}
-                        placeholder={lang === 'RU' ? 'Напр: 12 месяцев, реагирование 24/7' : 'SLA şertleri...'}
+                        placeholder={t('slaRegulationPlaceholder', 'Напр: 12 месяцев, реагирование 24/7')}
                         className={`w-full px-3 py-2 rounded-lg text-xs font-medium ${theme.inputBg}`}
                       />
                     </div>
@@ -1309,9 +1308,9 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                     <th className="py-3 px-3 w-10 text-center">#</th>
                     <th className="py-3 px-3 min-w-50">
                       {currentLotType === 'WORKS' 
-                        ? (lang === 'RU' ? 'Этап / вид работ *' : 'Işiň tapgyry / görnüşi *')
+                        ? (t('workStageRequiredTitle', 'Этап / вид работ *'))
                         : currentLotType === 'SERVICES'
-                        ? (lang === 'RU' ? 'Наименование услуги *' : 'Hyzmatyň ady *')
+                        ? (t('serviceNameRequiredTitle', 'Наименование услуги *'))
                         : `${t('specProduct', 'Haryt')} *`}
                     </th>
                     <th className="py-3 px-3 w-40 text-center">{t('specUnit', 'Ölçeg birligi')} *</th>
@@ -1320,14 +1319,14 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                     )}
                     <th className="py-3 px-3 w-32 text-center whitespace-nowrap">
                       {currentLotType === 'SERVICES' 
-                        ? (lang === 'RU' ? 'Объем / Период *' : 'Möçberi / Möhleti *')
+                        ? (t('volumePeriodRequiredTitle', 'Объем / Период *'))
                         : `${t('specQty', 'Mukdar')} *`}
                     </th>
                     <th className="py-3 px-3 min-w-55">
                       {currentLotType === 'WORKS'
-                        ? (lang === 'RU' ? 'Состав и спецификация работ' : 'Işiň düzümi we häsiýetnamasy')
+                        ? (t('scopeOfWork', 'Состав и спецификация работ'))
                         : currentLotType === 'SERVICES'
-                        ? (lang === 'RU' ? 'Регламент и описание услуги' : 'Hyzmatyň tertibi we mazmuny')
+                        ? (t('serviceRegulations', 'Регламент и описание услуги'))
                         : t('specDesc', 'Mazmuny')}
                     </th>
                     <th className="py-3 px-3 w-12 text-center">{t('action', 'Amal')}</th>
@@ -1339,10 +1338,10 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                       <td colSpan={currentLotType === 'GOODS' ? 7 : 6} className="py-8 text-center text-slate-400">
                         <p className="text-xs mb-2.5">
                           {currentLotType === 'WORKS'
-                            ? (lang === 'RU' ? 'В этом лоте пока нет этапов работ' : 'Bu lota entek iş tapgyry goşulmady')
+                            ? (t('noStagesInLotYet', 'В этом лоте пока нет этапов работ'))
                             : currentLotType === 'SERVICES'
-                            ? (lang === 'RU' ? 'В этом лоте пока нет позиций услуг' : 'Bu lota entek hyzmat goşulmady')
-                            : (lang === 'RU' ? 'В этом лоте пока нет позиций' : 'Bu lota entek haryt goşulmady')}
+                            ? (t('noServicesInLotYet', 'В этом лоте пока нет позиций услуг'))
+                            : (t('noPositionsInLotYet', 'В этом лоте пока нет позиций'))}
                         </p>
                         <button
                           type="button"
@@ -1351,10 +1350,10 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                         >
                           <Plus size={14} />
                           {currentLotType === 'WORKS'
-                            ? (lang === 'RU' ? 'Добавить этап / вид работ' : 'Iş tapgyryny goş')
+                            ? (t('addWorkStage', 'Добавить этап / вид работ'))
                             : currentLotType === 'SERVICES'
-                            ? (lang === 'RU' ? 'Добавить позицию услуги' : 'Hyzmat goş')
-                            : (lang === 'RU' ? 'Добавить первую позицию' : 'Ilkinji harydy goş')}
+                            ? (t('addServicePosition', 'Добавить позицию услуги'))
+                            : (t('addFirstPositionBtn', 'Добавить первую позицию'))}
                         </button>
                       </td>
                     </tr>
@@ -1373,7 +1372,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                                 products={products}
                                 value={item.haryt}
                                 generalProductId={item.generalProductId}
-                                placeholder={lang === 'RU' ? 'Выберите или найдите товар...' : 'Haryt saýlaň...'}
+                                placeholder={t('selectOrSearchProductPlaceholder', 'Выберите или найдите товар...')}
                                 onChange={(prodName, prodId) => handleSpecChange(lotIdx, idx, 'productSelect', prodName, prodId)}
                                 onOpenCreateModal={(initialText) => handleOpenProductModal(initialText, lotIdx, idx)}
                                 isDarkMode={isDarkMode}
@@ -1383,7 +1382,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                               />
                               {isDup && (
                                 <span className="block text-[10px] text-rose-500 font-semibold mt-1">
-                                  ⚠️ {lang === 'RU' ? 'Этот товар уже есть в данном лоте' : 'Bu haryt eýýäm bar'}
+                                  ⚠️ {t('itemAlreadyInLotNotice', 'Этот товар уже есть в данном лоте')}
                                 </span>
                               )}
                             </>
@@ -1395,8 +1394,8 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                               onChange={(e) => handleSpecChange(lotIdx, idx, 'haryt', e.target.value, e)}
                               placeholder={
                                 currentLotType === 'WORKS'
-                                  ? (lang === 'RU' ? 'Напр: Демонтажные работы, монтаж системы...' : 'Işiň ady...')
-                                  : (lang === 'RU' ? 'Напр: Сервисное и техническое обслуживание...' : 'Hyzmatyň ady...')
+                                  ? (t('workExamplePlaceholder', 'Напр: Демонтажные работы, монтаж системы...'))
+                                  : (t('serviceExamplePlaceholder', 'Напр: Сервисное и техническое обслуживание...'))
                               }
                               className={`w-full px-3 py-1.5 rounded-lg text-xs font-medium border focus:outline-none focus:ring-1 focus:ring-emerald-500 ${theme.inputBg}`}
                             />
@@ -1410,7 +1409,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                             options={units.map(u => ({ id: u.id, name: `${u.name} (${u.shortName})` }))}
                             value={item.unit}
                             onChange={(val) => handleSpecChange(lotIdx, idx, 'unit', val)}
-                            placeholder={lang === 'RU' ? 'Выберите...' : 'Saýlaň...'}
+                            placeholder={t('select', 'Выберите...')}
                             searchable={units.length > 6}
                             isDarkMode={isDarkMode}
                             theme={theme}
@@ -1424,12 +1423,12 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                             <CustomSelect
                               size="sm"
                               options={[
-                                { id: '', name: lang === 'RU' ? 'Не указан' : 'Görkezilmedik' },
+                                { id: '', name: t('notSpecified', 'Не указан') },
                                 ...manufacturers.map(m => ({ id: m.id, name: m.name }))
                               ]}
                               value={item.brand || ''}
                               onChange={(val) => handleSpecChange(lotIdx, idx, 'brand', val)}
-                              placeholder={lang === 'RU' ? 'Не указан' : 'Görkezilmedik'}
+                              placeholder={t('notSpecified', 'Не указан')}
                               searchable={manufacturers.length > 5}
                               isDarkMode={isDarkMode}
                               theme={theme}
@@ -1457,10 +1456,10 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                             rows={1}
                             placeholder={
                               currentLotType === 'WORKS'
-                                ? (lang === 'RU' ? 'Состав работ / ТЗ...' : 'Işiň beýany...')
+                                ? (t('scopeOfWorkPlaceholder', 'Состав работ / ТЗ...'))
                                 : currentLotType === 'SERVICES'
-                                ? (lang === 'RU' ? 'Регламент обслуживания...' : 'Hyzmatyň tertibi...')
-                                : (lang === 'RU' ? 'Характеристики / Описание...' : 'Mazmuny...')
+                                ? (t('maintenanceRegulationsPlaceholder', 'Регламент обслуживания...'))
+                                : (t('specsDescriptionPlaceholder', 'Характеристики / Описание...'))
                             }
                             value={item.desc}
                             onChange={(e) => {
@@ -1483,7 +1482,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                             type="button"
                             onClick={() => handleRemoveSpec(lotIdx, idx)}
                             className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95 cursor-pointer mx-auto"
-                            title={lang === 'RU' ? 'Удалить позицию' : 'Pozmak'}
+                            title={t('delete', 'Удалить позицию')}
                           >
                             <Trash2 size={15} />
                           </button>
@@ -1505,10 +1504,10 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                 <Plus size={15} />
                 <span>
                   {currentLotType === 'WORKS'
-                    ? (lang === 'RU' ? 'Добавить этап / вид работ' : 'Iş tapgyryny goş')
+                    ? (t('addWorkStage', 'Добавить этап / вид работ'))
                     : currentLotType === 'SERVICES'
-                    ? (lang === 'RU' ? 'Добавить позицию услуги' : 'Hyzmat goş')
-                    : (lang === 'RU' ? 'Добавить позицию в лот' : 'Lota haryt goş')}
+                    ? (t('addServicePosition', 'Добавить позицию услуги'))
+                    : (t('addItemToLotBtn', 'Добавить позицию в лот'))}
                 </span>
               </button>
             </div>
@@ -1529,7 +1528,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
           <div className="w-6 h-6 rounded-full bg-emerald-600 group-hover:bg-emerald-700 text-white flex items-center justify-center transition-colors shadow-xs">
             <Plus size={15} />
           </div>
-          <span>{lang === 'RU' ? 'Добавить новый лот' : 'Täze lot goşmak'}</span>
+          <span>{t('addNewLotBtn', 'Добавить новый лот')}</span>
         </button>
       </div>
 
@@ -1542,7 +1541,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
             </div>
             <div>
               <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('documents', 'Resminamalar')}</h3>
-              <p className="text-[11px] text-slate-400">{lang === 'RU' ? 'Прикрепите сопутствующие тендерные документы и спецификации' : 'Goşmaça faýllary ýükläň'}</p>
+              <p className="text-[11px] text-slate-400">{t('attachTenderDocsSubtitle', 'Прикрепите сопутствующие тендерные документы и спецификации')}</p>
             </div>
           </div>
           <input
@@ -1553,7 +1552,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
           />
           <button type="button" onClick={handleFileClick} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer">
             <Plus size={15} />
-            <span>{lang === 'RU' ? 'Загрузить файл' : 'Faýl ýükle'}</span>
+            <span>{t('uploadFileBtn', 'Загрузить файл')}</span>
           </button>
         </div>
 
@@ -1590,7 +1589,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
                       type="button"
                       onClick={() => setDocs(docs.filter((_, i) => i !== idx))}
                       className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95 cursor-pointer mx-auto"
-                      title={lang === 'RU' ? 'Удалить документ' : 'Faýly pozmak'}
+                      title={t('deleteDocumentTooltip', 'Удалить документ')}
                     >
                       <Trash2 size={15} />
                     </button>
@@ -1625,8 +1624,8 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
               : 'text-slate-500 dark:text-slate-400'
           }`}>
             {isFormValid
-              ? (lang === 'RU' ? 'Все обязательные поля заполнены' : 'Ähli hökmany meýdanlar dolduryldy')
-              : (lang === 'RU' ? 'Заполните обязательные поля (*)' : 'Hökmany meýdanlary dolduryň')}
+              ? (t('allRequiredFieldsFilled', 'Все обязательные поля заполнены'))
+              : (t('fillRequiredFieldsPrompt', 'Заполните обязательные поля (*)'))}
           </span>
         </div>
 
@@ -1637,7 +1636,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
               onClick={handleClearDraft}
               className="px-4 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30 text-slate-600 dark:text-slate-400 transition-all active:scale-95 cursor-pointer"
             >
-              {lang === 'RU' ? 'Очистить черновик' : 'Arassala'}
+              {t('clearBtn', 'Очистить черновик')}
             </button>
           )}
 
@@ -1652,7 +1651,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
             disabled={loading}
             className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
           >
-            {lang === 'RU' ? 'Сохранить черновик' : 'Taslama sakla'}
+            {t('saveDraftBtn', 'Сохранить черновик')}
           </button>
 
           <button
@@ -1662,7 +1661,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
             className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 disabled:opacity-50 active:scale-95 cursor-pointer"
           >
             <Save size={16} />
-            <span>{loading ? t('saving', 'Saklanýar...') : (lang === 'RU' ? 'Опубликовать тендер' : 'Tenderi çap et')}</span>
+            <span>{loading ? t('saving', 'Saklanýar...') : (t('publishTenderBtn', 'Опубликовать тендер'))}</span>
           </button>
         </div>
       </div>

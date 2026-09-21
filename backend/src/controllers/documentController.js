@@ -72,13 +72,57 @@ const getDocuments = async (req, res) => {
     }
 };
 
+const fs = require('fs');
+
 const deleteDocument = async (req, res) => {
     try {
         const { id } = req.params;
-        await prisma.supplierFile.deleteMany({ where: { documentId: id } });
-        await prisma.tenderFile.deleteMany({ where: { documentId: id } });
-        await prisma.offerFile.deleteMany({ where: { documentId: id } });
-        await prisma.document.delete({ where: { id } });
+
+        const doc = await prisma.document.findUnique({
+            where: { id },
+            include: {
+                supplierFiles: { include: { supplier: true } },
+                offerFiles: { include: { offer: { include: { supplier: true } } } },
+                tenderFiles: { include: { tender: true } }
+            }
+        });
+
+        if (!doc) {
+            return res.status(404).json({ error: 'Документ не найден' });
+        }
+
+        // Защита от IDOR: проверка прав доступа
+        if (req.user.roleType !== 'ADMIN') {
+            // Документы тендера может удалять только организатор/администратор
+            if (doc.tenderFiles && doc.tenderFiles.length > 0) {
+                return res.status(403).json({ error: 'У вас нет прав на удаление документов тендера' });
+            }
+
+            // Проверяем принадлежность документа поставщику
+            const isOwnerOfSupplierDoc = doc.supplierFiles.some(sf => sf.supplier?.userId === req.user.id);
+            const isOwnerOfOfferDoc = doc.offerFiles.some(of => of.offer?.supplier?.userId === req.user.id);
+
+            if (!isOwnerOfSupplierDoc && !isOwnerOfOfferDoc) {
+                return res.status(403).json({ error: 'Доступ запрещен. Вы не являетесь владельцем этого документа.' });
+            }
+        }
+
+        const filePath = doc.filePath;
+
+        await prisma.$transaction([
+            prisma.supplierFile.deleteMany({ where: { documentId: id } }),
+            prisma.tenderFile.deleteMany({ where: { documentId: id } }),
+            prisma.offerFile.deleteMany({ where: { documentId: id } }),
+            prisma.document.delete({ where: { id } })
+        ]);
+
+        // Физическое удаление файла с сервера для предотвращения утечки диска
+        if (filePath && fs.existsSync(filePath)) {
+            fs.unlink(filePath, (err) => {
+                if (err) console.error('Ошибка удаления физического файла:', err.message);
+            });
+        }
+
         res.json({ success: true, message: 'Документ успешно удален' });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при удалении документа', details: error.message });

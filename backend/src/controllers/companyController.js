@@ -56,7 +56,10 @@
                         phone: phone,
                         address: address,
                         email: email,
-                        licenseNumber: license,
+                        taxId: inn || null,
+                        licenseNumber: license || null,
+                        countryId: countryId || null,
+                        verificationStatus: 'VERIFIED',
                     }
                 });
 

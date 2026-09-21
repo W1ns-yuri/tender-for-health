@@ -68,7 +68,7 @@ export default function OfferModal({ tender, onClose, onSuccess, role, isDarkMod
         }))
       });
       await showAlert({
-        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
+        title: t('successTitle', 'Успешно'),
         message: t('successOffer', 'Коммерческое предложение успешно отправлено!'),
         type: 'success'
       });
@@ -76,7 +76,7 @@ export default function OfferModal({ tender, onClose, onSuccess, role, isDarkMod
       onClose();
     } catch (err) {
       showAlert({
-        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
+        title: t('errorTitle', 'Ошибка'),
         message: `${t('errorOffer', 'Ошибка: Предложение не отправлено! ')} ${err.response?.data?.error || err.message}`,
         type: 'error'
       });
@@ -93,7 +93,7 @@ export default function OfferModal({ tender, onClose, onSuccess, role, isDarkMod
         <div className={`p-5 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-100 bg-slate-50'}`}>
           <div>
             <h2 className={`text-lg font-bold ${theme.primaryText}`}>{t('createOfferTitle', 'Teklip döretmek')}</h2>
-            <p className="text-xs font-semibold text-teal-600">{tender?.tenderNumber || 'Lot № 325'}</p>
+            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">{tender?.tenderNumber || 'Lot № 325'}</p>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -106,7 +106,7 @@ export default function OfferModal({ tender, onClose, onSuccess, role, isDarkMod
             <button
               onClick={handleSubmitOffer}
               disabled={isSubmitting}
-              className="px-5 py-1.5 bg-teal-800 hover:bg-teal-900 text-white text-xs font-semibold rounded-lg transition-colors flex items-center space-x-1.5"
+              className="px-5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center space-x-1.5"
             >
               <Check size={15} />
               <span>{t('saveBtn', 'Ýatda sakla')}</span>
@@ -155,7 +155,7 @@ export default function OfferModal({ tender, onClose, onSuccess, role, isDarkMod
                 type="text"
                 value={paymentTerms}
                 onChange={(e) => setPaymentTerms(e.target.value)}
-                className={`w-full p-2.5 rounded-lg focus:ring-2 focus:ring-teal-500/20 border ${theme.inputBg}`}
+                className={`w-full p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500/20 border ${theme.inputBg}`}
               />
             </div>
 
@@ -166,7 +166,7 @@ export default function OfferModal({ tender, onClose, onSuccess, role, isDarkMod
                 placeholder="..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className={`w-full p-2.5 rounded-lg focus:ring-2 focus:ring-teal-500/20 border ${theme.inputBg}`}
+                className={`w-full p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500/20 border ${theme.inputBg}`}
               />
             </div>
           </div>
@@ -194,17 +194,17 @@ export default function OfferModal({ tender, onClose, onSuccess, role, isDarkMod
             <div className={`border rounded-lg overflow-hidden ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
               <div className={`px-3 py-2 text-xs font-semibold flex justify-between items-center ${isDarkMode ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700'}`}>
                 <span>{t('selectedItems', 'Saýlananlar')}</span>
-                <button onClick={() => setShowItemModal(true)} className="text-teal-600 hover:underline text-xs flex items-center">
+                <button onClick={() => setShowItemModal(true)} className="text-blue-600 dark:text-blue-400 hover:underline text-xs flex items-center">
                   <Plus size={14} className="mr-0.5" /> {t('addBtn', 'Goşmak')}
                 </button>
               </div>
               <div className="p-2 space-y-2 max-h-48 overflow-y-auto text-xs">
                 {offerItems.map((item, idx) => (
-                  <div key={idx} className={`flex justify-between items-center p-2 rounded border ${isDarkMode ? 'bg-teal-900/20 border-teal-800/30' : 'bg-teal-50/50 border-teal-100'}`}>
+                  <div key={idx} className={`flex justify-between items-center p-2 rounded border ${isDarkMode ? 'bg-blue-950/30 border-blue-900/30' : 'bg-blue-50/50 border-blue-100'}`}>
                     <div>
                       <p className={`font-semibold ${theme.primaryText}`}>{item.haryt}</p>
                       <p className={`text-[11px] ${theme.subText}`}>
-                        {item.mukdar} {item.unit} × <span className="font-bold text-teal-600">{item.price} {currency}</span>
+                        {item.mukdar} {item.unit} × <span className="font-bold text-blue-600 dark:text-blue-400">{item.price} {currency}</span>
                       </p>
                     </div>
                     <button onClick={() => handleRemoveItem(idx)} className="p-1 text-rose-500 hover:bg-rose-500/20 rounded">
@@ -295,7 +295,7 @@ export default function OfferModal({ tender, onClose, onSuccess, role, isDarkMod
               <div className="pt-2 flex justify-end">
                 <button
                   onClick={handleAddItem}
-                  className="px-5 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-lg text-xs font-semibold transition-colors"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors"
                 >
                   {t('saveBtn', 'Ýatda sakla')}
                 </button>

@@ -49,14 +49,13 @@ const updateProfile = async (req, res) => {
             }
         });
 
-        // Обновляем User (телефон и email пользователя, если переданы)
-        await prisma.user.update({
-            where: { id: userId },
-            data: { 
-                ...(phone ? { phone } : {}),
-                ...(email ? { username: email } : {})
-            }
-        });
+        // Обновляем User (контактный телефон пользователя, если передан)
+        if (phone) {
+            await prisma.user.update({
+                where: { id: userId },
+                data: { phone }
+            });
+        }
 
         // Записываем событие в архив / лог модерации
         try {
@@ -95,6 +94,38 @@ const getPendingSuppliers = async (req, res) => {
     }
 };
 
+// Администратор получает реестр всех зарегистрированных поставщиков с фильтрацией
+const getAllSuppliers = async (req, res) => {
+    try {
+        const { search, status } = req.query;
+        const where = {};
+        if (status) {
+            where.verificationStatus = status;
+        }
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { taxId: { contains: search, mode: 'insensitive' } },
+                { regNumber: { contains: search, mode: 'insensitive' } },
+                { phone: { contains: search, mode: 'insensitive' } },
+            ];
+        }
+
+        const suppliers = await prisma.supplier.findMany({
+            where,
+            include: {
+                user: { select: { id: true, username: true, phone: true } },
+                country: true,
+                files: { include: { document: true } }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(suppliers);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при получении реестра поставщиков', details: error.message });
+    }
+};
+
 // Получение полной информации о поставщике по id (для профиля и модерации)
 const getSupplierById = async (req, res) => {
     try {
@@ -102,7 +133,7 @@ const getSupplierById = async (req, res) => {
         const supplier = await prisma.supplier.findUnique({
             where: { id },
             include: {
-                user: { select: { id: true, username: true, email: true, phone: true } },
+                user: { select: { id: true, username: true, phone: true } },
                 country: true,
                 files: {
                     include: { document: true }
@@ -112,9 +143,96 @@ const getSupplierById = async (req, res) => {
         if (!supplier) {
             return res.status(404).json({ error: 'Поставщик не найден' });
         }
+
+        // Защита персональных и финансовых данных: обычный поставщик может просматривать только свой собственный профиль
+        if (req.user && req.user.roleType !== 'ADMIN' && supplier.userId !== req.user.id) {
+            return res.status(403).json({ error: 'У вас нет прав на просмотр конфиденциальных данных этого поставщика' });
+        }
+
         res.json(supplier);
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при получении данных поставщика', details: error.message });
+    }
+};
+
+// Получение статистики предложений поставщика (всего заявок, выиграно)
+const getSupplierStats = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const supplier = await prisma.supplier.findUnique({ where: { id } });
+        if (!supplier) {
+            return res.status(404).json({ error: 'Поставщик не найден' });
+        }
+
+        if (req.user && req.user.roleType !== 'ADMIN' && supplier.userId !== req.user.id) {
+            return res.status(403).json({ error: 'Нет доступа к статистике этого поставщика' });
+        }
+
+        const totalOffers = await prisma.offer.count({
+            where: {
+                supplierId: id,
+                status: { not: 'TASLAMA' }
+            }
+        });
+
+        const wonOffers = await prisma.offer.count({
+            where: {
+                supplierId: id,
+                status: 'YENIJI'
+            }
+        });
+
+        res.json({ totalOffers, wonOffers });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка получения статистики поставщика', details: error.message });
+    }
+};
+
+// Администратор удаляет поставщика
+const deleteSupplier = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const supplier = await prisma.supplier.findUnique({ where: { id } });
+        if (!supplier) {
+            return res.status(404).json({ error: 'Поставщик не найден' });
+        }
+
+        await prisma.$transaction([
+            prisma.supplierModerationLog.deleteMany({ where: { supplierId: id } }),
+            prisma.supplierFile.deleteMany({ where: { supplierId: id } }),
+            prisma.supplier.delete({ where: { id } }),
+        ]);
+
+        res.json({ message: 'Поставщик успешно удален' });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при удалении поставщика', details: error.message });
+    }
+};
+
+// Администратор обновляет данные любого поставщика
+const adminUpdateSupplier = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, inn, taxId, phone, address, email, license, licenseNumber, countryId, isActive } = req.body;
+        const finalTaxId = taxId || inn;
+        const finalLicense = licenseNumber || license;
+
+        const updated = await prisma.supplier.update({
+            where: { id },
+            data: {
+                ...(name ? { name } : {}),
+                ...(finalTaxId !== undefined ? { taxId: finalTaxId } : {}),
+                ...(phone !== undefined ? { phone } : {}),
+                ...(address !== undefined ? { address } : {}),
+                ...(email !== undefined ? { email } : {}),
+                ...(finalLicense !== undefined ? { licenseNumber: finalLicense } : {}),
+                ...(countryId !== undefined ? { countryId: countryId || null } : {}),
+                ...(isActive !== undefined ? { isActive: Boolean(isActive) } : {}),
+            }
+        });
+        res.json(updated);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка обновления поставщика', details: error.message });
     }
 };
 
@@ -247,9 +365,13 @@ const getModerationArchive = async (req, res) => {
 };
 
 module.exports = {
+    getAllSuppliers,
+    deleteSupplier,
+    adminUpdateSupplier,
     updateProfile,
     getPendingSuppliers,
     getSupplierById,
+    getSupplierStats,
     approveSupplier,
     rejectSupplier,
     getModerationArchive

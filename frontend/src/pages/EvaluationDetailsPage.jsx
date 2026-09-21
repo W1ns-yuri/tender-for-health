@@ -37,8 +37,8 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
     } catch (e) {
       console.error('Failed to fetch tender details', e);
       showAlert({
-        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
-        message: lang === 'RU' ? 'Не удалось загрузить данные тендера для оценки' : 'Tender maglumatlary ýüklenmedi',
+        title: t('errorTitle', 'Ошибка'),
+        message: t('failedToLoadEvaluationTender', 'Не удалось загрузить данные тендера для оценки'),
         type: 'error'
       });
     } finally {
@@ -53,13 +53,11 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
   const handleAwardLot = async (lotId, offerId, isCurrentlyAwarded = false) => {
     if (isCurrentlyAwarded) {
       const isConfirmed = await showConfirm({
-        title: lang === 'RU' ? 'Снять выбор победителя' : 'Ýeňijini aýyrmak',
-        message: lang === 'RU' 
-          ? 'Вы уверены, что хотите снять выбор победителя по данному лоту?' 
-          : 'Bu lot boýunça ýeňiji saýlawyny aýyrmakçymy?',
+        title: t('deselectWinnerAction', 'Снять выбор победителя'),
+        message: t('confirmDeselectWinnerMessage', 'Вы уверены, что хотите снять выбор победителя по данному лоту?'),
         type: 'warning',
-        confirmText: lang === 'RU' ? 'Снять выбор' : 'Aýyr',
-        cancelText: lang === 'RU' ? 'Отмена' : 'Ýatyr',
+        confirmText: t('deselectChoice', 'Снять выбор'),
+        cancelText: t('cancelEditBtn', 'Отмена'),
       });
       if (!isConfirmed) return;
 
@@ -67,14 +65,14 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
         await API.post('/evaluation/award-lot', { tenderId: id, lotId, offerId: null });
         fetchTenderDetails(id);
         showAlert({
-          title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
-          message: lang === 'RU' ? 'Выбор победителя по лоту снят' : 'Ýeňiji saýlawy aýryldy',
+          title: t('successTitle', 'Успешно'),
+          message: t('winnerDeselectedSuccess', 'Выбор победителя по лоту снят'),
           type: 'info'
         });
       } catch (e) {
         showAlert({
-          title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
-          message: lang === 'RU' ? 'Ошибка при снятии выбора' : 'Ýalňyşlyk ýüze çykdy',
+          title: t('errorTitle', 'Ошибка'),
+          message: t('profileSaveError', 'Ошибка при снятии выбора'),
           type: 'error'
         });
       }
@@ -82,13 +80,11 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
     }
 
     const isConfirmed = await showConfirm({
-      title: lang === 'RU' ? 'Выбор победителя' : 'Ýeňijini saýlamak',
-      message: lang === 'RU' 
-        ? 'Вы уверены, что хотите назначить этого поставщика победителем для данного Лота?' 
-        : 'Bu lot boýunça şu üpjün edijini ýeňiji edip saýlamakçymy?',
+      title: t('winnerSelectionTitle', 'Выбор победителя'),
+      message: t('confirmAssignWinnerMessage', 'Вы уверены, что хотите назначить этого поставщика победителем для данного Лота?'),
       type: 'success',
-      confirmText: lang === 'RU' ? 'Выбрать' : 'Saýla',
-      cancelText: lang === 'RU' ? 'Отмена' : 'Ýatyr',
+      confirmText: t('selectActionBtn', 'Выбрать'),
+      cancelText: t('cancelEditBtn', 'Отмена'),
     });
     if (!isConfirmed) return;
 
@@ -97,14 +93,14 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
       // Refresh details to show updated UI
       fetchTenderDetails(id);
       showAlert({
-        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
-        message: lang === 'RU' ? 'Победитель по лоту успешно назначен' : 'Lot boýunça ýeňiji üstünlikli bellendi',
+        title: t('successTitle', 'Успешно'),
+        message: t('winnerAssignedSuccess', 'Победитель по лоту успешно назначен'),
         type: 'success'
       });
     } catch (e) {
       showAlert({
-        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
-        message: lang === 'RU' ? 'Ошибка при выборе победителя' : 'Ýalňyşlyk ýüze çykdy',
+        title: t('errorTitle', 'Ошибка'),
+        message: t('profileSaveError', 'Ошибка при выборе победителя'),
         type: 'error'
       });
     }
@@ -134,26 +130,31 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
     : (tenderDetails?.status || 'BAHALANDYRYLDY');
 
   const handleCompleteEvaluation = async () => {
+    if (awardedLots.length === 0) {
+      showAlert({
+        title: t('winnerNotSelectedAlert', 'Внимание: победитель не выбран'),
+        message: t('noWinnerSelectedErrorMessage', 'Нельзя утвердить протокол: не выбран победитель ни по одному лоту тендера. Пожалуйста, назначьте хотя бы одного победителя.'),
+        type: 'warning'
+      });
+      return;
+    }
+
     if (!allLotsAwarded) {
       const isProceed = await showConfirm({
-        title: lang === 'RU' ? 'Внимание: не все лоты распределены' : 'Üns beriň: ähli lotlar paýlanmady',
-        message: lang === 'RU' 
-          ? `Победители выбраны только для ${awardedLots.length} из ${lotsWithOffers.length} лотов. Вы уверены, что хотите завершить оценку сейчас?`
-          : `${lotsWithOffers.length} lotdan diňe ${awardedLots.length} sanysyna ýeňiji saýlandy. Baha bermegi tamamlamakçymy?`,
+        title: t('notAllLotsAwardedAlert', 'Внимание: не все лоты распределены'),
+        message: t('notAllLotsAwardedConfirmMessage', `Победители выбраны только для ${awardedLots.length} из ${lotsWithOffers.length} лотов. Вы уверены, что хотите завершить оценку сейчас?`, { awardedCount: awardedLots.length, totalCount: lotsWithOffers.length }),
         type: 'warning',
-        confirmText: lang === 'RU' ? 'Завершить в любом случае' : 'Barybir tamamla',
-        cancelText: lang === 'RU' ? 'Вернуться к выбору' : 'Yza dön',
+        confirmText: t('finishAnywayBtn', 'Завершить в любом случае'),
+        cancelText: t('backToSelectionBtn', 'Вернуться к выбору'),
       });
       if (!isProceed) return;
     } else {
       const isConfirmed = await showConfirm({
-        title: lang === 'RU' ? 'Завершение оценки' : 'Baha bermegi tamamlamak',
-        message: lang === 'RU' 
-          ? 'Вы уверены, что хотите утвердить итоговый протокол и огласить победителей? Всем поставщикам будут разосланы уведомления о результатах.' 
-          : 'Baha bermegi tamamlamakçymy? Netijeler yglan ediler.',
+        title: t('completeEvaluationTitle', 'Завершение оценки'),
+        message: t('confirmApproveProtocolMessage', 'Вы уверены, что хотите утвердить итоговый протокол и огласить победителей? Всем поставщикам будут разосланы уведомления о результатах.'),
         type: 'success',
-        confirmText: lang === 'RU' ? 'Утвердить протокол' : 'Tassykla',
-        cancelText: lang === 'RU' ? 'Отмена' : 'Ýatyr',
+        confirmText: t('confirmBtn', 'Утвердить протокол'),
+        cancelText: t('cancelEditBtn', 'Отмена'),
       });
       if (!isConfirmed) return;
     }
@@ -161,15 +162,15 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
     try {
       await API.post(`/evaluation/complete/${id}`);
       await showAlert({
-        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
-        message: lang === 'RU' ? 'Оценка успешно завершена! Итоги оглашены.' : 'Baha bermek tamamlandy! Ýeňijiler yglan edildi.',
+        title: t('successTitle', 'Успешно'),
+        message: t('evaluationCompletedSuccess', 'Оценка успешно завершена! Итоги оглашены.'),
         type: 'success'
       });
       fetchTenderDetails(id);
     } catch (e) {
       showAlert({
-        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
-        message: lang === 'RU' ? 'Ошибка при завершении оценки' : 'Ýalňyşlyk ýüze çykdy',
+        title: t('errorTitle', 'Ошибка'),
+        message: e.response?.data?.error || (t('profileSaveError', 'Ошибка при завершении оценки')),
         type: 'error'
       });
     }
@@ -184,7 +185,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
       <div className="min-h-[500px] flex flex-col items-center justify-center">
         <div className="inline-block animate-spin rounded-full h-10 w-10 border-3 border-emerald-500 border-t-transparent mb-3" />
         <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-          {lang === 'RU' ? 'Загрузка рабочего стола оценки...' : 'Baha beriş iş stoly ýüklenýär...'}
+          {t('loadingEvaluationWorkspace', 'Загрузка рабочего стола оценки...')}
         </p>
       </div>
     );
@@ -195,14 +196,14 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
       <div className="p-12 text-center">
         <AlertCircle size={48} className="mx-auto text-rose-500 mb-3" />
         <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-          {lang === 'RU' ? 'Тендер не найден' : 'Tender tapylmady'}
+          {t('tenderNotFoundTitle', 'Тендер не найден')}
         </h2>
         <Link
           to="/evaluation"
           className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold"
         >
           <ArrowLeft size={14} />
-          {lang === 'RU' ? 'Вернуться к реестру оценки' : 'Sanawa dolan'}
+          {t('returnToEvaluationRegistry', 'Вернуться к реестру оценки')}
         </Link>
       </div>
     );
@@ -216,14 +217,14 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
           <button
             onClick={() => navigate('/evaluation')}
             className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-emerald-600 transition-all cursor-pointer shadow-2xs"
-            title={lang === 'RU' ? 'Назад к списку тендеров' : 'Yza dolan'}
+            title={t('backToTendersList', 'Назад к списку тендеров')}
           >
             <ArrowLeft size={16} />
           </button>
           <div>
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <Link to="/evaluation" className="hover:text-emerald-600 transition-colors">
-                {lang === 'RU' ? 'Оценка заявок' : 'Baha bermek'}
+                {t('evaluationTab', 'Оценка заявок')}
               </Link>
               <span>/</span>
               <span className="font-mono font-bold text-slate-600 dark:text-slate-300">
@@ -231,7 +232,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
               </span>
             </div>
             <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 mt-0.5">
-              {lang === 'RU' ? 'Оценка предложений по закупке' : 'Satyn alyş boýunça tekliplere baha bermek'}
+              {t('evaluationDetailsHeading', 'Оценка предложений по закупке')}
             </h1>
           </div>
         </div>
@@ -242,7 +243,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
           >
             <Printer size={14} />
-            <span>{lang === 'RU' ? 'Печать протокола' : 'Protokoly çap et'}</span>
+            <span>{t('printProtocolBtn', 'Печать протокола')}</span>
           </button>
 
           <Link
@@ -251,7 +252,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-emerald-600 text-xs font-semibold transition-colors shadow-2xs"
           >
             <ExternalLink size={14} />
-            <span>{lang === 'RU' ? 'Открыть тендер' : 'Tenderi aç'}</span>
+            <span>{t('openTenderAction', 'Открыть тендер')}</span>
           </Link>
         </div>
       </div>
@@ -266,7 +267,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
               </span>
               {getStatusBadge(effectiveStatus, lang, isDarkMode)}
               <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                {lang === 'RU' ? 'Итоги по лотам' : 'Lot netijeleri'}: <strong className="text-emerald-600 dark:text-emerald-400">{awardedLots.length}</strong> / {lotsWithOffers.length}
+                {t('resultsByLotsSummary', 'Итоги по лотам')}: <strong className="text-emerald-600 dark:text-emerald-400">{awardedLots.length}</strong> / {lotsWithOffers.length}
               </span>
             </div>
             <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-2">
@@ -279,7 +280,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-slate-100 dark:border-slate-800/80">
           <div>
             <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
-              {lang === 'RU' ? 'Заказчик' : 'Sargyt ediji'}
+              {t('client', 'Заказчик')}
             </p>
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
               <Building2 size={15} className="text-slate-400 shrink-0" />
@@ -289,19 +290,19 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
 
           <div>
             <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
-              {lang === 'RU' ? 'Категория и тип' : 'Kategoriýa / Görnüş'}
+              {t('categoryAndTypeSummary', 'Категория и тип')}
             </p>
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
               {tenderDetails.category?.name || '—'}
               <span className="text-xs text-slate-400 font-normal ml-1.5">
-                ({tenderDetails.type === 'YERLI' ? (lang === 'RU' ? 'Местный' : 'Ýerli') : (lang === 'RU' ? 'Международный' : 'Halkara')})
+                ({tenderDetails.type === 'YERLI' ? (t('typeLocal', 'Местный')) : (t('typeGlobal', 'Международный'))})
               </span>
             </p>
           </div>
 
           <div>
             <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
-              {lang === 'RU' ? 'Крайний срок подачи' : 'Soňky möhlet'}
+              {t('submissionDeadlineSummary', 'Крайний срок подачи')}
             </p>
             <p className="text-sm font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
               <Clock size={15} className="shrink-0" />
@@ -311,10 +312,10 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
 
           <div>
             <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
-              {lang === 'RU' ? 'Лоты и заявки' : 'Lotlar we teklipler'}
+              {t('lotsAndBidsTab', 'Лоты и заявки')}
             </p>
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              {lotsList.length} {lang === 'RU' ? 'лот.' : 'lot'} • {(tenderDetails.offers || []).length} {lang === 'RU' ? 'заявок' : 'teklip'}
+              {lotsList.length} {t('lotsAbbr', 'лот.')} • {(tenderDetails.offers || []).length} {t('offersSuffix', 'заявок')}
             </p>
           </div>
         </div>
@@ -325,7 +326,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
         {lotsList.length === 0 ? (
           <div className={`p-12 text-center rounded-2xl border ${theme.cardBg} text-slate-400`}>
             <AlertCircle size={40} className="mx-auto mb-2 opacity-30" />
-            <p className="font-semibold">{lang === 'RU' ? 'В данном тендере нет позиций или лотов' : 'Haryt ýok'}</p>
+            <p className="font-semibold">{t('noItemsOrLotsInTender', 'В данном тендере нет позиций или лотов')}</p>
           </div>
         ) : (
           lotsList.map((lot, lotIndex) => {
@@ -394,7 +395,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                   <div>
                     <div className="flex items-center gap-2.5 flex-wrap">
                       <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold text-xs">
-                        {lang === 'RU' ? 'ЛОТ' : 'LOT'} #{lotIndex + 1}
+                        {t('lotUpperLabel', 'ЛОТ')} #{lotIndex + 1}
                       </span>
                       <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
                         {lot.name}
@@ -402,20 +403,20 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                       {hasWinner && (
                         <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
                           <CheckCircle size={13} />
-                          {lang === 'RU' ? 'Победитель выбран' : 'Ýeňiji saýlandy'}
+                          {t('winnerSelectedBadge', 'Победитель выбран')}
                         </span>
                       )}
                     </div>
 
                     <div className="flex items-center gap-4 text-xs text-slate-500 mt-2 flex-wrap">
                       <p>
-                        {lang === 'RU' ? 'Позиций в спецификации:' : 'Haryt sany:'}{' '}
+                        {t('specItemsCountLabel', 'Позиций в спецификации:')}{' '}
                         <strong className="text-slate-700 dark:text-slate-200 font-bold">{lot.specs.length}</strong>
                       </p>
                       {lot.deliveryTerm && (
                         <p className="flex items-center gap-1.5 border-l border-slate-300 dark:border-slate-700 pl-4">
                           <span className="uppercase text-[10px] text-slate-400 font-semibold tracking-wider">
-                            {lang === 'RU' ? 'Поставка (Incoterms):' : 'Gowşuryş:'}
+                            {t('deliveryIncotermsLabel', 'Поставка (Incoterms):')}
                           </span>
                           <strong 
                             className="text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 px-2 py-0.5 rounded-md font-mono font-bold text-xs"
@@ -430,7 +431,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
 
                   <div className="text-right">
                     <span className="text-xs font-semibold text-slate-500">
-                      {lang === 'RU' ? 'Подано предложений:' : 'Teklipler:'}{' '}
+                      {t('offersSubmittedCountLabel', 'Подано предложений:')}{' '}
                       <strong className="text-slate-800 dark:text-slate-100 font-bold">{competingOffers.length}</strong>
                     </span>
                   </div>
@@ -445,12 +446,10 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                       </div>
                       <div>
                         <span className="font-semibold text-slate-700 dark:text-slate-200 text-sm">
-                          {lang === 'RU' ? 'Нет поданных предложений по данному лоту' : 'Bu lot boýunça teklip gowşyrylmady'}
+                          {t('noOffersForThisLot', 'Нет поданных предложений по данному лоту')}
                         </span>
                         <p className="text-xs text-slate-400 mt-0.5">
-                          {lang === 'RU' 
-                            ? 'Ни один поставщик пока не подал заявку на спецификацию этого лота.' 
-                            : 'Häzirlikçe bu lot boýunça hiç bir üpjün ediji teklip bermedi.'}
+                          {t('noSupplierBidsForLot', 'Ни один поставщик пока не подал заявку на спецификацию этого лота.')}
                         </p>
                       </div>
                     </div>
@@ -463,12 +462,12 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
                           <tr className={theme.tableHeaderBg}>
-                            <th className="py-3 px-4 font-semibold">{lang === 'RU' ? 'Поставщик' : 'Üpjün ediji'}</th>
-                            <th className="py-3 px-4 font-semibold text-center w-36">{lang === 'RU' ? 'Покрытие лота' : 'Lotuň dolulygy'}</th>
-                            <th className="py-3 px-4 font-semibold text-right w-48">{lang === 'RU' ? 'Итоговая сумма лота' : 'Jemi bahasy'}</th>
-                            <th className="py-3 px-4 font-semibold text-center w-32">{lang === 'RU' ? 'Сравнение цен' : 'Baha tapawudy'}</th>
-                            <th className="py-3 px-4 font-semibold text-center w-48">{lang === 'RU' ? 'Решение по лоту' : 'Lot boýunça çözgüt'}</th>
-                            <th className="py-3 px-4 font-semibold text-right w-36">{lang === 'RU' ? 'Подробности' : 'Jikme-jik'}</th>
+                            <th className="py-3 px-4 font-semibold">{t('supplierStr', 'Поставщик')}</th>
+                            <th className="py-3 px-4 font-semibold text-center w-36">{t('lotCoverageColumn', 'Покрытие лота')}</th>
+                            <th className="py-3 px-4 font-semibold text-right w-48">{t('lotTotalAmountColumn', 'Итоговая сумма лота')}</th>
+                            <th className="py-3 px-4 font-semibold text-center w-32">{t('priceComparisonColumn', 'Сравнение цен')}</th>
+                            <th className="py-3 px-4 font-semibold text-center w-48">{t('lotDecisionColumn', 'Решение по лоту')}</th>
+                            <th className="py-3 px-4 font-semibold text-right w-36">{t('lotOfferDetailsBtn', 'Подробности')}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -501,7 +500,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                     {co.deliveryTerm && (
                                       <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                                         <span className="text-[10px] text-slate-400 font-medium">
-                                          {lang === 'RU' ? 'Поставка:' : 'Gowşuryş:'}
+                                          {t('deliveryLabel', 'Поставка:')}
                                         </span>
                                         <span 
                                           className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
@@ -514,7 +513,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                           {co.deliveryTerm?.shortName || co.deliveryTerm?.name}
                                           {lot.deliveryTerm && (co.deliveryTerm?.shortName || '').toLowerCase() !== (lot.deliveryTerm?.shortName || '').toLowerCase() && (
                                             <span className="ml-1 text-[9px] font-sans font-normal opacity-90">
-                                              ({lang === 'RU' ? 'отличается от ТЗ' : 'üýtgeşik'})
+                                              ({t('differsFromSpecsBadge', 'отличается от ТЗ')})
                                             </span>
                                           )}
                                         </span>
@@ -529,7 +528,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                         ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
                                         : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
                                     }`}>
-                                      {co.itemsCount} / {co.totalItems} {lang === 'RU' ? 'поз.' : 'poz.'} ({Math.round((co.itemsCount / co.totalItems) * 100)}%)
+                                      {co.itemsCount} / {co.totalItems} {t('positionsAbbr', 'поз.')} ({Math.round((co.itemsCount / co.totalItems) * 100)}%)
                                     </span>
                                   </td>
 
@@ -541,7 +540,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                     {isLowest && (
                                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                                         <TrendingDown size={11} />
-                                        {lang === 'RU' ? 'Лучшая цена' : 'Iň arzan baha'}
+                                        {t('bestPriceBadge', 'Лучшая цена')}
                                       </span>
                                     )}
                                   </td>
@@ -550,7 +549,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                   <td className="py-3 px-4 text-center">
                                     {isLowest ? (
                                       <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded">
-                                        {lang === 'RU' ? 'Базовая мин.' : 'Esasy min.'}
+                                        {t('baselineMinBadge', 'Базовая мин.')}
                                       </span>
                                     ) : (
                                       <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
@@ -563,7 +562,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                   <td className="py-3 px-4 text-center">
                                     <button
                                       onClick={() => handleAwardLot(lot.id, co.offerId, co.isAwarded)}
-                                      title={co.isAwarded ? (lang === 'RU' ? 'Нажмите, чтобы снять выбор' : 'Saýlawy aýyrmak üçin basyň') : undefined}
+                                      title={co.isAwarded ? (t('clickToDeselectTooltip', 'Нажмите, чтобы снять выбор')) : undefined}
                                       className={`group/award px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${
                                         co.isAwarded 
                                           ? 'bg-emerald-600 text-white shadow-sm hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 dark:hover:border-rose-700 border border-emerald-600' 
@@ -574,11 +573,11 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                         <>
                                           <CheckCircle size={14} className="group-hover/award:hidden" />
                                           <X size={14} className="hidden group-hover/award:inline text-rose-600 dark:text-rose-400" />
-                                          <span className="group-hover/award:hidden">{lang === 'RU' ? 'Победитель' : 'Ýeňiji'}</span>
-                                          <span className="hidden group-hover/award:inline text-rose-600 dark:text-rose-400">{lang === 'RU' ? 'Снять выбор' : 'Aýyrmak'}</span>
+                                          <span className="group-hover/award:hidden">{t('winnerBadge', 'Победитель')}</span>
+                                          <span className="hidden group-hover/award:inline text-rose-600 dark:text-rose-400">{t('deselectChoice', 'Снять выбор')}</span>
                                         </>
                                       ) : (
-                                        <span>{lang === 'RU' ? 'Выбрать победителем' : 'Ýeňiji saýla'}</span>
+                                        <span>{t('selectAsWinnerBtn', 'Выбрать победителем')}</span>
                                       )}
                                     </button>
                                   </td>
@@ -589,7 +588,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                       <Link
                                         to={`/offers/${co.offerId}`}
                                         className={theme.actionBtn}
-                                        title={lang === 'RU' ? 'Открыть полную заявку' : 'Teklibi aç'}
+                                        title={t('openCompleteBidBtn', 'Открыть полную заявку')}
                                       >
                                         <Eye size={15} />
                                       </Link>
@@ -597,7 +596,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                         onClick={() => toggleOfferDetails(co.offerId)}
                                         className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                                       >
-                                        <span>{lang === 'RU' ? 'Спецификация' : 'Spesifikasiýa'}</span>
+                                        <span>{t('specificationTabTitle', 'Спецификация')}</span>
                                         {expandedOffers[co.offerId] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                                       </button>
                                     </div>
@@ -612,11 +611,11 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                         <div className="flex items-center justify-between">
                                           <h4 className="font-bold text-xs text-slate-700 dark:text-slate-200 flex items-center gap-2">
                                             <FileText size={15} className="text-emerald-600 dark:text-emerald-400" />
-                                            {lang === 'RU' ? 'Попозиционное предложение поставщика:' : 'Teklip harytlary:'}{' '}
+                                            {t('itemizedSupplierProposalTitle', 'Попозиционное предложение поставщика:')}{' '}
                                             <span className="text-emerald-600 dark:text-emerald-400">{co.supplierName}</span>
                                           </h4>
                                           <span className="text-[11px] text-slate-400">
-                                            {co.offerSpecs.length} {lang === 'RU' ? 'позиций заполнено' : 'haryt girizildi'}
+                                            {co.offerSpecs.length} {t('positionsFilledCount', 'позиций заполнено')}
                                           </span>
                                         </div>
 
@@ -625,12 +624,12 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                             <thead className="bg-emerald-50/70 dark:bg-emerald-950/30 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
                                               <tr>
                                                 <th className="p-3 font-semibold w-10 text-center">#</th>
-                                                <th className="p-3 font-semibold">{lang === 'RU' ? 'Товар / Предмет закупки' : 'Haryt / Talap'}</th>
-                                                <th className="p-3 font-semibold text-center w-24">{lang === 'RU' ? 'Ед. изм.' : 'Ölçeg'}</th>
-                                                <th className="p-3 font-semibold text-center w-24">{lang === 'RU' ? 'Кол-во' : 'Mukdar'}</th>
-                                                <th className="p-3 font-semibold text-right w-36">{lang === 'RU' ? 'Цена за ед.' : 'Birlik bahasy'}</th>
-                                                <th className="p-3 font-semibold text-right w-40">{lang === 'RU' ? 'Сумма' : 'Jemi'}</th>
-                                                <th className="p-3 font-semibold w-56">{lang === 'RU' ? 'Характеристики / Производитель' : 'Häsiýetnamalar'}</th>
+                                                <th className="p-3 font-semibold">{t('productSubjectColumn', 'Товар / Предмет закупки')}</th>
+                                                <th className="p-3 font-semibold text-center w-24">{t('specUnit', 'Ед. изм.')}</th>
+                                                <th className="p-3 font-semibold text-center w-24">{t('qty', 'Кол-во')}</th>
+                                                <th className="p-3 font-semibold text-right w-36">{t('unitPricePlain', 'Цена за ед.')}</th>
+                                                <th className="p-3 font-semibold text-right w-40">{t('totalAmount', 'Сумма')}</th>
+                                                <th className="p-3 font-semibold w-56">{t('specsManufacturerColumn', 'Характеристики / Производитель')}</th>
                                               </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -655,7 +654,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                                       <td className="p-3">
                                                         <div className="flex items-center gap-2">
                                                           <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[9px] uppercase font-bold rounded tracking-wider">
-                                                            {lang === 'RU' ? 'Запрос' : 'Talap'}
+                                                            {t('requestLabel', 'Запрос')}
                                                           </span>
                                                           <span className="font-semibold text-slate-700 dark:text-slate-200">
                                                             {requestedName}
@@ -676,15 +675,13 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                                           <CornerDownRight size={16} className="text-emerald-500 ml-1.5 mt-0.5 shrink-0" />
                                                           <div>
                                                             <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[9px] uppercase font-bold rounded-md tracking-wider mb-1 inline-flex items-center gap-1">
-                                                              {lang === 'RU' 
-                                                                ? (co.supplierName ? `КП: ${co.supplierName}` : 'КП поставщика') 
-                                                                : (co.supplierName ? `${co.supplierName} teklibi` : 'Üpjün edijiniň teklibi')}
+                                                              {co.supplierName ? `${t('supplierProposalPrefix', 'КП:')} ${co.supplierName}` : t('supplierProposalDefault', 'КП поставщика')}
                                                             </span>
                                                             <div className="font-medium text-slate-800 dark:text-slate-200 text-xs">
                                                               {offeredName}
                                                               {isDifferent && (
                                                                 <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 text-[9px] rounded uppercase font-bold tracking-wider">
-                                                                  {lang === 'RU' ? 'Замена' : 'Üýtgetme'}
+                                                                  {t('substituteBadge', 'Замена')}
                                                                 </span>
                                                              )}
                                                             </div>
@@ -742,13 +739,13 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
             </div>
             <div>
               <div className="text-xs font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <span>{lang === 'RU' ? 'Итоги распределения:' : 'Netijeler:'}</span>
+                <span>{t('allocationSummaryTitle', 'Итоги распределения:')}</span>
                 <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                  {awardedLots.length} {lang === 'RU' ? 'из' : '/'} {lotsWithOffers.length} {lang === 'RU' ? 'лотов' : 'lot'}
+                  {awardedLots.length} {t('fromWord', 'из')} {lotsWithOffers.length} {t('lotsCountSuffix', 'лотов')}
                 </span>
                 {allLotsAwarded && (
                   <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 text-[10px] font-bold">
-                    {lang === 'RU' ? 'Все лоты распределены' : 'Ähli lotlar taýyn'}
+                    {t('allLotsAllocatedBadge', 'Все лоты распределены')}
                   </span>
                 )}
               </div>
@@ -768,7 +765,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
               className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center gap-2"
             >
               <Download size={14} />
-              <span>{lang === 'RU' ? 'Экспорт / Печать' : 'Eksport / Çap'}</span>
+              <span>{t('exportPrintBtn', 'Экспорт / Печать')}</span>
             </button>
 
             <button
@@ -777,7 +774,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
             >
               <CheckCircle2 size={16} />
               <span>
-                {lang === 'RU' ? 'Утвердить протокол и объявить победителей' : 'Protokoly tassyklamak we ýeňijileri yglan etmek'}
+                {t('approveProtocolBtn', 'Утвердить протокол и объявить победителей')}
               </span>
             </button>
           </div>

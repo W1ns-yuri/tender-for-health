@@ -113,7 +113,7 @@ export default function Sidebar({
                   }`}
                 >
                   <Send size={19} />
-                  {!isCollapsed && <span className="ml-3">{lang === 'RU' ? 'Поданные предложения' : 'Gowşurylan teklipler'}</span>}
+                  {!isCollapsed && <span className="ml-3">{t('submittedOffers', 'Поданные предложения')}</span>}
                 </button>
 
                 <button
@@ -137,7 +137,7 @@ export default function Sidebar({
                   }`}
                 >
                   <Trophy size={19} />
-                  {!isCollapsed && <span className="ml-3">{lang === 'RU' ? 'Оценка заявок' : 'Ýeňijilik (Baha)'}</span>}
+                  {!isCollapsed && <span className="ml-3">{t('evaluationTab', 'Оценка заявок')}</span>}
                 </button>
 
                 <button

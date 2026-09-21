@@ -55,9 +55,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
     } catch (err) {
       const isColdStart = !err.response || err.response.status === 502 || err.response.status === 503 || err.code === 'ERR_NETWORK';
       if (isColdStart) {
-        setError(lang === 'RU'
-          ? 'Сервер подключается, пожалуйста, подождите 2-3 секунды и повторите...'
-          : 'Serwer birikdirilýär, 2-3 sekunt garaşyp gaýtadan synanyşyň...');
+        setError(t('coldStartWaitMsg', 'Сервер подключается, пожалуйста, подождите 2-3 секунды и повторите...'));
       } else {
         setError(err.response?.data?.error || t('invalidLogin', 'Неверный логин или пароль'));
       }
@@ -92,7 +90,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
   const handleNextStep = (e) => {
     e.preventDefault();
     if (!regData.firstName || !regData.lastName || !regData.username || !regData.password || !regData.phone) {
-      setError(lang === 'RU' ? 'Заполните все поля первого шага' : 'Ähli meýdançalary dolduryň');
+      setError(t('fillFirstStepFieldsNotice', 'Заполните все поля первого шага'));
       return;
     }
     setError('');
@@ -123,9 +121,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
       }
 
       if (isColdStart) {
-        setError(lang === 'RU'
-          ? 'Сервер подключается, пожалуйста, нажмите еще раз через пару секунд...'
-          : 'Serwer birikdirilýär, birnäçe sekuntdan soň gaýtadan basyň...');
+        setError(t('coldStartClickAgainMsg', 'Сервер подключается, пожалуйста, нажмите еще раз через пару секунд...'));
       } else {
         setError(err.response?.data?.error || t('invalidLogin', 'Неверный логин или пароль'));
       }
@@ -152,7 +148,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
         <div className="relative z-10 w-full max-w-[500px] mx-auto flex flex-col items-center animate-in fade-in zoom-in-95 duration-700 mt-8">
           {/* Оформление картинки под постер */}
           <div className="w-full bg-white p-2 rounded-[2rem] shadow-xl shadow-slate-200/60 border border-white mb-10 relative overflow-hidden flex items-center justify-center">
-            <div className="absolute inset-0 bg-gradient-to-tr from-orange-100/20 to-teal-100/20 rounded-[1.8rem] pointer-events-none z-10"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-orange-100/20 to-emerald-100/20 rounded-[1.8rem] pointer-events-none z-10"></div>
             <img
               src="/assets/login-page-ullustration.jpg"
               alt="Platform Collaboration"
@@ -162,15 +158,13 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
 
           <div className="text-center space-y-4">
             <h2 className="text-3xl xl:text-4xl font-black text-slate-800 tracking-tight leading-tight">
-              {lang === 'RU' ? 'Упростите взаимодействие' : 'Işleriňizi aňsatlaşdyryň'}<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-500">
-                {lang === 'RU' ? 'в сфере закупок' : 'satyn alyş ulgamynda'}
+              {t('loginHeadline1', 'Упростите взаимодействие')}<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
+                {t('loginHeadline2', 'в сфере закупок')}
               </span>
             </h2>
             <p className="text-slate-500 font-medium max-w-md mx-auto text-lg leading-relaxed">
-              {lang === 'RU'
-                ? 'Единая цифровая платформа для заказчиков и поставщиков. Эффективно, прозрачно, безопасно.'
-                : 'Sargyt edijiler we üpjün edijiler üçin ýeke-täk sanly platforma. Netijeli, aýdyň, howpsuz.'}
+              {t('loginTagline', 'Единая цифровая платформа для заказчиков и поставщиков. Эффективно, прозрачно, безопасно.')}
             </p>
           </div>
         </div>
@@ -220,13 +214,13 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
             </div>
             <h1 className="text-3xl font-black text-slate-800 mb-4 tracking-tight">
               {isRegister
-                ? (lang === 'RU' ? 'Создать аккаунт' : 'Hasap döretmek')
-                : (lang === 'RU' ? 'С возвращением!' : 'Hoş geldiňiz!')}
+                ? (t('createAccountTab', 'Создать аккаунт'))
+                : (t('welcomeBackTitle', 'С возвращением!'))}
             </h1>
             <p className="text-slate-500 text-sm font-medium">
               {isRegister
-                ? (lang === 'RU' ? 'Заполните данные для регистрации' : 'Hasaba alynmak üçin maglumatlary dolduryň')
-                : (lang === 'RU' ? 'Пожалуйста, введите ваши данные для входа' : 'Girmek üçin maglumatlaryňyzy giriziň')}
+                ? (t('registerSubtitle', 'Заполните данные для регистрации'))
+                : (t('loginSubtitle', 'Пожалуйста, введите ваши данные для входа'))}
             </p>
           </div>
 
@@ -243,7 +237,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
               <div className="space-y-5">
                 <div>
                   <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                    {lang === 'RU' ? 'Логин или Email' : 'Loginy ýa-da Email'}
+                    {t('loginOrEmailPlaceholder', 'Логин или Email')}
                   </label>
                   <div className="relative flex items-center">
                     <User size={18} className="absolute left-4 text-slate-400" />
@@ -252,7 +246,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                       required
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder={lang === 'RU' ? "corp@company.ru" : "corp@company.tm"}
+                      placeholder={t('emailPlaceholderDemo', 'corp@company.ru')}
                       className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-300 rounded-2xl text-slate-800 transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400 font-medium"
                     />
                   </div>
@@ -261,10 +255,10 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                 <div>
                   <div className="flex items-center justify-between mb-1.5 px-1">
                     <label className="block text-[13px] font-bold text-slate-700">
-                      {lang === 'RU' ? 'Пароль' : 'Açar sözi'}
+                      {t('password', 'Пароль')}
                     </label>
                     <button type="button" className="text-[13px] font-bold text-blue-600 hover:text-blue-700 transition-colors">
-                      {lang === 'RU' ? 'Забыли пароль?' : 'Açar sözüni unutdyňyzmy?'}
+                      {t('forgotPassword', 'Забыли пароль?')}
                     </button>
                   </div>
                   <div className="relative flex items-center">
@@ -302,7 +296,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                     <div className="w-full border-t border-slate-200"></div>
                   </div>
                   <span className="relative bg-white px-4 text-xs font-bold text-slate-500">
-                    {lang === 'RU' ? 'Демо-доступ' : 'Demo giriş'}
+                    {t('demoAccessTitle', 'Демо-доступ')}
                   </span>
                 </div>
 
@@ -325,13 +319,13 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
               </div>
 
               <div className="text-center mt-8 text-sm font-medium text-slate-500">
-                {lang === 'RU' ? 'Нет аккаунта?' : 'Hasabyňyz ýokmy?'} {' '}
+                {t('dontHaveAccountPrompt', 'Нет аккаунта?')} {' '}
                 <button
                   type="button"
                   onClick={() => { setIsRegister(true); setError(''); }}
                   className="text-blue-600 hover:text-blue-800 font-bold transition-colors underline decoration-2 underline-offset-4 decoration-blue-200 hover:decoration-blue-400 ml-1"
                 >
-                  {lang === 'RU' ? 'Зарегистрируйтесь' : 'Hasap dörediň'}
+                  {t('signUpLink', 'Зарегистрируйтесь')}
                 </button>
               </div>
             </form>
@@ -341,7 +335,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
 
               {/* Прогресс шагов */}
               <div className="flex items-center justify-center mb-6 space-x-2">
-                <div className={`h-2 flex-1 rounded-full transition-all duration-300 ${regStep === 1 ? 'bg-blue-600 shadow-sm shadow-blue-500/40' : regStep > 1 ? 'bg-teal-500' : 'bg-slate-200'}`}></div>
+                <div className={`h-2 flex-1 rounded-full transition-all duration-300 ${regStep === 1 ? 'bg-blue-600 shadow-sm shadow-blue-500/40' : regStep > 1 ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
                 <div className={`h-2 flex-1 rounded-full transition-all duration-300 ${regStep === 2 ? 'bg-blue-600 shadow-sm shadow-blue-500/40' : 'bg-slate-200'}`}></div>
               </div>
 
@@ -350,7 +344,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                        {lang === 'RU' ? 'Имя' : 'Ady'}*
+                        {t('colName', 'Имя')}*
                       </label>
                       <div className="relative flex items-center">
                         <User size={18} className="absolute left-4 text-slate-400" />
@@ -366,7 +360,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                     </div>
                     <div>
                       <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                        {lang === 'RU' ? 'Фамилия' : 'Familiýasy'}*
+                        {t('lastNamePlaceholder', 'Фамилия')}*
                       </label>
                       <div className="relative flex items-center">
                         <User size={18} className="absolute left-4 text-slate-400" />
@@ -384,7 +378,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
 
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                      {lang === 'RU' ? 'Рабочий Email (Логин)' : 'Iş Email (Loginy)'}*
+                      {t('workEmailLabel', 'Рабочий Email (Логин)')}*
                     </label>
                     <div className="relative flex items-center">
                       <Mail size={18} className="absolute left-4 text-slate-400" />
@@ -401,7 +395,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
 
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                      {lang === 'RU' ? 'Номер телефона' : 'Telefon belgisi'}*
+                      {t('phoneLabel', 'Номер телефона')}*
                     </label>
                     <div className="relative flex items-center">
                       <Phone size={18} className="absolute left-4 text-slate-400" />
@@ -420,7 +414,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
 
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                      {lang === 'RU' ? 'Пароль' : 'Açar sözi'}*
+                      {t('password', 'Пароль')}*
                     </label>
                     <div className="relative flex items-center">
                       <Lock size={18} className="absolute left-4 text-slate-400" />
@@ -446,7 +440,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                     type="submit"
                     className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] mt-6 text-[15px]"
                   >
-                    <span>{lang === 'RU' ? 'Далее' : 'Indiki'}</span>
+                    <span>{t('nextStepBtn', 'Далее')}</span>
                     <ChevronRight size={18} />
                   </button>
                 </>
@@ -454,18 +448,18 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                 <>
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                      {lang === 'RU' ? 'Тип участника' : 'Gatnaşyjy görnüşi'}*
+                      {t('participantTypeLabel', 'Тип участника')}*
                     </label>
                     <CustomSelect
                       role="SUPPLIER"
                       value={regData.companyType}
                       onChange={(val) => setRegData(prev => ({ ...prev, companyType: val }))}
                       options={[
-                        { id: 'ENTREPRENEUR', name: lang === 'RU' ? 'ИП (Hususy telekeçi)' : 'Hususy telekeçi' },
-                        { id: 'BUSINESS_SOCIETY', name: lang === 'RU' ? 'ХО / HJ (Hojalyk jemgyýeti)' : 'Hojalyk jemgyýeti' },
-                        { id: 'BUSINESS_COMPANY', name: lang === 'RU' ? 'ЧП / HK (Hususy kärhana)' : 'Hususy kärhana' },
-                        { id: 'FARMER_ASSOCIATION', name: lang === 'RU' ? 'ДХ / DH (Daýhan hojalygy)' : 'Daýhan hojalygy' },
-                        { id: 'GOVERNMENT', name: lang === 'RU' ? 'Гос. предприятие (Döwlet kärhanasy)' : 'Döwlet kärhanasy' }
+                        { id: 'ENTREPRENEUR', name: t('typeIE', 'ИП (Hususy telekeçi)') },
+                        { id: 'BUSINESS_SOCIETY', name: t('typeES', 'ХО / HJ (Hojalyk jemgyýeti)') },
+                        { id: 'BUSINESS_COMPANY', name: t('typePE', 'ЧП / HK (Hususy kärhana)') },
+                        { id: 'FARMER_ASSOCIATION', name: t('typeFE', 'ДХ / DH (Daýhan hojalygy)') },
+                        { id: 'GOVERNMENT', name: t('typeSE', 'Гос. предприятие (Döwlet kärhanasy)') }
                       ]}
                       size="md"
                     />
@@ -473,7 +467,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
 
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                      {lang === 'RU' ? 'Наименование компании / бренда' : 'Kärhananyň / brendiň ady'}*
+                      {t('companyBrandName', 'Наименование компании / бренда')}*
                     </label>
                     <div className="relative flex items-center">
                       <Building2 size={18} className="absolute left-4 text-slate-400" />
@@ -482,12 +476,12 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                         required
                         value={regData.companyName}
                         onChange={(e) => setRegData({ ...regData, companyName: e.target.value })}
-                        placeholder={lang === 'RU' ? "например, Медик-Фарм" : "mysal üçin, Medik-Farm"}
+                        placeholder={t('companyBrandPlaceholder', 'например, Медик-Фарм')}
                         className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
                       />
                     </div>
                     <p className="text-[11px] text-slate-400 mt-1 ml-1">
-                      {lang === 'RU' ? 'Указывайте только название бренда без организационной формы (ИП, ХО, ЧП)' : 'Diňe brendiň adyny ýazyň (HJ, HK, Telekeçi goşmazdan)'}
+                      {t('companyBrandHint', 'Указывайте только название бренда без организационной формы (ИП, ХО, ЧП)')}
                     </p>
                   </div>
 
@@ -519,9 +513,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                       className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                     />
                     <label htmlFor="termsAccepted" className="ml-2 text-xs text-slate-500 leading-tight">
-                      {lang === 'RU'
-                        ? 'Я согласен с регламентом проведения электронных торгов и обработкой персональных данных.'
-                        : 'Men elektron söwdalarynyň düzgünleri we şahsy maglumatlaryň işlenilmegi bilen ylalaşýaryn.'}
+                      {t('termsAcceptedAgreementText', 'Я согласен с регламентом проведения электронных торгов и обработкой персональных данных.')}
                     </label>
                   </div>
 
@@ -531,7 +523,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                       onClick={() => setRegStep(1)}
                       className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition-all"
                     >
-                      {lang === 'RU' ? 'Назад' : 'Yza'}
+                      {t('backToList', 'Назад')}
                     </button>
                     <button
                       type="submit"
@@ -545,13 +537,13 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
               )}
 
               <div className="text-center mt-6 text-sm font-medium text-slate-500">
-                {lang === 'RU' ? 'Уже есть аккаунт?' : 'Eýýäm hasabyňyz barmy?'} {' '}
+                {t('alreadyHaveAccountPrompt', 'Уже есть аккаунт?')} {' '}
                 <button
                   type="button"
                   onClick={() => { setIsRegister(false); setError(''); }}
                   className="text-slate-800 hover:text-black font-bold transition-colors underline decoration-2 underline-offset-4 decoration-slate-200 hover:decoration-slate-400 ml-1"
                 >
-                  {lang === 'RU' ? 'Войти' : 'Giriň'}
+                  {t('signInLink', 'Войти')}
                 </button>
               </div>
             </form>

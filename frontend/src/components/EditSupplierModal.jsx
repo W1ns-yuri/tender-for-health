@@ -25,11 +25,11 @@ export default function EditSupplierModal({ supplier, onClose, onSuccess, lang =
     if (supplier) {
       setFormData({
         name: supplier.name || '',
-        inn: supplier.inn || supplier.reg || '',
+        inn: supplier.taxId || supplier.inn || supplier.reg || '',
         phone: supplier.phone || '',
         address: supplier.address || '',
         email: supplier.email || '',
-        license: supplier.license || '',
+        license: supplier.licenseNumber || supplier.license || '',
         username: supplier.user?.username || '',
         password: '',
         countryId: supplier.countryId || ''
@@ -38,17 +38,21 @@ export default function EditSupplierModal({ supplier, onClose, onSuccess, lang =
   }, [supplier]);
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.inn || !formData.username) {
+    if (!formData.name || !formData.inn) {
       showAlert({
         title: t('validationError', 'Ошибка валидации'),
-        message: t('fillRequired', 'Заполните обязательные поля'),
+        message: t('fillRequired', 'Заполните обязательные поля: наименование и ИНН/STŞK'),
         type: 'warning'
       });
       return;
     }
     setIsSubmitting(true);
     try {
-      await API.put(`/companies/${supplier.id}`, formData);
+      await API.put(`/suppliers/${supplier.id}`, {
+        ...formData,
+        taxId: formData.inn,
+        licenseNumber: formData.license
+      });
       await showAlert({
         title: t('success', 'Успешно'),
         message: t('supplierUpdated', 'Данные поставщика успешно обновлены'),
@@ -88,7 +92,7 @@ export default function EditSupplierModal({ supplier, onClose, onSuccess, lang =
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
 
@@ -98,7 +102,7 @@ export default function EditSupplierModal({ supplier, onClose, onSuccess, lang =
               type="text"
               value={formData.inn}
               onChange={(e) => setFormData({ ...formData, inn: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
 
@@ -108,7 +112,7 @@ export default function EditSupplierModal({ supplier, onClose, onSuccess, lang =
               type="text"
               value={formData.license}
               onChange={(e) => setFormData({ ...formData, license: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
 
@@ -118,7 +122,7 @@ export default function EditSupplierModal({ supplier, onClose, onSuccess, lang =
               type="text"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
 
@@ -128,7 +132,7 @@ export default function EditSupplierModal({ supplier, onClose, onSuccess, lang =
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
 
@@ -138,7 +142,7 @@ export default function EditSupplierModal({ supplier, onClose, onSuccess, lang =
               type="text"
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
 
@@ -149,7 +153,7 @@ export default function EditSupplierModal({ supplier, onClose, onSuccess, lang =
               placeholder={t('passwordPlaceholder', 'Оставьте пустым, чтобы не менять')}
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
 
@@ -176,7 +180,7 @@ export default function EditSupplierModal({ supplier, onClose, onSuccess, lang =
               type="text"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500/20 ${inputBg}`}
+              className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-emerald-500/20 ${inputBg}`}
             />
           </div>
         </div>
@@ -191,7 +195,7 @@ export default function EditSupplierModal({ supplier, onClose, onSuccess, lang =
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center space-x-1"
+            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center space-x-1"
           >
             <Check size={16} />
             <span>{t('saveBtn', 'Сохранить')}</span>

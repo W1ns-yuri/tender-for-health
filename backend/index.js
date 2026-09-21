@@ -61,9 +61,9 @@ app.get('/api/health', (req, res) => {
 // Глобальный обработчик ошибок (Global Error Handler)
 app.use((err, req, res, next) => {
     console.error('Unhandled Error:', err.stack || err.message || err);
-    res.status(500).json({
+    res.status(err.status || 500).json({
         error: 'Внутренняя ошибка сервера (Internal Server Error)',
-        details: err.stack || err.message
+        details: process.env.NODE_ENV === 'production' ? 'Произошла непредвиденная ошибка на сервере' : (err.message || 'Ошибка обработки запроса')
     });
 });
 

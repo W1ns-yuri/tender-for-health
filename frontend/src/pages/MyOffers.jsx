@@ -44,11 +44,11 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
 
   const handleDeleteOffer = async (offerId) => {
     const isConfirmed = await showConfirm({
-      title: lang === 'RU' ? 'Отзыв предложения' : 'Teklibi yzyna almak',
-      message: lang === 'RU' ? 'Вы действительно хотите отозвать/удалить это коммерческое предложение?' : 'Siz hakykatdan hem bu teklibi pozmak isleýärsiňizmi?',
+      title: t('withdrawOfferTitle', 'Отзыв предложения'),
+      message: t('withdrawOfferConfirm', 'Вы действительно хотите отозвать/удалить это коммерческое предложение?'),
       type: 'danger',
-      confirmText: lang === 'RU' ? 'Удалить' : 'Pozmak',
-      cancelText: lang === 'RU' ? 'Отмена' : 'Ýatyr',
+      confirmText: t('delete', 'Удалить'),
+      cancelText: t('cancelEditBtn', 'Отмена'),
       isDanger: true,
     });
     if (!isConfirmed) return;
@@ -57,15 +57,15 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
       await API.delete(`/offers/${offerId}`);
       setOffers(prev => prev.filter(o => o.id !== offerId));
       showAlert({
-        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
-        message: lang === 'RU' ? 'Коммерческое предложение успешно удалено' : 'Teklip üstünlikli pozuldy',
+        title: t('successTitle', 'Успешно'),
+        message: t('offerDeletedSuccess', 'Коммерческое предложение успешно удалено'),
         type: 'success'
       });
     } catch (err) {
       console.error('Error deleting offer', err);
       showAlert({
-        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
-        message: err.response?.data?.error || (lang === 'RU' ? 'Ошибка при удалении предложения' : 'Teklip pozulanda ýalňyşlyk ýüze çykdy'),
+        title: t('errorTitle', 'Ошибка'),
+        message: err.response?.data?.error || (t('offerDeleteError', 'Ошибка при удалении предложения')),
         type: 'error'
       });
     }
@@ -120,13 +120,13 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
         <div>
           <h2 className={`text-xl font-bold ${theme.primaryText}`}>
             {isAdmin 
-              ? (lang === 'RU' ? 'Поданные предложения' : 'Gowşurylan teklipler')
+              ? (t('submittedOffers', 'Поданные предложения'))
               : t('myOffers', 'Tekliplerim')
             }
           </h2>
           <p className={`text-xs font-medium ${theme.subText}`}>
             {isAdmin 
-              ? (lang === 'RU' ? 'Администратор / Поданные коммерческие предложения поставщиков' : 'Admin / Gowşurylan teklipler')
+              ? (t('adminOffersPageTitle', 'Администратор / Поданные коммерческие предложения поставщиков'))
               : t('supplierMyOffers', 'Üpjün ediji / Tekliplerim')
             }
           </p>
@@ -164,7 +164,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
             placeholder={`${t('lotNo', 'Tender №')}: ...`}
             value={filterLot}
             onChange={(e) => setFilterLot(e.target.value)}
-            className={`px-2.5 py-1.5 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20 ${theme.inputBg}`}
+            className={`px-2.5 py-1.5 border rounded text-xs focus:outline-none ${theme.inputBg}`}
           />
           <CustomSelect
             role={role}
@@ -172,7 +172,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
             value={filterCurrency}
             onChange={(val) => setFilterCurrency(val)}
             options={[
-              { id: '', name: `${t('currency', 'Walýuta')}: ${lang === 'RU' ? 'Все' : 'Ählisi'}` },
+              { id: '', name: `${t('currency', 'Walýuta')}: ${t('allBtn', 'Все')}` },
               { id: 'TMT', name: 'TMT (Манат)' },
               { id: 'USD', name: 'USD ($ Доллар)' },
               { id: 'EUR', name: 'EUR (€ Евро)' }
@@ -186,7 +186,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
             placeholder={`${t('code', 'Belgisi')}: ...`}
             value={filterCode}
             onChange={(e) => setFilterCode(e.target.value)}
-            className={`px-2.5 py-1.5 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20 ${theme.inputBg}`}
+            className={`px-2.5 py-1.5 border rounded text-xs focus:outline-none ${theme.inputBg}`}
           />
           <CustomSelect
             role={role}
@@ -194,7 +194,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
             value={filterStatus}
             onChange={(val) => setFilterStatus(val)}
             options={[
-              { id: '', name: `${t('status', 'Status')}: ${lang === 'RU' ? 'Все' : 'Ählisi'}` },
+              { id: '', name: `${t('status', 'Status')}: ${t('allBtn', 'Все')}` },
               { id: 'TABSARYLDY', name: t('statusTabsyryldy', 'Подано') },
               { id: 'YENIJI', name: t('statusYeniji', 'Победитель') },
               { id: 'RET_EDILDI', name: t('statusRet', 'Отклонено') },
@@ -211,7 +211,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
               placeholder={t('searchPlaceholder', 'Gözleg...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full pl-8 pr-3 py-1.5 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/20 ${theme.inputBg}`}
+              className={`w-full pl-8 pr-3 py-1.5 border rounded text-xs focus:outline-none ${theme.inputBg}`}
             />
           </div>
         </div>
@@ -222,13 +222,13 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
               <tr className="border-b border-slate-200 dark:border-slate-800">
                 <th className="py-3.5 px-3 w-36 text-center">{t('tenderOrName', 'Тендер / Наименование')}</th>
                 <th className="py-3.5 px-3 text-center">{t('type', 'Görnüşi')}</th>
-                {isAdmin && <th className="py-3.5 px-3 text-left">{lang === 'RU' ? 'Поставщик' : 'Üpjün ediji'}</th>}
+                {isAdmin && <th className="py-3.5 px-3 text-left">{t('supplierStr', 'Поставщик')}</th>}
                 <th className="py-3.5 px-3 text-center">{t('client', 'Заказчик')}</th>
                 <th className="py-3.5 px-3 text-center">{t('currency', 'Walýuta')}</th>
                 <th className="py-3.5 px-3 text-center">{t('code', 'Номер заявки')}</th>
                 <th className="py-3.5 px-3 text-center">{t('status', 'Status')}</th>
                 <th className="py-3.5 px-3 text-center">{t('paymentTerms', 'Условия оплаты')}</th>
-                <th className="py-3.5 px-3 text-center">{lang === 'RU' ? 'Сумма' : 'Baha'}</th>
+                <th className="py-3.5 px-3 text-center">{t('totalAmount', 'Сумма')}</th>
                 <th className="py-3.5 px-3 text-center">{t('uploadDate', 'Дата подачи')}</th>
                 <th className="py-3.5 px-3 text-center w-20">{t('action', 'Действие')}</th>
               </tr>
@@ -241,7 +241,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
               ) : filteredOffers.length === 0 ? (
                 <tr>
                   <td colSpan={isAdmin ? "11" : "10"} className="py-8 text-center text-slate-500">
-                    {offers.length === 0 ? (lang === 'RU' ? 'Предложений пока не поступало' : 'Entek teklip ýok') : (lang === 'RU' ? 'По заданным фильтрам ничего не найдено' : 'Gözleg boýunça maglumat tapylmady')}
+                    {offers.length === 0 ? (t('noOffersYet', 'Предложений пока не поступало')) : (t('nothingFoundForFilters', 'По заданным фильтрам ничего не найдено'))}
                   </td>
                 </tr>
               ) : (
@@ -324,7 +324,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
                             <button 
                               onClick={() => handleDeleteOffer(item.id)}
                               className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95 cursor-pointer" 
-                              title={lang === 'RU' ? 'Удалить / Отозвать' : 'Pozmak'}
+                              title={t('delete', 'Удалить / Отозвать')}
                             >
                               <Trash2 size={16} />
                             </button>

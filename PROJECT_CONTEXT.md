@@ -61,7 +61,7 @@
 | Линтер           | OXLint (oxlint@^1.75.0)                                                 |
 | Стейт-менеджмент | React useState (без Zustand/Redux)                                      |
 | Валидация форм   | Ручная встроенная JSX-валидация (нет react-hook-form/Zod)               |
-| Языки интерфейса | RU / TM / EN (словарь translations.js, ~51 КБ)                          |
+| Языки интерфейса | RU / TM / EN (централизованный словарь translations.js, ~750+ ключей на каждый язык) |
 | Dev-порт         | 5173                                                                    |
 
 Прокси Vite (vite.config.js): /api/_ и /uploads/_ → http://127.0.0.1:5000
@@ -104,8 +104,8 @@
 - **Аудит**: auditMiddleware логирует POST/PUT/PATCH/DELETE с statusCode<400 в таблицу logs
 - **CORS**: разрешён только http://localhost:5173 (или CORS_ORIGIN из .env)
 - **Статические файлы**: /uploads через express.static
-- **Разрешённые типы файлов**: PDF, JPG, JPEG, PNG (проверка MIME + расширения в Multer)
-- **Лимит размера файла**: 10 МБ
+- **Разрешённые типы файлов**: PDF, JPG, JPEG, PNG, DOC, DOCX, XLS, XLSX (проверка расширения и MIME в Multer)
+- **Лимит размера файла**: 25 МБ (согласно требованиям тендерной документации и спецификаций)
 
 ---
 
@@ -600,7 +600,7 @@ BACKEND (Express :5000):
 | GET    | /api/tenders             | Public       | Список всех тендеров                |
 | GET    | /api/tenders/next-number | Auth         | Следующий номер TNDR-YYYY-MM-NNN    |
 | GET    | /api/tenders/:id         | Auth         | Тендер по ID (спецификации, заявки) |
-| POST   | /api/tenders             | Auth         | Создать тендер                      |
+| POST   | /api/tenders             | Auth + ADMIN | Создать тендер (организатор)        |
 | DELETE | /api/tenders/:id         | Auth + ADMIN | Удалить тендер                      |
 
 #### /api/offers — Предложения
@@ -617,14 +617,18 @@ BACKEND (Express :5000):
 
 #### /api/suppliers — Поставщики
 
-| Метод | URL                               | Доступ                | Описание                                   |
-| ----- | --------------------------------- | --------------------- | ------------------------------------------ |
-| PUT   | /api/suppliers/profile            | Auth + SUPPLIER/ADMIN | Обновить профиль + статус → PENDING_REVIEW |
-| GET   | /api/suppliers/pending            | Auth + ADMIN          | Список на модерации                        |
-| GET   | /api/suppliers/moderation/archive | Auth + ADMIN          | Архив решений модерации + статистика       |
-| POST  | /api/suppliers/:id/approve        | Auth + ADMIN          | Одобрить → VERIFIED                        |
-| POST  | /api/suppliers/:id/reject         | Auth + ADMIN          | Отклонить → REJECTED (с причиной)          |
-| GET   | /api/suppliers/:id                | Auth                  | Профиль по ID                              |
+| Метод  | URL                               | Доступ                | Описание                                   |
+| ------ | --------------------------------- | --------------------- | ------------------------------------------ |
+| GET    | /api/suppliers                    | Auth + ADMIN          | Реестр всех поставщиков (поиск, фильтры)   |
+| PUT    | /api/suppliers/profile            | Auth + SUPPLIER/ADMIN | Обновить профиль + статус → PENDING_REVIEW |
+| GET    | /api/suppliers/pending            | Auth + ADMIN          | Список на модерации                        |
+| GET    | /api/suppliers/moderation/archive | Auth + ADMIN          | Архив решений модерации + статистика       |
+| POST   | /api/suppliers/:id/approve        | Auth + ADMIN          | Одобрить → VERIFIED                        |
+| POST   | /api/suppliers/:id/reject         | Auth + ADMIN          | Отклонить → REJECTED (с причиной)          |
+| PUT    | /api/suppliers/:id                | Auth + ADMIN          | Обновить данные поставщика (админ)         |
+| DELETE | /api/suppliers/:id                | Auth + ADMIN          | Удалить поставщика                         |
+| GET    | /api/suppliers/:id                | Auth                  | Профиль по ID                              |
+| GET    | /api/suppliers/:id/stats          | Auth + SUPPLIER/ADMIN | Статистика поданных и выигранных заявок    |
 
 #### /api/evaluation — Оценка заявок
 
@@ -655,26 +659,27 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
 | POST                | /api/catalogs/currencies/rates     | Auth + ADMIN       | Установить курс    |
 | GET                 | /api/catalogs/countries            | Public             | Страны             |
 | POST/PUT/DELETE     | /api/catalogs/countries(/:id)      | Auth + ADMIN       | CRUD               |
-| GET                 | /api/catalogs/delivery-terms       | Public             | Условия поставки   |
-| POST/PUT/DELETE     | /api/catalogs/delivery-terms(/:id) | Auth + ADMIN       | CRUD               |
-| GET                 | /api/catalogs/manufacturers        | Public             | Производители      |
-| POST/PUT/DELETE     | /api/catalogs/manufacturers(/:id)  | Auth + ADMIN/PS    | CRUD               |
-| GET/POST/PUT/DELETE | /api/catalogs/clients(/:id)        | Public (без auth!) | Заказчики          |
+| GET                 | /api/catalogs/delivery-terms       | Public          | Условия поставки   |
+| POST/PUT/DELETE     | /api/catalogs/delivery-terms(/:id) | Auth + ADMIN    | CRUD               |
+| GET                 | /api/catalogs/manufacturers        | Public          | Производители      |
+| POST/PUT/DELETE     | /api/catalogs/manufacturers(/:id)  | Auth + ADMIN/PS | CRUD               |
+| GET                 | /api/catalogs/clients              | Public          | Заказчики          |
+| POST/PUT/DELETE     | /api/catalogs/clients(/:id)        | Auth + ADMIN    | Заказчики (CRUD)   |
 
 #### /api/documents — Документы
 
 | Метод  | URL                   | Доступ        | Описание                                     |
 | ------ | --------------------- | ------------- | -------------------------------------------- |
 | GET    | /api/documents        | Auth          | Список (фильтр: tenderId/supplierId/offerId) |
-| POST   | /api/documents/upload | Auth + Multer | Загрузка (PDF/JPG/PNG, до 10 МБ)             |
-| DELETE | /api/documents/:id    | Auth          | Удалить                                      |
+| POST   | /api/documents/upload | Auth + Multer | Загрузка (PDF/JPG/PNG/DOC/XLS, до 25 МБ)     |
+| DELETE | /api/documents/:id    | Auth          | Удалить (с проверкой прав и очисткой диска)  |
 
 #### /api/dashboard — Дашборд
 
-| Метод | URL                  | Доступ | Описание           |
-| ----- | -------------------- | ------ | ------------------ |
-| GET   | /api/dashboard/stats | Auth   | Статистика системы |
-| GET   | /api/dashboard/logs  | Auth   | Логи аудита        |
+| Метод | URL                  | Доступ       | Описание                    |
+| ----- | -------------------- | ------------ | --------------------------- |
+| GET   | /api/dashboard/stats | Auth         | Статистика системы          |
+| GET   | /api/dashboard/logs  | Auth + ADMIN | Логи аудита (с ENUM-поиском)|
 
 #### Прочие
 
@@ -777,7 +782,7 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
             │   │                         safeString(val, fallback) — безопасное строковое извлечение
             │   ├── statusUtils.jsx     — getStatusBadge(status, lang, isDarkMode) → JSX бейдж
             │   │                         getTypeBadge(type, lang, isDarkMode) → JSX бейдж типа
-            │   └── translations.js     — getTranslation(lang, key, fallback), словарь RU/TM/EN (~51 КБ)
+            │   └── translations.js     — getTranslation(lang, key, fallback, params), полная триада RU/TM/EN (750+ ключей)
             │
             ├── components/
             │   ├── Sidebar.jsx         — боковое меню: ADMIN vs SUPPLIER ветки, коллапс (w-64/w-20), dark mode toggle
@@ -838,8 +843,8 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
 | ------------------- | -------------------------------------------- | ------------------------------- |
 | /login              | LoginPage                                    | Только без токена               |
 | /dashboard          | Dashboard                                    | Авторизован                     |
-| /create-tender      | CreateTenderPage                             | Авторизован (на практике ADMIN) |
-| /suppliers          | SuppliersList                                | Авторизован                     |
+| /create-tender      | CreateTenderPage                             | role === 'ADMIN'                |
+| /suppliers          | SuppliersList                                | role === 'ADMIN'                |
 | /suppliers/:id      | SupplierProfilePage                          | Авторизован                     |
 | /tenders            | Tenders                                      | Авторизован                     |
 | /tenders/:id        | TenderDetails                                | Авторизован                     |
@@ -856,17 +861,22 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
 | /settings           | Inline (выбор языка)                         | Авторизован                     |
 | /\*                 | Navigate to /dashboard                       | —                               |
 
-### 7.4 Мультиязычная поддержка (i18n)
+### 7.4 Мультиязычная поддержка (i18n) и архитектура переводов (v1.2.0)
 
-| Код | Язык                 | Статус                       |
-| --- | -------------------- | ---------------------------- |
-| RU  | Русский              | По умолчанию, полный словарь |
-| TM  | Türkmençe (латиница) | Полный словарь               |
-| EN  | English              | Частичный словарь            |
+| Код | Язык                 | Статус                         |
+| --- | -------------------- | ------------------------------ |
+| RU  | Русский              | По умолчанию, 100% покрытие   |
+| TM  | Türkmençe (латиница) | Полный словарь (100% покрытие) |
+| EN  | English              | Полный словарь (100% покрытие) |
 
-Словарь: src/utils/translations.js (~51 КБ).
-Функция: getTranslation(lang, key, fallback).
-Переключение: /settings страница, CustomSelect элемент. Значение хранится в React state App.jsx (lang, setLang).
+- **Централизованный словарь**: `src/utils/translations.js` (~750+ ключей на каждый язык, синхронная триада TM/RU/EN).
+- **Движок локализации**: `getTranslation(lang, key, fallback, params)`:
+  - **Каскадный Fallback (Cascading Fallback)**: `currentDict[key] ?? ruDict[key] ?? tmDict[key] ?? enDict[key] ?? fallback ?? key`. При отсутствии ключа в текущем языке гарантируется возврат значения из основного языка системы без краша и без отображения невалидных заглушек.
+  - **Интерполяция параметров**: Поддержка динамических плейсхолдеров формата `{variable}` (например, `{fileName}`, `{count}`, `{total}`, `{currencyCode}`) через регулярные выражения.
+- **Искоренение антипаттерна бинарных тернарников**:
+  - Полностью устранены конструкции вида `lang === 'RU' ? 'Текст' : 'Tekst'`, ломавшие английскую локализацию (`lang === 'EN'` ошибочно отдавал туркменский текст).
+  - Рефакторинг затронул 562 тернарных выражения в 21 файле (`AlertContext.jsx`, `statusUtils.jsx`, `CustomDatePicker.jsx`, `Sidebar.jsx`, `OfferModal.jsx`, `RejectSupplierModal.jsx`, `App.jsx`, `Dashboard.jsx`, `Tenders.jsx`, `TenderDetails.jsx`, `CreateOfferPage.jsx`, `CreateTenderPage.jsx`, `Evaluation.jsx`, `EvaluationDetailsPage.jsx`, `LoginPage.jsx`, `MyOffers.jsx`, `OfferDetailsPage.jsx`, `SupplierProfilePage.jsx`, `SuppliersList.jsx`, `SupplierWins.jsx`, `AdminLogs.jsx`, `AdminCatalogs.jsx`).
+- **Переключение языка**: модальное окно / роут `/settings`, компонент `CustomSelect`, а также переключатель на странице входа `LoginPage.jsx`. Состояние сохраняется в React state (`lang`, `setLang`) и передается дочерним компонентам.
 
 ### 7.5 Компоненты интерфейса и дизайн-система
 
@@ -880,4 +890,43 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
   - Нижняя панель действий (Sticky Action Bar) адаптирована под рабочий контейнер (`sticky bottom-0 -mx-6 -mb-6`) и не перекрывает боковое меню (Sidebar).
 - **Алерты (`AlertContext.jsx`)**: Адаптивное цветовое оформление всплывающих окон подтверждения и уведомлений с учетом роли пользователя (`SUPPLIER` — синий брендинг, `ADMIN` — изумрудный).
 - **Предотвращение дубликатов файлов**: Устранено дублирование записей прикрепленных документов оффера в `offerController.js`.
+
+### 7.6 Аудит безопасности и целостности данных (v1.1.0)
+
+В результате комплексного аудита кодовой базы внедрены следующие меры защиты и исправления:
+- **Устранение утечки паролей (CWE-532)**: Полностью удалено логирование plaintext-паролей в консоль сервера в `authController.js`.
+- **Защита коммерческой тайны предложений**: В `offerController.js` (`getOffersByTender`) поставщики ограничены просмотром только собственных заявок до момента оглашения победителей (`YENIJI_YGLAN_EDILDI`).
+- **Защита от IDOR (Insecure Direct Object Reference)**:
+  - В `offerController.js` (`deleteOffer`) добавлена проверка авторства заявки (`supplier.userId === req.user.id` либо роль `ADMIN`) и запрет удаления после закрытия тендера.
+  - В `documentController.js` (`deleteDocument`) добавлена проверка принадлежности документа текущему пользователю и реализовано физическое удаление файлов с диска сервера.
+- **Устранение сбоев Prisma 500**:
+  - В `supplierController.js` (`getSupplierById`) убран запрос несуществующего поля `user.email`.
+  - В `dashboardController.js` (`getLogs`) строковый поиск адаптирован под ENUM-типы PostgreSQL (`EventType` и `OperationType`).
+- **Синхронизация реестра поставщиков**: `SuppliersList.jsx` и `EditSupplierModal.jsx` переведены с устаревшей таблицы `companies` на официальную модель `suppliers`.
+- **Строгий RBAC**: Добавлен `checkRole(['ADMIN'])` на создание тендеров (`POST /api/tenders`), управление заказчиками (`POST/PUT/DELETE /api/catalogs/clients`) и просмотр аудита (`GET /api/dashboard/logs`). Маршруты `/create-tender` и `/suppliers` во фронтенде закрыты от роли `SUPPLIER`.
+
+### 7.7 Комплексный аудит надежности, процедур вскрытия и дизайн-токенов (v1.2.0)
+
+В рамках повторного глубокого аудита кодовой базы на корректность, безопасность и соответствие регламентам тендерных систем выполнены следующие доработки:
+
+1. **Регламент «Запечатанных конвертов» (Sealed Bids) и дедлайны**:
+   - В `tenderController.js` (`getTenderById`): до официального наступления крайнего срока подачи заявок (дедлайна) и процедуры вскрытия (`openTenderBids`) ценовые предложения и позиции поставщиков скрыты от администраторов (отображаются лишь обезличенные метаданные: `{ id, bidderCode, createdAt, status, version }`), а участники видят строго собственные заявки.
+   - В `evaluationController.js` (`openTenderBids`): внедрена блокировка вскрытия конвертов до наступления дедлайна тендера (`new Date() < new Date(tender.deadline)`), исключающая преждевременный доступ к коммерческим предложениям.
+   - В `offerController.js` (`deleteOffer`): заблокирован отзыв предложений поставщиками после истечения дедлайна тендера («Заявка не может быть отозвана после истечения окончательного срока подачи заявок» согласно ст. 25 Закона о тендерах).
+2. **Устранение критических багов выполнения**:
+   - В `tenderController.js` (`getTenderById`): устранена критическая ошибка `ReferenceError: id is not defined` путем добавления извлечения `const { id } = req.params;`.
+   - В `evaluationController.js` (`awardLot` и `completeEvaluation`): устранено затенение внешней переменной `prisma` внутри `prisma.$transaction`.
+   - В `EvaluationDetailsPage.jsx` (`handleCompleteEvaluation`): внедрена клиентская блокировка завершения оценки при 0 утвержденных лотах и вывод конкретных серверных сообщений об ошибках из `e.response?.data?.error`.
+3. **100% унификация ролевых дизайн-токенов**:
+   - Полностью ликвидированы остаточные классы `teal-` в компонентах `CatalogFormModal.jsx`, `AddSupplierModal.jsx`, `EditSupplierModal.jsx`, `OfferModal.jsx` и `LoginPage.jsx`.
+   - Все административные элементы, модальные окна и поля ввода переведены на изумрудные токены (`emerald-600`, `focus:ring-emerald-500/20`), а формы поставщика — на синие (`blue-600`, `focus:ring-blue-500/20`).
+4. **Орфография, грамматика и чистота словарей (translations.js)**:
+   - Исправлена грамматика туркменского алфавита: `ýeňiji saylamak` ➔ `ýeňiji saýlamak` (с буквой `ý`).
+   - Исправлена русская орфография: `Заводы изготовители` ➔ `Заводы-изготовители` (дефисное написание).
+   - Устранены дублирующиеся ключи свойств объекта в секциях `RU` и `EN` (`phoneFormatHint`, `exactAddress`, `exactAddressPlaceholder`, `addressCleanHint`, `passportFormatHint`).
+5. **Анализ несоответствий с отраслевым ТЗ закупочной системы**:
+   - *Тендерное обеспечение (Bid Bond)*: в текущей схеме гарантийные обязательства принимаются файлом, рекомендована структуризация в БД (размер залога, номер банковской гарантии, срок действия).
+   - *Кворум участников*: по закону закупка признается несостоявшейся при наличии менее 2 допущенных участников; рекомендовано расширение валидации завершения торгов.
+   - *Версионирование условий*: при изменении спецификаций открытого тендера требуется уведомление поставщиков и перевод ранее поданных заявок в статус запроса на обновление.
+
 

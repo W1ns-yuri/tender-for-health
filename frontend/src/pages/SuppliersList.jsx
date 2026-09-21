@@ -75,12 +75,12 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
   const fetchSuppliers = async () => {
     try {
       setLoading(true);
-      const res = await API.get('/companies');
+      const res = await API.get('/suppliers');
       if (res.data && Array.isArray(res.data)) {
         setSuppliers(res.data);
       }
     } catch (err) {
-      console.error('Failed to fetch companies', err);
+      console.error('Failed to fetch suppliers', err);
     } finally {
       setLoading(false);
     }
@@ -131,7 +131,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
     if (!isConfirmed) return;
 
     try {
-      await API.delete(`/companies/${id}`);
+      await API.delete(`/suppliers/${id}`);
       fetchSuppliers();
       showAlert({
         title: t('success', 'Успешно'),
@@ -139,7 +139,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
         type: 'success'
       });
     } catch (err) {
-      console.error('Failed to delete company', err);
+      console.error('Failed to delete supplier', err);
       showAlert({
         title: t('error', 'Ошибка'),
         message: t('errorCreateSupplier', 'Ошибка при удалении'),
@@ -247,7 +247,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                 : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
             }`}
           >
-            {lang === 'RU' ? 'Все поставщики' : 'Ähli üpjün edijiler'}
+            {t('allSuppliers', 'Все поставщики')}
           </button>
           
           <button 
@@ -258,7 +258,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                 : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
             }`}
           >
-            <span>{lang === 'RU' ? 'На модерации' : 'Barlagda'}</span>
+            <span>{t('underModerationTab', 'На модерации')}</span>
             {pendingSuppliers.length > 0 && (
               <span className={`py-0.5 px-2 rounded-full text-[10px] font-bold ${
                 activeTab === 'pending'
@@ -335,12 +335,12 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                     <td colSpan="7" className="py-12 text-center text-slate-500">
                       <Search size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
                       <p className="font-bold text-sm text-slate-700 dark:text-slate-300">
-                        {lang === 'RU' ? 'Поставщики не найдены' : 'Üpjün ediji tapylmady'}
+                        {t('suppliersNotFoundNotice', 'Поставщики не найдены')}
                       </p>
                       <p className="text-xs text-slate-400 mt-1">
                         {search.trim()
-                          ? (lang === 'RU' ? 'Попробуйте изменить поисковый запрос или сбросить фильтр.' : 'Gözleg sözüni üýtgedip görüň.')
-                          : (lang === 'RU' ? 'В системе пока нет зарегистрированных поставщиков.' : 'Ulgamda heniz hasaba alnan üpjün ediji ýok.')}
+                          ? (t('adjustSearchFilterPrompt', 'Попробуйте изменить поисковый запрос или сбросить фильтр.'))
+                          : (t('noRegisteredSuppliersYet', 'В системе пока нет зарегистрированных поставщиков.'))}
                       </p>
                     </td>
                   </tr>
@@ -381,7 +381,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                         </button>
                         <button 
                           onClick={() => setSupplierToEdit(s)} 
-                          className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"
                         >
                           <Edit2 size={16} />
                         </button>
@@ -406,12 +406,12 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
             <table className="w-full text-left text-xs border-collapse">
               <thead className={theme.tableHeaderBg}>
                 <tr className="border-b border-slate-200 dark:border-slate-800">
-                  <th className="py-3.5 px-4 text-center">{lang === 'RU' ? 'Компания' : 'Kompaniýa'}</th>
-                  <th className="py-3.5 px-4 text-center">{lang === 'RU' ? 'Тип / ИНН' : 'Görnüşi / STŞK'}</th>
-                  <th className="py-3.5 px-4 text-center">{lang === 'RU' ? 'Контакты' : 'Kontaktlar'}</th>
-                  <th className="py-3.5 px-4 text-center">{lang === 'RU' ? 'Банк' : 'Bank'}</th>
-                  <th className="py-3.5 px-4 text-center">{lang === 'RU' ? 'Статус' : 'Status'}</th>
-                  <th className="py-3.5 px-4 text-center">{lang === 'RU' ? 'Действие' : 'Amal'}</th>
+                  <th className="py-3.5 px-4 text-center">{t('companyColumnTitle', 'Компания')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('typeTaxIdColumn', 'Тип / ИНН')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('contacts', 'Контакты')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('bankColumnTitle', 'Банк')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('status', 'Статус')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('action', 'Действие')}</th>
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -420,10 +420,10 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                     <td colSpan="6" className="py-12 text-center text-slate-500">
                       <Shield size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
                       <p className="font-bold text-sm text-slate-700 dark:text-slate-300">
-                        {lang === 'RU' ? 'Нет заявок на модерацию' : 'Barlagda arza ýok'}
+                        {t('noModerationApplications', 'Нет заявок на модерацию')}
                       </p>
                       <p className="text-xs text-slate-400 mt-1">
-                        {lang === 'RU' ? 'Все компании проверены и имеют актуальный статус.' : 'Ähli arzalar barlanyldy.'}
+                        {t('allCompaniesReviewedNotice', 'Все компании проверены и имеют актуальный статус.')}
                       </p>
                     </td>
                   </tr>
@@ -439,7 +439,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <p className="font-medium">{safeString(s.phone || s.user?.phone || '-')}</p>
-                        <p className="font-medium text-teal-600">{safeString(s.email || '-')}</p>
+                        <p className="font-medium text-emerald-600">{safeString(s.email || '-')}</p>
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <p className="font-semibold">{safeString(s.bankName || '-')}</p>
@@ -567,7 +567,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
               {/* Фильтр по типу решения */}
               <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
                 {[
-                  { id: 'ALL', label: lang === 'RU' ? 'Все' : 'Ählisi' },
+                  { id: 'ALL', label: t('allBtn', 'Все') },
                   { id: 'APPROVED', label: t('approvedKpi', 'Одобрено') },
                   { id: 'REJECTED', label: t('rejectedKpi', 'Отклонено') },
                   { id: 'RESUBMITTED', label: t('statusResubmittedBadge', 'Повторные') },
@@ -615,9 +615,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                           {t('emptyArchive', 'Архив решений пуст')}
                         </p>
                         <p className="text-xs text-slate-400 mt-1">
-                          {lang === 'RU' 
-                            ? 'История проверок и принятых решений будет накапливаться здесь.' 
-                            : 'Moderasiýa taryhy bu ýerde ýygnanar.'}
+                          {t('moderationHistoryEmptyNotice', 'История проверок и принятых решений будет накапливаться здесь.')}
                         </p>
                       </td>
                     </tr>
@@ -626,7 +624,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                       <tr key={log.id} className={theme.tableRowHover}>
                         {/* Дата и время */}
                         <td className="py-3.5 px-4 text-center font-mono text-slate-500 text-[11px] whitespace-nowrap">
-                          {new Date(log.createdAt).toLocaleString(lang === 'RU' ? 'ru-RU' : 'tk-TM', {
+                          {new Date(log.createdAt).toLocaleString(t('localeCode', 'ru-RU'), {
                             day: '2-digit',
                             month: '2-digit',
                             year: 'numeric',
@@ -681,8 +679,8 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                           ) : (
                             <span className="text-slate-400 italic text-[11px]">
                               {log.action === 'SUBMITTED' || log.action === 'RESUBMITTED' 
-                                ? (lang === 'RU' ? 'Поставщик' : 'Üpjün ediji') 
-                                : (lang === 'RU' ? 'Администратор' : 'Dolandyryjy')}
+                                ? (t('supplierStr', 'Поставщик')) 
+                                : (t('adminStr', 'Администратор'))}
                             </span>
                           )}
                         </td>

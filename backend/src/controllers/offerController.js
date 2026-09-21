@@ -81,6 +81,11 @@ const createOffer = async (req, res) => {
             return res.status(400).json({ error: 'Тендер закрыт или не принимает заявки' });
         }
 
+        // Проверка дедлайна: прием заявок строго до окончания установленного срока
+        if (new Date() > new Date(tender.deadline)) {
+            return res.status(400).json({ error: 'Срок подачи заявок по данному тендеру истек (дедлайн прошел)' });
+        }
+
         // Запрещаем подавать несколько заявок на один тендер от одного поставщика
         const existingOffer = await prisma.offer.findFirst({
             where: {
@@ -97,10 +102,33 @@ const createOffer = async (req, res) => {
             return res.status(400).json({ error: 'Укажите предложенную цену хотя бы для одной позиции спецификации' });
         }
 
+        // Проверяем принадлежность каждой позиции спецификации именно к этому тендеру и валидируем цены
+        const tenderSpecs = await prisma.tenderSpecification.findMany({
+            where: { tenderId: tenderId },
+            select: { id: true, quantity: true }
+        });
+        const validSpecMap = new Map(tenderSpecs.map(s => [s.id, s.quantity]));
+
+        for (const item of specs) {
+            if (!item.tenderSpecId || !validSpecMap.has(item.tenderSpecId)) {
+                return res.status(400).json({ error: `Спецификация с ID "${item.tenderSpecId}" не принадлежит данному тендеру` });
+            }
+            const unitPrice = parseFloat(item.unitPrice);
+            const quantity = parseFloat(item.quantity);
+            if (isNaN(unitPrice) || unitPrice < 0) {
+                return res.status(400).json({ error: 'Цена за единицу товара не может быть отрицательной или пустой' });
+            }
+            if (isNaN(quantity) || quantity <= 0) {
+                return res.status(400).json({ error: 'Количество товара должно быть больше 0' });
+            }
+        }
+
         // Автоматический подсчёт общей цены коммерческого предложения
         let totalPrice = 0;
         const offerSpecsData = specs.map((item) => {
-            const itemTotal = parseFloat(item.unitPrice) * parseFloat(item.quantity);
+            const unitPrice = parseFloat(item.unitPrice);
+            const quantity = parseFloat(item.quantity);
+            const itemTotal = unitPrice * quantity;
             totalPrice += itemTotal;
 
             return {
@@ -109,8 +137,8 @@ const createOffer = async (req, res) => {
                 unitId: item.unitId || null,
                 manufacturerId: item.manufacturerId || null,
                 name: item.name || null,
-                quantity: parseFloat(item.quantity),
-                unitPrice: parseFloat(item.unitPrice),
+                quantity: quantity,
+                unitPrice: unitPrice,
                 description: item.description || null,
                 isEquivalent: Boolean(item.isEquivalent),
                 equivalentName: item.equivalentName || null,
@@ -122,11 +150,18 @@ const createOffer = async (req, res) => {
         // Получаем все действующие курсы валют из базы
         const activeExchangeRates = await prisma.exchangeRate.findMany();
 
-        // Формируем записи для OfferExchangeRate
-        const offerRatesData = activeExchangeRates.map((rate) => ({
-            currencyId: rate.fromCurrencyId,
-            value: rate.value,
-        }));
+        // Формируем записи для OfferExchangeRate (дедупликация по валютам)
+        const seenCurrencyIds = new Set();
+        const offerRatesData = [];
+        for (const rate of activeExchangeRates) {
+            if (!seenCurrencyIds.has(rate.fromCurrencyId)) {
+                seenCurrencyIds.add(rate.fromCurrencyId);
+                offerRatesData.push({
+                    currencyId: rate.fromCurrencyId,
+                    value: rate.value,
+                });
+            }
+        }
 
         // Проверяем версионность: сколько версий предложений уже есть от этого поставщика
         const previousOffersCount = await prisma.offer.count({
@@ -179,8 +214,30 @@ const createOffer = async (req, res) => {
 const getOffersByTender = async (req, res) => {
     try {
         const { tenderId } = req.params;
+
+        const tender = await prisma.tender.findUnique({
+            where: { id: tenderId },
+            select: { status: true }
+        });
+
+        if (!tender) {
+            return res.status(404).json({ error: 'Тендер не найден' });
+        }
+
+        const whereClause = { tenderId };
+
+        // Защита коммерческой тайны: поставщики не видят заявки и цены конкурентов до объявления победителей
+        if (req.user && req.user.roleType !== 'ADMIN' && tender.status !== 'YENIJI_YGLAN_EDILDI') {
+            const userSuppliers = await prisma.supplier.findMany({
+                where: { userId: req.user.id },
+                select: { id: true }
+            });
+            const supplierIds = userSuppliers.map(s => s.id);
+            whereClause.supplierId = { in: supplierIds };
+        }
+
         const offers = await prisma.offer.findMany({
-            where: { tenderId },
+            where: whereClause,
             include: {
                 supplier: true,
                 deliveryTerm: true,
@@ -377,7 +434,17 @@ const getOfferById = async (req, res) => {
             const suppliers = await prisma.supplier.findMany({ where: { userId: req.user.id } });
             const supplierIds = suppliers.map(s => s.id);
             if (!supplierIds.includes(offer.supplierId)) {
-                return res.status(403).json({ error: 'Нет доступа к этому предложению' });
+                // Если победители уже объявлены, просмотр открыт для прозрачности
+                if (offer.tender?.status !== 'YENIJI_YGLAN_EDILDI') {
+                    return res.status(403).json({ error: 'Нет доступа к этому предложению' });
+                }
+            }
+        } else {
+            // Для администратора: если тендер еще открыт (до дедлайна и вскрытия заявок), коммерческие цены запечатаны
+            if (offer.tender?.status === 'ACYK' && new Date() < new Date(offer.tender?.deadline)) {
+                return res.status(403).json({ 
+                    error: 'Заявка запечатана в закрытый конверт. Просмотр коммерческих позиций доступен только после наступления дедлайна и процедуры вскрытия предложений.' 
+                });
             }
         }
 
@@ -390,10 +457,26 @@ const getOfferById = async (req, res) => {
 const deleteOffer = async (req, res) => {
     try {
         const { id } = req.params;
-        const offer = await prisma.offer.findUnique({ where: { id } });
+        const offer = await prisma.offer.findUnique({
+            where: { id },
+            include: { supplier: true, tender: true }
+        });
         if (!offer) {
             return res.status(404).json({ error: 'Предложение не найдено' });
         }
+
+        // Защита от IDOR: удалить может только админ или автор предложения
+        if (req.user.roleType !== 'ADMIN' && offer.supplier.userId !== req.user.id) {
+            return res.status(403).json({ error: 'У вас нет прав на удаление этого коммерческого предложения' });
+        }
+
+        // Поставщик может отозвать/удалить заявку только пока тендер открыт для приема заявок и дедлайн не истек
+        if (req.user.roleType !== 'ADMIN') {
+            if (offer.tender.status !== 'ACYK' || (offer.tender.deadline && new Date() > new Date(offer.tender.deadline))) {
+                return res.status(400).json({ error: 'Нельзя отозвать заявку после окончания установленного срока подачи заявок (дедлайна) или закрытия тендера' });
+            }
+        }
+
         await prisma.$transaction([
             prisma.offerFile.deleteMany({ where: { offerId: id } }),
             prisma.offerSpecification.deleteMany({ where: { offerId: id } }),

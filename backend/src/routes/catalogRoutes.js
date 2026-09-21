@@ -60,8 +60,8 @@ router.delete('/manufacturers/:id', authMiddleware, checkRole(['ADMIN', 'PURCHAS
 
 // Заказчики
 router.get('/clients', getClients);
-router.post('/clients', createClient);
-router.put('/clients/:id', updateClient);
-router.delete('/clients/:id', deleteClient);
+router.post('/clients', authMiddleware, checkRole(['ADMIN']), createClient);
+router.put('/clients/:id', authMiddleware, checkRole(['ADMIN']), updateClient);
+router.delete('/clients/:id', authMiddleware, checkRole(['ADMIN']), deleteClient);
 
 module.exports = router;

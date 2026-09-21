@@ -50,8 +50,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
     } catch (e) {
       console.error(e);
       showAlert({
-        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
-        message: lang === 'RU' ? 'Ошибка при сохранении' : 'Ýatda saklamakda säwlik',
+        title: t('errorTitle', 'Ошибка'),
+        message: t('profileSaveError', 'Ошибка при сохранении'),
         type: 'error'
       });
     }
@@ -65,8 +65,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
     } catch (e) {
       console.error(e);
       showAlert({
-        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
-        message: lang === 'RU' ? 'Ошибка при изменении статуса' : 'Ýagdaýy üýtgetmekde säwlik',
+        title: t('errorTitle', 'Ошибка'),
+        message: t('statusUpdateError', 'Ошибка при изменении статуса'),
         type: 'error'
       });
     }
@@ -74,11 +74,11 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
 
   const handleDelete = async (itemId) => {
     const isConfirmed = await showConfirm({
-      title: lang === 'RU' ? 'Удаление записи' : 'Ýazgyny pozmak',
-      message: lang === 'RU' ? 'Вы уверены, что хотите удалить эту запись?' : 'Bu ýazgyny pozjakdygyňyza ynamyňyz barmy?',
+      title: t('deleteRecordTitle', 'Удаление записи'),
+      message: t('deleteRecordConfirm', 'Вы уверены, что хотите удалить эту запись?'),
       type: 'danger',
-      confirmText: lang === 'RU' ? 'Удалить' : 'Pozmak',
-      cancelText: lang === 'RU' ? 'Отмена' : 'Ýatyr',
+      confirmText: t('delete', 'Удалить'),
+      cancelText: t('cancelEditBtn', 'Отмена'),
       isDanger: true
     });
     if (!isConfirmed) return;
@@ -88,15 +88,15 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
       await API.delete(`/catalogs/${endpoint}/${itemId}`);
       fetchCatalogData(activeCatalog);
       showAlert({
-        title: lang === 'RU' ? 'Успешно' : 'Üstünlikli',
-        message: lang === 'RU' ? 'Запись успешно удалена' : 'Ýazgy üstünlikli pozuldy',
+        title: t('successTitle', 'Успешно'),
+        message: t('recordDeletedSuccess', 'Запись успешно удалена'),
         type: 'success'
       });
     } catch (e) {
       console.error(e);
       showAlert({
-        title: lang === 'RU' ? 'Ошибка' : 'Ýalňyşlyk',
-        message: lang === 'RU' ? 'Ошибка при удалении' : 'Pozmakda säwlik',
+        title: t('errorTitle', 'Ошибка'),
+        message: t('deleteError', 'Ошибка при удалении'),
         type: 'error'
       });
     }
@@ -196,8 +196,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center font-mono">{c.code}</td>
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
                     <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
@@ -227,12 +227,12 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{c.name}</td>
                 <td className="py-3 px-4 text-center font-mono">{c.code}</td>
-                <td className="py-3 px-4 text-center font-bold text-teal-600">{c.symbol}</td>
+                <td className="py-3 px-4 text-center font-bold text-emerald-600">{c.symbol}</td>
                 <td className="py-3 px-4 text-center text-lg">{c.flag || '-'}</td>
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
                     <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
@@ -264,8 +264,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center font-mono">{c.alpha3}</td>
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
                     <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
@@ -292,11 +292,11 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
               <tr key={c.id} className={theme.tableRowHover}>
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{c.name}</td>
-                <td className="py-3 px-4 text-center font-bold text-teal-600">{c.shortName}</td>
+                <td className="py-3 px-4 text-center font-bold text-emerald-600">{c.shortName}</td>
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
                     <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
@@ -330,8 +330,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-slate-500">{p.description}</td>
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {p.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(p)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(p)} />}
-                    <button onClick={() => { setEditingItem(p); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    {p.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(p)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(p)} />}
+                    <button onClick={() => { setEditingItem(p); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
                     <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
@@ -358,11 +358,11 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
               <tr key={u.id} className={theme.tableRowHover}>
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{u.name}</td>
-                <td className="py-3 px-4 text-center font-bold text-teal-600">{u.shortName}</td>
+                <td className="py-3 px-4 text-center font-bold text-emerald-600">{u.shortName}</td>
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {u.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(u)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(u)} />}
-                    <button onClick={() => { setEditingItem(u); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    {u.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(u)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(u)} />}
+                    <button onClick={() => { setEditingItem(u); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
                     <button onClick={() => handleDelete(u.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
@@ -392,8 +392,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 <td className="py-3 px-4 text-center font-mono">{m.code}</td>
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {m.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(m)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(m)} />}
-                    <button onClick={() => { setEditingItem(m); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    {m.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(m)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(m)} />}
+                    <button onClick={() => { setEditingItem(m); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
                     <button onClick={() => handleDelete(m.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
@@ -419,7 +419,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
             {clients.length === 0 ? (
               <tr>
                 <td colSpan="3" className="py-12 text-center text-slate-400">
-                  {lang === 'RU' ? 'Список заказчиков пуст' : 'Sargyt edijiler sanawy boş'}
+                  {t('customersListEmpty', 'Список заказчиков пуст')}
                 </td>
               </tr>
             ) : clients.map((c, i) => (
@@ -429,8 +429,8 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {c.isActive ? <ToggleRight size={20} className="text-teal-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"><Edit2 size={16} /></button>
+                    {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
                     <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
                   </div>
                 </td>
@@ -447,7 +447,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
         <div className="text-center text-slate-400">
           <Database size={48} className="mx-auto mb-4 opacity-20" />
           <p className="text-lg font-medium">{t('underConstruction', 'Gurluşygy dowam edýär (Maglumat ýok)')}</p>
-          <p className="text-sm mt-1">{lang === 'RU' ? 'Этот раздел находится в разработке.' : 'Bu bölüm gurluşykda.'}</p>
+          <p className="text-sm mt-1">{t('sectionUnderDevelopment', 'Этот раздел находится в разработке.')}</p>
         </div>
       </div>
     );
@@ -466,11 +466,11 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                 onClick={() => setSearchParams({ catalog: item.id })}
                 className={`p-4 rounded-xl border flex items-center space-x-4 cursor-pointer transition-all ${
                   isDarkMode 
-                    ? 'bg-slate-800 border-slate-700 hover:border-teal-500 hover:shadow-lg hover:shadow-teal-900/20' 
-                    : 'bg-white border-slate-200 hover:border-teal-400 hover:shadow-md'
+                    ? 'bg-slate-800 border-slate-700 hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-900/20' 
+                    : 'bg-white border-slate-200 hover:border-emerald-400 hover:shadow-md'
                 }`}
               >
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${isDarkMode ? 'bg-slate-700 text-teal-400' : 'bg-slate-50 text-teal-600'}`}>
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${isDarkMode ? 'bg-slate-700 text-emerald-400' : 'bg-slate-50 text-emerald-600'}`}>
                   {item.icon}
                 </div>
                 <div className="overflow-hidden">
@@ -488,7 +488,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
           // Table View (Режим таблицы)
           <div className="animate-in slide-in-from-right-4 duration-200">
             <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
                 {sections[section]?.find(s => s.id === activeCatalog)?.title || activeCatalog}
               </h2>
               
@@ -498,16 +498,16 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
                   <input 
                     type="text" 
                     placeholder={t('searchPlaceholder', 'Gözleg...')} 
-                    className={`pl-9 pr-4 py-2 rounded-md border text-sm w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-teal-500/50 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`} 
+                    className={`pl-9 pr-4 py-2 rounded-md border text-sm w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`} 
                   />
                 </div>
                 
-                <button className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-md text-sm font-medium transition-colors">
+                <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-medium transition-colors">
                   <Filter size={16} />
                   <span>{t('filter', 'Filter')}</span>
                 </button>
                 
-                <button onClick={() => { setEditingItem(null); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors">
+                <button onClick={() => { setEditingItem(null); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-medium transition-colors">
                   <PlusCircle size={16} />
                   <span>{t('addBtn', 'Goş')}</span>
                 </button>

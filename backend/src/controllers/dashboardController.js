@@ -84,13 +84,26 @@ const getLogs = async (req, res) => {
     try {
         const { search, limit = 100 } = req.query;
         const where = {};
-        if (search) {
-            where.OR = [
-                { eventType: { contains: search, mode: 'insensitive' } },
-                { operationType: { contains: search, mode: 'insensitive' } },
-                { ip: { contains: search, mode: 'insensitive' } },
-                { user: { username: { contains: search, mode: 'insensitive' } } }
+        if (search && search.trim() !== '') {
+            const trimmed = search.trim();
+            const upper = trimmed.toUpperCase();
+
+            const orConditions = [
+                { ip: { contains: trimmed, mode: 'insensitive' } },
+                { user: { username: { contains: trimmed, mode: 'insensitive' } } },
+                { user: { firstName: { contains: trimmed, mode: 'insensitive' } } },
+                { user: { lastName: { contains: trimmed, mode: 'insensitive' } } },
             ];
+
+            // Проверяем валидность для ENUM-полей PostgreSQL во избежание сбоя Prisma
+            if (['HARYT', 'TENDER'].includes(upper)) {
+                orConditions.push({ eventType: { equals: upper } });
+            }
+            if (['OKAMAK', 'YAZMAK'].includes(upper)) {
+                orConditions.push({ operationType: { equals: upper } });
+            }
+
+            where.OR = orConditions;
         }
         const logs = await prisma.log.findMany({
             where,
