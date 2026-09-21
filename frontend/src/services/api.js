@@ -20,7 +20,21 @@ API.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
+  async (error) => {
+    const config = error.config;
+
+    // Авто-повтор запроса при кратковременной перезагрузке dev-сервера (502 / 503 / 504 / ECONNREFUSED)
+    if (
+      config &&
+      !config._retry &&
+      (error.code === 'ERR_NETWORK' ||
+        (error.response && [502, 503, 504].includes(error.response.status)))
+    ) {
+      config._retry = true;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return API(config);
+    }
+
     // Если получаем 401 Unauthorized или 404 на /auth/me, значит токен недействителен
     if (
       error.response &&
