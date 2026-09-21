@@ -931,5 +931,9 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
 6. **Отказоустойчивость сети и предотвращение 502 Bad Gateway**:
    - В `backend/index.js` вызов `app.listen(PORT, '0.0.0.0')` явно привязан к `'0.0.0.0'`, предотвращая рассинхронизацию IPv4/IPv6 (localhost vs 127.0.0.1) на Windows.
    - В `frontend/src/services/api.js` внедрен перехватчик с автоматическим повтором (`auto-retry` с задержкой 1000 мс) при временной недоступности бэкенда (502, 503, 504, ERR_NETWORK) во время горячей перезагрузки `node --watch`.
+7. **Устранение ошибок области видимости и затенения функции `t`**:
+   - В `CreateTenderPage.jsx`: внутри вынесенного подкомпонента `ProductSearchableSelect` добавлена инициализация функции `t = (key, fallback, params) => getTranslation(lang, key, fallback, params)`.
+   - В `Evaluation.jsx`: устранен конфликт затенения функции перевода `t` параметром итератора таблицы `filteredTenders.map(tender => ...)`, что предотвратило вызов объекта тендера вместо функции перевода.
+
 
 
