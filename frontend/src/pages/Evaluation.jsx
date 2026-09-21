@@ -39,7 +39,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
   const uniqueClients = Array.from(
     new Set(
       tenders
-        .map(t => t.client?.name)
+        .map(c => c.client?.name)
         .filter(Boolean)
     )
   ).sort();
@@ -306,38 +306,38 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredTenders.map(t => {
-                  const offersCount = t._count?.offers || 0;
-                  const lotsCount = t._count?.lots || 0;
-                  const isExpired = new Date(t.deadline) < new Date();
-                  const isCompleted = t.status === 'YENIJI_YGLAN_EDILDI';
-                  const isFailed = offersCount === 0 && (isExpired || t.status === 'YAPYK');
+                {filteredTenders.map(tender => {
+                  const offersCount = tender._count?.offers || 0;
+                  const lotsCount = tender._count?.lots || 0;
+                  const isExpired = new Date(tender.deadline) < new Date();
+                  const isCompleted = tender.status === 'YENIJI_YGLAN_EDILDI';
+                  const isFailed = offersCount === 0 && (isExpired || tender.status === 'YAPYK');
 
                   return (
-                    <tr key={t.id} className={`${theme.tableRowHover} transition-colors group`}>
+                    <tr key={tender.id} className={`${theme.tableRowHover} transition-colors group`}>
                       {/* Номер тендера */}
                       <td className="py-3 px-4 font-mono font-bold text-xs text-emerald-700 dark:text-emerald-400">
                         <Link
-                          to={offersCount === 0 ? `/tenders/${t.id}` : `/evaluation/${t.id}`}
+                          to={offersCount === 0 ? `/tenders/${tender.id}` : `/evaluation/${tender.id}`}
                           className="hover:underline flex items-center gap-1.5"
                         >
-                          {t.tenderNumber}
+                          {tender.tenderNumber}
                         </Link>
                       </td>
 
                       {/* Наименование закупки */}
                       <td className="py-3 px-4">
                         <div className="font-semibold text-slate-800 dark:text-slate-100 text-xs line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                          {t.title}
+                          {tender.title}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          {t.category?.name && (
+                          {tender.category?.name && (
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-medium">
-                              {t.category.name}
+                              {tender.category.name}
                             </span>
                           )}
                           <span className="text-[10px] text-slate-400">
-                            {t.type === 'YERLI' ? (t('typeLocal', 'Местный')) : (t('typeGlobal', 'Международный'))}
+                            {tender.type === 'YERLI' ? (t('typeLocal', 'Местный')) : (t('typeGlobal', 'Международный'))}
                           </span>
                         </div>
                       </td>
@@ -346,7 +346,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                       <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
                         <div className="flex items-center gap-1.5">
                           <Building2 size={13} className="text-slate-400 shrink-0" />
-                          <span className="truncate font-medium">{t.client?.name || '—'}</span>
+                          <span className="truncate font-medium">{tender.client?.name || '—'}</span>
                         </div>
                       </td>
 
@@ -374,9 +374,9 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                       {/* Крайний срок */}
                       <td className="py-3 px-4">
                         <div className="font-semibold text-slate-700 dark:text-slate-200">
-                          {new Date(t.deadline).toLocaleDateString('ru-RU')}
+                          {new Date(tender.deadline).toLocaleDateString('ru-RU')}
                         </div>
-                        <div className="mt-0.5">{getDeadlineBadge(t.deadline)}</div>
+                        <div className="mt-0.5">{getDeadlineBadge(tender.deadline)}</div>
                       </td>
 
                       {/* Статус */}
@@ -386,7 +386,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                             {t('tenderFailedStatus', 'Не состоялся')}
                           </span>
                         ) : (
-                          getStatusBadge(t.status, lang, isDarkMode)
+                          getStatusBadge(tender.status, lang, isDarkMode)
                         )}
                       </td>
 
@@ -394,7 +394,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                       <td className="py-3 px-4 text-right">
                         {isCompleted ? (
                           <Link
-                            to={`/evaluation/${t.id}`}
+                            to={`/evaluation/${tender.id}`}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors"
                           >
                             <FileText size={13} className="text-slate-400" />
@@ -402,7 +402,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                           </Link>
                         ) : isFailed ? (
                           <Link
-                            to={`/tenders/${t.id}`}
+                            to={`/tenders/${tender.id}`}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors"
                           >
                             <Eye size={13} />
@@ -410,7 +410,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                           </Link>
                         ) : (
                           <Link
-                            to={`/evaluation/${t.id}`}
+                            to={`/evaluation/${tender.id}`}
                             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer"
                           >
                             <span>{t('evaluateBidsBtn', 'Оценить заявки')}</span>

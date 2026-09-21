@@ -45,9 +45,10 @@ const ProductSearchableSelect = ({
   placeholder,
   isDarkMode,
   theme,
-  lang,
+  lang = 'RU',
   isDuplicate
 }) => {
+  const t = (key, fallback, params) => getTranslation(lang, key, fallback, params);
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
@@ -329,7 +330,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
     try {
       const res = await API.get('/tenders');
       if (Array.isArray(res.data)) {
-        setExistingTenderNumbers(res.data.map(t => (t.tenderNumber || '').trim().toLowerCase()));
+        setExistingTenderNumbers(res.data.map(item => (item.tenderNumber || '').trim().toLowerCase()));
       }
     } catch (e) {
       console.warn('Failed to fetch existing tenders', e);
