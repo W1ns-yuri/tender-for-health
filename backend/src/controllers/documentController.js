@@ -14,7 +14,7 @@ const uploadDocument = async (req, res) => {
             data: {
                 name: name || Buffer.from(req.file.originalname, 'latin1').toString('utf8'),
                 fileName: Buffer.from(req.file.originalname, 'latin1').toString('utf8'),
-                filePath: req.file.path,
+                filePath: (req.file.path || '').replace(/\\/g, '/'),
                 fileType: req.file.mimetype,
                 fileSize: req.file.size || null,
                 documentTypeId: documentTypeId || null,
@@ -91,7 +91,8 @@ const deleteDocument = async (req, res) => {
             include: {
                 supplierFiles: { include: { supplier: true } },
                 offerFiles: { include: { offer: { include: { supplier: true } } } },
-                tenderFiles: { include: { tender: true } }
+                tenderFiles: { include: { tender: true } },
+                lotFiles: { include: { lot: true } }
             }
         });
 
@@ -101,9 +102,9 @@ const deleteDocument = async (req, res) => {
 
         // Защита от IDOR: проверка прав доступа
         if (req.user.roleType !== 'ADMIN') {
-            // Документы тендера может удалять только организатор/администратор
-            if (doc.tenderFiles && doc.tenderFiles.length > 0) {
-                return res.status(403).json({ error: 'У вас нет прав на удаление документов тендера' });
+            // Документы тендера и лотов может удалять только организатор/администратор
+            if ((doc.tenderFiles && doc.tenderFiles.length > 0) || (doc.lotFiles && doc.lotFiles.length > 0)) {
+                return res.status(403).json({ error: 'У вас нет прав на удаление документов тендера или лота' });
             }
 
             // Проверяем принадлежность документа поставщику
