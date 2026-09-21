@@ -112,7 +112,9 @@ export default function App() {
   };
 
   const handleNavigate = (tab, tenderId = null) => {
-    if (tenderId) {
+    if (tab === 'edit-tender' && tenderId) {
+      navigate(`/tenders/${tenderId}/edit`);
+    } else if (tenderId) {
       navigate(`/${tab}/${tenderId}`);
     } else {
       navigate(`/${tab}`);
@@ -175,6 +177,7 @@ export default function App() {
               } />
               
               <Route path="/create-tender" element={role === 'ADMIN' ? <CreateTenderPage onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
+              <Route path="/tenders/:id/edit" element={role === 'ADMIN' ? <CreateTenderPage onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} isEdit={true} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/suppliers" element={role === 'ADMIN' ? <SuppliersList role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/suppliers/:id" element={<SupplierProfilePage role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/tenders" element={<Tenders onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} />} />

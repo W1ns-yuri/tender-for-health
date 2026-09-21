@@ -7,7 +7,7 @@ const uploadDocument = async (req, res) => {
             return res.status(400).json({ error: 'Файл не был загружен' });
         }
 
-        const { name, documentTypeId, tenderId, supplierId, offerId } = req.body;
+        const { name, documentTypeId, tenderId, lotId, supplierId, offerId } = req.body;
 
         // Создаем запись базового документа
         const document = await prisma.document.create({
@@ -25,6 +25,12 @@ const uploadDocument = async (req, res) => {
         if (tenderId) {
             await prisma.tenderFile.create({
                 data: { tenderId, documentId: document.id },
+            });
+        }
+
+        if (lotId) {
+            await prisma.lotFile.create({
+                data: { lotId, documentId: document.id },
             });
         }
 
@@ -49,10 +55,12 @@ const uploadDocument = async (req, res) => {
 // Получение списка документов по объектам
 const getDocuments = async (req, res) => {
     try {
-        const { tenderId, supplierId, offerId } = req.query;
+        const { tenderId, lotId, supplierId, offerId } = req.query;
 
         let where = {};
-        if (tenderId) {
+        if (lotId) {
+            where.lotFiles = { some: { lotId } };
+        } else if (tenderId) {
             where.tenderFiles = { some: { tenderId } };
         } else if (supplierId) {
             where.supplierFiles = { some: { supplierId } };
@@ -112,6 +120,7 @@ const deleteDocument = async (req, res) => {
         await prisma.$transaction([
             prisma.supplierFile.deleteMany({ where: { documentId: id } }),
             prisma.tenderFile.deleteMany({ where: { documentId: id } }),
+            prisma.lotFile.deleteMany({ where: { documentId: id } }),
             prisma.offerFile.deleteMany({ where: { documentId: id } }),
             prisma.document.delete({ where: { id } })
         ]);

@@ -392,7 +392,7 @@ id (UUID PK), name (название организации-заказчика),
 
 ### 4.9 Таблица: tender_lots
 
-id (UUID PK), tender_id (FK→tenders Cascade), name, lot_type (GOODS / WORKS / SERVICES), delivery_term_id (FK→delivery_terms SetNull), delivery_address?, work_address?, work_period?, license_required (Boolean default false), service_format? (REMOTE / ON_SITE / HYBRID), sla_period?, createdAt, updatedAt
+id (UUID PK), tender_id (FK→tenders Cascade), lot_number (Int?), name, lot_type (GOODS / WORKS / SERVICES), category_id (FK→categories SetNull), end_user (String?, конечный получатель/бенефициар), description?, delivery_term_id (FK→delivery_terms SetNull), delivery_address?, work_address?, work_period?, license_required (Boolean default false), service_format? (REMOTE / ON_SITE / HYBRID), sla_period?, createdAt, updatedAt. Связана с files (LotFile[]) и tender_specifications (TenderSpecification[]).
 
 ### 4.10 Таблица: tender_specifications
 
@@ -523,6 +523,7 @@ id (PK), offer_id (FK→offers Cascade), currency_id (FK→currencies Cascade), 
 - tender_files: tenderId (FK) + documentId (FK)
 - supplier_files: supplierId (FK) + documentId (FK)
 - offer_files: offerId (FK) + documentId (FK)
+- lot_files: lotId (FK) + documentId (FK)
 
 ### 4.19 ER-диаграмма ключевых связей
 
@@ -595,13 +596,18 @@ BACKEND (Express :5000):
 
 #### /api/tenders — Тендеры
 
-| Метод  | URL                      | Доступ       | Описание                            |
-| ------ | ------------------------ | ------------ | ----------------------------------- |
-| GET    | /api/tenders             | Public       | Список всех тендеров                |
-| GET    | /api/tenders/next-number | Auth         | Следующий номер TNDR-YYYY-MM-NNN    |
-| GET    | /api/tenders/:id         | Auth         | Тендер по ID (спецификации, заявки) |
-| POST   | /api/tenders             | Auth + ADMIN | Создать тендер (организатор)        |
-| DELETE | /api/tenders/:id         | Auth + ADMIN | Удалить тендер                      |
+| Метод  | URL                              | Доступ       | Описание                                                  |
+| ------ | -------------------------------- | ------------ | --------------------------------------------------------- |
+| GET    | /api/tenders                     | Public       | Список всех тендеров                                      |
+| GET    | /api/tenders/next-number         | Auth         | Следующий номер TNDR-YYYY-MM-NNN                          |
+| GET    | /api/tenders/:id                 | Auth         | Тендер по ID (лоты, спецификации, файлы, заявки)          |
+| POST   | /api/tenders                     | Auth + ADMIN | Создать драфт тендера (базовые поля, поддержка lots: [])   |
+| PUT    | /api/tenders/:id                 | Auth + ADMIN | Обновить основные параметры тендера                       |
+| POST   | /api/tenders/:id/publish         | Auth + ADMIN | Опубликовать тендер (проверка наличия лотов, статус ACYK) |
+| POST   | /api/tenders/:id/lots            | Auth + ADMIN | Создать отдельный лот в тендере                           |
+| PUT    | /api/tenders/:id/lots/:lotId     | Auth + ADMIN | Атомарно сохранить параметры лота и его спецификацию      |
+| DELETE | /api/tenders/:id/lots/:lotId     | Auth + ADMIN | Удалить отдельный лот (каскад спецификаций и файлов лота) |
+| DELETE | /api/tenders/:id                 | Auth + ADMIN | Удалить тендер полностью                                  |
 
 #### /api/offers — Предложения
 
@@ -844,6 +850,7 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
 | /login              | LoginPage                                    | Только без токена               |
 | /dashboard          | Dashboard                                    | Авторизован                     |
 | /create-tender      | CreateTenderPage                             | role === 'ADMIN'                |
+| /tenders/:id/edit   | CreateTenderPage (режим редактирования)      | role === 'ADMIN'                |
 | /suppliers          | SuppliersList                                | role === 'ADMIN'                |
 | /suppliers/:id      | SupplierProfilePage                          | Авторизован                     |
 | /tenders            | Tenders                                      | Авторизован                     |
@@ -948,26 +955,29 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
   - `vite build`: Успешная сборка за ~500 мс без ошибок.
   - `Backend test`: 28 файлов контроллеров и маршрутов, 203 роута и middleware проверены — 0 ошибок.
   - `Prisma schema`: Валидация успешна.
-- **Затронутые файлы**:
-  - `frontend/src/pages/AdminCatalogs.jsx`
-  - `frontend/src/utils/translations.js`
-  - `frontend/src/components/Header.jsx`
-  - `frontend/src/utils/themeUtils.js`
-  - `frontend/src/pages/CreateTenderPage.jsx`
-  - `frontend/src/pages/CreateOfferPage.jsx`
-  - `frontend/src/pages/OfferDetailsPage.jsx`
-  - `frontend/src/pages/Evaluation.jsx`
-  - `frontend/src/pages/TenderDetails.jsx`
-  - `frontend/src/components/OfferModal.jsx`
-  - `frontend/src/components/CustomDatePicker.jsx`
-  - `frontend/src/pages/SuppliersList.jsx`
-  - `frontend/src/pages/AdminLogs.jsx`
-  - `frontend/src/pages/LoginPage.jsx`
-  - `frontend/src/pages/MyOffers.jsx`
-  - `frontend/src/pages/Dashboard.jsx`
-  - `frontend/src/pages/EvaluationDetailsPage.jsx`
-  - `frontend/src/pages/SupplierProfilePage.jsx`
-  - `PROJECT_CONTEXT.md`
+
+### 7.9 Архитектура атомарного управления лотами и табовая модель создания тендеров (v1.3.0)
+- **Дата**: 21 сентября 2026 г.
+- **Контекст и проблема**:
+  - Ранее форма создания тендера сохраняла весь тендер со всеми лотами и сотнями позиций спецификаций единым гигантским JSON-запросом. При масштабировании до 100 лотов по 500 позиций это приводило бы к исчерпанию лимитов payload, таймаутам транзакций СУБД и падению сервера.
+- **Реализованное решение**:
+  1. **2-этапный мастер создания тендера**:
+     - *Шаг 1*: Создание/сохранение драфта тендера (`TASLAMA`) с общими атрибутами (номер, наименование, заказчик, категории, сроки приёма и подведения итогов). Номер генерируется алгоритмом поиска максимума последовательности (`maxSeq + 1`), исключая коллизии дубликатов.
+     - *Шаг 2*: Управление лотами и спецификацией в виде интерактивных горизонтальных закладок (табов, стилизованных под закладки в учебнике): `[ 🔖 Лот №1: ... ] [ 🔖 Лот №2: ... ] [ ➕ Добавить лот ]`.
+  2. **Атомарность сохранения на сервере**:
+     - Каждый лот создаётся (`POST /api/tenders/:id/lots`), сохраняется/обновляется (`PUT /api/tenders/:id/lots/:lotId`) и удаляется (`DELETE /api/tenders/:id/lots/:lotId`) изолированным HTTP-запросом.
+     - Сохранение активного лота обновляет только его метаданные и его строки спецификации, не затрагивая остальные лоты тендера.
+  3. **Конечный получатель (endUser) и раздельная категоризация**:
+     - В модель `TenderLot` добавлены поля `lotNumber`, `endUser` (конечный получатель/бенефициар, например, "IT-отдел Госпиталя №1", отделяемый от общего `client` — Министерства здравоохранения), `description`, `categoryId`.
+  4. **Изолированный документооборот по лотам**:
+     - Добавлена M2M-таблица `lot_files` (`LotFile`) для привязки технической документации к конкретному лоту (`lotId` в `/api/documents/upload`).
+  5. **Контроль публикации**:
+     - Финальная кнопка «Опубликовать тендер» вызывает эндпоинт `POST /api/tenders/:id/publish`. Сервер проверяет наличие хотя бы 1 лота с заполненной спецификацией и переводит тендер из `TASLAMA` в `ACYK`.
+  6. **Отображение в смежных модулях**:
+     - `TenderDetails.jsx`: лоты отображаются через горизонтальные табы с бейджами количества позиций, выводом конечного получателя (`endUser`), условий поставки/выполнения и списком прикреплённых документов лота. Добавлена кнопка перехода в режим редактирования для администратора.
+     - `CreateOfferPage.jsx`: поставщик видит атрибут «Конечный получатель» и прямые ссылки на скачивание файлов конкретного лота при формировании предложения.
+     - `Tenders.jsx`: иконка редактирования открывает драфт тендера в форме управления лотами.
+
 
 
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Clock, Users, LayoutGrid, Trophy } from 'lucide-react';
+import { Download, Clock, Users, LayoutGrid, Trophy, Bookmark, Edit2, Paperclip, FileText } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
@@ -11,6 +11,7 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
   const navigate = useNavigate();
   const activeTenderId = tenderId || paramId;
   const [tender, setTender] = useState(null);
+  const [activeLotTab, setActiveLotTab] = useState(0);
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
 
@@ -28,36 +29,30 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
 
   const formatDate = (dateVal) => {
     if (!dateVal) return '-';
-    if (typeof dateVal === 'string' && /^\d{2}\.\d{2}\.\d{4}/.test(dateVal)) return dateVal;
     try {
       return new Date(dateVal).toLocaleDateString('ru-RU');
     } catch {
-      return '-';
+      return dateVal;
     }
   };
 
-  const getClientName = (d) => {
-    if (d?.client?.name) return d.client.name;
-    if (d?.createdBy?.firstName) return `${d.createdBy.firstName} ${d.createdBy.lastName || ''}`.trim();
-    return safeString(d?.client, '-');
+  const getClientName = (tItem) => {
+    return tItem?.client?.name || tItem?.clientId || '-';
   };
 
-  const getCategoryName = (d) => {
-    if (d?.category?.name) return d.category.name;
-    return safeString(d?.category, '-');
+  const getCategoryName = (tItem) => {
+    return tItem?.category?.name || tItem?.categoryId || '-';
   };
 
-  const handleDownload = (doc) => {
-    // API.defaults.baseURL is usually http://localhost:5000/api
-    const baseUrl = API.defaults.baseURL.replace('/api', '');
-    const actualFileName = doc.filePath ? doc.filePath.split(/[\\/]/).pop() : (doc.fileName || doc.name);
-    const fileUrl = `${baseUrl}/uploads/${actualFileName}`;
-    window.open(fileUrl, '_blank');
-  };
-
-  const docsList = Array.isArray(data?.files) && data.files.length > 0
+  const docsList = Array.isArray(data?.files)
     ? data.files.map(f => f.document).filter(Boolean)
     : (Array.isArray(data?.documents) ? data.documents : []);
+
+  const handleDownload = (doc) => {
+    const actualFileName = doc.filePath ? doc.filePath.split(/[\\/]/).pop() : (doc.fileName || doc.name);
+    const fileUrl = `http://localhost:5000/uploads/${actualFileName}`;
+    window.open(fileUrl, '_blank');
+  };
 
   if (!tender) {
     return <div className="text-center py-10 text-slate-500">{t('loading', 'Загрузка...')}</div>;
@@ -72,24 +67,35 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
             <h1 className={`text-2xl font-bold tracking-tight ${theme.primaryText}`}>{safeString(data?.tenderNumber)}</h1>
             <p className={`text-sm font-medium mt-1 ${theme.subText}`}>{safeString(data?.title)}</p>
           </div>
-          {role === 'SUPPLIER' && (
-            data?.offers?.length > 0 ? (
+          <div className="flex items-center gap-2.5">
+            {role === 'ADMIN' && (
               <button
-                disabled
-                className={`px-5 py-2 rounded-lg font-semibold text-sm shadow-md transition-all opacity-50 cursor-not-allowed ${theme.primaryBtn}`}
-                title={t('alreadySubmitted', 'Вы уже подали заявку на этот тендер')}
+                onClick={() => navigate(`/tenders/${data.id}/edit`)}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
-                {t('offerSubmitted', 'Teklip tabşyryldy')}
+                <Edit2 size={14} />
+                <span>{t('editTenderAndLots', 'Редактировать / Управлять лотами')}</span>
               </button>
-            ) : (
-              <button
-                onClick={() => navigate(`/create-offer/${data.id}`)}
-                className={`px-5 py-2 rounded-lg font-semibold text-sm shadow-md transition-all ${theme.primaryBtn}`}
-              >
-                {t('submitOfferBtn', 'Teklip ber')}
-              </button>
-            )
-          )}
+            )}
+            {role === 'SUPPLIER' && (
+              data?.offers?.length > 0 ? (
+                <button
+                  disabled
+                  className={`px-5 py-2 rounded-lg font-semibold text-sm shadow-md transition-all opacity-50 cursor-not-allowed ${theme.primaryBtn}`}
+                  title={t('alreadySubmitted', 'Вы уже подали заявку на этот тендер')}
+                >
+                  {t('offerSubmitted', 'Teklip tabşyryldy')}
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate(`/create-offer/${data.id}`)}
+                  className={`px-5 py-2 rounded-lg font-semibold text-sm shadow-md transition-all ${theme.primaryBtn}`}
+                >
+                  {t('submitOfferBtn', 'Teklip ber')}
+                </button>
+              )
+            )}
+          </div>
         </div>
 
         {/* Row 1: Dates & Badges */}
@@ -144,21 +150,22 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
         </div>
       </div>
 
-      {/* 3. Таблицы лотов и спецификаций */}
-      <div className="space-y-6">
+      {/* 3. Таблицы лотов и спецификаций в виде интерактивных закладок (табов) */}
+      <div className="space-y-4">
         {(!data?.lots || data.lots.length === 0) && (!data?.specs || data.specs.length === 0) ? (
           <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg} p-6 text-center text-slate-400`}>
             {t('noLotsOrSpecs', 'Нет лотов и спецификаций')}
           </div>
         ) : data?.lots && data.lots.length > 0 ? (
-          data.lots.map((lot, lotIdx) => {
-            // Найдем победителя этого лота из офферов
+          (() => {
+            const lot = data.lots[activeLotTab] || data.lots[0];
+            const lotIdx = activeLotTab < data.lots.length ? activeLotTab : 0;
+
             let winningOffer = null;
-            if (data.status === 'YENIJI_YGLAN_EDILDI' && data.offers) {
+            if (data.status === 'YENIJI_YGLAN_EDILDI' && data.offers && lot.specs) {
               const lotSpecIds = lot.specs.map(s => s.id);
-              // Если хотя бы одна спецификация лота имеет isAwarded, то этот оффер выиграл лот
               winningOffer = data.offers.find(offer =>
-                offer.specs.some(os => lotSpecIds.includes(os.tenderSpecId) && os.isAwarded)
+                offer.specs?.some(os => lotSpecIds.includes(os.tenderSpecId) && os.isAwarded)
               );
             }
 
@@ -167,104 +174,180 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
             const isGoods = !isWorks && !isServices;
 
             return (
-              <div key={lot.id} className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
-                <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-white'}`}>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-base">{t('lotUpperLabel', 'Лот')} #{lotIdx + 1}: {lot.name}</h3>
-                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
-                        isWorks 
-                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' 
-                          : isServices 
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
-                          : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-                      }`}>
-                        {isWorks ? (t('worksType', 'Работы')) : isServices ? (t('servicesType', 'Услуги')) : (t('catProducts', 'Товары'))}
-                      </span>
-                    </div>
-                    {isGoods && lot.deliveryTerm && (
-                      <p className="text-xs text-slate-500 mt-1">{t('deliveryTerm', 'Условие поставки')}: {lot.deliveryTerm.shortName}</p>
-                    )}
-                    {isWorks && (
-                      <div className="text-xs text-slate-500 mt-1 flex flex-wrap gap-x-4 gap-y-1">
-                        {lot.workAddress && <span>📍 {t('siteLabel', 'Объект')}: {lot.workAddress}</span>}
-                        {lot.workPeriod && <span>⏱️ {t('termLabel', 'Срок')}: {lot.workPeriod}</span>}
-                        {lot.licenseRequired && <span className="text-amber-600 font-semibold">📜 {t('licenseRequired', 'Требуется лицензия')}</span>}
+              <div className="space-y-4">
+                {/* Линейка закладок лотов */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+                  {data.lots.map((lItem, lIdx) => {
+                    const isActive = (activeLotTab === lIdx) || (!data.lots[activeLotTab] && lIdx === 0);
+                    return (
+                      <button
+                        key={lItem.id || lIdx}
+                        type="button"
+                        onClick={() => setActiveLotTab(lIdx)}
+                        className={`relative px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 border transition-all cursor-pointer shrink-0 ${
+                          isActive
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/25 ring-2 ring-emerald-500/30'
+                            : isDarkMode
+                            ? 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border-slate-700/80'
+                            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        <Bookmark size={14} className={isActive ? 'text-emerald-200' : 'text-slate-400'} />
+                        <span className="truncate max-w-44">{lItem.name || `Лот №${lItem.lotNumber || lIdx + 1}`}</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-black ${
+                          isActive ? 'bg-emerald-700 text-emerald-100' : isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {lItem.specs?.length || 0}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Карточка активного лота */}
+                <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
+                  <div className={`p-4 border-b flex flex-wrap items-center justify-between gap-3 ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-white'}`}>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-base">{t('lotUpperLabel', 'Лот')} #{lot.lotNumber || lotIdx + 1}: {lot.name}</h3>
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+                          isWorks 
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' 
+                            : isServices 
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
+                            : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+                        }`}>
+                          {isWorks ? (t('worksType', 'Работы')) : isServices ? (t('servicesType', 'Услуги')) : (t('catProducts', 'Товары'))}
+                        </span>
                       </div>
-                    )}
-                    {isServices && (
-                      <div className="text-xs text-slate-500 mt-1 flex flex-wrap gap-x-4 gap-y-1">
-                        {lot.serviceFormat && <span>🏢 {t('fileType', 'Формат')}: {lot.serviceFormat}</span>}
-                        {lot.slaPeriod && <span>⏱️ SLA: {lot.slaPeriod}</span>}
+
+                      {/* Дополнительные метаданные лота: Категория и Конечный получатель */}
+                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                        {lot.category?.name && (
+                          <span>📁 {t('lotCategory', 'Категория')}: <strong className={isDarkMode ? 'text-slate-300' : 'text-slate-700'}>{lot.category.name}</strong></span>
+                        )}
+                        {lot.endUser && (
+                          <span>🏢 {t('endUser', 'Конечный получатель')}: <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">{lot.endUser}</strong></span>
+                        )}
+                      </div>
+
+                      {/* Условия поставки / выполнения */}
+                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                        {isGoods && lot.deliveryTerm && (
+                          <span>📦 {t('deliveryTerm', 'Условие поставки')}: <strong>{lot.deliveryTerm.shortName}</strong></span>
+                        )}
+                        {isGoods && lot.deliveryAddress && (
+                          <span>📍 {t('deliveryAddressLabel', 'Пункт назначения')}: {lot.deliveryAddress}</span>
+                        )}
+                        {isWorks && (
+                          <>
+                            {lot.workAddress && <span>📍 {t('siteLabel', 'Объект')}: {lot.workAddress}</span>}
+                            {lot.workPeriod && <span>⏱️ {t('termLabel', 'Срок')}: {lot.workPeriod}</span>}
+                            {lot.licenseRequired && <span className="text-amber-600 font-semibold">📜 {t('licenseRequired', 'Требуется лицензия')}</span>}
+                          </>
+                        )}
+                        {isServices && (
+                          <>
+                            {lot.serviceFormat && <span>🏢 {t('serviceFormat', 'Формат')}: {lot.serviceFormat}</span>}
+                            {lot.slaPeriod && <span>⏱️ SLA: {lot.slaPeriod}</span>}
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {winningOffer && (
+                      <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-800">
+                        <Trophy size={16} className="text-emerald-500" />
+                        <div>
+                          <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">{t('winnerBadge', 'Победитель')}</div>
+                          <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{winningOffer.supplier?.name}</div>
+                        </div>
                       </div>
                     )}
                   </div>
-                  {winningOffer && (
-                    <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-800">
-                      <Trophy size={16} className="text-emerald-500" />
-                      <div>
-                        <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">{t('winnerBadge', 'Победитель')}</div>
-                        <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{winningOffer.supplier?.name}</div>
+
+                  {/* Прикрепленные документы этого лота */}
+                  {lot.files && lot.files.length > 0 && (
+                    <div className="px-4 py-2.5 bg-slate-50/70 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 mr-2">
+                        <Paperclip size={13} className="text-emerald-600" />
+                        <span>{t('lotDocuments', 'Документация лота')}:</span>
                       </div>
+                      {lot.files.map((fileObj, fIdx) => {
+                        const doc = fileObj.document || fileObj;
+                        return (
+                          <a
+                            key={doc.id || fIdx}
+                            href={doc.filePath ? `http://localhost:5000/${doc.filePath}` : '#'}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shadow-2xs transition-colors"
+                          >
+                            <FileText size={12} className="text-emerald-600" />
+                            <span className="truncate max-w-40">{doc.fileName || doc.name}</span>
+                          </a>
+                        );
+                      })}
                     </div>
                   )}
-                </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className={theme.tableHeaderBg}>
-                        <th className="py-3 px-4 w-16 text-center">H/K</th>
-                        <th className="py-3 px-4 text-center min-w-48">
-                          {isWorks 
-                            ? (t('workStages', 'Этап / вид работ')) 
-                            : isServices 
-                            ? (t('serviceName', 'Наименование услуги')) 
-                            : (t('product', 'Товар'))}
-                        </th>
-                        <th className="py-3 px-4 text-center w-28">{t('unit', 'Ölçeg birligi')}</th>
-                        {isGoods && <th className="py-3 px-4 text-center w-36">{t('manufacturer', 'Öndüriji')}</th>}
-                        <th className="py-3 px-4 text-center w-28">
-                          {isServices ? (t('volumePeriod', 'Объем / Период')) : t('quantity', 'Mukdar')}
-                        </th>
-                        <th className="py-3 px-4 text-center">
-                          {isWorks 
-                            ? (t('scopeOfWork', 'Состав и спецификация работ')) 
-                            : isServices 
-                            ? (t('serviceRegulations', 'Регламент и описание услуги')) 
-                            : t('description', 'Mazmuny')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-                      {lot.specs.length === 0 ? (
-                        <tr>
-                          <td colSpan={isGoods ? 6 : 5} className="py-6 text-center text-slate-400">
+                  {/* Таблица спецификаций лота */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className={theme.tableHeaderBg}>
+                          <th className="py-3 px-4 w-16 text-center">H/K</th>
+                          <th className="py-3 px-4 text-center min-w-48">
                             {isWorks 
-                              ? (t('noWorkStagesInLot', 'В этом лоте нет этапов работ')) 
+                              ? (t('workStages', 'Этап / вид работ')) 
                               : isServices 
-                              ? (t('noServicesInLot', 'В этом лоте нет позиций услуг')) 
-                              : (t('noGoodsInLot', 'В этом лоте нет товаров'))}
-                          </td>
+                              ? (t('serviceName', 'Наименование услуги')) 
+                              : (t('product', 'Товар'))}
+                          </th>
+                          <th className="py-3 px-4 text-center w-28">{t('unit', 'Ölçeg birligi')}</th>
+                          {isGoods && <th className="py-3 px-4 text-center w-36">{t('manufacturer', 'Öndüriji')}</th>}
+                          <th className="py-3 px-4 text-center w-28">
+                            {isServices ? (t('volumePeriod', 'Объем / Период')) : t('quantity', 'Mukdar')}
+                          </th>
+                          <th className="py-3 px-4 text-center">
+                            {isWorks 
+                              ? (t('scopeOfWork', 'Состав и спецификация работ')) 
+                              : isServices 
+                              ? (t('serviceRegulations', 'Регламент и описание услуги')) 
+                              : t('description', 'Mazmuny')}
+                          </th>
                         </tr>
-                      ) : lot.specs.map((spec, idx) => (
-                        <tr key={idx} className={theme.tableRowHover}>
-                          <td className="py-3.5 px-4 text-center font-semibold text-slate-400">{safeString(spec?.positionNumber || idx + 1)}</td>
-                          <td className="py-3.5 px-4 text-center font-medium">{safeString(spec?.generalProduct?.name || spec?.name)}</td>
-                          <td className="py-3.5 px-4 text-center">{safeString(spec?.unit?.name || spec?.unit?.shortName)}</td>
-                          {isGoods && <td className="py-3.5 px-4 text-center">{safeString(spec?.manufacturer?.name || '-')}</td>}
-                          <td className="py-3.5 px-4 text-center font-bold">{safeString(spec?.quantity)}</td>
-                          <td className="py-3.5 px-4 text-center w-auto min-w-60 whitespace-normal text-wrap text-slate-500">
-                            {safeString(spec?.description)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+                        {(!lot.specs || lot.specs.length === 0) ? (
+                          <tr>
+                            <td colSpan={isGoods ? 6 : 5} className="py-6 text-center text-slate-400">
+                              {isWorks 
+                                ? (t('noWorkStagesInLot', 'В этом лоте нет этапов работ')) 
+                                : isServices 
+                                ? (t('noServicesInLot', 'В этом лоте нет позиций услуг')) 
+                                : (t('noGoodsInLot', 'В этом лоте нет товаров'))}
+                            </td>
+                          </tr>
+                        ) : lot.specs.map((spec, idx) => (
+                          <tr key={idx} className={theme.tableRowHover}>
+                            <td className="py-3.5 px-4 text-center font-semibold text-slate-400">{safeString(spec?.positionNumber || idx + 1)}</td>
+                            <td className="py-3.5 px-4 text-center font-medium">{safeString(spec?.generalProduct?.name || spec?.name)}</td>
+                            <td className="py-3.5 px-4 text-center">{safeString(spec?.unit?.name || spec?.unit?.shortName)}</td>
+                            {isGoods && <td className="py-3.5 px-4 text-center">{safeString(spec?.manufacturer?.name || '-')}</td>}
+                            <td className="py-3.5 px-4 text-center font-bold">{safeString(spec?.quantity)}</td>
+                            <td className="py-3.5 px-4 text-center w-auto min-w-60 whitespace-normal text-wrap text-slate-500">
+                              {safeString(spec?.description)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             );
-          })
+          })()
         ) : (
           <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
             <div className={`p-4 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>

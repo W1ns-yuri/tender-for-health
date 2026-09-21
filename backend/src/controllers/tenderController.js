@@ -7,15 +7,25 @@ const generateNextTenderNumber = async (txOrPrisma = prisma) => {
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const prefix = `TNDR-${year}-${month}-`;
 
-    const count = await txOrPrisma.tender.count({
+    const existingTenders = await txOrPrisma.tender.findMany({
         where: {
             tenderNumber: {
                 startsWith: prefix
             }
-        }
+        },
+        select: { tenderNumber: true }
     });
 
-    const nextSeq = String(count + 1).padStart(3, '0');
+    let maxSeq = 0;
+    for (const t of existingTenders) {
+        const numPart = t.tenderNumber.replace(prefix, '');
+        const parsed = parseInt(numPart, 10);
+        if (!isNaN(parsed) && parsed > maxSeq) {
+            maxSeq = parsed;
+        }
+    }
+
+    const nextSeq = String(maxSeq + 1).padStart(3, '0');
     return `${prefix}${nextSeq}`;
 };
 
@@ -103,12 +113,17 @@ const createTender = async (req, res) => {
                 }
             }
 
-            for (const lot of parsedLots) {
+            for (let i = 0; i < parsedLots.length; i++) {
+                const lot = parsedLots[i];
                 const newLot = await tx.tenderLot.create({
                     data: {
-                        name: lot.name || 'Без названия',
+                        name: lot.name || `Лот №${i + 1}`,
                         tenderId: newTender.id,
+                        lotNumber: parseInt(lot.lotNumber, 10) || (i + 1),
+                        description: lot.description || null,
                         lotType: lot.lotType || 'GOODS',
+                        categoryId: (lot.categoryId && lot.categoryId !== '') ? lot.categoryId : null,
+                        endUser: lot.endUser ? lot.endUser.trim() : null,
                         deliveryTermId: (lot.deliveryTermId && lot.deliveryTermId !== '') ? lot.deliveryTermId : null,
                         deliveryAddress: lot.deliveryAddress || null,
                         workAddress: lot.workAddress || null,
@@ -123,10 +138,10 @@ const createTender = async (req, res) => {
                     const validSpecs = lot.specs.filter(s => (s.name || s.haryt) && (s.name || s.haryt).trim() !== '');
                     if (validSpecs.length > 0) {
                         await tx.tenderSpecification.createMany({
-                            data: validSpecs.map(spec => ({
+                            data: validSpecs.map((spec, sIdx) => ({
                                 tenderId: newTender.id,
                                 lotId: newLot.id,
-                                positionNumber: parseInt(spec.positionNumber, 10) || 1,
+                                positionNumber: parseInt(spec.positionNumber, 10) || (sIdx + 1),
                                 generalProductId: (spec.generalProductId && spec.generalProductId !== '') ? spec.generalProductId : null,
                                 name: (spec.name || spec.haryt || '').trim(),
                                 quantity: parseFloat(spec.quantity || spec.mukdar) || 1,
@@ -221,10 +236,16 @@ const getTenders = async (req, res) => {
             where,
             include: {
                 lots: {
+                    orderBy: { lotNumber: 'asc' },
                     include: {
+                        category: true,
                         deliveryTerm: true,
                         specs: {
-                            include: { generalProduct: true, unit: true, manufacturer: true }
+                            include: { generalProduct: true, unit: true, manufacturer: true },
+                            orderBy: { positionNumber: 'asc' }
+                        },
+                        files: {
+                            include: { document: true }
                         }
                     }
                 },
@@ -303,13 +324,21 @@ const getTenderById = async (req, res) => {
             where: { id },
             include: {
                 lots: {
+                    orderBy: { lotNumber: 'asc' },
                     include: {
+                        category: true,
                         deliveryTerm: true,
                         specs: {
                             include: {
                                 generalProduct: true,
                                 unit: true,
                                 manufacturer: true,
+                            },
+                            orderBy: { positionNumber: 'asc' }
+                        },
+                        files: {
+                            include: {
+                                document: true
                             }
                         }
                     }
@@ -338,6 +367,324 @@ const getTenderById = async (req, res) => {
     }
 };
 
+const updateTender = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            tenderNumber,
+            title,
+            description,
+            technicalSpecs,
+            deadline,
+            announcementDate,
+            categoryId,
+            clientId,
+            procurementType,
+            status,
+            type,
+            visibility
+        } = req.body;
+
+        const existingTender = await prisma.tender.findUnique({ where: { id } });
+        if (!existingTender) {
+            return res.status(404).json({ error: 'Тендер не найден' });
+        }
+
+        const updateData = {};
+        if (title !== undefined) updateData.title = title.trim();
+        if (tenderNumber !== undefined && tenderNumber.trim() !== '') {
+            updateData.tenderNumber = tenderNumber.trim();
+        }
+        if (description !== undefined) updateData.description = description;
+        if (technicalSpecs !== undefined) updateData.technicalSpecs = technicalSpecs;
+        if (type !== undefined) updateData.type = type;
+        if (visibility !== undefined) updateData.visibility = visibility;
+        if (status !== undefined) updateData.status = status;
+        if (procurementType !== undefined) updateData.procurementType = procurementType;
+        if (categoryId !== undefined) updateData.categoryId = (categoryId && categoryId !== '') ? categoryId : null;
+        if (clientId !== undefined) updateData.clientId = (clientId && clientId !== '') ? clientId : null;
+        if (deadline) updateData.deadline = new Date(deadline);
+        if (announcementDate) updateData.announcementDate = new Date(announcementDate);
+
+        const updated = await prisma.tender.update({
+            where: { id },
+            data: updateData,
+            include: {
+                category: true,
+                client: true,
+                createdBy: { select: { id: true, username: true, firstName: true, lastName: true } }
+            }
+        });
+
+        res.json(updated);
+    } catch (error) {
+        console.error('UpdateTender Error:', error);
+        res.status(500).json({ error: 'Ошибка обновления тендера', details: error.message });
+    }
+};
+
+const publishTender = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tender = await prisma.tender.findUnique({
+            where: { id },
+            include: {
+                lots: {
+                    include: { specs: true }
+                }
+            }
+        });
+
+        if (!tender) {
+            return res.status(404).json({ error: 'Тендер не найден' });
+        }
+
+        if (!tender.lots || tender.lots.length === 0) {
+            return res.status(400).json({ error: 'Невозможно опубликовать тендер: добавьте как минимум один лот' });
+        }
+
+        const updated = await prisma.tender.update({
+            where: { id },
+            data: { status: 'ACYK' },
+            include: {
+                lots: {
+                    orderBy: { lotNumber: 'asc' },
+                    include: {
+                        category: true,
+                        deliveryTerm: true,
+                        specs: {
+                            include: { generalProduct: true, unit: true, manufacturer: true },
+                            orderBy: { positionNumber: 'asc' }
+                        },
+                        files: {
+                            include: { document: true }
+                        }
+                    }
+                },
+                client: true,
+                category: true,
+            }
+        });
+
+        res.json(updated);
+    } catch (error) {
+        console.error('PublishTender Error:', error);
+        res.status(500).json({ error: 'Ошибка публикации тендера', details: error.message });
+    }
+};
+
+const createLot = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            lotNumber,
+            name,
+            description,
+            lotType,
+            categoryId,
+            endUser,
+            deliveryTermId,
+            deliveryAddress,
+            workAddress,
+            workPeriod,
+            licenseRequired,
+            serviceFormat,
+            slaPeriod,
+            specs
+        } = req.body;
+
+        const tender = await prisma.tender.findUnique({ where: { id } });
+        if (!tender) {
+            return res.status(404).json({ error: 'Тендер не найден' });
+        }
+
+        let finalLotNumber = lotNumber;
+        if (!finalLotNumber) {
+            const maxLot = await prisma.tenderLot.findFirst({
+                where: { tenderId: id },
+                orderBy: { lotNumber: 'desc' }
+            });
+            finalLotNumber = (maxLot?.lotNumber || 0) + 1;
+        }
+
+        const newLot = await prisma.$transaction(async (tx) => {
+            const lot = await tx.tenderLot.create({
+                data: {
+                    tenderId: id,
+                    lotNumber: parseInt(finalLotNumber, 10) || 1,
+                    name: name?.trim() || `Лот №${finalLotNumber}`,
+                    description: description || null,
+                    lotType: lotType || 'GOODS',
+                    categoryId: (categoryId && categoryId !== '') ? categoryId : null,
+                    endUser: endUser ? endUser.trim() : null,
+                    deliveryTermId: (deliveryTermId && deliveryTermId !== '') ? deliveryTermId : null,
+                    deliveryAddress: deliveryAddress || null,
+                    workAddress: workAddress || null,
+                    workPeriod: workPeriod || null,
+                    licenseRequired: Boolean(licenseRequired),
+                    serviceFormat: serviceFormat || null,
+                    slaPeriod: slaPeriod || null,
+                }
+            });
+
+            if (specs && Array.isArray(specs)) {
+                const validSpecs = specs.filter(s => (s.name || s.haryt) && (s.name || s.haryt).trim() !== '');
+                if (validSpecs.length > 0) {
+                    await tx.tenderSpecification.createMany({
+                        data: validSpecs.map((spec, idx) => ({
+                            tenderId: id,
+                            lotId: lot.id,
+                            positionNumber: parseInt(spec.positionNumber, 10) || (idx + 1),
+                            generalProductId: (spec.generalProductId && spec.generalProductId !== '') ? spec.generalProductId : null,
+                            name: (spec.name || spec.haryt || '').trim(),
+                            quantity: parseFloat(spec.quantity || spec.mukdar) || 1,
+                            unitId: (spec.unitId && spec.unitId !== '') ? spec.unitId : ((spec.unit && spec.unit !== '') ? spec.unit : null),
+                            manufacturerId: (spec.manufacturerId && spec.manufacturerId !== '') ? spec.manufacturerId : ((spec.brand && spec.brand !== '') ? spec.brand : null),
+                            description: (spec.description || spec.desc || '').trim() || null
+                        }))
+                    });
+                }
+            }
+
+            return await tx.tenderLot.findUnique({
+                where: { id: lot.id },
+                include: {
+                    category: true,
+                    deliveryTerm: true,
+                    specs: {
+                        include: { generalProduct: true, unit: true, manufacturer: true },
+                        orderBy: { positionNumber: 'asc' }
+                    },
+                    files: {
+                        include: { document: true }
+                    }
+                }
+            });
+        });
+
+        res.status(201).json(newLot);
+    } catch (error) {
+        console.error('CreateLot error:', error);
+        res.status(500).json({ error: 'Ошибка создания лота', details: error.message });
+    }
+};
+
+const updateLot = async (req, res) => {
+    try {
+        const { id, lotId } = req.params;
+        const {
+            lotNumber,
+            name,
+            description,
+            lotType,
+            categoryId,
+            endUser,
+            deliveryTermId,
+            deliveryAddress,
+            workAddress,
+            workPeriod,
+            licenseRequired,
+            serviceFormat,
+            slaPeriod,
+            specs
+        } = req.body;
+
+        const existingLot = await prisma.tenderLot.findFirst({
+            where: { id: lotId, tenderId: id }
+        });
+        if (!existingLot) {
+            return res.status(404).json({ error: 'Лот не найден в данном тендере' });
+        }
+
+        const updatedLot = await prisma.$transaction(async (tx) => {
+            await tx.tenderLot.update({
+                where: { id: lotId },
+                data: {
+                    lotNumber: lotNumber !== undefined ? parseInt(lotNumber, 10) : existingLot.lotNumber,
+                    name: name !== undefined ? name.trim() : existingLot.name,
+                    description: description !== undefined ? description : existingLot.description,
+                    lotType: lotType || existingLot.lotType,
+                    categoryId: (categoryId !== undefined) ? ((categoryId && categoryId !== '') ? categoryId : null) : existingLot.categoryId,
+                    endUser: endUser !== undefined ? (endUser ? endUser.trim() : null) : existingLot.endUser,
+                    deliveryTermId: (deliveryTermId !== undefined) ? ((deliveryTermId && deliveryTermId !== '') ? deliveryTermId : null) : existingLot.deliveryTermId,
+                    deliveryAddress: deliveryAddress !== undefined ? deliveryAddress : existingLot.deliveryAddress,
+                    workAddress: workAddress !== undefined ? workAddress : existingLot.workAddress,
+                    workPeriod: workPeriod !== undefined ? workPeriod : existingLot.workPeriod,
+                    licenseRequired: licenseRequired !== undefined ? Boolean(licenseRequired) : existingLot.licenseRequired,
+                    serviceFormat: serviceFormat !== undefined ? serviceFormat : existingLot.serviceFormat,
+                    slaPeriod: slaPeriod !== undefined ? slaPeriod : existingLot.slaPeriod,
+                }
+            });
+
+            if (specs !== undefined && Array.isArray(specs)) {
+                await tx.tenderSpecification.deleteMany({
+                    where: { lotId }
+                });
+
+                const validSpecs = specs.filter(s => (s.name || s.haryt) && (s.name || s.haryt).trim() !== '');
+                if (validSpecs.length > 0) {
+                    await tx.tenderSpecification.createMany({
+                        data: validSpecs.map((spec, idx) => ({
+                            tenderId: id,
+                            lotId: lotId,
+                            positionNumber: parseInt(spec.positionNumber, 10) || (idx + 1),
+                            generalProductId: (spec.generalProductId && spec.generalProductId !== '') ? spec.generalProductId : null,
+                            name: (spec.name || spec.haryt || '').trim(),
+                            quantity: parseFloat(spec.quantity || spec.mukdar) || 1,
+                            unitId: (spec.unitId && spec.unitId !== '') ? spec.unitId : ((spec.unit && spec.unit !== '') ? spec.unit : null),
+                            manufacturerId: (spec.manufacturerId && spec.manufacturerId !== '') ? spec.manufacturerId : ((spec.brand && spec.brand !== '') ? spec.brand : null),
+                            description: (spec.description || spec.desc || '').trim() || null
+                        }))
+                    });
+                }
+            }
+
+            return await tx.tenderLot.findUnique({
+                where: { id: lotId },
+                include: {
+                    category: true,
+                    deliveryTerm: true,
+                    specs: {
+                        include: { generalProduct: true, unit: true, manufacturer: true },
+                        orderBy: { positionNumber: 'asc' }
+                    },
+                    files: {
+                        include: { document: true }
+                    }
+                }
+            });
+        });
+
+        res.json(updatedLot);
+    } catch (error) {
+        console.error('UpdateLot error:', error);
+        res.status(500).json({ error: 'Ошибка обновления лота', details: error.message });
+    }
+};
+
+const deleteLot = async (req, res) => {
+    try {
+        const { id, lotId } = req.params;
+        const existingLot = await prisma.tenderLot.findFirst({
+            where: { id: lotId, tenderId: id }
+        });
+        if (!existingLot) {
+            return res.status(404).json({ error: 'Лот не найден' });
+        }
+
+        await prisma.$transaction(async (tx) => {
+            await tx.tenderSpecification.deleteMany({ where: { lotId } });
+            await tx.lotFile.deleteMany({ where: { lotId } });
+            await tx.tenderLot.delete({ where: { id: lotId } });
+        });
+
+        res.json({ success: true, message: 'Лот успешно удален', lotId });
+    } catch (error) {
+        console.error('DeleteLot error:', error);
+        res.status(500).json({ error: 'Ошибка удаления лота', details: error.message });
+    }
+};
+
 const deleteTender = async (req, res) => {
     try {
         const { id } = req.params;
@@ -351,4 +698,15 @@ const deleteTender = async (req, res) => {
     }
 };
 
-module.exports = { createTender, getTenders, getTenderById, deleteTender, getNextNumber };
+module.exports = {
+    createTender,
+    getTenders,
+    getTenderById,
+    updateTender,
+    publishTender,
+    deleteTender,
+    getNextNumber,
+    createLot,
+    updateLot,
+    deleteLot
+};

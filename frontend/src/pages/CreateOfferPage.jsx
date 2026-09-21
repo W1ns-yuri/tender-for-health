@@ -535,6 +535,35 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                         <span>{t('servicesType', 'Услуги')}</span>
                       </span>
                     )}
+
+                    {lot.endUser && (
+                      <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium pl-1">
+                        🏢 {t('endUser', 'Конечный получатель')}: <strong className="text-slate-800 dark:text-slate-200 font-bold">{lot.endUser}</strong>
+                      </span>
+                    )}
+
+                    {lot.files && lot.files.length > 0 && (
+                      <div className="flex items-center gap-1.5 ml-auto">
+                        <Paperclip size={12} className="text-blue-500" />
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{t('lotDocuments', 'Документы лота')}:</span>
+                        {lot.files.map((f, fIdx) => {
+                          const doc = f.document || f;
+                          return (
+                            <a
+                              key={doc.id || fIdx}
+                              href={`http://localhost:5000/${doc.filePath}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 hover:underline text-[11px] font-bold flex items-center gap-1 border border-blue-200/60 dark:border-blue-800"
+                              title={doc.fileName || doc.name}
+                            >
+                              <FileText size={11} />
+                              <span className="max-w-28 truncate">{doc.fileName || doc.name}</span>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   {/* Единая строка условий поставки / выполнения и сумма лота */}

@@ -179,6 +179,7 @@ model Category {
   description     String?
   generalProducts GeneralProduct[]
   tenders         Tender[]
+  lots            TenderLot[]
 
   isActive Boolean @default(true) @map("is_active")
 
@@ -392,8 +393,13 @@ model TenderLot {
   id              String         @id @default(uuid())
   tenderId        String         @map("tender_id")
   tender          Tender         @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  lotNumber       Int?           @map("lot_number")
   name            String
+  description     String?
   lotType         String?        @default("GOODS") @map("lot_type") // GOODS | WORKS | SERVICES
+  categoryId      String?        @map("category_id")
+  category        Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  endUser         String?        @map("end_user")
   deliveryTermId  String?        @map("delivery_term_id")
   deliveryTerm    DeliveryTerm?  @relation(fields: [deliveryTermId], references: [id], onDelete: SetNull)
   deliveryAddress String?        @map("delivery_address")
@@ -404,6 +410,7 @@ model TenderLot {
   slaPeriod       String?        @map("sla_period")
   
   specs           TenderSpecification[]
+  files           LotFile[]
 
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -646,6 +653,7 @@ model Document {
   documentType   DocumentType? @relation(fields: [documentTypeId], references: [id], onDelete: SetNull)
 
   tenderFiles   TenderFile[]
+  lotFiles      LotFile[]
   supplierFiles SupplierFile[]
   offerFiles    OfferFile[]
 
@@ -669,6 +677,16 @@ model TenderFile {
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@map("tender_files")
+}
+
+model LotFile {
+  id         String    @id @default(uuid())
+  lotId      String    @map("lot_id")
+  lot        TenderLot @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  documentId String    @map("document_id")
+  document   Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("lot_files")
 }
 
 model SupplierFile {

@@ -247,11 +247,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                         {(role === 'ADMIN' || role === 'PURCHASING_SPECIALIST') && (
                           <>
                             <button
-                              onClick={() => showAlert({
-                                title: t('editingTitle', 'Редактирование'),
-                                message: t('editingUnavailable', 'Редактирование пока недоступно'),
-                                type: 'info'
-                              })}
+                              onClick={() => onNavigate('edit-tender', item.id)}
                               className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 transition-all active:scale-95 cursor-pointer"
                               title={t('edit', 'Изменить')}
                             >
