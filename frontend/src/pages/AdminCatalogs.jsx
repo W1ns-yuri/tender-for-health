@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
-  Plus, PlusCircle, Search, Filter, Edit2, ToggleRight, ToggleLeft, Trash2, Database, Package, Settings, ChevronLeft, ChevronRight, 
-  Hash, Flag, Globe, Truck, DollarSign, Layers, ShieldAlert, 
-  Users, FolderTree, ArrowLeft
+  PlusCircle, Search, Filter, Edit2, ToggleRight, ToggleLeft, Trash2, Database, Package, Settings, 
+  Hash, Globe, Truck, DollarSign, Layers, ShieldAlert, 
+  Users, FolderTree
 } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
@@ -17,6 +17,10 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
     return <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} />;
   }
 
+  return <AdminCatalogsContent role={role} isDarkMode={isDarkMode} lang={lang} />;
+}
+
+function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
   const { showAlert, showConfirm } = useAlert();

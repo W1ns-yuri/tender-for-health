@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Check, Paperclip } from 'lucide-react';
+import { X, Plus, Trash2, Check } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
-import { getRoleTheme, safeString } from '../utils/themeUtils';
+import { getRoleTheme } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
 import CustomSelect from './CustomSelect';
 

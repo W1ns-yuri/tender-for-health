@@ -934,6 +934,40 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
 7. **Устранение ошибок области видимости и затенения функции `t`**:
    - В `CreateTenderPage.jsx`: внутри вынесенного подкомпонента `ProductSearchableSelect` добавлена инициализация функции `t = (key, fallback, params) => getTranslation(lang, key, fallback, params)`.
    - В `Evaluation.jsx`: устранен конфликт затенения функции перевода `t` параметром итератора таблицы `filteredTenders.map(tender => ...)`, что предотвратило вызов объекта тендера вместо функции перевода.
+8. **Устранение нарушений Rules of Hooks и статических ошибок**:
+   - В `AdminCatalogs.jsx`: выделен компонент `AdminCatalogsContent` для безусловного выполнения 14 хуков (`useAlert`, `useSearchParams`, `useState`, `useEffect`), исключая сбой React при раннем возврате `section === 'administrasiya'`.
+   - В `Header.jsx`: исправлено потенциальное падение по `TypeError` при вызове `.name` на ненайденном объекте компании/поставщика (`?.name`).
+   - В `translations.js`: удалены 13 дублирующихся ключей в словарях TM, RU, EN (`password`, `sectionProducts`, `phoneFormatHint`, `exactAddressPlaceholder`, `addressCleanHint`, `passportFormatHint`, `statusRejectedBadge`). Функция `getTranslation` обновлена для поддержки как `{paramKey}`, так и `${paramKey}` в строках переводов.
+   - В `CreateOfferPage.jsx`, `OfferDetailsPage.jsx`, `CreateTenderPage.jsx`, `Evaluation.jsx`: подключена передача динамических параметров (`pricedItemsCount`, `totalActiveItemsCount`, `currencyCode`, `diffDays`, `lotsCount`, `specsCount`, `query`, `char`) в вызовы `t()`, что устранило отображение сырых строк `${...}` в интерфейсе.
+   - Во всех компонентах устранены неиспользуемые импорты и лишние экранирования спецсимволов. Ошибки сборщика и `oxlint` снижены до строгого нуля (0 errors).
+
+### 7.8 Итоговый технический аудит кодовой базы и нулевой уровень ошибок (v1.2.1)
+- **Дата**: 21 сентября 2026 г.
+- **Статус качества**:
+  - `oxlint`: 0 errors (все 14 критических ошибок линтера устранены).
+  - `vite build`: Успешная сборка за ~500 мс без ошибок.
+  - `Backend test`: 28 файлов контроллеров и маршрутов, 203 роута и middleware проверены — 0 ошибок.
+  - `Prisma schema`: Валидация успешна.
+- **Затронутые файлы**:
+  - `frontend/src/pages/AdminCatalogs.jsx`
+  - `frontend/src/utils/translations.js`
+  - `frontend/src/components/Header.jsx`
+  - `frontend/src/utils/themeUtils.js`
+  - `frontend/src/pages/CreateTenderPage.jsx`
+  - `frontend/src/pages/CreateOfferPage.jsx`
+  - `frontend/src/pages/OfferDetailsPage.jsx`
+  - `frontend/src/pages/Evaluation.jsx`
+  - `frontend/src/pages/TenderDetails.jsx`
+  - `frontend/src/components/OfferModal.jsx`
+  - `frontend/src/components/CustomDatePicker.jsx`
+  - `frontend/src/pages/SuppliersList.jsx`
+  - `frontend/src/pages/AdminLogs.jsx`
+  - `frontend/src/pages/LoginPage.jsx`
+  - `frontend/src/pages/MyOffers.jsx`
+  - `frontend/src/pages/Dashboard.jsx`
+  - `frontend/src/pages/EvaluationDetailsPage.jsx`
+  - `frontend/src/pages/SupplierProfilePage.jsx`
+  - `PROJECT_CONTEXT.md`
 
 
 

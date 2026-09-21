@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Calendar, User, Tag, Clock, Users, LayoutGrid, Trophy } from 'lucide-react';
+import { Download, Clock, Users, LayoutGrid, Trophy } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 
-export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, lang = 'RU' }) {
+export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' }) {
   const { id: paramId } = useParams();
   const navigate = useNavigate();
   const activeTenderId = tenderId || paramId;
@@ -55,7 +55,6 @@ export default function TenderDetails({ tenderId, onNavigate, role, isDarkMode, 
     window.open(fileUrl, '_blank');
   };
 
-  const specsList = Array.isArray(data?.specs) ? data.specs : [];
   const docsList = Array.isArray(data?.files) && data.files.length > 0
     ? data.files.map(f => f.document).filter(Boolean)
     : (Array.isArray(data?.documents) ? data.documents : []);

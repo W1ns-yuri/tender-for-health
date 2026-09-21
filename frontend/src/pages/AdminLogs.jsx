@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, Users, Key, Database, RefreshCw, Search, 
-  Calendar, CheckCircle, Clock, ShieldCheck, UserCheck, 
-  FileText, Download, AlertCircle, Eye
+  CheckCircle, ShieldCheck, 
+  FileText, Eye
 } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';

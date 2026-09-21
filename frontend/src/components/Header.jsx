@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Search, Bell, Settings, ChevronLeft, ChevronRight, Globe, ChevronDown, User, LogOut } from 'lucide-react';
+import { Search, Bell, Settings, ChevronLeft, ChevronRight, Globe, ChevronDown, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getRoleTheme, getAvatarInitials } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 
-export default function Header({ user, role, setRole, isDarkMode, lang, setLang, onNavigate }) {
+export default function Header({ user, role, isDarkMode, lang, setLang, onNavigate }) {
   const theme = getRoleTheme(role, isDarkMode);
   const isAdmin = role === 'ADMIN';
   const [showLangMenu, setShowLangMenu] = useState(false);
@@ -105,7 +105,7 @@ export default function Header({ user, role, setRole, isDarkMode, lang, setLang,
             <div className={`absolute right-0 mt-2 w-56 rounded-xl border shadow-xl p-3 z-50 animate-in zoom-in-95 ${isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-white border-slate-100 text-slate-800'}`}>
               <div className="border-b pb-3 mb-2 border-slate-200 dark:border-slate-700">
                 <p className="font-bold text-sm">
-                  {((user?.companies?.[0] || user?.suppliers?.[0])?.name && role !== 'ADMIN') ? (user.companies?.[0] || user.suppliers?.[0]).name : (user?.firstName ? `${user.firstName} ${user.lastName || ''}` : (role === 'ADMIN' ? 'Admin Admin' : 'Supplier Supplier'))}
+                  {((user?.companies?.[0] || user?.suppliers?.[0])?.name && role !== 'ADMIN') ? (user?.companies?.[0] || user?.suppliers?.[0])?.name : (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (role === 'ADMIN' ? 'Admin Admin' : 'Supplier Supplier'))}
                 </p>
                 <p className={`text-xs capitalize ${theme.subText}`}>
                   {role === 'ADMIN' ? t('adminStr', 'Admin') : t('supplierStr', 'Üpjün ediji')}

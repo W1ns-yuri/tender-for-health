@@ -1,22 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, 
   Send, 
   FileText, 
   Plus, 
   Trash2, 
   Download, 
   AlertCircle, 
-  Building2, 
   CheckCircle2, 
   Clock, 
   Package,
-  Layers,
   CornerDownRight,
   UploadCloud,
-  Upload,
-  CheckCircle,
   X,
   Wrench,
   Settings2,
@@ -27,7 +22,7 @@ import {
 } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
-import { getRoleTheme, safeString, getCurrencyLabel } from '../utils/themeUtils';
+import { getRoleTheme, getCurrencyLabel } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
 import CustomSelect from '../components/CustomSelect';
 
@@ -133,7 +128,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
         setErrorMsg(t('tenderLoadError', 'Ошибка загрузки данных тендера'));
       })
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, role]);
 
   const ALLOWED_EXTS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png'];
   const MAX_FILE_SIZE_MB = 25;
@@ -407,7 +402,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
             </div>
             <div className="text-[11px] text-slate-500 font-medium flex items-center justify-end gap-1.5 whitespace-nowrap">
               <CheckCircle2 size={13} className={pricedItemsCount > 0 ? "text-emerald-600" : "text-slate-400"} />
-              <span>{t('pricedItemsProgress', 'Оценено: ${pricedItemsCount} из ${totalActiveItemsCount} позиций')}</span>
+              <span>{t('pricedItemsProgress', `Оценено: ${pricedItemsCount} из ${totalActiveItemsCount} позиций`, { pricedItemsCount, totalActiveItemsCount })}</span>
             </div>
           </div>
         </div>
@@ -665,8 +660,8 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                               ? (t('volumePeriod', 'Объем / Период')) 
                               : (t('specQty', 'Количество'))}*
                           </th>
-                          <th className="py-3 px-3.5 w-36 text-center">{t('unitPriceWithCurrency', 'Цена за ед. (${currencyCode})')}*</th>
-                          <th className="py-3 px-3.5 w-36 text-right">{t('totalSumWithCurrency', 'Сумма (${currencyCode})')}</th>
+                          <th className="py-3 px-3.5 w-36 text-center">{t('unitPriceWithCurrency', `Цена за ед. (${currencyCode})`, { currencyCode })}*</th>
+                          <th className="py-3 px-3.5 w-36 text-right">{t('totalSumWithCurrency', `Сумма (${currencyCode})`, { currencyCode })}</th>
                           <th className="py-3 px-3.5 min-w-45">
                             {lotType === 'WORKS'
                               ? (t('scopeOfWork', 'Состав и спецификация работ'))
@@ -1103,11 +1098,11 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
               </div>
               <div className="hidden md:block pl-5 border-l border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500">
                 <div className="font-semibold text-slate-700 dark:text-slate-300">
-                  {t('selectedLotsCountStr', 'Выбрано лотов: ${activeLotIds.length}')}
+                  {t('selectedLotsCountStr', `Выбрано лотов: ${activeLotIds.length}`, { count: activeLotIds.length, activeLotsCount: activeLotIds.length })}
                 </div>
                 <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
                   <CheckCircle2 size={12} className={pricedItemsCount > 0 ? "text-emerald-500" : "text-slate-400"} />
-                  <span>{t('pricedItemsProgress', 'Оценено: ${pricedItemsCount} из ${totalActiveItemsCount} позиций')}</span>
+                  <span>{t('pricedItemsProgress', `Оценено: ${pricedItemsCount} из ${totalActiveItemsCount} позиций`, { pricedItemsCount, totalActiveItemsCount })}</span>
                 </div>
               </div>
             </div>

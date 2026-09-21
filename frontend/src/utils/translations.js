@@ -83,7 +83,6 @@ export const translations = {
     addSupplier: 'Üpjün ediji goşmak',
     accountAccess: 'Ulgama girmek',
     login: 'Logini',
-    password: 'Paroly',
     editSupplier: 'Üpjün edijini üýtgetmek',
     deleteConfirm: 'Üpjün edijini hakykatdan hem öçürmek isleýärsiňizmi?',
     edit: 'Üýtgetmek',
@@ -236,7 +235,6 @@ export const translations = {
     
     // Справочники
     sectionGeneral: 'Umumy',
-    sectionProducts: 'Haryt',
     catTenderCategories: 'Tender kategoriýalar',
     catTenderCategoriesSub: 'Tender kategoriýalar',
     catCurrencies: 'Walýutalar',
@@ -347,12 +345,8 @@ export const translations = {
     companyCardOfficial: 'KÄRHANANYŇ RESMI KARTOÇKASY',
     printCompanyCard: 'Kärhana kartoçkasyny çap etmek',
     verifiedStateBadge: 'Elektron söwdalaryň tassyklanan gatnaşyjysy',
-    phoneFormatHint: 'Format: +993 XX XX-XX-XX',
     exactAddress: 'Takyk salgysy (etrap, köçe, jaý/ofis)',
-    exactAddressPlaceholder: 'etrap, köçe, jaý/ofis',
-    addressCleanHint: 'Şäheri/welaýaty gaýtalamazdan görkeziň: etrap, köçe, jaý, ofis',
     onlyPdfJpgAllowed: 'Diňe PDF, JPG we PNG görnüşli faýllara rugsat berilýär',
-    passportFormatHint: 'Mysal: I-AS 123456 (seriýa we 6 san)',
     passportInvalid: 'Pasport belgisi nädogry (format: I-XX 123456)',
     bankMfoAutoHint: 'Bank saýlananda awtomatiki kesgitlenýär (9 san)',
 
@@ -391,7 +385,6 @@ export const translations = {
     dateDecisionLabel: 'Sene we wagt',
     remarksLabel: 'Bellikler / Sebäp',
     statusApprovedBadge: 'Tassyklandy',
-    statusRejectedBadge: 'Ret edildi',
     statusResubmittedBadge: 'Gaýtadan ugradyldy',
     statusSubmittedBadge: 'Ilkinji tabşyryş',
     searchArchivePlaceholder: 'Kompaniýa, STŞK ýa-da moderator boýunça gözleg...',
@@ -851,7 +844,6 @@ export const translations = {
     addSupplier: 'Добавить поставщика',
     accountAccess: 'Доступ в систему',
     login: 'Логин',
-    password: 'Пароль',
     editSupplier: 'Изменить поставщика',
     deleteConfirm: 'Вы действительно хотите удалить этого поставщика?',
     edit: 'Редактировать',
@@ -1004,7 +996,6 @@ export const translations = {
 
     // Справочники
     sectionGeneral: 'Общие',
-    sectionProducts: 'Товары',
     catTenderCategories: 'Категории тендеров',
     catTenderCategoriesSub: 'Категории лотов',
     catCurrencies: 'Валюты',
@@ -1161,7 +1152,6 @@ export const translations = {
     dateDecisionLabel: 'Дата и время',
     remarksLabel: 'Замечания / Причина',
     statusApprovedBadge: 'Одобрено',
-    statusRejectedBadge: 'Отклонено',
     statusResubmittedBadge: 'Повторная подача',
     statusSubmittedBadge: 'Первичная подача',
     searchArchivePlaceholder: 'Поиск по компании, STŞK или модератору...',
@@ -1621,7 +1611,6 @@ export const translations = {
     addSupplier: 'Add Supplier',
     accountAccess: 'System Access',
     login: 'Login',
-    password: 'Password',
     editSupplier: 'Edit Supplier',
     deleteConfirm: 'Are you sure you want to delete this supplier?',
     edit: 'Edit',
@@ -1774,7 +1763,6 @@ export const translations = {
 
     // Catalogs
     sectionGeneral: 'General',
-    sectionProducts: 'Products',
     catTenderCategories: 'Tender Categories',
     catTenderCategoriesSub: 'Lot Categories',
     catCurrencies: 'Currencies',
@@ -1931,7 +1919,6 @@ export const translations = {
     dateDecisionLabel: 'Date & Time',
     remarksLabel: 'Remarks / Reason',
     statusApprovedBadge: 'Approved',
-    statusRejectedBadge: 'Rejected',
     statusResubmittedBadge: 'Resubmitted',
     statusSubmittedBadge: 'Initial submission',
     searchArchivePlaceholder: 'Search by company, Tax ID or moderator...',
@@ -2316,7 +2303,7 @@ export const getTranslation = (lang, key, fallback = '', params = null) => {
   if (typeof text !== 'string') text = String(text || '');
   if (params && typeof params === 'object') {
     Object.keys(params).forEach((paramKey) => {
-      text = text.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), params[paramKey]);
+      text = text.replace(new RegExp(`(\\$\\{${paramKey}\\}|\\{${paramKey}\\})`, 'g'), params[paramKey]);
     });
   }
   return text;

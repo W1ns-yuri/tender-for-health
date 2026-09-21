@@ -4,17 +4,11 @@ import {
   ArrowLeft, 
   FileText, 
   Package, 
-  DollarSign, 
   Calendar, 
   MapPin, 
   Building2, 
   Download, 
-  Clock, 
-  Users, 
-  Tag, 
-  CheckCircle2,
-  Trophy,
-  Layers
+  CheckCircle2
 } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
@@ -257,7 +251,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
               ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
               : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
           }`}>
-            {t('lotsAndPositionsCountStr', 'Лотов: ${lotGroups.length || 1} | Позиций: ${rawSpecs.length}')}
+            {t('lotsAndPositionsCountStr', `Лотов: ${lotGroups.length || 1} | Позиций: ${rawSpecs.length}`, { lotsCount: lotGroups.length || 1, specsCount: rawSpecs.length })}
           </span>
         </div>
 
@@ -316,8 +310,8 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                         <th className="py-2.5 px-3 min-w-45">{t('specBrand', 'Производитель / Модель')}</th>
                         <th className="py-2.5 px-3 w-28 text-center">{t('specUnit', 'Ед. изм.')}</th>
                         <th className="py-2.5 px-3 w-28 text-center">{t('specQty', 'Количество')}</th>
-                        <th className="py-2.5 px-3 w-36 text-center">{t('unitPriceWithCurrency', 'Цена за ед. (${currencyCode})')}</th>
-                        <th className="py-2.5 px-3 w-36 text-right">{t('totalSumWithCurrency', 'Сумма (${currencyCode})')}</th>
+                        <th className="py-2.5 px-3 w-36 text-center">{t('unitPriceWithCurrency', `Цена за ед. (${currencyCode})`, { currencyCode })}</th>
+                        <th className="py-2.5 px-3 w-36 text-right">{t('totalSumWithCurrency', `Сумма (${currencyCode})`, { currencyCode })}</th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -378,8 +372,8 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                     <th className="py-2.5 px-3 min-w-45">{t('specBrand', 'Производитель / Модель')}</th>
                     <th className="py-2.5 px-3 w-28 text-center">{t('specUnit', 'Ед. изм.')}</th>
                     <th className="py-2.5 px-3 w-28 text-center">{t('specQty', 'Количество')}</th>
-                    <th className="py-2.5 px-3 w-36 text-center">{t('unitPriceWithCurrency', 'Цена за ед. (${currencyCode})')}</th>
-                    <th className="py-2.5 px-3 w-36 text-right">{t('totalSumWithCurrency', 'Сумма (${currencyCode})')}</th>
+                    <th className="py-2.5 px-3 w-36 text-center">{t('unitPriceWithCurrency', `Цена за ед. (${currencyCode})`, { currencyCode })}</th>
+                    <th className="py-2.5 px-3 w-36 text-right">{t('totalSumWithCurrency', `Сумма (${currencyCode})`, { currencyCode })}</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>

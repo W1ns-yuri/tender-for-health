@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Send, Trophy, Eye, Plus, Edit2, Trash2, Search, Users } from 'lucide-react';
+import { FileText, Send, Trophy, Eye, Plus, Edit2, Trash2, Users } from 'lucide-react';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';

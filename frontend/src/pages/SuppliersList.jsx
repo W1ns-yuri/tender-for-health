@@ -12,9 +12,6 @@ import {
   CheckCircle2, 
   Clock, 
   RefreshCw, 
-  Filter,
-  Building2,
-  Calendar,
   UserCheck
 } from 'lucide-react';
 import API from '../services/api';

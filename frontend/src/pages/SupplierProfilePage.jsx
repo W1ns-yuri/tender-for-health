@@ -25,15 +25,12 @@ import {
   Printer,
   Edit3,
   Lock,
-  Eye,
-  Download,
   Shield,
   XCircle,
   ExternalLink
 } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
-import { getRoleTheme } from '../utils/themeUtils';
 import RejectSupplierModal from '../components/RejectSupplierModal';
 import { useAlert } from '../context/AlertContext';
 import CustomSelect from '../components/CustomSelect';
@@ -64,7 +61,6 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   const { id } = useParams();
   const navigate = useNavigate();
   const t = (key, fallback) => getTranslation(lang, key, fallback);
-  const theme = getRoleTheme(role, isDarkMode);
   const { showAlert, showConfirm } = useAlert();
 
   const [supplier, setSupplier] = useState(null);
@@ -310,6 +306,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
             const compRes = await API.get(`/suppliers/${id}`);
             currentSupplier = compRes.data;
           } catch (fetchErr) {
+            console.warn('Direct supplier fetch fallback:', fetchErr);
             const fallbackRes = await API.get('/offers/suppliers');
             currentSupplier = fallbackRes.data.find(c => String(c.id) === String(id));
           }

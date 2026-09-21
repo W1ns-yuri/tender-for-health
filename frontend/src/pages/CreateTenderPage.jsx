@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Save, Trash2, ChevronDown, AlertCircle, RefreshCw, FileText, AlignLeft, Paperclip, Calendar, Check, Package, Wrench, Settings2 } from 'lucide-react';
+import { Plus, Save, Trash2, ChevronDown, AlertCircle, RefreshCw, FileText, AlignLeft, Paperclip, Package, Wrench, Settings2 } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme, getCurrencyLabel } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
@@ -10,7 +10,7 @@ import CustomSelect from '../components/CustomSelect';
 import { useAlert } from '../context/AlertContext';
 
 // Запрещенные спецсимволы (<, >, {, }, |, ^, ~, `, \)
-const FORBIDDEN_CHARS_REGEX = /[<>{}\|^~`\\]/g;
+const FORBIDDEN_CHARS_REGEX = /[<>{}|^~`\\]/g;
 
 const sanitizeInputText = (text) => {
   if (typeof text !== 'string') return text;
@@ -201,7 +201,7 @@ const ProductSearchableSelect = ({
               >
                 <Plus size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <span className="truncate">
-                  {t('addToCatalogPrompt', 'Добавить в справочник: "${search.trim()}"')}
+                  {t('addToCatalogPrompt', `Добавить в справочник: "${search.trim()}"`, { query: search.trim() })}
                 </span>
               </div>
             )}
@@ -747,7 +747,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
         procurementType: formData.procurementType || 'GOODS',
         announcementDate: new Date(formData.announcementDate).toISOString(),
         deadline: new Date(formData.deadline).toISOString(),
-        lots: lots.map((lot, lotIdx) => ({
+        lots: lots.map(lot => ({
           name: sanitizeInputText(lot.name),
           lotType: lot.lotType || 'GOODS',
           deliveryTermId: lot.lotType === 'GOODS' ? (lot.deliveryTermId || undefined) : undefined,
@@ -807,7 +807,7 @@ export default function CreateTenderPage({ onNavigate, role, isDarkMode, lang = 
           }`}
         >
           <span className="text-amber-500 font-bold text-xs">⚠️</span>
-          <span>{t('forbiddenCharNotice', 'Символ "${forbiddenBadge.char}" недопустим')}</span>
+          <span>{t('forbiddenCharNotice', `Символ "${forbiddenBadge.char}" недопустим`, { char: forbiddenBadge.char })}</span>
           <div
             className={`absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent ${
               isDarkMode ? 'border-t-[#0f172a]' : 'border-t-white'

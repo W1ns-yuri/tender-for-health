@@ -76,7 +76,7 @@ export const getAvatarInitials = (userOrName, role = 'SUPPLIER') => {
     return role === 'ADMIN' ? 'AD' : 'SU';
   }
 
-  const parts = nameStr.split(/[\s_\-]+/).filter(Boolean);
+  const parts = nameStr.split(/[\s_-]+/).filter(Boolean);
   if (parts.length >= 2) {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
@@ -103,7 +103,7 @@ export const getCurrencyLabel = (currencyObjOrCode) => {
 
   if (labels[code]) return labels[code];
   if (typeof currencyObjOrCode === 'object' && currencyObjOrCode?.name) {
-    return `${code} — ${currencyObjOrCode.name.replace(/[\uD83C-\uDBFF\uDC00-\uDFFF]+/g, '').trim()}`;
+    return `${code} — ${currencyObjOrCode.name.replace(/\p{Extended_Pictographic}/gu, '').trim()}`;
   }
   return code;
 };

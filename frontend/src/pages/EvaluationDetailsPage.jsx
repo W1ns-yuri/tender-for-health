@@ -3,8 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   ArrowLeft, Trophy, CheckCircle, ChevronDown, ChevronUp, 
   FileText, Eye, ExternalLink, CornerDownRight, Printer, 
-  Clock, Building2, Layers, AlertCircle, CheckCircle2, TrendingDown,
-  Download, HelpCircle, X
+  Clock, Building2, AlertCircle, CheckCircle2, TrendingDown,
+  Download, X
 } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
@@ -70,6 +70,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
           type: 'info'
         });
       } catch (e) {
+        console.error('Failed to unaward lot', e);
         showAlert({
           title: t('errorTitle', 'Ошибка'),
           message: t('profileSaveError', 'Ошибка при снятии выбора'),
@@ -98,6 +99,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
         type: 'success'
       });
     } catch (e) {
+      console.error('Failed to award lot', e);
       showAlert({
         title: t('errorTitle', 'Ошибка'),
         message: t('profileSaveError', 'Ошибка при выборе победителя'),

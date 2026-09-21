@@ -99,9 +99,10 @@ export default function CustomDatePicker({
 
   // Sync viewed year/month when value changes externally
   useEffect(() => {
-    if (parsedValue) {
-      setViewYear(parsedValue.getFullYear());
-      setViewMonth(parsedValue.getMonth());
+    const parsed = parseDateString(value);
+    if (parsed) {
+      setViewYear(parsed.getFullYear());
+      setViewMonth(parsed.getMonth());
     }
   }, [value]);
 
@@ -286,6 +287,7 @@ export default function CustomDatePicker({
         role="button"
         tabIndex={disabled ? -1 : 0}
         aria-label={ariaLabel}
+        aria-required={required ? 'true' : undefined}
         onClick={toggleOpen}
         onKeyDown={(e) => {
           if (!disabled && (e.key === 'Enter' || e.key === ' ')) {

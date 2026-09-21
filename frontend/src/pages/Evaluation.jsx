@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, CheckCircle2, ChevronRight, FileText, Search, X, Filter, ArrowUpDown, Clock, Building2, Layers, AlertCircle, ArrowRight, Eye } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Trophy, CheckCircle2, FileText, Search, X, Clock, Building2, Layers, AlertCircle, ArrowRight, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
@@ -10,7 +10,6 @@ import CustomSelect from '../components/CustomSelect';
 export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
-  const navigate = useNavigate();
 
   const [tenders, setTenders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,28 +45,28 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
 
   // Filter & sort tenders
   const filteredTenders = tenders
-    .filter(t => {
+    .filter(tender => {
       // Text search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const num = (t.tenderNumber || '').toLowerCase();
-        const title = (t.title || '').toLowerCase();
-        const client = (t.client?.name || '').toLowerCase();
-        const cat = (t.category?.name || '').toLowerCase();
+        const num = (tender.tenderNumber || '').toLowerCase();
+        const title = (tender.title || '').toLowerCase();
+        const client = (tender.client?.name || '').toLowerCase();
+        const cat = (tender.category?.name || '').toLowerCase();
         if (!num.includes(q) && !title.includes(q) && !client.includes(q) && !cat.includes(q)) {
           return false;
         }
       }
 
       // Client filter
-      if (selectedClient !== 'ALL' && t.client?.name !== selectedClient) {
+      if (selectedClient !== 'ALL' && tender.client?.name !== selectedClient) {
         return false;
       }
 
       // Status filter
       if (selectedStatus !== 'ALL') {
-        if (selectedStatus === 'IN_PROGRESS' && t.status === 'YENIJI_YGLAN_EDILDI') return false;
-        if (selectedStatus === 'COMPLETED' && t.status !== 'YENIJI_YGLAN_EDILDI') return false;
+        if (selectedStatus === 'IN_PROGRESS' && tender.status === 'YENIJI_YGLAN_EDILDI') return false;
+        if (selectedStatus === 'COMPLETED' && tender.status !== 'YENIJI_YGLAN_EDILDI') return false;
       }
 
       return true;
@@ -88,9 +87,9 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
 
   // Summary statistics
   const totalTendersCount = tenders.length;
-  const inProgressCount = tenders.filter(t => t.status !== 'YENIJI_YGLAN_EDILDI').length;
-  const completedCount = tenders.filter(t => t.status === 'YENIJI_YGLAN_EDILDI').length;
-  const totalOffersCount = tenders.reduce((sum, t) => sum + (t._count?.offers || 0), 0);
+  const inProgressCount = tenders.filter(item => item.status !== 'YENIJI_YGLAN_EDILDI').length;
+  const completedCount = tenders.filter(item => item.status === 'YENIJI_YGLAN_EDILDI').length;
+  const totalOffersCount = tenders.reduce((sum, item) => sum + (item._count?.offers || 0), 0);
 
   const getDeadlineBadge = (deadlineStr) => {
     if (!deadlineStr) return null;
@@ -116,13 +115,13 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
     if (diffDays <= 3) {
       return (
         <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
-          {t('daysRemainingCount', 'Осталось ${diffDays} дн.')}
+          {t('daysRemainingCount', `Осталось ${diffDays} дн.`, { diffDays })}
         </span>
       );
     }
     return (
       <span className="text-[10px] font-medium text-slate-400">
-        {t('daysCountShort', '${diffDays} дн.')}
+        {t('daysCountShort', `${diffDays} дн.`, { diffDays })}
       </span>
     );
   };
