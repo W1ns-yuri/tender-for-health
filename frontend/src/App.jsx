@@ -23,6 +23,7 @@ import OfferDetailsPage from './pages/OfferDetailsPage';
 import { getRoleTheme } from './utils/themeUtils';
 import { AlertProvider } from './context/AlertContext';
 import CustomSelect from './components/CustomSelect';
+import { getTranslation } from './utils/translations';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('tender_token') || '');
