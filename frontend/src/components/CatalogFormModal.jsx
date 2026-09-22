@@ -28,6 +28,7 @@ export default function CatalogFormModal({
           ]
         };
       case 'categories':
+      case 'productCategories':
         return {
           title: t('addCategory', 'Добавить категорию'),
           editTitle: t('editCategory', 'Редактировать категорию'),
@@ -67,6 +68,7 @@ export default function CatalogFormModal({
           ]
         };
       case 'productsMNN':
+      case 'generalProducts':
         return {
           title: t('addProduct', 'Добавить товар'),
           editTitle: t('editProduct', 'Редактировать товар'),
@@ -87,6 +89,7 @@ export default function CatalogFormModal({
           ]
         };
       case 'manufacturers':
+      case 'brands':
         return {
           title: t('addManufacturer', 'Добавить производителя'),
           editTitle: t('editManufacturer', 'Редактировать производителя'),

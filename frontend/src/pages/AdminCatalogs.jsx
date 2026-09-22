@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { 
   PlusCircle, Search, Filter, Edit2, ToggleRight, ToggleLeft, Trash2, Database, Package, Settings, 
   Hash, Globe, Truck, DollarSign, Layers, ShieldAlert, 
-  Users, FolderTree
+  Users, FolderTree, ArrowLeft
 } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
@@ -17,16 +17,21 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
     return <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} />;
   }
 
-  return <AdminCatalogsContent role={role} isDarkMode={isDarkMode} lang={lang} />;
+  return <AdminCatalogsContent section={section} role={role} isDarkMode={isDarkMode} lang={lang} />;
 }
 
-function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
+function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
   const { showAlert, showConfirm } = useAlert();
+  const location = useLocation();
+
+  // Определяем активную секцию из пропа либо пути URL
+  const activeSection = section || (location.pathname.includes('haryt') ? 'haryt' : 'umumy');
   
   const [searchParams, setSearchParams] = useSearchParams();
   const activeCatalog = searchParams.get('catalog');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [categories, setCategories] = useState([]);
   const [currencies, setCurrencies] = useState([]);
@@ -41,9 +46,17 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
+  const getEndpoint = (cat) => {
+    if (cat === 'productsMNN' || cat === 'generalProducts') return 'products';
+    if (cat === 'categories' || cat === 'productCategories') return 'categories';
+    if (cat === 'delivery') return 'delivery-terms';
+    if (cat === 'brands') return 'manufacturers';
+    return cat;
+  };
+
   const handleSaveModal = async (formData, itemId) => {
     try {
-      const endpoint = activeCatalog === 'productsMNN' ? 'products' : activeCatalog === 'delivery' ? 'delivery-terms' : activeCatalog;
+      const endpoint = getEndpoint(activeCatalog);
       if (itemId) {
         await API.put(`/catalogs/${endpoint}/${itemId}`, formData);
       } else {
@@ -63,7 +76,7 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
 
   const handleToggleActive = async (item) => {
     try {
-      const endpoint = activeCatalog === 'productsMNN' ? 'products' : activeCatalog === 'delivery' ? 'delivery-terms' : activeCatalog;
+      const endpoint = getEndpoint(activeCatalog);
       await API.put(`/catalogs/${endpoint}/${item.id}`, { isActive: !item.isActive });
       fetchCatalogData(activeCatalog);
     } catch (e) {
@@ -88,7 +101,7 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
     if (!isConfirmed) return;
 
     try {
-      const endpoint = activeCatalog === 'productsMNN' ? 'products' : activeCatalog === 'delivery' ? 'delivery-terms' : activeCatalog;
+      const endpoint = getEndpoint(activeCatalog);
       await API.delete(`/catalogs/${endpoint}/${itemId}`);
       fetchCatalogData(activeCatalog);
       showAlert({
@@ -109,6 +122,12 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
   useEffect(() => {
     if (activeCatalog) {
       fetchCatalogData(activeCatalog);
+      setSearchQuery('');
+      if ((activeCatalog === 'manufacturers' || activeCatalog === 'brands') && countries.length === 0) {
+        API.get('/catalogs/countries')
+          .then(res => setCountries(Array.isArray(res.data) ? res.data : []))
+          .catch(e => console.error('Failed to preload countries:', e));
+      }
     }
   }, [activeCatalog]);
 
@@ -117,31 +136,31 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
     try {
       if (catalogKey === 'categories' || catalogKey === 'productCategories') {
         const res = await API.get('/catalogs/categories');
-        setCategories(res.data);
+        setCategories(Array.isArray(res.data) ? res.data : []);
       } else if (catalogKey === 'currencies') {
         const res = await API.get('/catalogs/currencies');
-        setCurrencies(res.data);
+        setCurrencies(Array.isArray(res.data) ? res.data : []);
       } else if (catalogKey === 'countries') {
         const res = await API.get('/catalogs/countries');
-        setCountries(res.data);
+        setCountries(Array.isArray(res.data) ? res.data : []);
       } else if (catalogKey === 'delivery') {
         const res = await API.get('/catalogs/delivery-terms');
-        setDeliveryTerms(res.data);
+        setDeliveryTerms(Array.isArray(res.data) ? res.data : []);
       } else if (catalogKey === 'productsMNN' || catalogKey === 'generalProducts') {
         const res = await API.get('/catalogs/products');
-        setProductsMNN(res.data);
+        setProductsMNN(Array.isArray(res.data) ? res.data : []);
       } else if (catalogKey === 'units') {
         const res = await API.get('/catalogs/units');
-        setUnits(res.data);
+        setUnits(Array.isArray(res.data) ? res.data : []);
       } else if (catalogKey === 'manufacturers' || catalogKey === 'brands') {
         const res = await API.get('/catalogs/manufacturers');
-        setManufacturers(res.data);
+        setManufacturers(Array.isArray(res.data) ? res.data : []);
       } else if (catalogKey === 'clients') {
         const res = await API.get('/catalogs/clients');
-        setClients(res.data);
+        setClients(Array.isArray(res.data) ? res.data : []);
       }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to load catalog data:', e);
     } finally {
       setLoading(false);
     }
@@ -180,8 +199,12 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
     }
 
     const tableHeaderClass = isDarkMode ? "bg-slate-800 text-slate-200 font-medium" : "bg-[#eef6ff] text-slate-800 font-medium";
+    const q = searchQuery.toLowerCase().trim();
 
     if (activeCatalog === 'categories' || activeCatalog === 'productCategories') {
+      const filtered = (categories || []).filter(c => 
+        !q || (c.name || '').toLowerCase().includes(q) || (c.code || '').toLowerCase().includes(q)
+      );
       return (
         <table className="w-full text-left text-xs border-collapse">
           <thead>
@@ -193,7 +216,13 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-            {categories.map((c, i) => (
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="py-8 text-center text-slate-400">
+                  {t('noResults', 'Нет данных')}
+                </td>
+              </tr>
+            ) : filtered.map((c, i) => (
               <tr key={c.id} className={theme.tableRowHover}>
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{c.name}</td>
@@ -201,8 +230,8 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -213,6 +242,9 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
     }
 
     if (activeCatalog === 'currencies') {
+      const filtered = (currencies || []).filter(c => 
+        !q || (c.name || '').toLowerCase().includes(q) || (c.code || '').toLowerCase().includes(q)
+      );
       return (
         <table className="w-full text-left text-xs border-collapse">
           <thead>
@@ -226,7 +258,13 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-            {currencies.map((c, i) => (
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="py-8 text-center text-slate-400">
+                  {t('noResults', 'Нет данных')}
+                </td>
+              </tr>
+            ) : filtered.map((c, i) => (
               <tr key={c.id} className={theme.tableRowHover}>
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{c.name}</td>
@@ -236,8 +274,8 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -248,6 +286,9 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
     }
 
     if (activeCatalog === 'countries') {
+      const filtered = (countries || []).filter(c => 
+        !q || (c.name || '').toLowerCase().includes(q) || (c.alpha2 || '').toLowerCase().includes(q) || (c.alpha3 || '').toLowerCase().includes(q)
+      );
       return (
         <table className="w-full text-left text-xs border-collapse">
           <thead>
@@ -260,7 +301,13 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-            {countries.map((c, i) => (
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="py-8 text-center text-slate-400">
+                  {t('noResults', 'Нет данных')}
+                </td>
+              </tr>
+            ) : filtered.map((c, i) => (
               <tr key={c.id} className={theme.tableRowHover}>
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{c.name}</td>
@@ -269,8 +316,8 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -281,6 +328,9 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
     }
 
     if (activeCatalog === 'delivery') {
+      const filtered = (deliveryTerms || []).filter(c => 
+        !q || (c.name || '').toLowerCase().includes(q) || (c.shortName || '').toLowerCase().includes(q)
+      );
       return (
         <table className="w-full text-left text-xs border-collapse">
           <thead>
@@ -292,7 +342,13 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-            {deliveryTerms.map((c, i) => (
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="py-8 text-center text-slate-400">
+                  {t('noResults', 'Нет данных')}
+                </td>
+              </tr>
+            ) : filtered.map((c, i) => (
               <tr key={c.id} className={theme.tableRowHover}>
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{c.name}</td>
@@ -300,8 +356,8 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -312,6 +368,9 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
     }
 
     if (activeCatalog === 'productsMNN' || activeCatalog === 'generalProducts') {
+      const filtered = (productsMNN || []).filter(p => 
+        !q || (p.name || '').toLowerCase().includes(q) || (p.tradeName || '').toLowerCase().includes(q) || (p.code || '').toLowerCase().includes(q)
+      );
       return (
         <table className="w-full text-left text-xs border-collapse">
           <thead>
@@ -325,18 +384,24 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-            {productsMNN.map((p, i) => (
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="py-8 text-center text-slate-400">
+                  {t('noResults', 'Нет данных')}
+                </td>
+              </tr>
+            ) : filtered.map((p, i) => (
               <tr key={p.id} className={theme.tableRowHover}>
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{p.name}</td>
                 <td className="py-3 px-4">{p.tradeName || '-'}</td>
-                <td className="py-3 px-4 text-center font-mono">{p.code}</td>
-                <td className="py-3 px-4 text-slate-500">{p.description}</td>
+                <td className="py-3 px-4 text-center font-mono">{p.code || '-'}</td>
+                <td className="py-3 px-4 text-slate-500">{p.description || '-'}</td>
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {p.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(p)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(p)} />}
-                    <button onClick={() => { setEditingItem(p); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
+                    <button onClick={() => { setEditingItem(p); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -347,6 +412,9 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
     }
 
     if (activeCatalog === 'units') {
+      const filtered = (units || []).filter(u => 
+        !q || (u.name || '').toLowerCase().includes(q) || (u.shortName || '').toLowerCase().includes(q)
+      );
       return (
         <table className="w-full text-left text-xs border-collapse">
           <thead>
@@ -358,7 +426,13 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-            {units.map((u, i) => (
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="py-8 text-center text-slate-400">
+                  {t('noResults', 'Нет данных')}
+                </td>
+              </tr>
+            ) : filtered.map((u, i) => (
               <tr key={u.id} className={theme.tableRowHover}>
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{u.name}</td>
@@ -366,8 +440,8 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {u.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(u)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(u)} />}
-                    <button onClick={() => { setEditingItem(u); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(u.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
+                    <button onClick={() => { setEditingItem(u); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(u.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -378,6 +452,9 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
     }
 
     if (activeCatalog === 'manufacturers' || activeCatalog === 'brands') {
+      const filtered = (manufacturers || []).filter(m => 
+        !q || (m.name || '').toLowerCase().includes(q) || (m.code || '').toLowerCase().includes(q)
+      );
       return (
         <table className="w-full text-left text-xs border-collapse">
           <thead>
@@ -389,7 +466,13 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-            {manufacturers.map((m, i) => (
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="py-8 text-center text-slate-400">
+                  {t('noResults', 'Нет данных')}
+                </td>
+              </tr>
+            ) : filtered.map((m, i) => (
               <tr key={m.id} className={theme.tableRowHover}>
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{m.name}</td>
@@ -397,8 +480,8 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {m.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(m)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(m)} />}
-                    <button onClick={() => { setEditingItem(m); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(m.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
+                    <button onClick={() => { setEditingItem(m); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(m.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -409,33 +492,34 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
     }
 
     if (activeCatalog === 'clients') {
+      const filtered = (clients || []).filter(c => 
+        !q || (c.name || '').toLowerCase().includes(q)
+      );
       return (
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className={tableHeaderClass}>
               <th className="py-3 px-4 w-16 text-center">#</th>
               <th className="py-3 px-4">{t('colName', 'Ady')}</th>
-              
               <th className="py-3 px-4 text-center w-32">{t('colAction', 'Amal')}</th>
             </tr>
           </thead>
           <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-            {clients.length === 0 ? (
+            {filtered.length === 0 ? (
               <tr>
                 <td colSpan="3" className="py-12 text-center text-slate-400">
                   {t('customersListEmpty', 'Список заказчиков пуст')}
                 </td>
               </tr>
-            ) : clients.map((c, i) => (
+            ) : filtered.map((c, i) => (
               <tr key={c.id} className={theme.tableRowHover}>
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{c.name}</td>
-                
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-3 text-slate-400">
                     {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"><Trash2 size={16} /></button>
+                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -457,64 +541,102 @@ function AdminCatalogsContent({ role, isDarkMode, lang = 'RU' }) {
     );
   };
 
+  const currentSectionItems = sections[activeSection] || sections.umumy;
+  const currentCatalogItem = currentSectionItems.find(s => s.id === activeCatalog) 
+    || sections.umumy.find(s => s.id === activeCatalog) 
+    || sections.haryt.find(s => s.id === activeCatalog);
+
   return (
     <div className={`flex flex-col min-h-[calc(100vh-100px)] -mx-6 -mt-6 ${isDarkMode ? 'bg-[#0b0f17]' : 'bg-slate-50/50'}`}>
       {/* Основная рабочая область */}
       <div className="flex-1 p-6 overflow-y-auto">
         {!activeCatalog ? (
           // Grid View (Сетка карточек)
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in duration-200">
-            {sections[section] && sections[section].map((item) => (
-              <div 
-                key={item.id} 
-                onClick={() => setSearchParams({ catalog: item.id })}
-                className={`p-4 rounded-xl border flex items-center space-x-4 cursor-pointer transition-all ${
-                  isDarkMode 
-                    ? 'bg-slate-800 border-slate-700 hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-900/20' 
-                    : 'bg-white border-slate-200 hover:border-emerald-400 hover:shadow-md'
-                }`}
-              >
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${isDarkMode ? 'bg-slate-700 text-emerald-400' : 'bg-slate-50 text-emerald-600'}`}>
-                  {item.icon}
-                </div>
-                <div className="overflow-hidden">
-                  <h4 className={`font-bold text-sm truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
-                    {item.title}
-                  </h4>
-                  <p className={`text-xs truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    {item.subtitle}
-                  </p>
-                </div>
+          <div className="space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold">
+                  {activeSection === 'haryt' 
+                    ? t('sectionProducts', 'Haryt katalogy') 
+                    : t('sectionDirectories', 'Gollanmalar')}
+                </h2>
+                <p className={`text-xs ${theme.subText} mt-0.5`}>
+                  {activeSection === 'haryt' 
+                    ? t('catGeneralProductsSub', 'Halkara patentsiz atlary we haryt ugurlary') 
+                    : t('catalogsTitle', 'Ulgam gollanmalary we toparlar')}
+                </p>
               </div>
-            ))}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {currentSectionItems.map((item) => (
+                <div 
+                  key={item.id} 
+                  onClick={() => setSearchParams({ catalog: item.id })}
+                  className={`p-4 rounded-xl border flex items-center space-x-4 cursor-pointer transition-all ${
+                    isDarkMode 
+                      ? 'bg-slate-800 border-slate-700 hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-900/20' 
+                      : 'bg-white border-slate-200 hover:border-emerald-400 hover:shadow-md'
+                  }`}
+                >
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${isDarkMode ? 'bg-slate-700 text-emerald-400' : 'bg-slate-50 text-emerald-600'}`}>
+                    {item.icon}
+                  </div>
+                  <div className="overflow-hidden">
+                    <h4 className={`font-bold text-sm truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+                      {item.title}
+                    </h4>
+                    <p className={`text-xs truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {item.subtitle}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           // Table View (Режим таблицы)
           <div className="animate-in slide-in-from-right-4 duration-200">
             <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                {sections[section]?.find(s => s.id === activeCatalog)?.title || activeCatalog}
-              </h2>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSearchParams({})}
+                  className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer ${
+                    isDarkMode
+                      ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-emerald-500 hover:text-emerald-400'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-emerald-600'
+                  }`}
+                >
+                  <ArrowLeft size={16} />
+                  <span>{t('back', 'Назад')}</span>
+                </button>
+                <h2 className={`text-xl font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                  {currentCatalogItem?.title || activeCatalog}
+                </h2>
+              </div>
               
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input 
                     type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t('searchPlaceholder', 'Gözleg...')} 
                     className={`pl-9 pr-4 py-2 rounded-md border text-sm w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'}`} 
                   />
                 </div>
                 
-                <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-medium transition-colors">
-                  <Filter size={16} />
-                  <span>{t('filter', 'Filter')}</span>
-                </button>
-                
-                <button onClick={() => { setEditingItem(null); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-medium transition-colors">
-                  <PlusCircle size={16} />
-                  <span>{t('addBtn', 'Goş')}</span>
-                </button>
+                {activeCatalog !== 'composition' && activeCatalog !== 'variations' && (
+                  <button 
+                    onClick={() => { setEditingItem(null); setIsModalOpen(true); }} 
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-medium transition-colors cursor-pointer shadow-xs"
+                  >
+                    <PlusCircle size={16} />
+                    <span>{t('addBtn', 'Goş')}</span>
+                  </button>
+                )}
               </div>
             </div>
 

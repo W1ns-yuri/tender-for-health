@@ -191,6 +191,9 @@ export default function App() {
               <Route path="/admin/evaluations/:id" element={role === 'SUPPLIER' ? <SupplierWins role={role} isDarkMode={isDarkMode} lang={lang} /> : <EvaluationDetailsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/umumy" element={role === 'ADMIN' ? <AdminCatalogs section="umumy" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/haryt" element={role === 'ADMIN' ? <AdminCatalogs section="haryt" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
+              <Route path="/catalogs" element={<Navigate to="/umumy" replace />} />
+              <Route path="/catalog" element={<Navigate to="/umumy" replace />} />
+              <Route path="/products" element={<Navigate to="/haryt" replace />} />
               <Route path="/administrasiya" element={role === 'ADMIN' ? <AdminCatalogs section="administrasiya" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/admin-logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
