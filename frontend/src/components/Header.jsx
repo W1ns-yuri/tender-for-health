@@ -9,6 +9,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
   const isAdmin = role === 'ADMIN';
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const navigate = useNavigate();
   const t = (key, fallback) => getTranslation(lang, key, fallback);
 
@@ -19,6 +20,8 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
   ];
 
   const currentLang = languages.find(l => l.code === (lang || 'TM')) || languages[0];
+
+  const logoSrc = user?.logoUrl || user?.supplier?.logoUrl || (user?.companies?.[0] || user?.suppliers?.[0])?.logoUrl;
 
   return (
     <header className={`h-16 px-6 flex items-center justify-between sticky top-0 z-20 border-b shadow-xs transition-colors ${isDarkMode ? 'bg-[#111827] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-800'}`}>
@@ -95,9 +98,18 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className={`flex items-center space-x-1 cursor-pointer p-1 rounded-full hover:bg-slate-100 ${isDarkMode ? 'hover:bg-slate-800' : ''}`}
           >
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs tracking-wider text-white ${isAdmin ? 'bg-emerald-600 shadow-sm shadow-emerald-500/30' : 'bg-blue-600 shadow-sm shadow-blue-500/30'}`}>
-              {getAvatarInitials(user, role)}
-            </div>
+            {logoSrc && !imgError ? (
+              <img
+                src={logoSrc}
+                alt="Logo"
+                onError={() => setImgError(true)}
+                className="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-xs"
+              />
+            ) : (
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs tracking-wider text-white ${isAdmin ? 'bg-emerald-600 shadow-sm shadow-emerald-500/30' : 'bg-blue-600 shadow-sm shadow-blue-500/30'}`}>
+                {getAvatarInitials(user, role)}
+              </div>
+            )}
             <ChevronDown size={16} className="text-slate-500" />
           </div>
 

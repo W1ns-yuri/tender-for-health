@@ -224,12 +224,52 @@ const getTenders = async (req, res) => {
         if (visibility) where.visibility = visibility;
         if (categoryId) where.categoryId = categoryId;
 
+        // Скрытие черновиков (TASLAMA): только администраторы могут видеть черновики тендеров
+        if (!req.user || req.user.roleType !== 'ADMIN') {
+            if (where.status === 'TASLAMA') {
+                return res.json([]);
+            }
+            if (!where.status) {
+                where.status = { not: 'TASLAMA' };
+            }
+        }
+
         if (search) {
-            where.OR = [
-                { tenderNumber: { contains: search, mode: 'insensitive' } },
-                { title: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
-            ];
+            where.AND = where.AND || [];
+            where.AND.push({
+                OR: [
+                    { tenderNumber: { contains: search, mode: 'insensitive' } },
+                    { title: { contains: search, mode: 'insensitive' } },
+                    { description: { contains: search, mode: 'insensitive' } },
+                ]
+            });
+        }
+
+        // Персонализация выдачи для аккредитованных поставщиков:
+        // Поставщик видит только те закупки, где категория тендера или хотя бы одного лота
+        // совпадает с его направлениями деятельности (либо общедоступные закупки без категории).
+        if (req.user && req.user.roleType === 'SUPPLIER') {
+            const supplier = await prisma.supplier.findFirst({
+                where: { userId: req.user.id },
+                include: { categories: true }
+            });
+
+            if (supplier && supplier.categories && supplier.categories.length > 0) {
+                const catIds = supplier.categories.map(c => c.categoryId);
+                where.AND = where.AND || [];
+                where.AND.push({
+                    OR: [
+                        { categoryId: { in: catIds } },
+                        { lots: { some: { categoryId: { in: catIds } } } },
+                        {
+                            AND: [
+                                { categoryId: null },
+                                { lots: { none: { categoryId: { not: null } } } }
+                            ]
+                        }
+                    ]
+                });
+            }
         }
 
         const tenders = await prisma.tender.findMany({
@@ -280,6 +320,10 @@ const getTenderById = async (req, res) => {
 
         if (!tenderBase) {
             return res.status(404).json({ error: 'Тендер не найден' });
+        }
+
+        if (tenderBase.status === 'TASLAMA' && (!req.user || req.user.roleType !== 'ADMIN')) {
+            return res.status(403).json({ error: 'Черновик тендера доступен только администратору' });
         }
 
         // Защита коммерческой тайны и процедура "запечатанных конвертов":

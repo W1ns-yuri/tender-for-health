@@ -102,12 +102,38 @@ const createOffer = async (req, res) => {
             return res.status(400).json({ error: 'Укажите предложенную цену хотя бы для одной позиции спецификации' });
         }
 
-        // Проверяем принадлежность каждой позиции спецификации именно к этому тендеру и валидируем цены
+        // Проверяем принадлежность каждой позиции спецификации именно к этому тендеру и валидируем категории лотов
         const tenderSpecs = await prisma.tenderSpecification.findMany({
             where: { tenderId: tenderId },
-            select: { id: true, quantity: true }
+            select: { 
+                id: true, 
+                quantity: true,
+                lotId: true,
+                lot: {
+                    select: { id: true, categoryId: true, name: true }
+                }
+            }
         });
         const validSpecMap = new Map(tenderSpecs.map(s => [s.id, s.quantity]));
+
+        // Проверяем аккредитацию поставщика по категориям
+        const supplierCategories = await prisma.supplierCategory.findMany({
+            where: { supplierId: finalSupplierId },
+            select: { categoryId: true }
+        });
+        if (supplierCategories.length > 0) {
+            const allowedCatIds = new Set(supplierCategories.map(c => c.categoryId));
+            for (const item of specs) {
+                const tSpec = tenderSpecs.find(s => s.id === item.tenderSpecId);
+                if (tSpec && tSpec.lot && tSpec.lot.categoryId) {
+                    if (!allowedCatIds.has(tSpec.lot.categoryId)) {
+                        return res.status(400).json({
+                            error: `Позиция относится к лоту "${tSpec.lot.name || tSpec.lot.id}", категория которого не входит в вашу аккредитацию.`
+                        });
+                    }
+                }
+            }
+        }
 
         for (const item of specs) {
             if (!item.tenderSpecId || !validSpecMap.has(item.tenderSpecId)) {

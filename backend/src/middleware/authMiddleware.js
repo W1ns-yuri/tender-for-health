@@ -43,4 +43,34 @@ const authMiddleware = async (req, res, next) => {
     }
 };
 
+const optionalAuthMiddleware = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return next();
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userId = decoded.userId || decoded.id;
+        if (userId) {
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { id: true, roleType: true, isActive: true }
+            });
+            if (user && user.isActive) {
+                req.user = {
+                    id: user.id,
+                    userId: user.id,
+                    roleType: user.roleType,
+                };
+            }
+        }
+    } catch (_) {
+        // Ошибки токена игнорируются для опциональной авторизации
+    }
+    next();
+};
+
+authMiddleware.optional = optionalAuthMiddleware;
+
 module.exports = authMiddleware;

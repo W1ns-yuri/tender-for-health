@@ -12,7 +12,8 @@ import {
   CheckCircle2, 
   Clock, 
   RefreshCw, 
-  UserCheck
+  UserCheck,
+  Layers
 } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
@@ -20,6 +21,7 @@ import { getTranslation } from '../utils/translations';
 import AddSupplierModal from '../components/AddSupplierModal';
 import EditSupplierModal from '../components/EditSupplierModal';
 import RejectSupplierModal from '../components/RejectSupplierModal';
+import CustomSelect from '../components/CustomSelect';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAlert } from '../context/AlertContext';
 
@@ -33,6 +35,8 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
   const [suppliers, setSuppliers] = useState([]);
   const [pendingSuppliers, setPendingSuppliers] = useState([]);
   const [countries, setCountries] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [supplierToEdit, setSupplierToEdit] = useState(null);
@@ -67,6 +71,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
       fetchModerationArchive();
     }
     API.get('/catalogs/countries').then(r => setCountries(r.data.filter(c => c.isActive))).catch(() => {});
+    API.get('/catalogs/categories').then(r => setCategories(r.data.filter(c => c.isActive))).catch(() => {});
   }, [role]);
 
   const fetchSuppliers = async () => {
@@ -158,7 +163,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
     if (!isConfirmed) return;
 
     try {
-      await API.post(`/suppliers/${supplier.id}/approve`);
+      await API.post(`/suppliers/${supplier.id}/approve`, {});
       fetchPendingSuppliers();
       fetchSuppliers();
       fetchModerationArchive();
@@ -186,15 +191,18 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
     setSupplierToReject(null);
   };
 
-  // Фильтрация поставщиков
+  // Фильтрация поставщиков (по поиску и выбранной категории деятельности)
   const filteredSuppliers = suppliers.filter(s => {
+    const matchesCategory = categoryFilter === 'ALL' || (s.categories && s.categories.some(c => c.categoryId === categoryFilter));
+    if (!matchesCategory) return false;
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
       (s.name || '').toLowerCase().includes(q) ||
       (s.taxId || '').toLowerCase().includes(q) ||
-      (s.regNo || '').toLowerCase().includes(q) ||
-      (s.country?.name || '').toLowerCase().includes(q)
+      (s.regNumber || s.regNo || '').toLowerCase().includes(q) ||
+      (s.country?.name || '').toLowerCase().includes(q) ||
+      (s.categories && s.categories.some(c => (c.category?.name || '').toLowerCase().includes(q)))
     );
   });
 
@@ -224,13 +232,26 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
           </p>
         </div>
 
-        <button 
-          onClick={() => setShowAddModal(true)}
-          className={`px-4 py-2 rounded-lg font-bold text-xs shadow-md transition-all flex items-center space-x-2 ${theme.primaryBtn}`}
-        >
-          <Plus size={16} />
-          <span>{t('addSupplier', 'Üpjün ediji goşmak')}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {role === 'ADMIN' && (
+            <button 
+              onClick={() => navigate('/umumy?catalog=categories')}
+              title={t('manageCategoriesBtn', 'Управление категориями')}
+              className="px-3.5 py-2 rounded-xl font-bold text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-emerald-400 hover:text-emerald-600 transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <Layers size={15} className="text-emerald-600" />
+              <span>{t('manageCategoriesBtn', 'Управление категориями')}</span>
+            </button>
+          )}
+
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className={`px-4 py-2 rounded-xl font-bold text-xs shadow-md transition-all flex items-center space-x-2 ${theme.primaryBtn}`}
+          >
+            <Plus size={16} />
+            <span>{t('addSupplier', 'Üpjün ediji goşmak')}</span>
+          </button>
+        </div>
       </div>
 
       {/* 2. Навигационные вкладки для администратора в едином фирменном стиле */}
@@ -302,7 +323,19 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                 placeholder={t('searchPlaceholder', 'Gözleg...')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className={`w-full pl-9 pr-3 py-1.5 rounded-lg text-xs border focus:outline-hidden ${theme.inputBg}`}
+                className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs border focus:outline-hidden ${theme.inputBg}`}
+              />
+            </div>
+            <div className="col-span-2">
+              <CustomSelect
+                role="ADMIN"
+                value={categoryFilter}
+                onChange={(val) => setCategoryFilter(val)}
+                options={[
+                  { id: 'ALL', name: `🏢 ${t('allCategories', 'Все направления деятельности')}` },
+                  ...categories.map(c => ({ id: c.id, name: c.name }))
+                ]}
+                size="md"
               />
             </div>
           </div>
@@ -312,6 +345,7 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
               <thead className={theme.tableHeaderBg}>
                 <tr className="border-b border-slate-200 dark:border-slate-800">
                   <th className="py-3.5 px-4 text-center">{t('supplierName', 'Kompaniýanyň ady')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('activityDirections', 'Направления')}</th>
                   <th className="py-3.5 px-4 text-center">{t('country', 'Ýurt')}</th>
                   <th className="py-3.5 px-4 text-center">{t('regNo', 'Ýazgy belgisi')}</th>
                   <th className="py-3.5 px-4 text-center">{t('taxId', 'ИНН (STŞK)')}</th>
@@ -323,19 +357,19 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
               <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
                 {loading ? (
                   <tr>
-                    <td colSpan="7" className="py-8 text-center text-slate-500">
+                    <td colSpan="8" className="py-8 text-center text-slate-500">
                       {t('loading', 'Ýüklenýär...')}
                     </td>
                   </tr>
                 ) : filteredSuppliers.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="py-12 text-center text-slate-500">
+                    <td colSpan="8" className="py-12 text-center text-slate-500">
                       <Search size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
                       <p className="font-bold text-sm text-slate-700 dark:text-slate-300">
                         {t('suppliersNotFoundNotice', 'Поставщики не найдены')}
                       </p>
                       <p className="text-xs text-slate-400 mt-1">
-                        {search.trim()
+                        {search.trim() || categoryFilter !== 'ALL'
                           ? (t('adjustSearchFilterPrompt', 'Попробуйте изменить поисковый запрос или сбросить фильтр.'))
                           : (t('noRegisteredSuppliersYet', 'В системе пока нет зарегистрированных поставщиков.'))}
                       </p>
@@ -346,6 +380,24 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                     <tr key={s.id || idx} className={theme.tableRowHover}>
                       <td className="py-3.5 px-4 text-center font-medium">
                         {safeString(s.name)}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        {s.categories && s.categories.length > 0 ? (
+                          <div className="flex flex-wrap items-center justify-center gap-1 max-w-xs mx-auto">
+                            {s.categories.map((sc, scIdx) => (
+                              <span
+                                key={sc.categoryId || scIdx}
+                                className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/40"
+                              >
+                                {sc.category?.name || 'Категория'}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 italic font-medium">
+                            {t('noCategoriesAssigned', 'Не указаны')}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-center text-slate-500">
                         {safeString(s.country?.name || s.countryName)}
@@ -429,6 +481,20 @@ export default function SuppliersList({ role, isDarkMode, lang = 'RU' }) {
                     <tr key={s.id || idx} className={theme.tableRowHover}>
                       <td className="py-3.5 px-4 text-center">
                         <p className="font-bold text-slate-800 dark:text-white">{safeString(s.name)}</p>
+                        <div className="flex flex-wrap items-center justify-center gap-1 mt-1.5">
+                          {s.categories && s.categories.length > 0 ? (
+                            s.categories.map((sc, scIdx) => (
+                              <span
+                                key={sc.categoryId || scIdx}
+                                className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                              >
+                                {sc.category?.name}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-[10px] text-slate-400">{t('noCategoriesAssigned', 'Направления не указаны')}</span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <span className="font-medium px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded">{s.type}</span>

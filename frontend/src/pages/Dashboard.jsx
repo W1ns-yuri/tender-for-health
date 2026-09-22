@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Send, Trophy, Eye, Plus, Edit2, Trash2, Users } from 'lucide-react';
+import { FileText, Send, Trophy, Eye, Plus, Edit2, Trash2, Users, ChevronRight } from 'lucide-react';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
@@ -9,6 +9,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
   const [tenders, setTenders] = useState([]);
   const [myOffers, setMyOffers] = useState([]);
   const [stats, setStats] = useState({ openTenders: 0, totalOffers: 0, winnersCount: 0, totalSuppliers: 0 });
+  const [supplierProfile, setSupplierProfile] = useState(null);
   const [loadingTenders, setLoadingTenders] = useState(true);
   const [loadingOffers, setLoadingOffers] = useState(true);
   const theme = getRoleTheme(role, isDarkMode);
@@ -16,7 +17,12 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+    if (role === 'SUPPLIER') {
+      API.get('/suppliers/profile')
+        .then(res => { if (res.data) setSupplierProfile(res.data); })
+        .catch(err => console.error('Dashboard profile fetch err', err));
+    }
+  }, [role]);
 
   const fetchDashboardData = async (retryCount = 1) => {
     try {
@@ -107,6 +113,32 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
           </button>
         )}
       </div>
+
+      {/* Приветственный баннер онбординга для поставщиков со статусом PENDING */}
+      {role === 'SUPPLIER' && supplierProfile?.verificationStatus === 'PENDING' && (
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-blue-500/5 border border-blue-500/20 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-300">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/25">
+              <Users size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                {t('onboardingPendingTitle', 'Профиль ожидает заполнения')}
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5 max-w-2xl">
+                {t('onboardingPendingBanner', 'Добро пожаловать в Tender Ulgamy! Заполните реквизиты компании, банковские данные и прикрепите документы в профиле для прохождения верификации.')}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigate('profile')}
+            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/20 transition-all shrink-0 active:scale-95 flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>{t('goToProfileBtn', 'Перейти в профиль')}</span>
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Метрики */}
       {role === 'ADMIN' ? (

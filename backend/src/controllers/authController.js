@@ -5,7 +5,7 @@ const prisma = require('../lib/prisma');
 // Регистрация нового пользователя
 const register = async (req, res) => {
     try {
-        const { username, password, firstName, lastName, middleName, position, phone, companyType, companyName, taxId } = req.body;
+        const { username, password, firstName, lastName, middleName, position, phone, companyType, companyName, taxId, categoryIds } = req.body;
 
         if (!username || !password || !firstName || !lastName || !phone) {
             return res.status(400).json({ error: 'Пожалуйста, заполните обязательные поля: username, password, firstName, lastName, phone' });
@@ -26,7 +26,7 @@ const register = async (req, res) => {
             cleanCompanyName = cleanCompanyName.replace(/^(ип|хо|ооо|чп|hj|dh|hk|telekeçi|hojalyk\s+jemgyýeti|hususy\s+telekeçi|hususy\s+kärhana)\s*["«'”]?\s*/i, '').replace(/["»'”]$/, '').trim() || cleanCompanyName;
         }
 
-        // Атомарное создание пользователя и профиля поставщика в одной транзакции
+        // Атомарное создание пользователя, профиля поставщика и его категорий в одной транзакции
         const newUser = await prisma.$transaction(async (tx) => {
             const user = await tx.user.create({
                 data: {
@@ -41,7 +41,7 @@ const register = async (req, res) => {
                 },
             });
 
-            await tx.supplier.create({
+            const supplier = await tx.supplier.create({
                 data: {
                     userId: user.id,
                     name: cleanCompanyName || `${firstName} ${lastName}`,
@@ -50,8 +50,19 @@ const register = async (req, res) => {
                     phone: phone || null,
                     email: username.includes('@') ? username : null,
                     verificationStatus: 'PENDING',
+                    directorName: `${firstName} ${lastName}`.trim(),
                 },
             });
+
+            if (Array.isArray(categoryIds) && categoryIds.length > 0) {
+                await tx.supplierCategory.createMany({
+                    data: categoryIds.map(categoryId => ({
+                        supplierId: supplier.id,
+                        categoryId
+                    })),
+                    skipDuplicates: true
+                });
+            }
 
             return user;
         });
@@ -131,7 +142,16 @@ const getMe = async (req, res) => {
     try {
         const user = await prisma.user.findUnique({
             where: { id: req.user.id },
-            include: { companies: true, suppliers: true },
+            include: { 
+                companies: true, 
+                suppliers: {
+                    include: {
+                        categories: {
+                            include: { category: true }
+                        }
+                    }
+                } 
+            },
         });
 
         if (!user) {

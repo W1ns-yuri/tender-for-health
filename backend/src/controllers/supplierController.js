@@ -4,7 +4,7 @@ const prisma = require('../lib/prisma');
 const updateProfile = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { name, type, address, region, bankName, bankAccount, bankMfo, passportInfo, passportSeries, passportIssuedBy, email, phone } = req.body;
+        const { name, type, address, region, bankName, bankAccount, bankMfo, passportInfo, passportSeries, passportIssuedBy, email, phone, categoryIds, directorName, logoUrl } = req.body;
 
         // Ищем поставщика
         const supplier = await prisma.supplier.findFirst({
@@ -24,38 +24,54 @@ const updateProfile = async (req, res) => {
         const combinedPassport = passportInfo || [passportSeries, passportIssuedBy].filter(Boolean).join(', ');
         const previousStatus = supplier.verificationStatus;
 
-        // Обновляем Supplier (включая рабочий телефон и email)
-        const updatedSupplier = await prisma.supplier.update({
-            where: { id: supplier.id },
-            data: {
-                name: cleanName,
-                type: type || supplier.type,
-                address,
-                region,
-                bankName,
-                bankAccount,
-                bankMfo,
-                passportInfo: combinedPassport,
-                passportSeries,
-                passportIssuedBy,
-                email,
-                phone, // Сохраняем рабочий телефон в профиле компании
-                verificationStatus: 'PENDING_REVIEW', // Переводим на проверку
-            },
-            include: {
-                files: {
-                    include: { document: true }
+        // Обновляем Supplier и его категории в транзакции
+        const updatedSupplier = await prisma.$transaction(async (tx) => {
+            await tx.supplier.update({
+                where: { id: supplier.id },
+                data: {
+                    name: cleanName,
+                    type: type || supplier.type,
+                    address,
+                    region,
+                    bankName,
+                    bankAccount,
+                    bankMfo,
+                    passportInfo: combinedPassport,
+                    passportSeries,
+                    passportIssuedBy,
+                    email,
+                    phone, // Сохраняем рабочий телефон в профиле компании
+                    verificationStatus: 'PENDING_REVIEW', // Переводим на проверку
+                    ...(directorName !== undefined ? { directorName } : {}),
+                    ...(logoUrl !== undefined ? { logoUrl } : {}),
+                },
+            });
+
+            if (categoryIds !== undefined && Array.isArray(categoryIds)) {
+                await tx.supplierCategory.deleteMany({ where: { supplierId: supplier.id } });
+                if (categoryIds.length > 0) {
+                    await tx.supplierCategory.createMany({
+                        data: categoryIds.map(cId => ({ supplierId: supplier.id, categoryId: cId })),
+                        skipDuplicates: true
+                    });
                 }
             }
-        });
 
-        // Обновляем User (контактный телефон пользователя, если передан)
-        if (phone) {
-            await prisma.user.update({
-                where: { id: userId },
-                data: { phone }
+            if (phone) {
+                await tx.user.update({
+                    where: { id: userId },
+                    data: { phone }
+                });
+            }
+
+            return tx.supplier.findUnique({
+                where: { id: supplier.id },
+                include: {
+                    files: { include: { document: true } },
+                    categories: { include: { category: true } }
+                }
             });
-        }
+        });
 
         // Записываем событие в архив / лог модерации
         try {
@@ -84,8 +100,16 @@ const updateProfile = async (req, res) => {
 const getPendingSuppliers = async (req, res) => {
     try {
         const pending = await prisma.supplier.findMany({
-            where: { verificationStatus: { in: ['PENDING', 'PENDING_REVIEW'] } },
-            include: { user: true, files: { include: { document: true } } },
+            where: { verificationStatus: 'PENDING_REVIEW' },
+            include: { 
+                user: true, 
+                files: { include: { document: true } },
+                categories: { include: { category: true } },
+                moderationLogs: {
+                    include: { admin: { select: { firstName: true, lastName: true, username: true } } },
+                    orderBy: { createdAt: 'desc' }
+                }
+            },
             orderBy: { updatedAt: 'desc' }
         });
         res.json(pending);
@@ -97,10 +121,15 @@ const getPendingSuppliers = async (req, res) => {
 // Администратор получает реестр всех зарегистрированных поставщиков с фильтрацией
 const getAllSuppliers = async (req, res) => {
     try {
-        const { search, status } = req.query;
+        const { search, status, categoryId } = req.query;
         const where = {};
         if (status) {
             where.verificationStatus = status;
+        }
+        if (categoryId) {
+            where.categories = {
+                some: { categoryId }
+            };
         }
         if (search) {
             where.OR = [
@@ -116,7 +145,8 @@ const getAllSuppliers = async (req, res) => {
             include: {
                 user: { select: { id: true, username: true, phone: true } },
                 country: true,
-                files: { include: { document: true } }
+                files: { include: { document: true } },
+                categories: { include: { category: true } }
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -133,10 +163,17 @@ const getSupplierById = async (req, res) => {
         const supplier = await prisma.supplier.findUnique({
             where: { id },
             include: {
-                user: { select: { id: true, username: true, phone: true } },
+                user: { select: { id: true, username: true, phone: true, firstName: true, lastName: true, middleName: true, createdAt: true } },
                 country: true,
                 files: {
                     include: { document: true }
+                },
+                categories: {
+                    include: { category: true }
+                },
+                moderationLogs: {
+                    include: { admin: { select: { firstName: true, lastName: true, username: true } } },
+                    orderBy: { createdAt: 'desc' }
                 }
             }
         });
@@ -213,23 +250,48 @@ const deleteSupplier = async (req, res) => {
 const adminUpdateSupplier = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, inn, taxId, phone, address, email, license, licenseNumber, countryId, isActive } = req.body;
+        const { name, inn, taxId, phone, address, email, license, licenseNumber, countryId, isActive, categoryIds, directorName, logoUrl } = req.body;
         const finalTaxId = taxId || inn;
         const finalLicense = licenseNumber || license;
 
-        const updated = await prisma.supplier.update({
-            where: { id },
-            data: {
-                ...(name ? { name } : {}),
-                ...(finalTaxId !== undefined ? { taxId: finalTaxId } : {}),
-                ...(phone !== undefined ? { phone } : {}),
-                ...(address !== undefined ? { address } : {}),
-                ...(email !== undefined ? { email } : {}),
-                ...(finalLicense !== undefined ? { licenseNumber: finalLicense } : {}),
-                ...(countryId !== undefined ? { countryId: countryId || null } : {}),
-                ...(isActive !== undefined ? { isActive: Boolean(isActive) } : {}),
+        const updated = await prisma.$transaction(async (tx) => {
+            await tx.supplier.update({
+                where: { id },
+                data: {
+                    ...(name ? { name } : {}),
+                    ...(finalTaxId !== undefined ? { taxId: finalTaxId } : {}),
+                    ...(phone !== undefined ? { phone } : {}),
+                    ...(address !== undefined ? { address } : {}),
+                    ...(email !== undefined ? { email } : {}),
+                    ...(finalLicense !== undefined ? { licenseNumber: finalLicense } : {}),
+                    ...(countryId !== undefined ? { countryId: countryId || null } : {}),
+                    ...(isActive !== undefined ? { isActive: Boolean(isActive) } : {}),
+                    ...(directorName !== undefined ? { directorName } : {}),
+                    ...(logoUrl !== undefined ? { logoUrl } : {}),
+                }
+            });
+
+            if (categoryIds !== undefined && Array.isArray(categoryIds)) {
+                await tx.supplierCategory.deleteMany({ where: { supplierId: id } });
+                if (categoryIds.length > 0) {
+                    await tx.supplierCategory.createMany({
+                        data: categoryIds.map(cId => ({ supplierId: id, categoryId: cId })),
+                        skipDuplicates: true
+                    });
+                }
             }
+
+            return tx.supplier.findUnique({
+                where: { id },
+                include: {
+                    user: { select: { id: true, username: true, phone: true } },
+                    country: true,
+                    files: { include: { document: true } },
+                    categories: { include: { category: true } }
+                }
+            });
         });
+
         res.json(updated);
     } catch (error) {
         res.status(500).json({ error: 'Ошибка обновления поставщика', details: error.message });
@@ -240,17 +302,34 @@ const adminUpdateSupplier = async (req, res) => {
 const approveSupplier = async (req, res) => {
     try {
         const { id } = req.params;
+        const { categoryIds } = req.body || {};
+
         const previousSupplier = await prisma.supplier.findUnique({
             where: { id },
             select: { verificationStatus: true, name: true }
         });
 
-        const updated = await prisma.supplier.update({
-            where: { id },
-            data: {
-                verificationStatus: 'VERIFIED',
-                rejectionReason: null
+        const updated = await prisma.$transaction(async (tx) => {
+            if (categoryIds !== undefined && Array.isArray(categoryIds)) {
+                await tx.supplierCategory.deleteMany({ where: { supplierId: id } });
+                if (categoryIds.length > 0) {
+                    await tx.supplierCategory.createMany({
+                        data: categoryIds.map(cId => ({ supplierId: id, categoryId: cId })),
+                        skipDuplicates: true
+                    });
+                }
             }
+
+            return tx.supplier.update({
+                where: { id },
+                data: {
+                    verificationStatus: 'VERIFIED',
+                    rejectionReason: null
+                },
+                include: {
+                    categories: { include: { category: true } }
+                }
+            });
         });
 
         // Записываем одобрение в архив / историю модерации

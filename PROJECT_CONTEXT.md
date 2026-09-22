@@ -50,19 +50,19 @@
 
 ### 2.1 Фронтенд
 
-| Параметр         | Значение                                                                |
-| ---------------- | ----------------------------------------------------------------------- |
-| Фреймворк        | React 19 (react@^19.2.8)                                                |
-| Сборщик          | Vite 8 (vite@^8.2.0) + @vitejs/plugin-react@^6.0.4                      |
-| CSS-фреймворк    | Tailwind CSS v4 (tailwindcss@^4.3.3, подключён через @tailwindcss/vite) |
-| Иконки           | Lucide React (lucide-react@^1.31.0)                                     |
-| HTTP-клиент      | Axios (axios@^1.19.0)                                                   |
-| Роутинг          | React Router DOM v7 (react-router-dom@^7.18.2)                          |
-| Линтер           | OXLint (oxlint@^1.75.0)                                                 |
-| Стейт-менеджмент | React useState (без Zustand/Redux)                                      |
-| Валидация форм   | Ручная встроенная JSX-валидация (нет react-hook-form/Zod)               |
+| Параметр         | Значение                                                                             |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| Фреймворк        | React 19 (react@^19.2.8)                                                             |
+| Сборщик          | Vite 8 (vite@^8.2.0) + @vitejs/plugin-react@^6.0.4                                   |
+| CSS-фреймворк    | Tailwind CSS v4 (tailwindcss@^4.3.3, подключён через @tailwindcss/vite)              |
+| Иконки           | Lucide React (lucide-react@^1.31.0)                                                  |
+| HTTP-клиент      | Axios (axios@^1.19.0)                                                                |
+| Роутинг          | React Router DOM v7 (react-router-dom@^7.18.2)                                       |
+| Линтер           | OXLint (oxlint@^1.75.0)                                                              |
+| Стейт-менеджмент | React useState (без Zustand/Redux)                                                   |
+| Валидация форм   | Ручная встроенная JSX-валидация (нет react-hook-form/Zod)                            |
 | Языки интерфейса | RU / TM / EN (централизованный словарь translations.js, ~750+ ключей на каждый язык) |
-| Dev-порт         | 5173                                                                    |
+| Dev-порт         | 5173                                                                                 |
 
 Прокси Vite (vite.config.js): /api/_ и /uploads/_ → http://127.0.0.1:5000
 
@@ -176,15 +176,16 @@
 
 Все стандартные браузерные диалоги `window.alert()` и `window.confirm()` заменены на единую асинхронную систему кастомных модальных окон `AlertContext` (`showAlert` и `showConfirm`):
 
-| Тип диалога | Иконка Lucide    | Бейдж и акцент (Light / Dark)                                              | Назначение                                                 |
-| ----------- | ---------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| success     | `CheckCircle2`   | `bg-emerald-50 text-emerald-600` / `bg-emerald-950/50 text-emerald-400`    | Успешное создание, сохранение, одобрение верификации       |
-| danger      | `AlertOctagon`   | `bg-rose-50 text-rose-600` / `bg-rose-950/50 text-rose-400`                | Деструктивные действия (удаление тендера, отказ, сброс)    |
-| error       | `XCircle`        | `bg-rose-50 text-rose-600` / `bg-rose-950/50 text-rose-400`                | Ошибки запросов, сетевые сбои, критические исключения      |
-| warning     | `AlertTriangle`  | `bg-amber-50 text-amber-600` / `bg-amber-950/50 text-amber-400`           | Предупреждения (неоцененные лоты, изменение реквизитов)    |
-| info        | `Info`           | `bg-sky-50 text-sky-600` / `bg-sky-950/50 text-sky-400`                   | Информационные уведомления, подсказки                      |
+| Тип диалога | Иконка Lucide   | Бейдж и акцент (Light / Dark)                                           | Назначение                                              |
+| ----------- | --------------- | ----------------------------------------------------------------------- | ------------------------------------------------------- |
+| success     | `CheckCircle2`  | `bg-emerald-50 text-emerald-600` / `bg-emerald-950/50 text-emerald-400` | Успешное создание, сохранение, одобрение верификации    |
+| danger      | `AlertOctagon`  | `bg-rose-50 text-rose-600` / `bg-rose-950/50 text-rose-400`             | Деструктивные действия (удаление тендера, отказ, сброс) |
+| error       | `XCircle`       | `bg-rose-50 text-rose-600` / `bg-rose-950/50 text-rose-400`             | Ошибки запросов, сетевые сбои, критические исключения   |
+| warning     | `AlertTriangle` | `bg-amber-50 text-amber-600` / `bg-amber-950/50 text-amber-400`         | Предупреждения (неоцененные лоты, изменение реквизитов) |
+| info        | `Info`          | `bg-sky-50 text-sky-600` / `bg-sky-950/50 text-sky-400`                 | Информационные уведомления, подсказки                   |
 
 **Ключевые возможности `AlertContext`:**
+
 - **Promise-based API:** `const ok = await showConfirm({ title, message, isDanger: true });`
 - **Клавиатурная доступность:** Закрытие/отмена по клавише `Escape`, подтверждение по `Enter`.
 - **Блокировка прокрутки:** Автоматический scroll-lock на `document.body` при открытом диалоге.
@@ -194,6 +195,7 @@
 ### 3.7 Единая система полей ввода и кастомный календарь (CustomDatePicker.jsx)
 
 Все поля ввода (`<input>`, `<select>`, `<textarea>`, `CustomSelect`, `CustomDatePicker`) приведены к строго единой визуальной логике:
+
 - **Обычное состояние:** видимая аккуратная рамка `border border-slate-200 dark:border-slate-700` с фоном `bg-slate-50 dark:bg-[#1f2937]`.
 - **При наведении (hover):** мягкая смена цвета обводки на акцентный цвет роли (`hover:border-emerald-400 dark:hover:border-emerald-500/70` для Admin; `hover:border-blue-400` для Supplier).
 - **При фокусе / открытии (focus / active / open):** полное отключение черной системной обводки браузера (`outline-none focus:outline-none`), подсветка ярким изумрудным цветом с мягким ореолом (`focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20` / `!border-emerald-500 !ring-2 !ring-emerald-500/25`).
@@ -209,6 +211,7 @@
 ### 3.8 Модуль оценки заявок: Двухэкранная архитектура Drill-down (Evaluation.jsx & EvaluationDetailsPage.jsx)
 
 Модуль оценки спроектирован по отраслевому стандарту закупочных систем (ЕИС, B2B-Center, SAP Ariba) на 100% ширины экрана, исключая тесный Master-Detail split-view:
+
 1. **Экран 1: Реестр тендеров на оценку (`Evaluation.jsx` / `/evaluation`):**
    - Полноразмерная таблица (100% ширины) всех закупочных процедур с индикаторами (всего тендеров, на рассмотрении, подано заявок, итоги оглашены).
    - Фильтрация: поиск по номеру/названию/заказчику, селект заказчика, фильтр статусов (Все / На рассмотрении / Итоги подведены) и сортировка (по дедлайну, заявкам, дате).
@@ -265,6 +268,7 @@
 ### 3.10 Унификация таблиц: Главная (Dashboard.jsx) и Все тендеры (Tenders.jsx)
 
 Таблица «Последние открытые тендеры» на главной странице (`Dashboard.jsx`) полностью синхронизирована по структуре колонок, паддингам и типографике со страницей «Все тендеры» (`Tenders.jsx`):
+
 - Убраны жесткие ограничения максимальной ширины (`max-w-xs`, `max-w-[180px]`) и обрезка строк (`line-clamp-2`), вызывавшие усечение названий, описаний и технических условий троеточием (`...`).
 - Текст ячеек наименования, описания (`min-w-55 whitespace-normal text-wrap`) и технических условий (`min-w-45 whitespace-normal text-wrap`) переносится естественным образом без усечения.
 - Заголовки колонок (`th`) и данные ячеек (`td`) приведены к единым отступам (`py-3.5 px-4`) и центрированию (`text-center`), обеспечивая идентичный визуальный ритм таблиц на обеих страницах.
@@ -441,7 +445,33 @@ id (PK), name, quantity (Int), unit (String), description?, tender_id (FK→tend
 | passport_info         | String?                            | Объединённые паспортные данные                                                       |
 | passport_series       | String?                            | Серия паспорта                                                                       |
 | passport_issued_by    | String?                            | Орган выдачи паспорта                                                                |
+| director_name         | String?                            | ФИО руководителя компании                                                            |
+| logo_url              | String?                            | URL логотипа компании                                                                |
 | createdAt / updatedAt | DateTime                           | —                                                                                    |
+
+### 4.12.1 Таблица: supplier_categories
+
+| Поле        | Тип                       | Описание                         |
+| ----------- | ------------------------- | -------------------------------- |
+| id          | String UUID PK            | —                                |
+| supplier_id | String FK → suppliers.id  | Cascade                          |
+| category_id | String FK → categories.id | Cascade                          |
+| createdAt   | DateTime                  | —                                |
+
+UNIQUE индекс: `[supplier_id, category_id]`.
+
+### 4.12.2 Таблица: supplier_moderation_logs
+
+| Поле            | Тип                   | Описание                          |
+| --------------- | --------------------- | --------------------------------- |
+| id              | String UUID PK        | —                                 |
+| supplier_id     | String FK → suppliers | Cascade                           |
+| admin_id        | String? FK → users    | SetNull                           |
+| action          | String                | APPROVED / REJECTED               |
+| previous_status | String                | Предыдущий статус верификации     |
+| new_status      | String                | Новый статус верификации          |
+| reason          | String?               | Причина отклонения (при REJECTED) |
+| createdAt       | DateTime              | —                                 |
 
 **Специфика Туркменистана:**
 
@@ -473,16 +503,16 @@ id (PK), name, quantity (Int), unit (String), description?, tender_id (FK→tend
 
 ### 4.14 Таблица: offer_specifications
 
-| Поле               | Тип                                  | Описание                      |
-| ------------------ | ------------------------------------ | ----------------------------- |
-| id                 | String UUID PK                       | —                             |
-| offer_id           | String FK → offers.id                | Cascade                       |
-| tender_spec_id     | String FK → tender_specifications.id | Позиция ТЗ (Cascade)          |
-| general_product_id | String? FK → general_products.id     | SetNull                       |
-| unit_id            | String? FK → units.id                | SetNull                       |
-| manufacturer_id    | String? FK → manufacturers.id        | SetNull                       |
-| name               | String?                              | —                             |
-| position_number    | Int?                                 | —                             |
+| Поле                     | Тип                                  | Описание                      |
+| ------------------------ | ------------------------------------ | ----------------------------- |
+| id                       | String UUID PK                       | —                             |
+| offer_id                 | String FK → offers.id                | Cascade                       |
+| tender_spec_id           | String FK → tender_specifications.id | Позиция ТЗ (Cascade)          |
+| general_product_id       | String? FK → general_products.id     | SetNull                       |
+| unit_id                  | String? FK → units.id                | SetNull                       |
+| manufacturer_id          | String? FK → manufacturers.id        | SetNull                       |
+| name                     | String?                              | —                             |
+| position_number          | Int?                                 | —                             |
 | quantity                 | Float default 1                      | —                             |
 | unit_price               | Float default 0                      | Цена за единицу               |
 | description              | String?                              | —                             |
@@ -514,7 +544,18 @@ id (PK), offer_id (FK→offers Cascade), currency_id (FK→currencies Cascade), 
 **bids:** id, offeredPrice, comment, status (BidStatus), tenderId (FK), companyId (FK)
 **bid_items:** id, pricePerUnit, totalPrice, isAlternative, alternativeDesc, bidId (FK), tenderItemId (FK)
 
-### 4.18 Таблицы документов
+### 4.18 Таблица: supplier_categories (Аккредитация поставщиков по категориям)
+
+| Поле        | Тип                         | Описание                                                      |
+| ----------- | --------------------------- | ------------------------------------------------------------- |
+| id          | String UUID PK              | —                                                             |
+| supplier_id | String FK → suppliers.id    | Cascade                                                       |
+| category_id | String FK → categories.id   | Cascade                                                       |
+| created_at  | DateTime                    | —                                                             |
+
+Таблица связывает поставщиков с единым справочником `categories` (Many-to-Many). Уникальный составной индекс `@@unique([supplier_id, category_id])`. Используется для формирования квалификационного вендор-листа, таргетированной выдачи тендеров и блокировки подачи предложений на неаккредитованные лоты.
+
+### 4.19 Таблицы документов
 
 **documents:** id, name?, description?, fileName, filePath, fileType (MIME), file_size (Int?), document_type_id (FK SetNull), tenderId (FK Cascade — устар.), bidId (FK Cascade — устар.), createdAt
 
@@ -525,7 +566,7 @@ id (PK), offer_id (FK→offers Cascade), currency_id (FK→currencies Cascade), 
 - offer_files: offerId (FK) + documentId (FK)
 - lot_files: lotId (FK) + documentId (FK)
 
-### 4.19 ER-диаграмма ключевых связей
+### 4.20 ER-диаграмма ключевых связей
 
     User -1:N-> Supplier -1:N-> Offer -N:1-> Tender
     User -1:N-> Tender (created_by)
@@ -534,6 +575,7 @@ id (PK), offer_id (FK→offers Cascade), currency_id (FK→currencies Cascade), 
     Offer -N:1-> Supplier
     Offer -N:1-> DeliveryTerm
     Offer -1:N-> OfferExchangeRate -N:1-> Currency
+    Supplier -M:N-> Category (via supplier_categories)
     Supplier -M:N-> Document (via supplier_files)
     Tender -M:N-> Document (via tender_files)
     Offer -M:N-> Document (via offer_files)
@@ -588,53 +630,53 @@ BACKEND (Express :5000):
 
 #### /api/auth — Аутентификация
 
-| Метод | URL                | Доступ | Описание                                         |
-| ----- | ------------------ | ------ | ------------------------------------------------ |
-| POST  | /api/auth/login    | Public | Вход, возвращает JWT                             |
-| POST  | /api/auth/register | Public | Регистрация поставщика (создаёт User + Supplier) |
-| GET   | /api/auth/me       | Auth   | Получить текущего пользователя                   |
+| Метод | URL                | Доступ | Описание                                                                                                |
+| ----- | ------------------ | ------ | ------------------------------------------------------------------------------------------------------- |
+| POST  | /api/auth/login    | Public | Вход, возвращает JWT                                                                                    |
+| POST  | /api/auth/register | Public | Регистрация поставщика (создаёт User + Supplier, принимает `categoryIds: string[]` для категорий)        |
+| GET   | /api/auth/me       | Auth   | Получить текущего пользователя (включает профиль поставщика и аккредитованные категории)                |
 
 #### /api/tenders — Тендеры
 
-| Метод  | URL                              | Доступ       | Описание                                                  |
-| ------ | -------------------------------- | ------------ | --------------------------------------------------------- |
-| GET    | /api/tenders                     | Public       | Список всех тендеров                                      |
-| GET    | /api/tenders/next-number         | Auth         | Следующий номер TNDR-YYYY-MM-NNN                          |
-| GET    | /api/tenders/:id                 | Auth         | Тендер по ID (лоты, спецификации, файлы, заявки)          |
-| POST   | /api/tenders                     | Auth + ADMIN | Создать драфт тендера (базовые поля, поддержка lots: [])   |
-| PUT    | /api/tenders/:id                 | Auth + ADMIN | Обновить основные параметры тендера                       |
-| POST   | /api/tenders/:id/publish         | Auth + ADMIN | Опубликовать тендер (проверка наличия лотов, статус ACYK) |
-| POST   | /api/tenders/:id/lots            | Auth + ADMIN | Создать отдельный лот в тендере                           |
-| PUT    | /api/tenders/:id/lots/:lotId     | Auth + ADMIN | Атомарно сохранить параметры лота и его спецификацию      |
-| DELETE | /api/tenders/:id/lots/:lotId     | Auth + ADMIN | Удалить отдельный лот (каскад спецификаций и файлов лота) |
-| DELETE | /api/tenders/:id                 | Auth + ADMIN | Удалить тендер полностью                                  |
+| Метод  | URL                          | Доступ             | Описание                                                                                                                  |
+| ------ | ---------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /api/tenders                 | Public/Opt Auth    | Список тендеров. При токенe поставщика персонализирует выдачу по аккредитованным категориям (тендер, лоты, общие)          |
+| GET    | /api/tenders/next-number     | Auth               | Следующий номер TNDR-YYYY-MM-NNN                                                                                          |
+| GET    | /api/tenders/:id             | Auth               | Тендер по ID (лоты, спецификации, файлы, заявки)                                                                          |
+| POST   | /api/tenders                 | Auth + ADMIN       | Создать драфт тендера (базовые поля, поддержка lots: [])                                                                  |
+| PUT    | /api/tenders/:id             | Auth + ADMIN       | Обновить основные параметры тендера                                                                                       |
+| POST   | /api/tenders/:id/publish     | Auth + ADMIN       | Опубликовать тендер (проверка наличия лотов, статус ACYK)                                                                 |
+| POST   | /api/tenders/:id/lots        | Auth + ADMIN       | Создать отдельный лот в тендере                                                                                           |
+| PUT    | /api/tenders/:id/lots/:lotId | Auth + ADMIN       | Атомарно сохранить параметры лота и его спецификацию                                                                      |
+| DELETE | /api/tenders/:id/lots/:lotId | Auth + ADMIN       | Удалить отдельный лот (каскад спецификаций и файлов лота)                                                                 |
+| DELETE | /api/tenders/:id             | Auth + ADMIN       | Удалить тендер полностью                                                                                                  |
 
 #### /api/offers — Предложения
 
-| Метод  | URL                          | Доступ                | Описание               |
-| ------ | ---------------------------- | --------------------- | ---------------------- |
-| GET    | /api/offers                  | Auth + ADMIN          | Все предложения        |
-| POST   | /api/offers                  | Auth + SUPPLIER/ADMIN | Создать предложение    |
-| GET    | /api/offers/tender/:tenderId | Auth                  | Предложения по тендеру |
-| GET    | /api/offers/my-wins          | Auth + SUPPLIER/ADMIN | Победы                 |
-| GET    | /api/offers/my               | Auth + SUPPLIER/ADMIN | Мои предложения        |
-| GET    | /api/offers/:id              | Auth + SUPPLIER/ADMIN | Предложение по ID      |
-| DELETE | /api/offers/:id              | Auth + SUPPLIER/ADMIN | Удалить                |
+| Метод  | URL                          | Доступ                | Описание                                                                                                            |
+| ------ | ---------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| GET    | /api/offers                  | Auth + ADMIN          | Все предложения                                                                                                     |
+| POST   | /api/offers                  | Auth + SUPPLIER/ADMIN | Создать предложение (проверка верификации и блокировка позиций лотов вне аккредитованных категорий поставщика)     |
+| GET    | /api/offers/tender/:tenderId | Auth                  | Предложения по тендеру                                                                                              |
+| GET    | /api/offers/my-wins          | Auth + SUPPLIER/ADMIN | Победы                                                                                                              |
+| GET    | /api/offers/my               | Auth + SUPPLIER/ADMIN | Мои предложения                                                                                                     |
+| GET    | /api/offers/:id              | Auth + SUPPLIER/ADMIN | Предложение по ID                                                                                                   |
+| DELETE | /api/offers/:id              | Auth + SUPPLIER/ADMIN | Удалить                                                                                                             |
 
 #### /api/suppliers — Поставщики
 
-| Метод  | URL                               | Доступ                | Описание                                   |
-| ------ | --------------------------------- | --------------------- | ------------------------------------------ |
-| GET    | /api/suppliers                    | Auth + ADMIN          | Реестр всех поставщиков (поиск, фильтры)   |
-| PUT    | /api/suppliers/profile            | Auth + SUPPLIER/ADMIN | Обновить профиль + статус → PENDING_REVIEW |
-| GET    | /api/suppliers/pending            | Auth + ADMIN          | Список на модерации                        |
-| GET    | /api/suppliers/moderation/archive | Auth + ADMIN          | Архив решений модерации + статистика       |
-| POST   | /api/suppliers/:id/approve        | Auth + ADMIN          | Одобрить → VERIFIED                        |
-| POST   | /api/suppliers/:id/reject         | Auth + ADMIN          | Отклонить → REJECTED (с причиной)          |
-| PUT    | /api/suppliers/:id                | Auth + ADMIN          | Обновить данные поставщика (админ)         |
-| DELETE | /api/suppliers/:id                | Auth + ADMIN          | Удалить поставщика                         |
-| GET    | /api/suppliers/:id                | Auth                  | Профиль по ID                              |
-| GET    | /api/suppliers/:id/stats          | Auth + SUPPLIER/ADMIN | Статистика поданных и выигранных заявок    |
+| Метод  | URL                               | Доступ                | Описание                                                                                                         |
+| ------ | --------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| GET    | /api/suppliers                    | Auth + ADMIN          | Реестр всех поставщиков / Вендор-лист (поиск, фильтр `?categoryId=...`, список категорий компании)              |
+| PUT    | /api/suppliers/profile            | Auth + SUPPLIER/ADMIN | Обновить профиль + статус → PENDING_REVIEW, опционально обновляет `categoryIds`                                   |
+| GET    | /api/suppliers/pending            | Auth + ADMIN          | Список на модерации (включая заявленные категории поставщика)                                                   |
+| GET    | /api/suppliers/moderation/archive | Auth + ADMIN          | Архив решений модерации + статистика                                                                             |
+| POST   | /api/suppliers/:id/approve        | Auth + ADMIN          | Одобрить → VERIFIED (синхронизирует `categoryIds` при передаче)                                                   |
+| POST   | /api/suppliers/:id/reject         | Auth + ADMIN          | Отклонить → REJECTED (с причиной)                                                                                |
+| PUT    | /api/suppliers/:id                | Auth + ADMIN          | Обновить данные поставщика (админ, управление категориями аккредитации `categoryIds`)                             |
+| DELETE | /api/suppliers/:id                | Auth + ADMIN          | Удалить поставщика                                                                                               |
+| GET    | /api/suppliers/:id                | Auth                  | Профиль по ID (с категориями)                                                                                    |
+| GET    | /api/suppliers/:id/stats          | Auth + SUPPLIER/ADMIN | Статистика поданных и выигранных заявок                                                                          |
 
 #### /api/evaluation — Оценка заявок
 
@@ -652,25 +694,25 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
 
 #### /api/catalogs — Справочники
 
-| Метод               | URL                                | Доступ             | Описание           |
-| ------------------- | ---------------------------------- | ------------------ | ------------------ |
-| GET                 | /api/catalogs/categories           | Public             | Категории          |
-| POST/PUT/DELETE     | /api/catalogs/categories(/:id)     | Auth + ADMIN/PS    | CRUD               |
-| GET                 | /api/catalogs/products             | Public             | МНН (общие товары) |
-| POST/PUT/DELETE     | /api/catalogs/products(/:id)       | Auth + ADMIN/PS    | CRUD               |
-| GET                 | /api/catalogs/units                | Public             | Единицы измерения  |
-| POST/PUT/DELETE     | /api/catalogs/units(/:id)          | Auth + ADMIN       | CRUD               |
-| GET                 | /api/catalogs/currencies           | Public             | Валюты             |
-| POST/PUT/DELETE     | /api/catalogs/currencies(/:id)     | Auth + ADMIN       | CRUD               |
-| POST                | /api/catalogs/currencies/rates     | Auth + ADMIN       | Установить курс    |
-| GET                 | /api/catalogs/countries            | Public             | Страны             |
-| POST/PUT/DELETE     | /api/catalogs/countries(/:id)      | Auth + ADMIN       | CRUD               |
-| GET                 | /api/catalogs/delivery-terms       | Public          | Условия поставки   |
-| POST/PUT/DELETE     | /api/catalogs/delivery-terms(/:id) | Auth + ADMIN    | CRUD               |
-| GET                 | /api/catalogs/manufacturers        | Public          | Производители      |
-| POST/PUT/DELETE     | /api/catalogs/manufacturers(/:id)  | Auth + ADMIN/PS | CRUD               |
-| GET                 | /api/catalogs/clients              | Public          | Заказчики          |
-| POST/PUT/DELETE     | /api/catalogs/clients(/:id)        | Auth + ADMIN    | Заказчики (CRUD)   |
+| Метод           | URL                                | Доступ          | Описание           |
+| --------------- | ---------------------------------- | --------------- | ------------------ |
+| GET             | /api/catalogs/categories           | Public          | Категории          |
+| POST/PUT/DELETE | /api/catalogs/categories(/:id)     | Auth + ADMIN/PS | CRUD               |
+| GET             | /api/catalogs/products             | Public          | МНН (общие товары) |
+| POST/PUT/DELETE | /api/catalogs/products(/:id)       | Auth + ADMIN/PS | CRUD               |
+| GET             | /api/catalogs/units                | Public          | Единицы измерения  |
+| POST/PUT/DELETE | /api/catalogs/units(/:id)          | Auth + ADMIN    | CRUD               |
+| GET             | /api/catalogs/currencies           | Public          | Валюты             |
+| POST/PUT/DELETE | /api/catalogs/currencies(/:id)     | Auth + ADMIN    | CRUD               |
+| POST            | /api/catalogs/currencies/rates     | Auth + ADMIN    | Установить курс    |
+| GET             | /api/catalogs/countries            | Public          | Страны             |
+| POST/PUT/DELETE | /api/catalogs/countries(/:id)      | Auth + ADMIN    | CRUD               |
+| GET             | /api/catalogs/delivery-terms       | Public          | Условия поставки   |
+| POST/PUT/DELETE | /api/catalogs/delivery-terms(/:id) | Auth + ADMIN    | CRUD               |
+| GET             | /api/catalogs/manufacturers        | Public          | Производители      |
+| POST/PUT/DELETE | /api/catalogs/manufacturers(/:id)  | Auth + ADMIN/PS | CRUD               |
+| GET             | /api/catalogs/clients              | Public          | Заказчики          |
+| POST/PUT/DELETE | /api/catalogs/clients(/:id)        | Auth + ADMIN    | Заказчики (CRUD)   |
 
 #### /api/documents — Документы
 
@@ -682,10 +724,10 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
 
 #### /api/dashboard — Дашборд
 
-| Метод | URL                  | Доступ       | Описание                    |
-| ----- | -------------------- | ------------ | --------------------------- |
-| GET   | /api/dashboard/stats | Auth         | Статистика системы          |
-| GET   | /api/dashboard/logs  | Auth + ADMIN | Логи аудита (с ENUM-поиском)|
+| Метод | URL                  | Доступ       | Описание                     |
+| ----- | -------------------- | ------------ | ---------------------------- |
+| GET   | /api/dashboard/stats | Auth         | Статистика системы           |
+| GET   | /api/dashboard/logs  | Auth + ADMIN | Логи аудита (с ENUM-поиском) |
 
 #### Прочие
 
@@ -845,34 +887,34 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
 
 ### 7.3 Навигационная карта React Router
 
-| URL                 | Компонент                                    | Условие доступа                 |
-| ------------------- | -------------------------------------------- | ------------------------------- |
-| /login              | LoginPage                                    | Только без токена               |
-| /dashboard          | Dashboard                                    | Авторизован                     |
-| /create-tender      | CreateTenderPage                             | role === 'ADMIN'                |
-| /tenders/:id/edit   | CreateTenderPage (режим редактирования)      | role === 'ADMIN'                |
-| /suppliers          | SuppliersList                                | role === 'ADMIN'                |
-| /suppliers/:id      | SupplierProfilePage                          | Авторизован                     |
-| /tenders            | Tenders                                      | Авторизован                     |
-| /tenders/:id        | TenderDetails                                | Авторизован                     |
-| /tender-details/:id | TenderDetails                                | Авторизован (алиас)             |
-| /create-offer/:id   | CreateOfferPage                              | Авторизован                     |
-| /offers             | MyOffers                                     | Авторизован                     |
-| /offers/:id         | OfferDetailsPage                             | Авторизован                     |
-| /evaluation         | Evaluation (ADMIN) / SupplierWins (SUPPLIER) | Авторизован                     |
-| /umumy              | AdminCatalogs section=umumy                  | role === 'ADMIN'                |
-| /haryt              | AdminCatalogs section=haryt                  | role === 'ADMIN'                |
-| /administrasiya     | AdminCatalogs section=administrasiya         | role === 'ADMIN'                |
-| /logs / /admin-logs | AdminLogs                                    | role === 'ADMIN'                |
-| /profile            | SupplierProfilePage isOwner=true             | Авторизован                     |
-| /settings           | Inline (выбор языка)                         | Авторизован                     |
-| /\*                 | Navigate to /dashboard                       | —                               |
+| URL                 | Компонент                                    | Условие доступа     |
+| ------------------- | -------------------------------------------- | ------------------- |
+| /login              | LoginPage                                    | Только без токена   |
+| /dashboard          | Dashboard                                    | Авторизован         |
+| /create-tender      | CreateTenderPage                             | role === 'ADMIN'    |
+| /tenders/:id/edit   | CreateTenderPage (режим редактирования)      | role === 'ADMIN'    |
+| /suppliers          | SuppliersList                                | role === 'ADMIN'    |
+| /suppliers/:id      | SupplierProfilePage                          | Авторизован         |
+| /tenders            | Tenders                                      | Авторизован         |
+| /tenders/:id        | TenderDetails                                | Авторизован         |
+| /tender-details/:id | TenderDetails                                | Авторизован (алиас) |
+| /create-offer/:id   | CreateOfferPage                              | Авторизован         |
+| /offers             | MyOffers                                     | Авторизован         |
+| /offers/:id         | OfferDetailsPage                             | Авторизован         |
+| /evaluation         | Evaluation (ADMIN) / SupplierWins (SUPPLIER) | Авторизован         |
+| /umumy              | AdminCatalogs section=umumy                  | role === 'ADMIN'    |
+| /haryt              | AdminCatalogs section=haryt                  | role === 'ADMIN'    |
+| /administrasiya     | AdminCatalogs section=administrasiya         | role === 'ADMIN'    |
+| /logs / /admin-logs | AdminLogs                                    | role === 'ADMIN'    |
+| /profile            | SupplierProfilePage isOwner=true             | Авторизован         |
+| /settings           | Inline (выбор языка)                         | Авторизован         |
+| /\*                 | Navigate to /dashboard                       | —                   |
 
 ### 7.4 Мультиязычная поддержка (i18n) и архитектура переводов (v1.2.0)
 
 | Код | Язык                 | Статус                         |
 | --- | -------------------- | ------------------------------ |
-| RU  | Русский              | По умолчанию, 100% покрытие   |
+| RU  | Русский              | По умолчанию, 100% покрытие    |
 | TM  | Türkmençe (латиница) | Полный словарь (100% покрытие) |
 | EN  | English              | Полный словарь (100% покрытие) |
 
@@ -901,6 +943,7 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
 ### 7.6 Аудит безопасности и целостности данных (v1.1.0)
 
 В результате комплексного аудита кодовой базы внедрены следующие меры защиты и исправления:
+
 - **Устранение утечки паролей (CWE-532)**: Полностью удалено логирование plaintext-паролей в консоль сервера в `authController.js`.
 - **Защита коммерческой тайны предложений**: В `offerController.js` (`getOffersByTender`) поставщики ограничены просмотром только собственных заявок до момента оглашения победителей (`YENIJI_YGLAN_EDILDI`).
 - **Защита от IDOR (Insecure Direct Object Reference)**:
@@ -932,9 +975,9 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
    - Исправлена русская орфография: `Заводы изготовители` ➔ `Заводы-изготовители` (дефисное написание).
    - Устранены дублирующиеся ключи свойств объекта в секциях `RU` и `EN` (`phoneFormatHint`, `exactAddress`, `exactAddressPlaceholder`, `addressCleanHint`, `passportFormatHint`).
 5. **Анализ несоответствий с отраслевым ТЗ закупочной системы**:
-   - *Тендерное обеспечение (Bid Bond)*: в текущей схеме гарантийные обязательства принимаются файлом, рекомендована структуризация в БД (размер залога, номер банковской гарантии, срок действия).
-   - *Кворум участников*: по закону закупка признается несостоявшейся при наличии менее 2 допущенных участников; рекомендовано расширение валидации завершения торгов.
-   - *Версионирование условий*: при изменении спецификаций открытого тендера требуется уведомление поставщиков и перевод ранее поданных заявок в статус запроса на обновление.
+   - _Тендерное обеспечение (Bid Bond)_: в текущей схеме гарантийные обязательства принимаются файлом, рекомендована структуризация в БД (размер залога, номер банковской гарантии, срок действия).
+   - _Кворум участников_: по закону закупка признается несостоявшейся при наличии менее 2 допущенных участников; рекомендовано расширение валидации завершения торгов.
+   - _Версионирование условий_: при изменении спецификаций открытого тендера требуется уведомление поставщиков и перевод ранее поданных заявок в статус запроса на обновление.
 6. **Отказоустойчивость сети и предотвращение 502 Bad Gateway**:
    - В `backend/index.js` вызов `app.listen(PORT, '0.0.0.0')` явно привязан к `'0.0.0.0'`, предотвращая рассинхронизацию IPv4/IPv6 (localhost vs 127.0.0.1) на Windows.
    - В `frontend/src/services/api.js` внедрен перехватчик с автоматическим повтором (`auto-retry` с задержкой 1000 мс) при временной недоступности бэкенда (502, 503, 504, ERR_NETWORK) во время горячей перезагрузки `node --watch`.
@@ -949,6 +992,7 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
    - Во всех компонентах устранены неиспользуемые импорты и лишние экранирования спецсимволов. Ошибки сборщика и `oxlint` снижены до строгого нуля (0 errors).
 
 ### 7.8 Итоговый технический аудит кодовой базы и нулевой уровень ошибок (v1.2.1)
+
 - **Дата**: 21 сентября 2026 г.
 - **Статус качества**:
   - `oxlint`: 0 errors (все 14 критических ошибок линтера устранены).
@@ -957,13 +1001,14 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
   - `Prisma schema`: Валидация успешна.
 
 ### 7.9 Архитектура атомарного управления лотами и табовая модель создания тендеров (v1.3.0)
+
 - **Дата**: 21 сентября 2026 г.
 - **Контекст и проблема**:
   - Ранее форма создания тендера сохраняла весь тендер со всеми лотами и сотнями позиций спецификаций единым гигантским JSON-запросом. При масштабировании до 100 лотов по 500 позиций это приводило бы к исчерпанию лимитов payload, таймаутам транзакций СУБД и падению сервера.
 - **Реализованное решение**:
   1. **2-этапный мастер создания тендера**:
-     - *Шаг 1*: Создание/сохранение драфта тендера (`TASLAMA`) с общими атрибутами (номер, наименование, заказчик, категории, сроки приёма и подведения итогов). Номер генерируется алгоритмом поиска максимума последовательности (`maxSeq + 1`), исключая коллизии дубликатов.
-     - *Шаг 2*: Управление лотами и спецификацией в виде интерактивных горизонтальных закладок (табов, стилизованных под закладки в учебнике): `[ 🔖 Лот №1: ... ] [ 🔖 Лот №2: ... ] [ ➕ Добавить лот ]`.
+     - _Шаг 1_: Создание/сохранение драфта тендера (`TASLAMA`) с общими атрибутами (номер, наименование, заказчик, категории, сроки приёма и подведения итогов). Номер генерируется алгоритмом поиска максимума последовательности (`maxSeq + 1`), исключая коллизии дубликатов.
+     - _Шаг 2_: Управление лотами и спецификацией в виде интерактивных горизонтальных закладок (табов, стилизованных под закладки в учебнике): `[ 🔖 Лот №1: ... ] [ 🔖 Лот №2: ... ] [ ➕ Добавить лот ]`.
   2. **Атомарность сохранения на сервере**:
      - Каждый лот создаётся (`POST /api/tenders/:id/lots`), сохраняется/обновляется (`PUT /api/tenders/:id/lots/:lotId`) и удаляется (`DELETE /api/tenders/:id/lots/:lotId`) изолированным HTTP-запросом.
      - Сохранение активного лота обновляет только его метаданные и его строки спецификации, не затрагивая остальные лоты тендера.
@@ -982,6 +1027,79 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
      - В `documentController.js` включена защита `doc.lotFiles` для предотвращения IDOR-удаления файлов лотов не-администраторами; пути `filePath` нормализованы к кроссплатформенным слэшам (`/`).
      - Автоматизированный интеграционный тест (`scratch/comprehensive_test.js`) подтвердил 100% сохранение всех полей (`endUser`, `lotNumber`, спецификации, прикрепленные файлы) в базе данных PostgreSQL и их корректную отдачу клиентам.
 
+### 7.10 Квалификационный вендор-лист и динамическая категоризация поставщиков (v1.4.0)
 
+- **Дата**: 22 сентября 2026 г.
+- **Контекст и бизнес-задача**:
+  - В системе зарегистрированы сотни поставщиков разной отраслевой специфики (поставка медицинского оборудования, лекарственные средства, строительно-монтажные работы, сервисные и консультационные услуги).
+  - Требовалось:
+    1. Исключить хаос при подаче предложений: поставщик медицинского оборудования не должен заявляться на строительные или сервисные лоты, если он не аккредитован по этим категориям.
+    2. Реализовать централизованный динамический Вендор-лист для организаторов закупки (администраторов) с мгновенной фильтрацией по категориям деятельности.
+    3. Создать строгий регламент аккредитации: поставщик заявляет направления при регистрации и в личном кабинете, а администратор валидирует и утверждает перечень аккредитованных отраслей в процессе модерации.
+- **Реализованная архитектура**:
+  1. **Нормализованная модель данных (M:N)**:
+     - Введена связующая таблица `supplier_categories` (`SupplierCategory`) с полями `supplier_id` (FK), `category_id` (FK) и уникальным индексом `@@unique([supplier_id, category_id])`.
+     - 100% DRY: используется существующий динамический справочник `Category`, в котором администраторы могут создавать/редактировать/деактивировать любые категории деятельности.
+  2. **Регистрация поставщика с отраслевой квалификацией**:
+     - В `LoginPage.jsx` (Шаг 2 регистрации) встроен блок множественного выбора категорий деятельности (`categoryIds`) с визуальными чипами, счётчиком выбранных направлений и обязательной клиентской валидацией (минимум 1 категория).
+     - Серверная транзакция в `authController.js` атомарно создаёт пользователя `User`, профиль `Supplier` и связки `SupplierCategory`.
+  3. **Квалификационный Вендор-лист и модерация (`SuppliersList.jsx`)**:
+     - На вкладке «Все поставщики» (/suppliers) интегрирован селектор быстрой фильтрации по категориям (`?categoryId=...`) и кнопка прямого перехода к каталогу категорий.
+     - В таблице вендоров добавлена колонка «Категории деятельности» с аккуратными статусными бейджами.
+     - Во вкладке «На модерации» и модальном окне модерации/редактирования (`EditSupplierModal.jsx`) администратор видит заявленные поставщиком категории, может дополнять или корректировать их перед одобрением верификации (`POST /api/suppliers/:id/approve`).
+  4. **Управление профилем поставщика (`SupplierProfilePage.jsx`)**:
+     - В личном кабинете поставщика выведен интерактивный блок «Категории деятельности / Аккредитация».
+     - В режиме просмотра — цветные бейджи с иконкой `Layers`. В режиме редактирования — интерактивные чипы для выбора направлений работы, отслеживание флага несохранённых изменений (`hasChanges`) и автоматическая отправка на повторную модерацию при изменении данных.
+  5. **Персонализированная выдача тендеров (`tenderController.js`)**:
+     - В `authMiddleware.js` добавлен метод `authMiddleware.optional`, определяющий личность пользователя даже на публичных маршрутах.
+     - На эндпоинте `GET /api/tenders`: если запрос исходит от авторизованного поставщика (`roleType === 'SUPPLIER'`), реестр выдаёт тендеры, соответствующие его аккредитованным категориям (совпадение категории тендера, либо наличие хотя бы одного лота аккредитованной категории, либо общесистемные неклассифицированные закупки).
+  6. **Лот-уровневая защита и предупреждения в КП (`CreateOfferPage.jsx` & `offerController.js`)**:
+     - Если смешанный тендер содержит лоты разных категорий (например, Лот 1 — Оборудование, Лот 2 — Монтажные работы), поставщик видит всю процедуру в целом.
+     - В форме подачи предложения (`CreateOfferPage.jsx`): лоты, категория которых не входит в аккредитацию поставщика, визуально затемняются (`opacity-70 bg-slate-50/50`), чекбокс выбора лота и все инпуты цен/аналогов блокируются (`disabled`), и выводится предупреждающий бейдж `Лот вне вашей категории аккредитации` (`bg-amber-50 text-amber-700`).
+     - В `offerController.js` (`createOffer`): внедрена серверная проверка, отклоняющая создание предложения (HTTP 403), если поставщик не верифицирован или пытается подать заявку на неаккредитованный лот.
+  7. **Сквозное тестирование и качество**:
+     - Написан и выполнен интеграционный сценарий `backend/scratch/test_vendor_categories.js`: подтверждена запись связей в БД, фильтрация вендор-листа, таргетированная выдача тендеров, блокировка неаккредитованных лотов и динамическое обновление категорий администратором.
+     - `npm run build` во фронтенде: 0 ошибок, чистая сборка за ~880 мс.
+     - Контроллеры бэкенда: 0 ошибок синтаксиса и импорта.
 
+### 7.11 Комплексная модернизация онбординга, профиля поставщика, модерации и подачи предложений по лотам (v1.5.0)
 
+- **Дата**: 22 сентября 2026 г.
+- **Контекст и проблемы**:
+  - Ранее процесс онбординга имел разночтения в переводах, аббревиатурах и статусах, форма регистрации требовала вертикальной прокрутки, а цвета индикатора прогресса спорили с ролевыми токенами (зеленый вместо синего поставщика).
+  - В профиле поставщика отсутствовала возможность гибкого ввода нестандартных банков и МФО, не было данных представителя аккаунта, а при отклонении верификации можно было повторно отправить форму без исправлений.
+  - При модерации поставщиков эндпоинт одобрения падал с ошибкой 500 из-за попытки деструктуризации `req.body`, отсутствовал аудит действий модератора.
+  - Черновики тендеров (`TASLAMA`) были видны поставщикам в общем списке, не верифицированные поставщики могли переходить к созданию предложений, а в форме подачи предложения (`CreateOfferPage.jsx`) отсутствовало табовое переключение между лотами.
+- **Реализованные решения**:
+  1. **Модернизация мастера регистрации (`LoginPage.jsx`)**:
+     - Компактный 3-этапный визард без скролла на Full HD (1080p).
+     - Единые краткие лейблы: «Почта» (вместо громоздкого «Рабочий email»), «ИНН / STŞK» (вместо разрозненных надписей).
+     - Исправлены организационно-правовые формы (ИП, ХО, ЧП, DH, ГП на RU; HT, HJ, HK, DK, DB на TM; IE, LLC, BE, SE, FA на EN) с чистым хранением наименования компании без аббревиатур.
+     - Индикатор прогресса шагов строго в синих тонах роли поставщика (`bg-blue-600`, `text-blue-600`), без зеленых акцентов.
+     - Кнопки перехода на следующий шаг заблокированы (`disabled`) до полного заполнения и валидации обязательных полей текущего шага.
+     - Автоматическое заполнение `directorName` в профиле из объединенных `firstName` и `lastName` контактного лица при создании аккаунта.
+  2. **Дашборд и глобальная навигация (`Dashboard.jsx`, `Header.jsx`, `CustomSelect.jsx`)**:
+     - В `Dashboard.jsx` для поставщиков в статусе `PENDING` добавлен информационный баннер онбординга с кнопкой перехода в профиль для отправки на верификацию.
+     - В `Header.jsx` добавлено отображение логотипа компании (`logoUrl`) с надежным fallback на текстовую монограмму.
+     - В выпадающие списки `CustomSelect.jsx` добавлен CSS-класс `overscroll-contain`, устраняющий скролл всей страницы при прокрутке длинного списка.
+  3. **Профиль поставщика (`SupplierProfilePage.jsx`)**:
+     - Добавлена информационная карточка данных представителя аккаунта (ФИО, логин/email, телефон).
+     - Поле руководителя компании (`directorName`) доступно для редактирования, отображается в режиме просмотра и выводится в PDF-визитке поставщика.
+     - Загрузка и удаление логотипа компании с предпросмотром через иконку камеры.
+     - Гибкий ввод банка: возможность переключения в режим ручного ввода произвольного банка с отдельным полем МФО (ровно 9 цифр) и кнопкой возврата к каталогу.
+     - Ограничение размера файлов документов до 10 МБ с лаконичным заголовком раздела.
+     - Блокировка повторной отправки на проверку при статусе `REJECTED`, если поставщик не внес изменения в форму.
+  4. **Модерация поставщиков и аудит (`supplierController.js`, `SuppliersList.jsx`, `EditSupplierModal.jsx`)**:
+     - Исправлена ошибка 500 в `approveSupplier` с безопасным получением `categoryIds` из `req.body || {}`.
+     - Фильтрация очереди ожидания модерации строго по `verificationStatus: 'PENDING_REVIEW'`.
+     - Модальное окно отклонения поставщика с обязательным указанием причины отказа.
+     - Логирование действий модератора в аудит-логе (`supplierModerationLog`).
+  5. **Контроль видимости черновиков (`tenderController.js`)**:
+     - Черновики тендеров (`status: 'TASLAMA'`) исключены из публичной выдачи `GET /api/tenders` и защищены ошибкой 403 в `GET /api/tenders/:id` для всех пользователей, кроме администраторов.
+  6. **Лот-ориентированная подача предложений (`CreateOfferPage.jsx`, `TenderDetails.jsx`)**:
+     - Защита не верифицированных поставщиков: предупреждающий баннер в `TenderDetails.jsx` и деактивация кнопки «Подать заявку» со ссылкой на профиль; блокировка отправки формы в `CreateOfferPage.jsx`.
+     - Табовая навигация по лотам в `CreateOfferPage.jsx`: возможность переключения «По лотам» (индивидуальные табы «Лот №1», «Лот №2» с кнопками «Следующий лот →» / «← Предыдущий лот») и «Все лоты сразу».
+     - Прямые ссылки на скачивание документов тендера и прикрепленных технических файлов каждого лота с нормализацией путей.
+  7. **Тестирование и верификация**:
+     - Сборка фронтенда `npm run build` выполнена успешно без ошибок и предупреждений.
+     - Все контроллеры бэкенда проверены на чистоту импортов и синтаксис.

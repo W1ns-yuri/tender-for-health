@@ -180,6 +180,7 @@ model Category {
   generalProducts GeneralProduct[]
   tenders         Tender[]
   lots            TenderLot[]
+  supplierCategories SupplierCategory[]
 
   isActive Boolean @default(true) @map("is_active")
 
@@ -495,15 +496,30 @@ model Supplier {
   passportInfo  String?       @map("passport_info")
   passportSeries String?      @map("passport_series")
   passportIssuedBy String?    @map("passport_issued_by")
+  directorName  String?       @map("director_name")
+  logoUrl       String?       @map("logo_url")
 
   offers Offer[]
   files  SupplierFile[]
   moderationLogs SupplierModerationLog[]
+  categories     SupplierCategory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("suppliers")
+}
+
+model SupplierCategory {
+  id         String   @id @default(uuid())
+  supplierId String   @map("supplier_id")
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  categoryId String   @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([supplierId, categoryId])
+  @@map("supplier_categories")
 }
 
 model Offer {

@@ -16,8 +16,8 @@ const { checkRole } = require('../middleware/rbacMiddleware');
 
 const router = express.Router();
 
-// 1. Посмотреть все тендеры (публичный)
-router.get('/', getTenders);
+// 1. Посмотреть все тендеры (публичный / с персонализацией по категориям поставщика)
+router.get('/', authMiddleware.optional, getTenders);
 
 // 2. Получить следующий порядковый номер тендера (TNDR-YYYY-MM-001)
 router.get('/next-number', authMiddleware, getNextNumber);

@@ -206,7 +206,7 @@ export const CustomSelect = ({
               />
             </div>
           )}
-          <div className="overflow-y-auto flex-1 divide-y divide-slate-100 dark:divide-slate-800/60">
+          <div className="overflow-y-auto overscroll-contain flex-1 divide-y divide-slate-100 dark:divide-slate-800/60 select-none">
             {filteredOptions.length > 0 ? (
               filteredOptions.map(opt => {
                 const isSelected = String(value) === String(opt.id);

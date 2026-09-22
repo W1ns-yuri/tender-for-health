@@ -46,9 +46,14 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
   const [paymentTerms, setPaymentTerms] = useState(t('payment100Percent', '100% оплата'));
   const [comment, setComment] = useState('');
 
+  // Управление вкладками лотов и режимом отображения
+  const [activeLotTab, setActiveLotTab] = useState(0);
+  const [viewMode, setViewMode] = useState('tabs'); // 'tabs' | 'all'
+
   // Выбранные лоты и условия поставки по каждому лоту
   const [selectedLots, setSelectedLots] = useState({}); // { [lotId]: boolean }
   const [lotDeliveryTerms, setLotDeliveryTerms] = useState({}); // { [lotId]: deliveryTermId }
+  const [supplierCategoryIds, setSupplierCategoryIds] = useState([]);
   
   // Позиции предложения: { [lotId]: [{ tenderSpecId, requestedName, haryt, brand, unit, mukdar, price, desc, isEquivalent, equivalentName, equivalentJustification }] }
   const [offerItemsByLot, setOfferItemsByLot] = useState({});
@@ -67,10 +72,15 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
       API.get('/catalogs/delivery-terms').catch(() => ({ data: [] })),
       API.get('/auth/me').catch(() => ({ data: null }))
     ]).then(([tenderRes, currRes, dtRes, meRes]) => {
-      
+      let suppCatIds = [];
       if (role === 'SUPPLIER' && meRes.data?.suppliers?.[0]) {
-          if (meRes.data.suppliers[0].verificationStatus !== 'VERIFIED') {
+          const supp = meRes.data.suppliers[0];
+          if (supp.verificationStatus !== 'VERIFIED') {
               setIsVerified(false);
+          }
+          if (supp.categories && supp.categories.length > 0) {
+              suppCatIds = supp.categories.map(c => c.categoryId);
+              setSupplierCategoryIds(suppCatIds);
           }
       }
 
@@ -92,7 +102,8 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
         const initialOfferItems = {};
         
         tenderData.lots.forEach(lot => {
-          initialSelectedLots[lot.id] = true;
+          const isLotPermitted = !lot.categoryId || suppCatIds.length === 0 || suppCatIds.includes(lot.categoryId);
+          initialSelectedLots[lot.id] = isLotPermitted;
           initialLotDT[lot.id] = lot.deliveryTermId || (loadedDT.length > 0 ? loadedDT[0].id : '');
           
           initialOfferItems[lot.id] = (lot.specs || []).map((spec, idx) => ({
@@ -256,6 +267,13 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
     if (e) e.preventDefault();
     setErrorMsg('');
 
+    // 0. Проверка верификации поставщика
+    if (!isVerified) {
+      setErrorMsg(t('verificationRequiredToBid', 'Для подачи ценового предложения необходимо пройти верификацию компании'));
+      scrollToError();
+      return;
+    }
+
     // 0. Проверка статуса тендера и крайнего срока
     if (tender?.status !== 'ACYK') {
       setErrorMsg(t('tenderClosedForOffersError', 'Тендер закрыт или не принимает коммерческие предложения.'));
@@ -274,6 +292,17 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
       setErrorMsg(t('selectAtLeastOneLotError', 'Пожалуйста, выберите хотя бы один лот для участия в тендере'));
       scrollToError();
       return;
+    }
+
+    // Проверка категорий поставщика: блокируем подачу КП на лоты вне аккредитации
+    if (supplierCategoryIds.length > 0) {
+      for (const lot of tender?.lots || []) {
+        if (lot.categoryId && !supplierCategoryIds.includes(lot.categoryId) && selectedLots[lot.id]) {
+          setErrorMsg(t('notAccreditedForLot', 'Подача КП по данному лоту недоступна'));
+          scrollToError();
+          return;
+        }
+      }
     }
 
     // 2. Строгая проверка на непустое предложение (хотя бы один товар с ценой > 0)
@@ -362,6 +391,32 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
           </span>
         </div>
       </div>
+
+      {/* Баннер предупреждения для неверифицированного поставщика */}
+      {!isVerified && (
+        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <Clock size={18} />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-amber-900 dark:text-amber-100">
+                {t('verificationRequiredToBidTitle', 'Требуется верификация компании')}
+              </h4>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                {t('completeProfileToBidNotice', 'Для подачи ценовых предложений необходимо заполнить реквизиты и прикрепить документы в профиле.')}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/profile')}
+            className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm shrink-0 cursor-pointer"
+          >
+            {t('goToProfileBtn', 'Перейти в профиль')}
+          </button>
+        </div>
+      )}
 
       {/* 2. Карточка тендера и Информационный блок */}
       <div className={`p-6 rounded-2xl border shadow-xs ${theme.cardBg}`}>
@@ -476,17 +531,90 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
         </div>
       </div>
 
-      {/* 4. Таблицы по лотам с двухуровневыми строками (Верхняя строка - Запрос, Нижняя строка - Предложение) */}
+      {/* 4. Таблицы по лотам с вкладками переключения */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
-            {t('lotsPricesSpecsTitle', 'Цены и спецификации по лотам')}
-          </h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
+              {t('lotsPricesSpecsTitle', 'Цены и спецификации по лотам')}
+            </h3>
+            {tender?.lots && tender.lots.length > 1 && (
+              <p className="text-xs text-slate-400 mt-0.5">
+                {t('lotsNavigationHint', 'Переключайтесь между лотами для заполнения цен и условий')}
+              </p>
+            )}
+          </div>
+
+          {tender?.lots && tender.lots.length > 1 && (
+            <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl self-start">
+              <button
+                type="button"
+                onClick={() => setViewMode('tabs')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  viewMode === 'tabs'
+                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                {t('viewModeByLots', 'По лотам')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  viewMode === 'all'
+                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                {t('viewModeAllLots', 'Все лоты сразу')}
+              </button>
+            </div>
+          )}
         </div>
 
+        {/* Табы лотов (при наличии нескольких лотов в режиме по лотам) */}
+        {tender?.lots && tender.lots.length > 1 && viewMode === 'tabs' && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            {tender.lots.map((lot, idx) => {
+              const isAllowed = !lot.categoryId || supplierCategoryIds.length === 0 || supplierCategoryIds.includes(lot.categoryId);
+              const isSelected = Boolean(selectedLots[lot.id]) && isAllowed;
+              const lotTotal = calculateLotTotal(lot.id);
+              const isActiveTab = activeLotTab === idx;
+
+              return (
+                <button
+                  key={lot.id}
+                  type="button"
+                  onClick={() => setActiveLotTab(idx)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all whitespace-nowrap cursor-pointer border ${
+                    isActiveTab
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20'
+                      : isSelected
+                      ? 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-blue-300'
+                      : 'bg-slate-100 dark:bg-slate-900 text-slate-400 border-transparent opacity-60'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${isSelected ? (isActiveTab ? 'bg-white' : 'bg-blue-500') : 'bg-slate-300'}`}></span>
+                  <span>{t('lotUpperLabel', 'Лот')} #{idx + 1}: {lot.name}</span>
+                  {isSelected && lotTotal > 0 && (
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                      isActiveTab ? 'bg-blue-700 text-white' : 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300'
+                    }`}>
+                      {lotTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {tender?.lots && tender.lots.length > 0 ? (
-          tender.lots.map((lot, lotIdx) => {
-            const isSelected = Boolean(selectedLots[lot.id]);
+          (viewMode === 'tabs' && tender.lots.length > 1 ? [tender.lots[Math.min(activeLotTab, tender.lots.length - 1)]] : tender.lots).map((lot) => {
+            const lotIdx = tender.lots.findIndex(l => l.id === lot.id);
+            const isAllowed = !lot.categoryId || supplierCategoryIds.length === 0 || supplierCategoryIds.includes(lot.categoryId);
+            const isSelected = Boolean(selectedLots[lot.id]) && isAllowed;
             const lotItems = offerItemsByLot[lot.id] || [];
             const lotTotal = calculateLotTotal(lot.id);
             const customerDeliveryTerm = lot.deliveryTerm?.shortName || lot.deliveryTerm?.name || 'Не указано';
@@ -508,13 +636,24 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                       type="checkbox"
                       id={`lot-toggle-${lot.id}`}
                       checked={isSelected}
-                      onChange={() => toggleLotSelection(lot.id)}
-                      className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0"
+                      disabled={!isAllowed}
+                      onChange={() => isAllowed && toggleLotSelection(lot.id)}
+                      className={`w-5 h-5 rounded text-blue-600 focus:ring-blue-500 shrink-0 ${
+                        !isAllowed ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'
+                      }`}
                     />
                     <label htmlFor={`lot-toggle-${lot.id}`} className="font-extrabold text-base cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-2">
                       <span>{t('lotUpperLabel', 'Лот')} #{lotIdx + 1}: {lot.name}</span>
-                      {!isSelected && <span className="text-xs font-normal text-slate-400">({t('disabledBadge', 'отключен')})</span>}
+                      {!isSelected && isAllowed && <span className="text-xs font-normal text-slate-400">({t('disabledBadge', 'отключен')})</span>}
                     </label>
+
+                    {/* Бейдж вне категории */}
+                    {!isAllowed && (
+                      <span className="px-2.5 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-bold text-[11px] flex items-center gap-1 border border-rose-200 dark:border-rose-900/60">
+                        <AlertCircle size={12} className="text-rose-500" />
+                        <span>{t('lotOutsideCategory', 'Лот вне вашей категории аккредитации')}</span>
+                      </span>
+                    )}
 
                     {/* Бейдж типа предмета лота */}
                     {lotType === 'GOODS' && (
@@ -806,16 +945,24 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                       <input
                                         type="text"
                                         required
+                                        disabled={!isAllowed || !isSelected}
                                         value={item.equivalentName || ''}
                                         onChange={(e) => handleSpecFieldChange(lot.id, idx, 'equivalentName', e.target.value)}
-                                        placeholder={t('analogTradeNamePlaceholder', 'Торговое наименование предлагаемого аналога...')}
-                                        className={`w-full px-3 py-2 rounded-lg border text-xs font-bold text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 bg-blue-50/30 dark:bg-blue-950/30`}
+                                        placeholder={
+                                          lotType === 'SERVICES'
+                                            ? (t('serviceEquivalentPlaceholder', 'Предлагаемая услуга-аналог...'))
+                                            : (t('productEquivalentPlaceholder', 'Торговое наименование аналога / модель...'))
+                                        }
+                                        className={`w-full px-3 py-2 rounded-lg border text-xs font-bold ${
+                                          !isAllowed || !isSelected ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800' : 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-950/50 text-blue-900 dark:text-blue-100 placeholder:text-blue-400'
+                                        }`}
                                       />
                                     ) : (
                                       <input
                                         type="text"
                                         required
-                                        value={item.haryt || item.requestedName}
+                                        disabled={!isAllowed || !isSelected}
+                                        value={item.haryt || item.requestedName || ''}
                                         onChange={(e) => handleSpecFieldChange(lot.id, idx, 'haryt', e.target.value)}
                                         placeholder={
                                           lotType === 'WORKS'
@@ -824,7 +971,9 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                             ? (t('serviceNamePlaceholder', 'Наименование оказываемой услуги...'))
                                             : (t('productNamePlaceholder', 'Наименование товара...'))
                                         }
-                                        className={`w-full px-3 py-2 rounded-lg border text-xs font-semibold ${theme.inputBg}`}
+                                        className={`w-full px-3 py-2 rounded-lg border text-xs font-semibold ${theme.inputBg} ${
+                                          !isAllowed || !isSelected ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800' : ''
+                                        }`}
                                       />
                                     )}
                                   </td>
@@ -853,10 +1002,13 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                       min="0"
                                       step="any"
                                       required
+                                      disabled={!isAllowed || !isSelected}
                                       placeholder="0.00"
                                       value={item.price === 0 ? '' : item.price}
                                       onChange={(e) => handleSpecFieldChange(lot.id, idx, 'price', e.target.value === '' ? 0 : Number(e.target.value))}
                                       className={`w-full px-3 py-2 text-right font-black rounded-lg border text-xs transition-all ${
+                                        !isAllowed || !isSelected ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800' : ''
+                                      } ${
                                         hasPrice
                                           ? 'border-blue-400 dark:border-blue-600 text-blue-700 dark:text-blue-300 bg-blue-50/40 dark:bg-blue-950/40 focus:ring-2 focus:ring-blue-500'
                                           : `text-slate-700 dark:text-slate-300 ${theme.inputBg}`
@@ -876,18 +1028,24 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                                     {isEq ? (
                                       <textarea
                                         rows="2"
+                                        disabled={!isAllowed || !isSelected}
                                         value={item.equivalentJustification || ''}
                                         onChange={(e) => handleSpecFieldChange(lot.id, idx, 'equivalentJustification', e.target.value)}
                                         placeholder={t('equivalenceJustificationPlaceholder', 'Обоснование эквивалентности (МНН, форма, дозировка, характеристики)...')}
-                                        className="w-full px-3 py-1.5 rounded-lg text-xs border border-blue-200 dark:border-blue-800 bg-blue-50/20 dark:bg-blue-950/20 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 resize-none"
+                                        className={`w-full px-3 py-1.5 rounded-lg text-xs border border-blue-200 dark:border-blue-800 bg-blue-50/20 dark:bg-blue-950/20 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 resize-none ${
+                                          !isAllowed || !isSelected ? 'opacity-40 cursor-not-allowed' : ''
+                                        }`}
                                       />
                                     ) : (
                                       <input
                                         type="text"
+                                        disabled={!isAllowed || !isSelected}
                                         value={item.desc}
                                         onChange={(e) => handleSpecFieldChange(lot.id, idx, 'desc', e.target.value)}
                                         placeholder={t('manufacturerNotesPlaceholder', 'Производитель, страна, модель...')}
-                                        className={`w-full px-3 py-2 rounded-lg text-xs border ${theme.inputBg}`}
+                                        className={`w-full px-3 py-2 rounded-lg text-xs border ${theme.inputBg} ${
+                                          !isAllowed || !isSelected ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800' : ''
+                                        }`}
                                       />
                                     )}
                                   </td>
@@ -916,6 +1074,31 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                 ) : (
                   <div className="p-5 text-center text-slate-400 text-xs font-medium bg-slate-50/50 dark:bg-slate-900/20">
                     {t('optedOutOfLotNotice', 'Вы отключили участие в данном лоте')}
+                  </div>
+                )}
+
+                {/* Навигация между лотами в табовом режиме */}
+                {viewMode === 'tabs' && tender.lots.length > 1 && (
+                  <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 flex items-center justify-between">
+                    <button
+                      type="button"
+                      disabled={activeLotTab === 0}
+                      onClick={() => setActiveLotTab(prev => Math.max(0, prev - 1))}
+                      className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      {t('lotTabPrevBtn', '← Предыдущий лот')}
+                    </button>
+                    <span className="text-xs font-bold text-slate-400">
+                      {activeLotTab + 1} / {tender.lots.length}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={activeLotTab >= tender.lots.length - 1}
+                      onClick={() => setActiveLotTab(prev => Math.min(tender.lots.length - 1, prev + 1))}
+                      className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-sm"
+                    >
+                      {t('lotTabNextBtn', 'Следующий лот →')}
+                    </button>
                   </div>
                 )}
               </div>

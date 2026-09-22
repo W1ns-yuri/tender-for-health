@@ -25,9 +25,10 @@ import {
   Printer,
   Edit3,
   Lock,
-  Shield,
-  XCircle,
-  ExternalLink
+  Shield, 
+  XCircle, 
+  ExternalLink,
+  Camera
 } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
@@ -55,6 +56,7 @@ const TURKMEN_BANKS = [
   { id: 'DasaryYkdysady', name: 'Türkmenistanyň Daşary ykdysady iş banky', key: 'bank_dasary', code: '390101726' },
   { id: 'TurkmenTurk', name: 'Türkmen-Türk paýdarlar täjirçilik banky', key: 'bank_turkmenturk', code: '390101735' },
   { id: 'Prezidentbank', name: '«Prezidentbank»', key: 'bank_prezidentbank', code: '390101701' },
+  { id: 'OTHER', name: 'Другой банк / Inisi...', key: 'otherBankOption', code: '', isCustom: true },
 ];
 
 export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isOwner }) {
@@ -66,6 +68,9 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   const [supplier, setSupplier] = useState(null);
   const [stats, setStats] = useState({ totalOffers: 0, wonOffers: 0 });
   const [documents, setDocuments] = useState([]);
+  const [categoriesList, setCategoriesList] = useState([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+  const [initialCategoryIds, setInitialCategoryIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -77,6 +82,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   const [bankSearch, setBankSearch] = useState('');
   const bankDropdownRef = useRef(null);
   const fileInputRef = useRef(null);
+  const logoInputRef = useRef(null);
 
   // Состояние кастомного выпадающего списка велаятов
   const [isRegionOpen, setIsRegionOpen] = useState(false);
@@ -94,8 +100,12 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     passportSeries: '',
     passportIssuedBy: '',
     email: '',
-    phone: ''
+    phone: '',
+    directorName: '',
+    logoUrl: ''
   });
+
+  const [isCustomBank, setIsCustomBank] = useState(false);
 
   // Локальное отображение номера телефона (без префикса +993)
   const [phoneDigits, setPhoneDigits] = useState('');
@@ -132,7 +142,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
 
     try {
       setIsModerating(true);
-      await API.post(`/suppliers/${supplier.id}/approve`);
+      await API.post(`/suppliers/${supplier.id}/approve`, {});
       setSupplier(prev => ({ ...prev, verificationStatus: 'VERIFIED', rejectionReason: null }));
       await showAlert({
         title: t('success', 'Успешно'),
@@ -315,6 +325,14 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
         setSupplier(currentSupplier);
 
         if (currentSupplier) {
+          const loadedCatIds = currentSupplier.categories ? currentSupplier.categories.map(c => c.categoryId) : [];
+          setSelectedCategoryIds(loadedCatIds);
+          setInitialCategoryIds(loadedCatIds);
+
+          API.get('/catalogs/categories').then(r => {
+            if (Array.isArray(r.data)) setCategoriesList(r.data.filter(c => c.isActive));
+          }).catch(() => {});
+
           // Извлечение паспортных данных (если ранее были сохранены единой строкой)
           let pSeries = currentSupplier.passportSeries || '';
           let pIssued = currentSupplier.passportIssuedBy || '';
@@ -358,6 +376,16 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
           setInitialPhoneDigits(formattedP);
 
           const cleanName = getCleanCompanyName(currentSupplier.name);
+          const userFullName = currentSupplier.user?.firstName
+            ? `${currentSupplier.user.firstName} ${currentSupplier.user.lastName || ''}`.trim()
+            : '';
+
+          const bankIsCustom = Boolean(
+            currentSupplier.bankName && 
+            !TURKMEN_BANKS.some(b => b.name === currentSupplier.bankName && !b.isCustom)
+          );
+          setIsCustomBank(bankIsCustom);
+
           const initialData = {
             name: cleanName,
             type: currentSupplier.type || 'ENTREPRENEUR',
@@ -369,7 +397,9 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
             passportSeries: pSeries,
             passportIssuedBy: pIssued,
             email: currentSupplier.email || userEmail || '',
-            phone: pureDigits ? `+993 ${formattedP}` : ''
+            phone: pureDigits ? `+993 ${formattedP}` : '',
+            directorName: currentSupplier.directorName || userFullName || '',
+            logoUrl: currentSupplier.logoUrl || ''
           };
 
           setFormData(initialData);
@@ -424,6 +454,9 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       formData.passportIssuedBy !== initialFormData.passportIssuedBy ||
       formData.phone !== initialFormData.phone ||
       formData.email !== initialFormData.email ||
+      formData.directorName !== initialFormData.directorName ||
+      formData.logoUrl !== initialFormData.logoUrl ||
+      JSON.stringify([...selectedCategoryIds].sort()) !== JSON.stringify([...initialCategoryIds].sort()) ||
       pendingDeleteDocIds.length > 0 ||
       documents.length !== initialDocuments.length
     )
@@ -534,34 +567,114 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     }));
   };
 
-  // Обработка выбора банка
+  // Обработка выбора банка (поддержка свободного ввода при выборе "Другой банк")
   const handleSelectBank = (bank) => {
-    setFormData(prev => ({
-      ...prev,
-      bankName: bank.name,
-      bankMfo: bank.code || prev.bankMfo
-    }));
+    if (bank.id === 'OTHER' || bank.isCustom) {
+      setIsCustomBank(true);
+      setFormData(prev => ({
+        ...prev,
+        bankName: '',
+        bankMfo: ''
+      }));
+    } else {
+      setIsCustomBank(false);
+      setFormData(prev => ({
+        ...prev,
+        bankName: bank.name,
+        bankMfo: bank.code || prev.bankMfo
+      }));
+    }
     setIsBankOpen(false);
     setBankSearch('');
   };
 
-  // Загрузка файлов с жесткой валидацией допустимых расширений и MIME-типов
+  // Загрузка логотипа компании
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !supplier?.id) return;
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!['png', 'jpg', 'jpeg'].includes(ext)) {
+      showAlert({
+        title: t('validationError', 'Ошибка валидации'),
+        message: t('onlyImagesAllowed', 'Для логотипа поддерживаются только изображения JPG и PNG'),
+        type: 'warning'
+      });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showAlert({
+        title: t('validationError', 'Ошибка валидации'),
+        message: t('logoTooLarge', 'Размер логотипа не должен превышать 5 МБ'),
+        type: 'warning'
+      });
+      return;
+    }
+    try {
+      setUploading(true);
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('supplierId', supplier.id);
+      uploadData.append('name', `logo_${file.name}`);
+
+      const res = await API.post('/documents/upload', uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data) {
+        const logoPath = res.data.filePath 
+          ? (res.data.filePath.startsWith('http') ? res.data.filePath : `http://localhost:5000/${res.data.filePath.replace(/\\/g, '/')}`) 
+          : (res.data.url || '');
+        setFormData(prev => ({ ...prev, logoUrl: logoPath }));
+        try {
+          const userStr = localStorage.getItem('tender_user');
+          if (userStr) {
+            const parsedUser = JSON.parse(userStr);
+            parsedUser.logoUrl = logoPath;
+            if (parsedUser.suppliers?.[0]) parsedUser.suppliers[0].logoUrl = logoPath;
+            localStorage.setItem('tender_user', JSON.stringify(parsedUser));
+          }
+        } catch {}
+        showAlert({
+          title: t('success', 'Успешно'),
+          message: t('logoUploadedSuccess', 'Логотип успешно загружен'),
+          type: 'success'
+        });
+      }
+    } catch (err) {
+      console.error('Logo upload error', err);
+      showAlert({
+        title: t('error', 'Ошибка'),
+        message: t('uploadError', 'Ошибка при загрузке логотипа'),
+        type: 'error'
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Загрузка файлов с валидацией форматов и лимита размера (до 10 МБ)
   const handleFileUpload = async (filesToUpload) => {
     if (!filesToUpload || !filesToUpload.length || !supplier?.id) return;
     setUploading(true);
     setUploadError('');
 
-    const ALLOWED_EXTS = ['pdf', 'jpg', 'jpeg', 'png'];
-    const ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png', 'image/pjpeg'];
+    const ALLOWED_EXTS = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'xls', 'xlsx'];
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
     try {
       for (const file of Array.from(filesToUpload)) {
         const ext = file.name.split('.').pop()?.toLowerCase() || '';
-        const mime = (file.type || '').toLowerCase();
 
-        // Блокируем любые недопустимые форматы (.doc, .exe, скрипты и др.) на клиенте
-        if (!ALLOWED_EXTS.includes(ext) || (mime && !ALLOWED_MIME.includes(mime))) {
-          setUploadError(t('onlyPdfJpgAllowed', 'Разрешены только документы PDF и изображения JPG/PNG'));
+        // Проверка расширения
+        if (!ALLOWED_EXTS.includes(ext)) {
+          setUploadError(t('unsupportedFileFormat', 'Поддерживаются форматы: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG'));
+          setUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
+
+        // Проверка размера до 10 МБ
+        if (file.size > MAX_FILE_SIZE) {
+          setUploadError(t('fileSizeExceeds10MB', 'Размер каждого файла не должен превышать 10 МБ'));
           setUploading(false);
           if (fileInputRef.current) fileInputRef.current.value = '';
           return;
@@ -625,6 +738,16 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       return;
     }
 
+    // Блокировка повторной отправки если статус REJECTED и нет изменений
+    if (supplier?.verificationStatus === 'REJECTED' && !hasChanges) {
+      showAlert({
+        title: t('attention', 'Внимание'),
+        message: t('noChangesResubmitError', 'Внесите изменения в реквизиты перед повторной отправкой на проверку'),
+        type: 'warning'
+      });
+      return;
+    }
+
     // Проверка формата паспорта: строго 6 цифр
     if (formData.passportSeries) {
       const passportRegex = /^([I|V|X]+-[A-ZА-Я]{2}\s\d{6})$/i;
@@ -638,6 +761,15 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
         });
         return;
       }
+    }
+
+    if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
+      showAlert({
+        title: t('attention', 'Внимание'),
+        message: t('atLeastOneCategoryRequired', 'Выберите хотя бы одну категорию деятельности'),
+        type: 'warning'
+      });
+      return;
     }
 
     const isVerifiedSupplier = supplier?.verificationStatus === 'VERIFIED';
@@ -673,14 +805,22 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
         ...formData,
         name: cleanedName,
         address: cleanedAddr,
+        directorName: formData.directorName?.trim() || null,
+        logoUrl: formData.logoUrl || null,
+        categoryIds: selectedCategoryIds,
         passportInfo: [formData.passportSeries, formData.passportIssuedBy].filter(Boolean).join(', ')
       };
       const res = await API.put('/suppliers/profile', payload);
       setSupplier(res.data);
+      const updatedCatIds = res.data.categories ? res.data.categories.map(c => c.categoryId) : selectedCategoryIds;
+      setSelectedCategoryIds(updatedCatIds);
+      setInitialCategoryIds(updatedCatIds);
       const newSavedData = { 
         ...formData, 
         name: cleanedName, 
         address: cleanedAddr,
+        directorName: formData.directorName?.trim() || '',
+        logoUrl: formData.logoUrl || '',
         phone: res.data?.phone || formData.phone 
       };
       setFormData(newSavedData);
@@ -785,7 +925,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
 
   const isVerified = supplier?.verificationStatus === 'VERIFIED';
   const isEditable = effectiveIsOwner && (isVerified ? isEditing : supplier?.verificationStatus !== 'PENDING_REVIEW');
-  const isSubmitDisabled = !isEditable || !hasDocuments || saving;
+  const isSubmitDisabled = !isEditable || !hasDocuments || saving || (supplier?.verificationStatus === 'REJECTED' && !hasChanges);
 
   const bgClass = isDarkMode ? 'text-slate-100' : 'text-slate-800';
   const cardBg = isDarkMode ? 'bg-slate-900 border-slate-800 shadow-none' : 'bg-white border-slate-200/60 shadow-xl shadow-slate-200/40';
@@ -937,8 +1077,37 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
         <div className={`flex-1 min-w-0 rounded-[2rem] p-6 sm:p-8 space-y-8 ${cardBg}`}>
           {/* Шапка профиля компании: чистый бренд + аватар-монограмма */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pb-6 border-b border-slate-100">
-            <div className="h-20 w-20 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-white rounded-[1.25rem] flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0 font-black text-2xl tracking-wider select-none">
-              {getBrandInitials(supplier.name)}
+            <div className="relative group shrink-0">
+              <div className="h-20 w-20 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-white rounded-[1.25rem] flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0 font-black text-2xl tracking-wider select-none overflow-hidden">
+                {(formData.logoUrl || supplier.logoUrl) ? (
+                  <img
+                    src={formData.logoUrl || supplier.logoUrl}
+                    alt={supplier.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  getBrandInitials(supplier.name)
+                )}
+              </div>
+              {isEditable && (
+                <>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    className="hidden"
+                    onChange={handleLogoUpload}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => logoInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-md border-2 border-white dark:border-slate-900 transition-all hover:scale-110 cursor-pointer"
+                    title={t('uploadLogo', 'Загрузить логотип')}
+                  >
+                    <Camera size={13} />
+                  </button>
+                </>
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl font-black tracking-tight truncate">
@@ -981,6 +1150,44 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                     {t('statusPendingBadge', 'Требует проверки')}
                   </span>
                 )}
+              </div>
+            </div>
+          </div>
+
+          {/* Карточка данных аккаунта представителя */}
+          <div className="p-4 sm:p-5 bg-gradient-to-r from-blue-50/70 to-indigo-50/40 dark:from-blue-950/20 dark:to-indigo-950/20 border border-blue-100 dark:border-blue-900/40 rounded-2xl">
+            <div className="flex items-center gap-2 mb-3">
+              <User size={16} className="text-blue-600" />
+              <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900 dark:text-blue-300">
+                {t('accountRepresentativeInfo', 'Данные представителя аккаунта')}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              <div>
+                <span className="text-slate-400 block mb-0.5">{t('fullNameLabel', 'ФИО')}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  {supplier.user?.firstName || supplier.user?.lastName 
+                    ? `${supplier.user?.firstName || ''} ${supplier.user?.lastName || ''}`.trim() 
+                    : (formData.directorName || supplier.directorName || '—')}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-400 block mb-0.5">{t('email', 'Почта')}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">
+                  {supplier.user?.email || supplier.email || '—'}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-400 block mb-0.5">{t('phone', 'Телефон')}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  {supplier.user?.phone || supplier.phone || '—'}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-400 block mb-0.5">{t('registeredAt', 'Дата регистрации')}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  {supplier.user?.createdAt ? new Date(supplier.user.createdAt).toLocaleDateString() : (supplier.createdAt ? new Date(supplier.createdAt).toLocaleDateString() : '—')}
+                </span>
               </div>
             </div>
           </div>
@@ -1045,6 +1252,86 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       <p className="text-[11px] text-slate-400 mt-1 ml-1">
                         {t('companyBrandHint', 'Указывайте только название бренда без организационной формы (ИП, ХО, ЧП)')}
                       </p>
+                    )}
+                  </div>
+
+                  {/* ФИО Руководителя */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
+                      {t('directorFullNameLabel', 'ФИО Руководителя')} {isEditable && <span className="text-rose-500">*</span>}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      disabled={!isEditable}
+                      value={formData.directorName}
+                      onChange={e => setFormData(prev => ({ ...prev, directorName: e.target.value }))}
+                      placeholder={isEditable ? t('directorNamePlaceholder', 'например, Иванов Иван Иванович') : ''}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`}
+                    />
+                    {isEditable && (
+                      <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                        {t('directorNameHint', 'ФИО первого руководителя организации или ИП')}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Направления деятельности / Категории поставщика */}
+                  <div className="sm:col-span-2">
+                    <div className="flex items-center justify-between mb-1.5 ml-1">
+                      <label className="block text-xs font-bold text-slate-500">
+                        {t('supplierCategories', 'Категории деятельности')} {isEditable && <span className="text-rose-500">*</span>}
+                      </label>
+                      <span className="text-xs font-bold text-blue-600">
+                        {selectedCategoryIds.length} {t('categoriesSelected', 'выбрано')}
+                      </span>
+                    </div>
+                    {isEditable ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl">
+                        {categoriesList.map(cat => {
+                          const isChecked = selectedCategoryIds.includes(cat.id);
+                          return (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCategoryIds(prev => 
+                                  isChecked ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
+                                );
+                              }}
+                              className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-semibold border transition-all text-left cursor-pointer ${
+                                isChecked
+                                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300'
+                              }`}
+                            >
+                              <div className={`w-4 h-4 rounded flex items-center justify-center border text-[10px] font-bold shrink-0 ${
+                                isChecked ? 'bg-white text-blue-600 border-white' : 'border-slate-300 bg-white'
+                              }`}>
+                                {isChecked ? '✓' : ''}
+                              </div>
+                              <span className="truncate">{cat.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-2xl">
+                        {supplier.categories && supplier.categories.length > 0 ? (
+                          supplier.categories.map(sc => (
+                            <span
+                              key={sc.categoryId}
+                              className="px-3 py-1 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold"
+                            >
+                              {sc.category?.name}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">
+                            {t('noCategoriesAssigned', 'Направления не указаны')}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1210,8 +1497,35 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   {t('bankDetails', 'Банковские реквизиты')}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Селект с поиском для банка */}
-                  <div className="sm:col-span-2 relative" ref={bankDropdownRef}>
+                  {/* Селект с поиском для банка или свободный ввод если 'Другой банк' */}
+                  {isCustomBank && isEditable ? (
+                    <div className="sm:col-span-2">
+                      <div className="flex items-center justify-between mb-1.5 ml-1">
+                        <label className="block text-xs font-bold text-slate-500">
+                          {t('customBankNameLabel', 'Наименование банка (ручной ввод)')} <span className="text-rose-500">*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCustomBank(false);
+                            setFormData(prev => ({ ...prev, bankName: '' }));
+                          }}
+                          className="text-xs font-bold text-blue-600 hover:text-blue-700 underline cursor-pointer"
+                        >
+                          ← {t('chooseFromBankList', 'Выбрать из списка банков')}
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        value={formData.bankName}
+                        onChange={e => setFormData(prev => ({ ...prev, bankName: e.target.value }))}
+                        placeholder={t('customBankPlaceholder', 'Введите точное наименование банка')}
+                        className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`}
+                      />
+                    </div>
+                  ) : (
+                    <div className="sm:col-span-2 relative" ref={bankDropdownRef}>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
                       {t('bankNameLabel', 'Наименование банка')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
@@ -1293,6 +1607,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       </div>
                     )}
                   </div>
+                  )}
 
                   {/* Расчетный счет */}
                   <div>
@@ -1385,17 +1700,22 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
 
               {/* 4. Загрузка документов с отображением списка и строгим фильтром */}
               <div>
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  <FileCheck size={18} className="text-blue-600" />
-                  {t('companyDocsTitle', 'Документы компании (PDF / JPG)')}
-                </h3>
+                <div className="mb-4">
+                  <h3 className="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+                    <FileCheck size={18} className="text-blue-600" />
+                    {t('companyDocumentsTitle', 'Документы компании')}
+                  </h3>
+                  <p className="text-xs text-slate-400 ml-6">
+                    {t('documentFormatsHelp', 'Поддерживаются форматы: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (до 10 МБ)')}
+                  </p>
+                </div>
                 
                 {/* Скрытый input с жестким accept: проводник ОС отфильтровывает все недопустимые файлы */}
                 <input
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                   onChange={e => handleFileUpload(e.target.files)}
                   className="hidden"
                   disabled={!isEditable || uploading}
@@ -1643,6 +1963,13 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                         </div>
                       )}
 
+                      {supplier?.verificationStatus === 'REJECTED' && !hasChanges && (
+                        <div className="flex items-center gap-2.5 p-3.5 bg-rose-50 border border-rose-200/80 rounded-xl text-xs font-semibold text-rose-800 animate-in fade-in">
+                          <AlertCircle size={16} className="text-rose-600 shrink-0" />
+                          <span>{t('noChangesResubmitError', 'Внесите изменения в реквизиты перед повторной отправкой на проверку')}</span>
+                        </div>
+                      )}
+
                       <button 
                         type="submit" 
                         disabled={isSubmitDisabled} 
@@ -1764,6 +2091,15 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                     <p className="font-semibold">{supplier.bankName || '-'}</p>
                   </div>
                 </div>
+                {supplier.directorName && (
+                  <div className="flex items-start gap-3">
+                    <User size={18} className="text-slate-400 mt-0.5" />
+                    <div>
+                      <p className="text-slate-500 font-medium">{t('directorFullNameLabel', 'Руководитель')}</p>
+                      <p className="font-semibold">{supplier.directorName}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2140,6 +2476,12 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   {t('directorData', 'Данные руководителя')}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {formData.directorName && (
+                    <div className="sm:col-span-2">
+                      <p className="text-slate-500">{t('directorFullNameLabel', 'ФИО Руководителя')}:</p>
+                      <p className="font-bold text-slate-800 text-sm">{formData.directorName}</p>
+                    </div>
+                  )}
                   <div>
                     <p className="text-slate-500">{t('passportSeriesLabel', 'Серия и номер паспорта')}:</p>
                     <p className="font-bold text-slate-800 text-sm tracking-wider font-mono">{formData.passportSeries || '-'}</p>

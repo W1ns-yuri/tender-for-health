@@ -12,6 +12,7 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
   const activeTenderId = tenderId || paramId;
   const [tender, setTender] = useState(null);
   const [activeLotTab, setActiveLotTab] = useState(0);
+  const [supplierProfile, setSupplierProfile] = useState(null);
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
 
@@ -23,9 +24,22 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
         })
         .catch((e) => console.log('Tender details error', e));
     }
-  }, [activeTenderId]);
+    if (role === 'SUPPLIER') {
+      API.get('/suppliers/profile')
+        .then((res) => {
+          if (res.data) setSupplierProfile(res.data);
+        })
+        .catch(() => {
+          try {
+            const u = JSON.parse(localStorage.getItem('tender_user'));
+            if (u?.suppliers?.[0]) setSupplierProfile(u.suppliers[0]);
+          } catch {}
+        });
+    }
+  }, [activeTenderId, role]);
 
   const data = tender || {};
+  const isSupplierVerified = role !== 'SUPPLIER' || supplierProfile?.verificationStatus === 'VERIFIED';
 
   const formatDate = (dateVal) => {
     if (!dateVal) return '-';
@@ -49,8 +63,14 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
     : (Array.isArray(data?.documents) ? data.documents : []);
 
   const handleDownload = (doc) => {
-    const actualFileName = doc.filePath ? doc.filePath.split(/[\\/]/).pop() : (doc.fileName || doc.name);
-    const fileUrl = `http://localhost:5000/uploads/${actualFileName}`;
+    if (!doc) return;
+    if (doc.filePath && doc.filePath.startsWith('http')) {
+      window.open(doc.filePath, '_blank');
+      return;
+    }
+    const cleanPath = (doc.filePath || `uploads/${doc.fileName || doc.name || ''}`).replace(/\\/g, '/');
+    const normalized = cleanPath.startsWith('/') ? cleanPath.slice(1) : cleanPath;
+    const fileUrl = `http://localhost:5000/${normalized.startsWith('uploads/') ? normalized : `uploads/${normalized}`}`;
     window.open(fileUrl, '_blank');
   };
 
@@ -86,6 +106,14 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                 >
                   {t('offerSubmitted', 'Teklip tabşyryldy')}
                 </button>
+              ) : !isSupplierVerified ? (
+                <button
+                  disabled
+                  className="px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all opacity-50 cursor-not-allowed bg-slate-300 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                  title={t('verificationRequiredToBid', 'Для подачи ценового предложения необходимо пройти верификацию компании')}
+                >
+                  {t('submitOfferBtn', 'Teklip ber')}
+                </button>
               ) : (
                 <button
                   onClick={() => navigate(`/create-offer/${data.id}`)}
@@ -97,6 +125,35 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
             )}
           </div>
         </div>
+
+        {/* Баннер предупреждения для неверифицированного поставщика */}
+        {role === 'SUPPLIER' && supplierProfile && supplierProfile.verificationStatus !== 'VERIFIED' && (
+          <div className="mt-4 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Clock size={18} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-amber-900 dark:text-amber-100">
+                  {t('verificationRequiredToBidTitle', 'Требуется верификация компании')}
+                </h4>
+                <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                  {supplierProfile.verificationStatus === 'PENDING_REVIEW'
+                    ? t('profileInReviewCannotBidNotice', 'Ваши документы находятся на проверке у администратора. Доступ к торгам откроется после одобрения.')
+                    : supplierProfile.verificationStatus === 'REJECTED'
+                    ? t('profileRejectedCannotBidNotice', 'Верификация отклонена. Исправьте замечания в профиле и отправьте его на повторную проверку.')
+                    : t('completeProfileToBidNotice', 'Для подачи ценовых предложений необходимо заполнить реквизиты и прикрепить документы в профиле.')}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/profile')}
+              className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm shrink-0 cursor-pointer"
+            >
+              {t('goToProfileBtn', 'Перейти в профиль')}
+            </button>
+          </div>
+        )}
 
         {/* Row 1: Dates & Badges */}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
@@ -275,6 +332,9 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                       </div>
                       {lot.files.map((fileObj, fIdx) => {
                         const doc = fileObj.document || fileObj;
+                        const cleanPath = (doc.filePath || `uploads/${doc.fileName || doc.name || ''}`).replace(/\\/g, '/');
+                        const normalized = cleanPath.startsWith('/') ? cleanPath.slice(1) : cleanPath;
+                        const fileUrl = doc.filePath && doc.filePath.startsWith('http') ? doc.filePath : `http://localhost:5000/${normalized.startsWith('uploads/') ? normalized : `uploads/${normalized}`}`;
                         return (
                           <a
                             key={doc.id || fIdx}

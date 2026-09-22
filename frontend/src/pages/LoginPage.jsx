@@ -32,9 +32,21 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
     companyName: '',
     companyType: 'ENTREPRENEUR',
     taxId: '',
+    categoryIds: [],
     termsAccepted: false
   });
   const [regStep, setRegStep] = useState(1);
+  const [categoriesList, setCategoriesList] = useState([]);
+
+  React.useEffect(() => {
+    API.get('/catalogs/categories')
+      .then(res => {
+        if (Array.isArray(res.data)) {
+          setCategoriesList(res.data.filter(c => c.isActive));
+        }
+      })
+      .catch(err => console.error('Failed to load categories', err));
+  }, []);
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -67,6 +79,11 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
+    if (!regData.categoryIds || regData.categoryIds.length === 0) {
+      setError(t('atLeastOneCategoryRequired', 'Выберите хотя бы одну категорию деятельности'));
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -87,14 +104,44 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
     }
   };
 
+  const isStep1Valid = Boolean(
+    regData.firstName?.trim() &&
+    regData.lastName?.trim() &&
+    regData.username?.trim() &&
+    regData.username.includes('@') &&
+    regData.phone?.replace(/\D/g, '').length >= 8 &&
+    regData.password?.length >= 6
+  );
+
+  const isStep2Valid = Boolean(
+    regData.companyType &&
+    regData.companyName?.trim().length >= 2 &&
+    regData.taxId?.replace(/\D/g, '').length === 8
+  );
+
+  const isStep3Valid = Boolean(
+    regData.categoryIds &&
+    regData.categoryIds.length > 0 &&
+    regData.termsAccepted
+  );
+
   const handleNextStep = (e) => {
-    e.preventDefault();
-    if (!regData.firstName || !regData.lastName || !regData.username || !regData.password || !regData.phone) {
-      setError(t('fillFirstStepFieldsNotice', 'Заполните все поля первого шага'));
-      return;
+    if (e) e.preventDefault();
+    if (regStep === 1) {
+      if (!isStep1Valid) {
+        setError(t('fillStep1FieldsNotice', 'Заполните все обязательные поля первого шага'));
+        return;
+      }
+      setError('');
+      setRegStep(2);
+    } else if (regStep === 2) {
+      if (!isStep2Valid) {
+        setError(t('fillStep2FieldsNotice', 'Заполните реквизиты компании и ИНН'));
+        return;
+      }
+      setError('');
+      setRegStep(3);
     }
-    setError('');
-    setRegStep(2);
   };
 
   const handleQuickLogin = async (demoUser, demoPass, retryCount = 1) => {
@@ -330,21 +377,63 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
               </div>
             </form>
           ) : (
-            // ФОРМА РЕГИСТРАЦИИ (Выглядит как отдельный экран)
-            <form onSubmit={regStep === 1 ? handleNextStep : handleRegister} className="space-y-4 animate-in slide-in-from-right-8 duration-300">
-
-              {/* Прогресс шагов */}
-              <div className="flex items-center justify-center mb-6 space-x-2">
-                <div className={`h-2 flex-1 rounded-full transition-all duration-300 ${regStep === 1 ? 'bg-blue-600 shadow-sm shadow-blue-500/40' : regStep > 1 ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
-                <div className={`h-2 flex-1 rounded-full transition-all duration-300 ${regStep === 2 ? 'bg-blue-600 shadow-sm shadow-blue-500/40' : 'bg-slate-200'}`}></div>
+            // ФОРМА РЕГИСТРАЦИИ (3 шага без скролла)
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (regStep === 1 || regStep === 2) {
+                  handleNextStep(e);
+                } else {
+                  handleRegister(e);
+                }
+              }}
+              className="space-y-4 animate-in slide-in-from-right-8 duration-300"
+            >
+              {/* Индикатор 3-х шагов регистрации (строго синий брендинг поставщика) */}
+              <div className="flex items-center justify-between mb-6 px-1">
+                {[
+                  { num: 1, label: t('regStep1Title', 'Учётная запись') },
+                  { num: 2, label: t('regStep2Title', 'Организация') },
+                  { num: 3, label: t('regStep3Title', 'Направления') },
+                ].map((s, idx) => (
+                  <React.Fragment key={s.num}>
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all duration-300 ${
+                          regStep === s.num
+                            ? 'bg-blue-600 text-white shadow-md shadow-blue-500/40 ring-4 ring-blue-100'
+                            : regStep > s.num
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-100 text-slate-400 border border-slate-200'
+                        }`}
+                      >
+                        {regStep > s.num ? '✓' : s.num}
+                      </div>
+                      <span
+                        className={`text-[11px] font-bold transition-colors ${
+                          regStep === s.num ? 'text-blue-600' : regStep > s.num ? 'text-slate-700' : 'text-slate-400'
+                        }`}
+                      >
+                        {s.label}
+                      </span>
+                    </div>
+                    {idx < 2 && (
+                      <div
+                        className={`h-0.5 flex-1 mx-2 -mt-5 transition-all duration-300 ${
+                          regStep > s.num ? 'bg-blue-600' : 'bg-slate-200'
+                        }`}
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
               </div>
 
-              {regStep === 1 ? (
+              {regStep === 1 && (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                        {t('colName', 'Имя')}*
+                        {t('firstNameLabel', 'Имя')}*
                       </label>
                       <div className="relative flex items-center">
                         <User size={18} className="absolute left-4 text-slate-400" />
@@ -360,7 +449,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                     </div>
                     <div>
                       <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                        {t('lastNamePlaceholder', 'Фамилия')}*
+                        {t('lastNameLabel', 'Фамилия')}*
                       </label>
                       <div className="relative flex items-center">
                         <User size={18} className="absolute left-4 text-slate-400" />
@@ -378,7 +467,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
 
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                      {t('workEmailLabel', 'Рабочий Email (Логин)')}*
+                      {t('emailLabel', 'Почта')}*
                     </label>
                     <div className="relative flex items-center">
                       <Mail size={18} className="absolute left-4 text-slate-400" />
@@ -387,7 +476,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                         required
                         value={regData.username}
                         onChange={(e) => setRegData({ ...regData, username: e.target.value })}
-                        placeholder="corp@company.ru"
+                        placeholder="corp@company.tm"
                         className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
                       />
                     </div>
@@ -437,14 +526,18 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                   </div>
 
                   <button
-                    type="submit"
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] mt-6 text-[15px]"
+                    type="button"
+                    onClick={handleNextStep}
+                    disabled={!isStep1Valid}
+                    className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] mt-6 text-[15px]"
                   >
                     <span>{t('nextStepBtn', 'Далее')}</span>
                     <ChevronRight size={18} />
                   </button>
                 </>
-              ) : (
+              )}
+
+              {regStep === 2 && (
                 <>
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
@@ -455,11 +548,11 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                       value={regData.companyType}
                       onChange={(val) => setRegData(prev => ({ ...prev, companyType: val }))}
                       options={[
-                        { id: 'ENTREPRENEUR', name: t('typeIE', 'ИП (Hususy telekeçi)') },
-                        { id: 'BUSINESS_SOCIETY', name: t('typeES', 'ХО / HJ (Hojalyk jemgyýeti)') },
-                        { id: 'BUSINESS_COMPANY', name: t('typePE', 'ЧП / HK (Hususy kärhana)') },
-                        { id: 'FARMER_ASSOCIATION', name: t('typeFE', 'ДХ / DH (Daýhan hojalygy)') },
-                        { id: 'GOVERNMENT', name: t('typeSE', 'Гос. предприятие (Döwlet kärhanasy)') }
+                        { id: 'ENTREPRENEUR', name: t('typeEntrepreneur', 'ИП (Индивидуальный предприниматель)') },
+                        { id: 'BUSINESS_SOCIETY', name: t('typeBusinessSociety', 'ХО (Хозяйственное общество)') },
+                        { id: 'BUSINESS_COMPANY', name: t('typeBusinessCompany', 'ХП (Хозяйственное предприятие)') },
+                        { id: 'GOVERNMENT', name: t('typeGovernment', 'ГП (Государственное предприятие)') },
+                        { id: 'FARMER_ASSOCIATION', name: t('typeFarmer', 'ДО (Дочернее общество)') }
                       ]}
                       size="md"
                     />
@@ -487,7 +580,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
 
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                      STŞK (ИНН)*
+                      {t('taxIdLabel', 'ИНН')}*
                     </label>
                     <div className="relative flex items-center">
                       <FileText size={18} className="absolute left-4 text-slate-400" />
@@ -503,6 +596,82 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                     </div>
                   </div>
 
+                  <div className="flex space-x-3 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => { setError(''); setRegStep(1); }}
+                      className="w-1/3 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition-all text-sm"
+                    >
+                      {t('backToList', 'Назад')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextStep}
+                      disabled={!isStep2Valid}
+                      className="w-2/3 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] text-[15px]"
+                    >
+                      <span>{t('nextStepBtn', 'Далее')}</span>
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {regStep === 3 && (
+                <>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5 ml-1">
+                      <label className="block text-[13px] font-bold text-slate-700">
+                        {t('supplierCategories', 'Категории деятельности')}*
+                      </label>
+                      <span className="text-[11px] font-bold text-blue-600">
+                        {t('categoriesSelected', 'Выбрано')}: {regData.categoryIds.length}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mb-2 ml-1">
+                      {t('selectCategoriesHint', 'Выберите направления деятельности вашей компании')}
+                    </p>
+                    <div className="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto overscroll-contain p-2 bg-slate-50 border border-slate-200 rounded-2xl">
+                      {categoriesList.length === 0 ? (
+                        <div className="text-xs text-slate-400 text-center py-4">
+                          {t('loading', 'Загрузка категорий...')}
+                        </div>
+                      ) : (
+                        categoriesList.map((cat) => {
+                          const isChecked = regData.categoryIds.includes(cat.id);
+                          return (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => {
+                                setRegData(prev => ({
+                                  ...prev,
+                                  categoryIds: isChecked
+                                    ? prev.categoryIds.filter(id => id !== cat.id)
+                                    : [...prev.categoryIds, cat.id]
+                                }));
+                              }}
+                              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left cursor-pointer border ${
+                                isChecked
+                                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50/40'
+                              }`}
+                            >
+                              <div
+                                className={`w-4 h-4 rounded-md flex items-center justify-center border text-[10px] shrink-0 font-bold ${
+                                  isChecked ? 'bg-white text-blue-600 border-white' : 'border-slate-300 bg-white'
+                                }`}
+                              >
+                                {isChecked ? '✓' : ''}
+                              </div>
+                              <span className="truncate">{cat.name}</span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+
                   <div className="flex items-start mt-4">
                     <input
                       type="checkbox"
@@ -510,9 +679,9 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                       required
                       checked={regData.termsAccepted}
                       onChange={(e) => setRegData({ ...regData, termsAccepted: e.target.checked })}
-                      className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                     />
-                    <label htmlFor="termsAccepted" className="ml-2 text-xs text-slate-500 leading-tight">
+                    <label htmlFor="termsAccepted" className="ml-2 text-xs text-slate-500 leading-tight cursor-pointer select-none">
                       {t('termsAcceptedAgreementText', 'Я согласен с регламентом проведения электронных торгов и обработкой персональных данных.')}
                     </label>
                   </div>
@@ -520,15 +689,15 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                   <div className="flex space-x-3 mt-6">
                     <button
                       type="button"
-                      onClick={() => setRegStep(1)}
-                      className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition-all"
+                      onClick={() => { setError(''); setRegStep(2); }}
+                      className="w-1/3 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition-all text-sm"
                     >
                       {t('backToList', 'Назад')}
                     </button>
                     <button
                       type="submit"
-                      disabled={loading || !regData.termsAccepted}
-                      className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] disabled:opacity-70 text-[15px]"
+                      disabled={loading || !isStep3Valid}
+                      className="w-2/3 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] text-[15px]"
                     >
                       <span>{loading ? t('registering', 'Создание...') : t('registerBtn', 'Зарегистрироваться')}</span>
                     </button>
