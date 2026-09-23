@@ -1072,7 +1072,8 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       new Date(formData.licenseExpiryDate) >= new Date().setHours(0, 0, 0, 0)
     );
 
-    const isDetailsFilled = isBasicDetailsFilled && isBankFilled && isDirectorFilled && isMedicalValid;
+    const isCategoriesSelected = Boolean(selectedCategoryIds && selectedCategoryIds.length > 0);
+    const isDetailsFilled = isBasicDetailsFilled && isBankFilled && isDirectorFilled && isMedicalValid && isCategoriesSelected;
     const isDocsUploaded = documents.length > 0;
     const isApproved = supplier?.verificationStatus === 'VERIFIED';
     const isPendingReview = supplier?.verificationStatus === 'PENDING_REVIEW';
@@ -1119,10 +1120,11 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
 
   const readiness = calculateReadiness();
   const hasDocuments = documents && documents.length > 0;
+  const isCategoriesSelected = Boolean(selectedCategoryIds && selectedCategoryIds.length > 0);
 
   const isVerified = supplier?.verificationStatus === 'VERIFIED';
   const isEditable = effectiveIsOwner && (isVerified ? isEditing : supplier?.verificationStatus !== 'PENDING_REVIEW');
-  const isSubmitDisabled = !isEditable || !hasDocuments || saving || isLicenseExpired || (supplier?.verificationStatus === 'REJECTED' && !hasChanges);
+  const isSubmitDisabled = !isEditable || !hasDocuments || !isCategoriesSelected || saving || isLicenseExpired || (supplier?.verificationStatus === 'REJECTED' && !hasChanges);
 
   const bgClass = isDarkMode ? 'text-slate-100' : 'text-slate-800';
   const cardBg = isDarkMode ? 'bg-slate-900 border-slate-800 shadow-none' : 'bg-white border-slate-200/60 shadow-xl shadow-slate-200/40';
@@ -2430,6 +2432,13 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   ) : (
                     /* НЕ ВЕРИФИЦИРОВАН (PENDING / REJECTED): Кнопка отправки на модерацию */
                     <div className="space-y-3">
+                      {!isCategoriesSelected && (
+                        <div className="flex items-center gap-2.5 p-3.5 bg-amber-50 border border-amber-200/80 rounded-xl text-xs font-semibold text-amber-800 animate-in fade-in">
+                          <AlertCircle size={16} className="text-amber-600 shrink-0" />
+                          <span>{t('atLeastOneCategoryRequired', 'Выберите хотя бы одну категорию деятельности')}</span>
+                        </div>
+                      )}
+
                       {!hasDocuments && (
                         <div className="flex items-center gap-2.5 p-3.5 bg-amber-50 border border-amber-200/80 rounded-xl text-xs font-semibold text-amber-800 animate-in fade-in">
                           <AlertCircle size={16} className="text-amber-600 shrink-0" />

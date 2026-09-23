@@ -1132,6 +1132,11 @@ export const translations = {
     statusGuestNotice: "Bahalandyryş tekliplerini bermek üçin ähli maglumatlary dolduryň, resminamalary ýükläň we barlaga iberiň.",
     submitToModerationBtn: "Barlaga ibermek",
     submittedForReviewSuccess: "Anketa üstünlikli barlaga iberildi! Saglygy goraýyş ministrliginiň kararyna garaşyň.",
+    regStep1Title: "Ulanyjy maglumaty",
+    regStep2Title: "Edara maglumaty",
+    regStep3Title: "Giriş we şertler",
+    profileAccreditationNotice: "Hasap açylandan soň, şahsy otagda iş ugurlaryny saýlamak, bank rekwizitlerini görkezmek we resminamalary ýüklemek elýeterli bolar.",
+    fillStep3FieldsNotice: "Email, paroly giriziň we tertipnamany kabul ediň",
   },
   RU: {
     select: 'Выберите...',
@@ -2267,6 +2272,11 @@ export const translations = {
     statusGuestNotice: "Для подачи ценовых предложений заполните профиль, прикрепите документы и отправьте анкету на модерацию в Минздрав.",
     submitToModerationBtn: "Отправить на модерацию",
     submittedForReviewSuccess: "Анкета успешно отправлена на модерацию! Ожидайте проверки администратором Минздрава.",
+    regStep1Title: "Учётная запись",
+    regStep2Title: "Организация",
+    regStep3Title: "Вход и условия",
+    profileAccreditationNotice: "После создания учетной записи в личном кабинете вы сможете выбрать направления деятельности, указать банковские реквизиты и прикрепить документы для допуска к торгам.",
+    fillStep3FieldsNotice: "Заполните email, пароль и подтвердите согласие с условиями",
   },
   EN: {
     select: 'Select...',
@@ -3400,6 +3410,11 @@ export const translations = {
     statusGuestNotice: "To submit price offers, complete your profile, attach documents, and submit your application for review to the Health Ministry.",
     submitToModerationBtn: "Submit for Moderation",
     submittedForReviewSuccess: "Application successfully submitted for review! Please await review by the Health Ministry administrator.",
+    regStep1Title: "User Account",
+    regStep2Title: "Company",
+    regStep3Title: "Access & Terms",
+    profileAccreditationNotice: "After creating an account, you will be able to select business categories, specify bank details, and attach documents in your profile to access tenders.",
+    fillStep3FieldsNotice: "Please enter email, password, and accept the terms",
   }
 };
 

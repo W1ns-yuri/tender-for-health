@@ -63,11 +63,9 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
     companyName: '',
     companyType: 'BUSINESS_SOCIETY',
     taxId: '',
-    categoryIds: [],
     termsAccepted: false
   });
   const [regStep, setRegStep] = useState(1);
-  const [categoriesList, setCategoriesList] = useState([]);
 
   const selectedCountryObj = COUNTRIES.find(c => c.id === regData.countryCode) || COUNTRIES[0];
 
@@ -106,16 +104,6 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
     }));
   };
 
-  React.useEffect(() => {
-    API.get('/catalogs/categories')
-      .then(res => {
-        if (Array.isArray(res.data)) {
-          setCategoriesList(res.data.filter(c => c.isActive));
-        }
-      })
-      .catch(err => console.error('Failed to load categories', err));
-  }, []);
-
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -147,8 +135,8 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
-    if (!regData.categoryIds || regData.categoryIds.length === 0) {
-      setError(t('selectAtLeastOneCategoryWarning', 'Для завершения регистрации выберите хотя бы одну категорию деятельности'));
+    if (!isStep3Valid) {
+      setError(t('fillStep3FieldsNotice', 'Заполните email, пароль и подтвердите согласие с условиями'));
       return;
     }
 
@@ -196,10 +184,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
     regData.firstName?.trim() &&
     regData.lastName?.trim() &&
     regData.countryCode &&
-    regData.username?.trim() &&
-    regData.username.includes('@') &&
-    isPhoneValid &&
-    regData.password?.length >= 6
+    isPhoneValid
   );
 
   const isStep2Valid = Boolean(
@@ -211,8 +196,9 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
   );
 
   const isStep3Valid = Boolean(
-    regData.categoryIds &&
-    regData.categoryIds.length > 0 &&
+    regData.username?.trim() &&
+    regData.username.includes('@') &&
+    regData.password?.length >= 6 &&
     regData.termsAccepted
   );
 
@@ -485,7 +471,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                 {[
                   { num: 1, label: t('regStep1Title', 'Учётная запись') },
                   { num: 2, label: t('regStep2Title', 'Организация') },
-                  { num: 3, label: t('regStep3Title', 'Направления') },
+                  { num: 3, label: t('regStep3Title', 'Вход и условия') },
                 ].map((s, idx) => (
                   <React.Fragment key={s.num}>
                     <div className="flex flex-col items-center gap-1.5">
@@ -556,7 +542,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                     </div>
                   </div>
 
-                  {/* 🌍 ВЫБОР СТРАНЫ СРАЗУ ПОСЛЕ ФАМИЛИИ */}
+                  {/* 🌍 ВЫБОР СТРАНЫ */}
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
                       {t('countryLabel', 'Страна')}*
@@ -570,24 +556,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                      {t('emailLabel', 'Почта')}*
-                    </label>
-                    <div className="relative flex items-center">
-                      <Mail size={18} className="absolute left-4 text-slate-400" />
-                      <input
-                        type="email"
-                        required
-                        value={regData.username}
-                        onChange={(e) => setRegData({ ...regData, username: e.target.value })}
-                        placeholder="corp@company.tm"
-                        className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
-                      />
-                    </div>
-                  </div>
-
-                  {/* 📞 ДИНАМИЧЕСКИЙ ТЕЛЕФОН С УЧЕТОМ СТРАНЫ */}
+                  {/* 📞 ТЕЛЕФОН */}
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
                       {t('phoneLabel', 'Номер телефона')}*
@@ -625,35 +594,11 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                      {t('password', 'Пароль')}*
-                    </label>
-                    <div className="relative flex items-center">
-                      <Lock size={18} className="absolute left-4 text-slate-400" />
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        value={regData.password}
-                        onChange={(e) => setRegData({ ...regData, password: e.target.value })}
-                        placeholder="••••••••"
-                        className="w-full pl-11 pr-12 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center h-full"
-                      >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    </div>
-                  </div>
-
                   <button
                     type="button"
                     onClick={handleNextStep}
                     disabled={!isStep1Valid}
-                    className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] mt-6 text-[15px]"
+                    className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] mt-6 text-[15px] cursor-pointer"
                   >
                     <span>{t('nextStepBtn', 'Далее')}</span>
                     <ChevronRight size={18} />
@@ -756,74 +701,62 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
               {regStep === 3 && (
                 <>
                   <div>
-                    <div className="flex items-center justify-between mb-1.5 ml-1">
-                      <label className="block text-[13px] font-bold text-slate-700">
-                        {t('supplierCategories', 'Категории деятельности')}*
-                      </label>
-                      <span className={`text-[11px] font-bold ${regData.categoryIds.length > 0 ? 'text-blue-600' : 'text-rose-500'}`}>
-                        {t('categoriesSelected', 'Выбрано')}: {regData.categoryIds.length}
-                      </span>
+                    <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
+                      {t('corpEmail', 'Корпоративная почта (Логин)')}*
+                    </label>
+                    <div className="relative flex items-center">
+                      <Mail size={18} className="absolute left-4 text-slate-400" />
+                      <input
+                        type="email"
+                        required
+                        value={regData.username}
+                        onChange={(e) => setRegData({ ...regData, username: e.target.value })}
+                        placeholder="corp@company.tm"
+                        className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
+                      />
                     </div>
-                    <p className="text-[11px] text-slate-400 mb-2 ml-1">
-                      {t('selectCategoriesHint', 'Выберите направления деятельности вашей компании')}
-                    </p>
-                    <div className="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto overscroll-contain p-2 bg-slate-50 border border-slate-200 rounded-2xl">
-                      {categoriesList.length === 0 ? (
-                        <div className="text-xs text-slate-400 text-center py-4">
-                          {t('loading', 'Загрузка категорий...')}
-                        </div>
-                      ) : (
-                        categoriesList.map((cat) => {
-                          const isChecked = regData.categoryIds.includes(cat.id);
-                          return (
-                            <button
-                              key={cat.id}
-                              type="button"
-                              onClick={() => {
-                                setRegData(prev => ({
-                                  ...prev,
-                                  categoryIds: isChecked
-                                    ? prev.categoryIds.filter(id => id !== cat.id)
-                                    : [...prev.categoryIds, cat.id]
-                                }));
-                              }}
-                              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left cursor-pointer border ${
-                                isChecked
-                                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                                  : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50/40'
-                              }`}
-                            >
-                              <div
-                                className={`w-4 h-4 rounded-md flex items-center justify-center border text-[10px] shrink-0 font-bold ${
-                                  isChecked ? 'bg-white text-blue-600 border-white' : 'border-slate-300 bg-white'
-                                }`}
-                              >
-                                {isChecked ? '✓' : ''}
-                              </div>
-                              <span className="truncate">{cat.name}</span>
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-
-                    {/* ПРЕДУПРЕЖДЕНИЕ ПРИ 0 ВЫБРАННЫХ КАТЕГОРИЯХ */}
-                    {regData.categoryIds.length === 0 && (
-                      <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium flex items-center gap-2 animate-in fade-in">
-                        <AlertCircle size={16} className="text-amber-600 shrink-0" />
-                        <span>{t('selectAtLeastOneCategoryWarning', 'Для завершения регистрации выберите хотя бы одну категорию деятельности')}</span>
-                      </div>
-                    )}
                   </div>
 
-                  <div className="flex items-start mt-4">
+                  <div>
+                    <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
+                      {t('password', 'Пароль для входа')}*
+                    </label>
+                    <div className="relative flex items-center">
+                      <Lock size={18} className="absolute left-4 text-slate-400" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        value={regData.password}
+                        onChange={(e) => setRegData({ ...regData, password: e.target.value })}
+                        placeholder="••••••••"
+                        className="w-full pl-11 pr-12 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center h-full cursor-pointer"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Информационная карточка об аккредитации и заполнении профиля */}
+                  <div className="p-3.5 bg-blue-50/70 border border-blue-100 rounded-2xl flex items-start gap-2.5 text-xs text-blue-900">
+                    <CheckCircle2 size={18} className="text-blue-600 shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">
+                      {t('profileAccreditationNotice', 'После создания учетной записи в личном кабинете вы сможете выбрать направления деятельности, указать банковские реквизиты и прикрепить документы для допуска к торгам.')}
+                    </span>
+                  </div>
+
+                  <div className="flex items-start">
                     <input
                       type="checkbox"
                       id="termsAccepted"
                       required
                       checked={regData.termsAccepted}
                       onChange={(e) => setRegData({ ...regData, termsAccepted: e.target.checked })}
-                      className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                      className="mt-0.5 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                     />
                     <label htmlFor="termsAccepted" className="ml-2 text-xs text-slate-500 leading-tight cursor-pointer select-none">
                       {t('termsAcceptedAgreementText', 'Я согласен с регламентом проведения электронных торгов и обработкой персональных данных.')}

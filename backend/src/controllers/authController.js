@@ -11,10 +11,6 @@ const register = async (req, res) => {
             return res.status(400).json({ error: 'Пожалуйста, заполните обязательные поля: username, password, firstName, lastName, phone' });
         }
 
-        if (!Array.isArray(categoryIds) || categoryIds.length === 0) {
-            return res.status(400).json({ error: 'Пожалуйста, выберите хотя бы одну категорию деятельности компании' });
-        }
-
         // Проверяем, существует ли уже пользователь с таким логином
         const existingUser = await prisma.user.findUnique({ where: { username } });
         if (existingUser) {
