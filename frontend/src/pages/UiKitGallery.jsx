@@ -11,7 +11,6 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
   CardAction,
   TableContainer,
   Table,
@@ -42,7 +41,6 @@ import {
   Trash2,
   Edit2,
   CheckCircle2,
-  AlertCircle,
   FileText,
   DollarSign,
   Users,
@@ -52,15 +50,14 @@ import {
   Eye,
   Clock,
   Layers,
-  Globe,
   Sun,
   Moon,
 } from 'lucide-react';
 
 const TEXTS = {
   RU: {
-    bannerTag: 'Медицинская платформа • UI Kit & Дизайн-система v2.0',
-    bannerTitle: 'Единая Дизайн-Система и UI Компоненты',
+    bannerTag: 'W1ns UI Kit • Медицинская платформа v2.0',
+    bannerTitle: 'W1ns UI Kit & Единая Дизайн-Система',
     bannerDesc: 'Утвержденная библиотека переиспользуемых элементов. Изменение компонента в одном месте (шрифт, отступы, скругления) мгновенно обновляет весь сайт.',
     roleAdmin: 'Администратор (Изумрудный)',
     roleSupplier: 'Поставщик (Синий)',
@@ -90,8 +87,8 @@ const TEXTS = {
     searchPlaceholder: 'Поиск по названию или коду...',
   },
   TM: {
-    bannerTag: 'Lukmançylyk ulgamy • UI Kit & Dizaýn ulgamy v2.0',
-    bannerTitle: 'Ýeke-täk dizaýn ulgamy we UI komponentler',
+    bannerTag: 'W1ns UI Kit • Lukmançylyk ulgamy v2.0',
+    bannerTitle: 'W1ns UI Kit & Ýeke-täk dizaýn ulgamy',
     bannerDesc: 'Taslamanyň ähli sahypalarynda dizaýn birligini üpjün edýän tassyklanan komponentler toplumy. Bir ýerde üýtgetmek ähli sahypalara täsir edýär.',
     roleAdmin: 'Administrator (Zümerret)',
     roleSupplier: 'Üpjün ediji (Gök)',
@@ -121,8 +118,8 @@ const TEXTS = {
     searchPlaceholder: 'Ady ýa-da kody boýunça gözleg...',
   },
   EN: {
-    bannerTag: 'Medical Platform • UI Kit & Design System v2.0',
-    bannerTitle: 'Unified Design System & UI Components',
+    bannerTag: 'W1ns UI Kit • Medical Platform v2.0',
+    bannerTitle: 'W1ns UI Kit & Unified Design System',
     bannerDesc: 'Approved reusable components library. Changing a font, padding, or radius here instantly updates the entire website consistently.',
     roleAdmin: 'Administrator (Emerald)',
     roleSupplier: 'Supplier (Blue)',
@@ -340,7 +337,17 @@ export default function UiKitGallery({ role: initialRole = 'ADMIN', isDarkMode: 
                 <Button variant="success" leftIcon={<CheckCircle2 size={16} />}>Одобрить заявку</Button>
                 <Button variant="danger" leftIcon={<Trash2 size={16} />}>Отклонить</Button>
                 <Button variant="outline">Настройки каталога</Button>
-                <Button variant="ghost">Аудит-лог</Button>
+                <Button
+                  variant="success"
+                  size="sm"
+                  isLoading={btnLoading}
+                  onClick={() => {
+                    setBtnLoading(true);
+                    setTimeout(() => setBtnLoading(false), 1200);
+                  }}
+                >
+                  {btnLoading ? 'Спиннер...' : 'Тест загрузки'}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -364,7 +371,17 @@ export default function UiKitGallery({ role: initialRole = 'ADMIN', isDarkMode: 
                 <Button variant="primary" leftIcon={<Plus size={16} />}>Подать предложение</Button>
                 <Button variant="secondary">Сохранить черновик</Button>
                 <Button variant="outline">Мой профиль</Button>
-                <Button variant="ghost">Отзыв предложения</Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  isLoading={btnLoading}
+                  onClick={() => {
+                    setBtnLoading(true);
+                    setTimeout(() => setBtnLoading(false), 1200);
+                  }}
+                >
+                  {btnLoading ? 'Спиннер...' : 'Тест загрузки'}
+                </Button>
               </div>
             </CardContent>
           </Card>

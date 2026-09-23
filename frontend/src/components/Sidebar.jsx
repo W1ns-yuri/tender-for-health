@@ -271,7 +271,7 @@ export default function Sidebar({
                 }`}
               >
                 <Sparkles size={19} className="text-amber-500" />
-                {!isCollapsed && <span className="ml-3">{t('uiKitNav', 'UI Kit / Dizaýn')}</span>}
+                {!isCollapsed && <span className="ml-3">{t('uiKitNav', 'W1ns UI Kit')}</span>}
               </button>
             </nav>
           </div>
