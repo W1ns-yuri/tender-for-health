@@ -42,3 +42,4 @@ export { default as Pagination } from './Pagination';
 export { default as SearchInput } from './SearchInput';
 export { Skeleton, SkeletonTable, default as SkeletonDefault } from './Skeleton';
 export { default as FileDropzone } from './FileDropzone';
+export { CustomSelect, default as DropdownSelect } from '../CustomSelect';

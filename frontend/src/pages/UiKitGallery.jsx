@@ -4,6 +4,7 @@ import {
   Input,
   Textarea,
   Select,
+  CustomSelect,
   Badge,
   Card,
   CardHeader,
@@ -47,13 +48,125 @@ import {
   Users,
   Building,
   Sparkles,
+  Shield,
+  Eye,
+  Clock,
+  Layers,
+  Globe,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
-export default function UiKitGallery() {
-  // State for interactive demonstrations
+const TEXTS = {
+  RU: {
+    bannerTag: 'Медицинская платформа • UI Kit & Дизайн-система v2.0',
+    bannerTitle: 'Единая Дизайн-Система и UI Компоненты',
+    bannerDesc: 'Утвержденная библиотека переиспользуемых элементов. Изменение компонента в одном месте (шрифт, отступы, скругления) мгновенно обновляет весь сайт.',
+    roleAdmin: 'Администратор (Изумрудный)',
+    roleSupplier: 'Поставщик (Синий)',
+    themeMode: 'Тема оформления',
+    langSelector: 'Язык отображения',
+    sectionMetrics: '1. Аналитические метрики (StatCard для Дашборда и Аналитики)',
+    metricTenders: 'Всего торгов',
+    metricTurnover: 'Общий оборот',
+    metricSuppliers: 'Зарегистрировано поставщиков',
+    metricPending: 'На проверке модератором',
+    sectionRoles: '2. Разделение стилей: Администратор и Поставщик (Buttons & Themes)',
+    adminThemeTitle: 'Тема Администратора (Изумрудный акцент)',
+    supplierThemeTitle: 'Тема Поставщика (Синий акцент)',
+    sectionInputs: '3. Поля ввода и выпадающие списки (Input, Select, CustomSelect)',
+    customSelectTitle: 'Портальный CustomSelect (не обрезается overflow, с поиском и автопозиционированием)',
+    nativeSelectTitle: 'Нативный Select',
+    sectionBadges: '4. Статусные бейджи и Уведомления (Badges & Alerts)',
+    sectionTabs: '5. Переключатели вкладок (Tabs)',
+    sectionTables: '6. Стандартизированные таблицы: 2 основных типа системы',
+    tableTypeAdmin: 'Тип А: Административная таблица управления (Поставщики / Модерация)',
+    tableTypeDashboard: 'Тип Б: Обзорная таблица дашборда (Тендеры / Лоты)',
+    sectionDropzone: '7. Зона загрузки документов (File Dropzone)',
+    sectionModals: '8. Модальные окна и подтверждения (Modals & Dialogs)',
+    sectionSkeletons: '9. Скелетоны загрузки (Skeleton Loaders)',
+    openModalBtn: 'Открыть стандартный модал',
+    openConfirmBtn: 'Открыть диалог удаления',
+    searchPlaceholder: 'Поиск по названию или коду...',
+  },
+  TM: {
+    bannerTag: 'Lukmançylyk ulgamy • UI Kit & Dizaýn ulgamy v2.0',
+    bannerTitle: 'Ýeke-täk dizaýn ulgamy we UI komponentler',
+    bannerDesc: 'Taslamanyň ähli sahypalarynda dizaýn birligini üpjün edýän tassyklanan komponentler toplumy. Bir ýerde üýtgetmek ähli sahypalara täsir edýär.',
+    roleAdmin: 'Administrator (Zümerret)',
+    roleSupplier: 'Üpjün ediji (Gök)',
+    themeMode: 'Dizaýn tertibi',
+    langSelector: 'Görkezilýän dil',
+    sectionMetrics: '1. Analitiki Metrika Kartlary (Stat Cards)',
+    metricTenders: 'Jemi söwdalar',
+    metricTurnover: 'Umumy dolanyşyk',
+    metricSuppliers: 'Hasaba alnan üpjün edijiler',
+    metricPending: 'Barlagda garaşýanlar',
+    sectionRoles: '2. Rol aýratynlyklary: Admin we Üpjün ediji (Buttons & Themes)',
+    adminThemeTitle: 'Admin dizaýn mowzugy (Zümerret reňk)',
+    supplierThemeTitle: 'Üpjün ediji dizaýn mowzugy (Gök reňk)',
+    sectionInputs: '3. Maglumat girizilýän meýdanlar (Input, Select, CustomSelect)',
+    customSelectTitle: 'Portal CustomSelect (konteýnerden daşary çykmaýar, gözlegli)',
+    nativeSelectTitle: 'Standart Select',
+    sectionBadges: '4. Status belgileri we Duýduryşlar (Badges & Alerts)',
+    sectionTabs: '5. Saýlaw panelleri (Tabs)',
+    sectionTables: '6. Standartlaşdyrylan tablisalar: 2 sany esasy görnüş',
+    tableTypeAdmin: 'Görnüş A: Dolandyryş tablisasy (Üpjün edijiler / Moderasiýa)',
+    tableTypeDashboard: 'Görnüş B: Esasy sahypa tablisasy (Tenderler / Lotlar)',
+    sectionDropzone: '7. Resminama ýükleýiş zolagy (File Dropzone)',
+    sectionModals: '8. Modallar we Tassyklama penjireleri (Modals & Dialogs)',
+    sectionSkeletons: '9. Ýükleniş skeletleri (Skeleton Loaders)',
+    openModalBtn: 'Standart Modaly açmak',
+    openConfirmBtn: 'Pozmak tassyklama penjiresini açmak',
+    searchPlaceholder: 'Ady ýa-da kody boýunça gözleg...',
+  },
+  EN: {
+    bannerTag: 'Medical Platform • UI Kit & Design System v2.0',
+    bannerTitle: 'Unified Design System & UI Components',
+    bannerDesc: 'Approved reusable components library. Changing a font, padding, or radius here instantly updates the entire website consistently.',
+    roleAdmin: 'Administrator (Emerald)',
+    roleSupplier: 'Supplier (Blue)',
+    themeMode: 'Color Theme',
+    langSelector: 'Display Language',
+    sectionMetrics: '1. Analytical Metric Cards (StatCard for Dashboard & Analytics)',
+    metricTenders: 'Total Tenders',
+    metricTurnover: 'Total Turnover',
+    metricSuppliers: 'Registered Suppliers',
+    metricPending: 'Pending Review',
+    sectionRoles: '2. Role Styles: Administrator vs Supplier (Buttons & Themes)',
+    adminThemeTitle: 'Administrator Theme (Emerald Accent)',
+    supplierThemeTitle: 'Supplier Theme (Blue Accent)',
+    sectionInputs: '3. Input Fields & Dropdowns (Input, Select, CustomSelect)',
+    customSelectTitle: 'Portal CustomSelect (overflow-safe, searchable & responsive)',
+    nativeSelectTitle: 'Native Select',
+    sectionBadges: '4. Status Badges & Alerts (Badges & Alerts)',
+    sectionTabs: '5. Tab Switchers (Tabs)',
+    sectionTables: '6. Standardized Tables: 2 Main Architectural Patterns',
+    tableTypeAdmin: 'Pattern A: Management Table (Suppliers / Moderation)',
+    tableTypeDashboard: 'Pattern B: Dashboard Overview Table (Tenders / Lots)',
+    sectionDropzone: '7. Document Upload Area (File Dropzone)',
+    sectionModals: '8. Modals & Confirmation Dialogs (Modals & Dialogs)',
+    sectionSkeletons: '9. Skeleton Loaders',
+    openModalBtn: 'Open Standard Modal',
+    openConfirmBtn: 'Open Delete Confirmation',
+    searchPlaceholder: 'Search by title or code...',
+  },
+};
+
+export default function UiKitGallery({ role: initialRole = 'ADMIN', isDarkMode: initialDark = false, lang: initialLang = 'RU' }) {
+  // Gallery interactive controls
+  const [currentRole, setCurrentRole] = useState(initialRole);
+  const [isDark, setIsDark] = useState(initialDark);
+  const [currentLang, setCurrentLang] = useState(initialLang);
+
+  const t = TEXTS[currentLang] || TEXTS.RU;
+  const isAdmin = currentRole === 'ADMIN';
+
+  // Demo interactive states
   const [btnLoading, setBtnLoading] = useState(false);
   const [inputValue, setInputValue] = useState('Winfinity Tech');
   const [selectedCurrency, setSelectedCurrency] = useState('TMT');
+  const [customSelectedCategory, setCustomSelectedCategory] = useState('1');
   const [activeTab, setActiveTab] = useState('pills');
   const [activeSegment, setActiveSegment] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -64,187 +177,303 @@ export default function UiKitGallery() {
   const [mockFile, setMockFile] = useState(null);
   const [showEmptyTable, setShowEmptyTable] = useState(false);
 
-  const sampleTableData = [
-    { id: 1, name: 'Parasetamol 500mg', code: 'MED-001', qty: '10,000 sany', price: '4.50 TMT', status: 'emerald', statusLabel: 'Ýeňiji' },
-    { id: 2, name: 'Amoksisillin 250mg', code: 'MED-002', qty: '5,000 sany', price: '12.00 TMT', status: 'amber', statusLabel: 'Garaşylýar' },
-    { id: 3, name: 'Ultrasound Scan Unit X1', code: 'EQ-990', qty: '2 sany', price: '145,000 TMT', status: 'blue', statusLabel: 'Barlagda' },
-    { id: 4, name: 'Lukmançylyk ellikleri M', code: 'DISP-11', qty: '50,000 jübüt', price: '0.80 TMT', status: 'rose', statusLabel: 'Ret edildi' },
+  // Sample data for Pattern A: Management / Suppliers table
+  const sampleSuppliersData = [
+    { id: 1, name: 'Dermanhana HJ', country: 'Türkmenistan', category: 'Derman serişdeleri', taxId: '10928374', license: 'MOH-TM-081', status: 'emerald', statusLabel: currentLang === 'RU' ? 'Активен' : 'Işjeň' },
+    { id: 2, name: 'MedEnjam Hojalyk Jemgyýeti', country: 'Türkmenistan', category: 'Lukmançylyk enjamlary', taxId: '20194821', license: 'MOH-TM-114', status: 'amber', statusLabel: currentLang === 'RU' ? 'На модерации' : 'Barlagda' },
+    { id: 3, name: 'Biolab Diagnostic GmbH', country: 'Germaniýa', category: 'Laboratoriýa reagentleri', taxId: 'DE81928471', license: 'EU-GMP-992', status: 'emerald', statusLabel: currentLang === 'RU' ? 'Активен' : 'Işjeň' },
+    { id: 4, name: 'HealthCare Logistics', country: 'Türkiýe', category: 'Sarp ediş serişdeleri', taxId: 'TR99018274', license: 'EXP-TR-004', status: 'rose', statusLabel: currentLang === 'RU' ? 'Неактивен' : 'Işjeň däl' },
+  ];
+
+  // Sample data for Pattern B: Dashboard / Tender Lots table
+  const sampleLotsData = [
+    { id: 'LOT-101', title: 'Parasetamol 500mg (10,000 gutusy)', budget: '45,000 TMT', bidsCount: 4, deadline: '2 günüň içinde', status: 'emerald', statusLabel: currentLang === 'RU' ? 'Прием заявок' : 'Teklip kabul edilýär' },
+    { id: 'LOT-102', title: 'Sanly Rentgen enjamy X-Ray Ultra', budget: '620,000 TMT', bidsCount: 2, deadline: '5 günüň içinde', status: 'blue', statusLabel: currentLang === 'RU' ? 'Оценка комиссией' : 'Bahalandyrma' },
+    { id: 'LOT-103', title: 'Steril lukmançylyk ellikleri (50,000 jübüt)', budget: '40,000 TMT', bidsCount: 6, deadline: 'Tamamlandy', status: 'slate', statusLabel: currentLang === 'RU' ? 'Завершен' : 'Tamamlanan' },
+  ];
+
+  const categoryOptions = [
+    { id: '1', name: currentLang === 'RU' ? '💊 Лекарственные средства и препараты' : '💊 Derman serişdeleri we preparatlar' },
+    { id: '2', name: currentLang === 'RU' ? '🩺 Медицинское оборудование и аппараты' : '🩺 Lukmançylyk enjamlary we abzallary' },
+    { id: '3', name: currentLang === 'RU' ? '🧤 Расходные материалы и перчатки' : '🧤 Sarp ediş serişdeleri we ellikler' },
+    { id: '4', name: currentLang === 'RU' ? '🔬 Лабораторные реактивы и тесты' : '🔬 Laboratoriýa reagentleri we testler' },
   ];
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-16">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-emerald-600 rounded-3xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
-        <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-xs text-xs font-semibold mb-3">
-            <Sparkles size={14} />
-            <span>Tender Ulgamy • UI Kit & Design System v2.0</span>
+    <div className={`space-y-8 max-w-7xl mx-auto pb-16 ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
+      {/* 0. INTERACTIVE TOOLBAR & CONTROLS HEADER */}
+      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-emerald-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-xs text-xs font-semibold mb-3">
+              <Sparkles size={14} />
+              <span>{t.bannerTag}</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-2">
+              {t.bannerTitle}
+            </h1>
+            <p className="text-sm text-blue-100 leading-relaxed">
+              {t.bannerDesc}
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-2">
-            Ýeke-täk dizaýn ulgamy we UI komponentler
-          </h1>
-          <p className="text-sm text-blue-100 leading-relaxed">
-            Taslamanyň ähli sahypalarynda (Aşgabat, Saglygy goraýyş ministrligi, Analitika, Tenderler) dizaýn birligini üpjün edýän tassyklanan komponentler toplumy.
-          </p>
+
+          {/* Quick interactive switches */}
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 space-y-3 shrink-0">
+            <div className="flex items-center justify-between gap-4 text-xs">
+              <span className="font-semibold text-blue-100">{t.langSelector}:</span>
+              <div className="flex rounded-lg overflow-hidden border border-white/30">
+                {['RU', 'TM', 'EN'].map((l) => (
+                  <button
+                    key={l}
+                    onClick={() => setCurrentLang(l)}
+                    className={`px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                      currentLang === l ? 'bg-white text-blue-900' : 'text-white hover:bg-white/20'
+                    }`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 text-xs">
+              <span className="font-semibold text-blue-100">Роль системы:</span>
+              <div className="flex rounded-lg overflow-hidden border border-white/30">
+                <button
+                  onClick={() => setCurrentRole('ADMIN')}
+                  className={`px-3 py-1 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
+                    currentRole === 'ADMIN' ? 'bg-emerald-500 text-white shadow-xs' : 'text-white hover:bg-white/20'
+                  }`}
+                >
+                  <Shield size={12} />
+                  <span>Admin</span>
+                </button>
+                <button
+                  onClick={() => setCurrentRole('SUPPLIER')}
+                  className={`px-3 py-1 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
+                    currentRole === 'SUPPLIER' ? 'bg-blue-500 text-white shadow-xs' : 'text-white hover:bg-white/20'
+                  }`}
+                >
+                  <Building size={12} />
+                  <span>Supplier</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 text-xs">
+              <span className="font-semibold text-blue-100">{t.themeMode}:</span>
+              <button
+                onClick={() => setIsDark(!isDark)}
+                className="px-3 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                {isDark ? <Moon size={13} className="text-amber-300" /> : <Sun size={13} className="text-amber-300" />}
+                <span>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* 1. STAT CARDS (METRICS FOR ANALYTICS & DASHBOARD) */}
       <section className="space-y-3">
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-          1. Analitiki Metrika Kartlary (Stat Cards)
+          {t.sectionMetrics}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            title="Jemi söwdalar"
+            title={t.metricTenders}
             value="128"
             icon={<FileText size={20} />}
-            color="blue"
+            color={isAdmin ? 'emerald' : 'blue'}
             trend={{ value: '+14.2%', direction: 'up', isPositive: true }}
-            subtitle="Geçen aýa görä ýokarlanma"
+            subtitle="По сравнению с прошлым месяцем"
           />
           <StatCard
-            title="Umumy dolanyşyk"
+            title={t.metricTurnover}
             value="4,850,200 TMT"
             icon={<DollarSign size={20} />}
             color="emerald"
             trend={{ value: '+8.5%', direction: 'up', isPositive: true }}
-            subtitle="Döwlet tenderleriniň möçberi"
+            subtitle="Объем медицинских торгов"
           />
           <StatCard
-            title="Hasaba alnan üpjün edijiler"
+            title={t.metricSuppliers}
             value="342"
             icon={<Building size={20} />}
             color="purple"
             trend={{ value: '+24', direction: 'up', isPositive: true }}
-            subtitle="Barlagdan geçen kompaniýalar"
+            subtitle="Прошедшие верификацию"
           />
           <StatCard
-            title="Barlagda garaşýanlar"
+            title={t.metricPending}
             value="12"
             icon={<Users size={20} />}
             color="amber"
             trend={{ value: '-3', direction: 'down', isPositive: false }}
-            subtitle="Moderator tassyklamasy"
+            subtitle="Ожидают решения модератора"
           />
         </div>
       </section>
 
-      {/* 2. BUTTONS */}
+      {/* 2. ROLE STYLING: ADMIN VS SUPPLIER */}
       <section className="space-y-3">
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-          2. Düwmeler (Button Variants & Sizes)
+          {t.sectionRoles}
         </h2>
-        <Card>
-          <CardHeader>
-            <div>
-              <CardTitle>Standart Düwmeler (Button Variants)</CardTitle>
-              <CardDescription>Ähli reňk wariantlary, ölçegleri we animasiýalary</CardDescription>
-            </div>
-            <CardAction>
-              <Badge variant="blue">7 Wariant</Badge>
-            </CardAction>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div>
-              <h4 className="text-xs font-bold text-slate-500 mb-3">Wariantlar:</h4>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button variant="primary" leftIcon={<Plus size={16} />}>Primary (Blue)</Button>
-                <Button variant="success" leftIcon={<CheckCircle2 size={16} />}>Success (Emerald)</Button>
-                <Button variant="danger" leftIcon={<Trash2 size={16} />}>Danger (Rose)</Button>
-                <Button variant="warning" leftIcon={<AlertCircle size={16} />}>Warning (Amber)</Button>
-                <Button variant="secondary">Secondary (Slate)</Button>
-                <Button variant="outline">Outline</Button>
-                <Button variant="ghost">Ghost</Button>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Admin Card */}
+          <Card className="border-t-4 border-t-emerald-600">
+            <CardHeader>
+              <div>
+                <CardTitle className="text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                  <Shield size={18} />
+                  <span>{t.adminThemeTitle}</span>
+                </CardTitle>
+                <CardDescription>Акцентные кнопки изумрудного цвета, бейджи модерации, подтверждения</CardDescription>
               </div>
-            </div>
+              <CardAction>
+                <Badge variant="emerald">ADMIN</Badge>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <Button variant="success" leftIcon={<CheckCircle2 size={16} />}>Одобрить заявку</Button>
+                <Button variant="danger" leftIcon={<Trash2 size={16} />}>Отклонить</Button>
+                <Button variant="outline">Настройки каталога</Button>
+                <Button variant="ghost">Аудит-лог</Button>
+              </div>
+            </CardContent>
+          </Card>
 
-            <div>
-              <h4 className="text-xs font-bold text-slate-500 mb-3">Ölçegler & Ýükleme:</h4>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button size="xs" variant="primary">Extra Small</Button>
-                <Button size="sm" variant="primary">Small</Button>
-                <Button size="md" variant="primary">Medium (Def)</Button>
-                <Button size="lg" variant="primary">Large</Button>
-                <Button
-                  variant="success"
-                  isLoading={btnLoading}
-                  onClick={() => {
-                    setBtnLoading(true);
-                    setTimeout(() => setBtnLoading(false), 1500);
-                  }}
-                >
-                  {btnLoading ? 'Ýüklenýär...' : 'Klikläň (Spinner testi)'}
-                </Button>
-                <Button size="icon-sm" variant="outline" title="Düzetmek"><Edit2 size={14} /></Button>
-                <Button size="icon-sm" variant="danger" title="Aýyrmak"><Trash2 size={14} /></Button>
+          {/* Supplier Card */}
+          <Card className="border-t-4 border-t-blue-600">
+            <CardHeader>
+              <div>
+                <CardTitle className="text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                  <Building size={18} />
+                  <span>{t.supplierThemeTitle}</span>
+                </CardTitle>
+                <CardDescription>Акцентные кнопки синего цвета, подача коммерческих предложений</CardDescription>
               </div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <span className="text-xs text-slate-400">Tailwind CSS v4 & Lucide Icons</span>
-            <Button size="xs" variant="outline">Gözden geçirmek</Button>
-          </CardFooter>
-        </Card>
+              <CardAction>
+                <Badge variant="blue">SUPPLIER</Badge>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <Button variant="primary" leftIcon={<Plus size={16} />}>Подать предложение</Button>
+                <Button variant="secondary">Сохранить черновик</Button>
+                <Button variant="outline">Мой профиль</Button>
+                <Button variant="ghost">Отзыв предложения</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </section>
 
-      {/* 3. INPUTS & FORM ELEMENTS */}
+      {/* 3. INPUTS, SELECT & CUSTOMSELECT */}
       <section className="space-y-3">
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-          3. Maglumat girizilýän meýdanlar (Input, Select, Textarea)
+          {t.sectionInputs}
         </h2>
         <Card>
-          <CardContent>
+          <CardContent className="space-y-6">
+            {/* CustomSelect Showcase */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles size={16} className="text-amber-500" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  {t.customSelectTitle}
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">
+                    Категория (с поисковым фильтром, роль {currentRole}):
+                  </label>
+                  <CustomSelect
+                    role={currentRole}
+                    isDarkMode={isDark}
+                    searchable={true}
+                    value={customSelectedCategory}
+                    onChange={(val) => setCustomSelectedCategory(val)}
+                    options={categoryOptions}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">
+                    Компактный размер (size="sm"):
+                  </label>
+                  <CustomSelect
+                    role={currentRole}
+                    isDarkMode={isDark}
+                    size="sm"
+                    value={selectedCurrency}
+                    onChange={(val) => setSelectedCurrency(val)}
+                    options={[
+                      { id: 'TMT', name: 'TMT — Туркменский манат' },
+                      { id: 'USD', name: 'USD — Доллар США' },
+                      { id: 'EUR', name: 'EUR — Евро' },
+                    ]}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Standard inputs */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <Input
-                label="Kompaniýanyň ady"
+                label="Наименование компании"
                 required
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 clearable
                 onClear={() => setInputValue('')}
-                hint="Resmi şahadatnama boýunça"
+                hint="Согласно свидетельству о гос. регистрации"
               />
 
               <Input
-                label="Salgyt belgisi (STŞK / OKPO)"
+                label="Код ОКПО / ИНН (моноширинный)"
                 mono
-                defaultValue="12345678"
+                defaultValue="20485910"
                 leftIcon={<Building size={16} />}
-                hint="8 sifrli mono meýdan"
+                hint="8 цифр, шрифт font-mono"
               />
 
               <Select
-                label="Walýuta"
+                label="Нативный Select (fallback)"
                 value={selectedCurrency}
                 onChange={(e) => setSelectedCurrency(e.target.value)}
                 options={[
-                  { value: 'TMT', label: 'TMT — Türkmen manady' },
-                  { value: 'USD', label: 'USD — ABŞ dollary' },
-                  { value: 'EUR', label: 'EUR — Ýewro' },
+                  { value: 'TMT', label: 'TMT — Туркменский манат' },
+                  { value: 'USD', label: 'USD — Доллар США' },
+                  { value: 'EUR', label: 'EUR — Евро' },
                 ]}
               />
 
-              <Input
-                label="Ýalňyş meýdan nusgasy"
-                defaultValue="invalid_email"
-                error="Girizilen email dogry däl"
-              />
+              <div className="md:col-span-2">
+                <SearchInput
+                  placeholder={t.searchPlaceholder}
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  onSearch={(q) => console.log('Searching:', q)}
+                />
+              </div>
 
-              <SearchInput
-                placeholder="Harytlary gözläň..."
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                onSearch={(q) => console.log('Searching:', q)}
+              <Input
+                label="Пример поля с ошибкой валидации"
+                defaultValue="invalid_tax_code"
+                error="Неверный формат налогового номера"
               />
 
               <div className="md:col-span-3">
                 <Textarea
-                  label="Goşmaça düşündiriş ýa-da şertler"
+                  label="Дополнительные условия или спецификация"
                   rows={2}
                   maxLength={300}
                   showCount
-                  defaultValue="Tender boýunça ähli harytlar lukmançylyk güwänamalaryna laýyk bolmaly."
+                  defaultValue="Все лекарственные средства должны сопровождаться сертификатами GMP и регистрацией Минздрава."
                 />
               </div>
             </div>
@@ -255,48 +484,47 @@ export default function UiKitGallery() {
       {/* 4. BADGES & ALERTS */}
       <section className="space-y-3">
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-          4. Status belgileri we Duýduryşlar (Badges & Alerts)
+          {t.sectionBadges}
         </h2>
         <Card>
           <CardContent className="space-y-6">
             <div>
-              <h4 className="text-xs font-bold text-slate-500 mb-3">Status Badges (Pulsing & Static):</h4>
+              <h4 className="text-xs font-bold text-slate-500 mb-3">Статусные бейджи:</h4>
               <div className="flex flex-wrap items-center gap-2.5">
-                <Badge variant="emerald" pulse>Aktiw tender</Badge>
-                <Badge variant="emerald" icon={<CheckCircle2 size={12} />}>Tassyklanan</Badge>
-                <Badge variant="amber" pulse>Barlagda</Badge>
-                <Badge variant="amber" dot>Garaşylýar</Badge>
-                <Badge variant="rose" dot>Ret edildi</Badge>
-                <Badge variant="blue">Täze teklip</Badge>
-                <Badge variant="purple">Analitika</Badge>
-                <Badge variant="cyan">Eksport</Badge>
-                <Badge variant="slate">Arhiw</Badge>
+                <Badge variant="emerald" pulse>Активный тендер</Badge>
+                <Badge variant="emerald" icon={<CheckCircle2 size={12} />}>Одобрен Минздравом</Badge>
+                <Badge variant="amber" pulse>На модерации</Badge>
+                <Badge variant="amber" dot>Ожидает решения</Badge>
+                <Badge variant="rose" dot>Отклонен</Badge>
+                <Badge variant="blue">Новое предложение</Badge>
+                <Badge variant="purple">Аналитика</Badge>
+                <Badge variant="slate">Архив решений</Badge>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Alert
                 variant="info"
-                title="Maglumat habarnamasy"
-                description="Tender boýunça resminamalary barlamak işi alnyp barylýar. Ýeňiji 3 günüň içinde kesgitlener."
+                title="Информационное уведомление"
+                description="Срок подачи предложений истекает через 3 календарных дня."
               />
 
               <Alert
                 variant="success"
-                title="Üstünlikli ýatda saklandy"
-                description="Teklibiňiz söwda ulgamyna kabul edildi we şifrirlendi."
+                title="Успешное сохранение"
+                description="Коммерческое предложение зарегистрировано и зашифровано в системе."
               />
 
               <Alert
                 variant="warning"
-                title="Ygtyýarnama möhleti gutarýar"
-                description="Kompaniýaňyzyň lukmançylyk ygtyýarnamasynyň möhletine 15 gün galdy."
+                title="Срок действия лицензии"
+                description="Лицензия поставщика истекает через 15 дней. Рекомендуется обновить документы."
               />
 
               <Alert
                 variant="danger"
-                title="Ýalňyşlyk ýüze çykdy"
-                description="Bellenen summanyň möçberi tender çäginden geçýär."
+                title="Ошибка валидации"
+                description="Сумма предложения превышает максимальный предельный бюджет лота."
               />
             </div>
           </CardContent>
@@ -306,37 +534,36 @@ export default function UiKitGallery() {
       {/* 5. TABS & SEGMENTED CONTROLS */}
       <section className="space-y-3">
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-          5. Saýlaw panelleri (Tabs)
+          {t.sectionTabs}
         </h2>
         <Card>
           <CardContent className="space-y-5">
             <div>
-              <h4 className="text-xs font-bold text-slate-500 mb-2">Pills wariant:</h4>
+              <h4 className="text-xs font-bold text-slate-500 mb-2">Pills (для фильтрации списков и модерации):</h4>
               <Tabs
                 variant="pills"
                 activeTab={activeTab}
                 onChange={setActiveTab}
                 tabs={[
-                  { id: 'pills', label: 'Ähli lotlar', count: 8 },
-                  { id: 'won', label: 'Utulanlar', count: 3 },
-                  { id: 'active', label: 'Dowam edýänler', count: 5 },
-                  { id: 'archive', label: 'Arhiw', count: 0 },
+                  { id: 'pills', label: 'Все поставщики', count: 342 },
+                  { id: 'pending', label: 'На проверке', count: 12 },
+                  { id: 'archive', label: 'Архив решений', count: 85 },
                 ]}
               />
             </div>
 
             <div>
-              <h4 className="text-xs font-bold text-slate-500 mb-2">Segmented wariant:</h4>
+              <h4 className="text-xs font-bold text-slate-500 mb-2">Segmented (компактный переключатель):</h4>
               <Tabs
                 variant="segmented"
                 size="sm"
                 activeTab={activeSegment}
                 onChange={setActiveSegment}
                 tabs={[
-                  { id: 'all', label: 'Ählisi' },
-                  { id: 'pharma', label: 'Dermanlar' },
-                  { id: 'equipment', label: 'Enjamlar' },
-                  { id: 'consumables', label: 'Sarp ediş serişdeleri' },
+                  { id: 'all', label: 'Все направления' },
+                  { id: 'pharma', label: 'Фармацевтика' },
+                  { id: 'equipment', label: 'Медоборудование' },
+                  { id: 'consumables', label: 'Расходные материалы' },
                 ]}
               />
             </div>
@@ -344,81 +571,150 @@ export default function UiKitGallery() {
         </Card>
       </section>
 
-      {/* 6. TABLE COMPONENT */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-            6. Standartlaşdyrylan Tablisa (Table & Pagination)
-          </h2>
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={() => setShowEmptyTable(!showEmptyTable)}
-          >
-            {showEmptyTable ? 'Maglumatly görnüş' : 'Boş tablisa (Empty state)'}
-          </Button>
+      {/* 6. TABLES: BOTH ARCHITECTURAL PATTERNS */}
+      <section className="space-y-6">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
+          {t.sectionTables}
+        </h2>
+
+        {/* Pattern A: Admin Management Table */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Shield size={14} className="text-emerald-600" />
+              <span>{t.tableTypeAdmin}</span>
+            </h3>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => setShowEmptyTable(!showEmptyTable)}
+            >
+              {showEmptyTable ? 'С данными' : 'Пустая таблица (Empty state)'}
+            </Button>
+          </div>
+
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell sortable>Наименование компании</TableHeaderCell>
+                  <TableHeaderCell>Направление</TableHeaderCell>
+                  <TableHeaderCell>Страна</TableHeaderCell>
+                  <TableHeaderCell>ИНН / STŞK</TableHeaderCell>
+                  <TableHeaderCell>Лицензия</TableHeaderCell>
+                  <TableHeaderCell align="center">Статус</TableHeaderCell>
+                  <TableHeaderCell align="right">Действия</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {showEmptyTable ? (
+                  <TableEmptyState
+                    colSpan={7}
+                    title="Поставщики не найдены"
+                    description="По заданным критериям поиска поставщиков в базе не обнаружено."
+                    action={
+                      <Button size="sm" variant="success" leftIcon={<Plus size={14} />}>
+                        Добавить поставщика
+                      </Button>
+                    }
+                  />
+                ) : (
+                  sampleSuppliersData.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell className="font-semibold text-slate-900 dark:text-slate-100">{row.name}</TableCell>
+                      <TableCell>
+                        <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">{row.category}</span>
+                      </TableCell>
+                      <TableCell className="text-slate-500">{row.country}</TableCell>
+                      <TableCell className="font-mono text-xs text-slate-500">{row.taxId}</TableCell>
+                      <TableCell className="font-mono text-xs text-slate-500">{row.license}</TableCell>
+                      <TableCell align="center">
+                        <Badge variant={row.status} size="sm">{row.statusLabel}</Badge>
+                      </TableCell>
+                      <TableCell align="right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button size="icon-sm" variant="ghost" title="Просмотр"><Eye size={14} /></Button>
+                          <Button size="icon-sm" variant="ghost" title="Редактировать"><Edit2 size={14} /></Button>
+                          <Button size="icon-sm" variant="ghost" title="Удалить"><Trash2 size={14} className="text-rose-500" /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={4}
+              totalItems={38}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              showingText={currentLang === 'RU' ? 'Показано' : 'Görkezilýär'}
+              ofText={currentLang === 'RU' ? 'из' : 'jemi'}
+              itemsText={currentLang === 'RU' ? 'записей' : 'ýazgy'}
+            />
+          </TableContainer>
         </div>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeaderCell sortable>Harydyň ady</TableHeaderCell>
-                <TableHeaderCell>Kody</TableHeaderCell>
-                <TableHeaderCell align="center">Mukdary</TableHeaderCell>
-                <TableHeaderCell align="right" sortable>Bahasy</TableHeaderCell>
-                <TableHeaderCell align="center">Status</TableHeaderCell>
-                <TableHeaderCell align="right">Hereket</TableHeaderCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {showEmptyTable ? (
-                <TableEmptyState
-                  colSpan={6}
-                  title="Haryt tapylmady"
-                  description="Gözleg boýunça hiç hili derman serişdesi ýa-da lukmançylyk enjamy tapylmady."
-                  action={
-                    <Button size="sm" variant="primary" leftIcon={<Plus size={14} />}>
-                      Täze haryt goşmak
-                    </Button>
-                  }
-                />
-              ) : (
-                sampleTableData.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="font-semibold">{row.name}</TableCell>
-                    <TableCell className="font-mono text-xs text-slate-500">{row.code}</TableCell>
-                    <TableCell align="center">{row.qty}</TableCell>
-                    <TableCell align="right" className="font-mono font-bold text-slate-900 dark:text-slate-100">{row.price}</TableCell>
+
+        {/* Pattern B: Dashboard / Tender Lots Overview Table */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <Layers size={14} className="text-blue-600" />
+            <span>{t.tableTypeDashboard}</span>
+          </h3>
+
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>Номер лота</TableHeaderCell>
+                  <TableHeaderCell>Наименование медицинского товара</TableHeaderCell>
+                  <TableHeaderCell align="right">Предельный бюджет</TableHeaderCell>
+                  <TableHeaderCell align="center">Заявок</TableHeaderCell>
+                  <TableHeaderCell>Срок подачи</TableHeaderCell>
+                  <TableHeaderCell align="center">Статус</TableHeaderCell>
+                  <TableHeaderCell align="right">Действие</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {sampleLotsData.map((lot) => (
+                  <TableRow key={lot.id}>
+                    <TableCell className="font-mono text-xs font-bold text-slate-500">{lot.id}</TableCell>
+                    <TableCell className="font-semibold text-slate-900 dark:text-slate-100">{lot.title}</TableCell>
+                    <TableCell align="right" className="font-mono font-black text-slate-900 dark:text-slate-100">{lot.budget}</TableCell>
                     <TableCell align="center">
-                      <Badge variant={row.status} size="sm">{row.statusLabel}</Badge>
+                      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        {lot.bidsCount}
+                      </span>
                     </TableCell>
-                    <TableCell align="right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button size="icon-sm" variant="ghost" title="Görmek"><Eye size={14} /></Button>
-                        <Button size="icon-sm" variant="ghost" title="Düzetmek"><Edit2 size={14} /></Button>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium">
+                        <Clock size={13} />
+                        <span>{lot.deadline}</span>
                       </div>
                     </TableCell>
+                    <TableCell align="center">
+                      <Badge variant={lot.status} size="sm">{lot.statusLabel}</Badge>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button size="xs" variant={isAdmin ? 'success' : 'primary'}>
+                        {currentLang === 'RU' ? 'Перейти' : 'Görmek'}
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-
-          <Pagination
-            currentPage={currentPage}
-            totalPages={4}
-            totalItems={38}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
-          />
-        </TableContainer>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </div>
       </section>
 
       {/* 7. FILE DROPZONE */}
       <section className="space-y-3">
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-          7. Resminama ýükleýiş zolagy (File Dropzone)
+          {t.sectionDropzone}
         </h2>
         <Card>
           <CardContent>
@@ -426,8 +722,8 @@ export default function UiKitGallery() {
               file={mockFile}
               onFileSelect={(f) => setMockFile(f)}
               onFileRemove={() => setMockFile(null)}
-              title="Lukmançylyk ygtyýarnamasyny ýükläň"
-              subtitle="PDF, DOCX ýa-da skan surat (25MB çenli)"
+              title={currentLang === 'RU' ? 'Загрузите медицинскую лицензию или сертификат' : 'Lukmançylyk ygtyýarnamasyny ýükläň'}
+              subtitle={currentLang === 'RU' ? 'PDF, DOCX или скан-изображение (до 25 МБ)' : 'PDF, DOCX ýa-da skan surat (25MB çenli)'}
             />
           </CardContent>
         </Card>
@@ -436,17 +732,17 @@ export default function UiKitGallery() {
       {/* 8. MODALS & CONFIRM DIALOGS */}
       <section className="space-y-3">
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-          8. Modallar we Tassyklama penjireleri (Modals & Dialogs)
+          {t.sectionModals}
         </h2>
         <Card>
           <CardContent>
             <div className="flex flex-wrap items-center gap-3">
-              <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-                Standart Modaly açmak
+              <Button variant={isAdmin ? 'success' : 'primary'} onClick={() => setIsModalOpen(true)}>
+                {t.openModalBtn}
               </Button>
 
               <Button variant="danger" onClick={() => setIsConfirmOpen(true)}>
-                Pozmak tassyklama penjiresini açmak
+                {t.openConfirmBtn}
               </Button>
             </div>
           </CardContent>
@@ -456,30 +752,32 @@ export default function UiKitGallery() {
       {/* 9. SKELETON LOADERS */}
       <section className="space-y-3">
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-          9. Ýükleniş skeletleri (Skeleton Loaders)
+          {t.sectionSkeletons}
         </h2>
-        <SkeletonTable rows={3} cols={4} />
+        <SkeletonTable rows={3} cols={5} />
       </section>
 
       {/* Interactive Modal Demo */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="md">
         <ModalHeader onClose={() => setIsModalOpen(false)}>
-          <ModalTitle>Täze barlag maglumaty</ModalTitle>
-          <ModalDescription>Ulgama täze şahamça ýa-da resminama goşmak</ModalDescription>
+          <ModalTitle>Новая запись реестра</ModalTitle>
+          <ModalDescription>Добавление нового подразделения или сертификата в реестр</ModalDescription>
         </ModalHeader>
         <ModalBody className="space-y-4">
-          <Input label="Bölümiň ady" placeholder="Mysal: Derman serişdeleri ammary" />
-          <Select
-            label="Jogapkär şahs"
+          <Input label="Название подразделения" placeholder="Например: Аптечный склад №1" />
+          <CustomSelect
+            role={currentRole}
+            isDarkMode={isDark}
+            label="Ответственное лицо"
             options={[
-              { value: '1', label: 'Orazow Maksat (Direktor)' },
-              { value: '2', label: 'Amanowa Maral (Baş buhgalter)' },
+              { id: '1', name: 'Оразов Максат (Директор)' },
+              { id: '2', name: 'Аманова Марал (Главный бухгалтер)' },
             ]}
           />
         </ModalBody>
         <ModalFooter>
-          <Button variant="outline" onClick={() => setIsModalOpen(false)}>Ýatyr</Button>
-          <Button variant="primary" onClick={() => setIsModalOpen(false)}>Goşmak</Button>
+          <Button variant="outline" onClick={() => setIsModalOpen(false)}>Отмена</Button>
+          <Button variant={isAdmin ? 'success' : 'primary'} onClick={() => setIsModalOpen(false)}>Сохранить</Button>
         </ModalFooter>
       </Modal>
 
@@ -489,23 +787,14 @@ export default function UiKitGallery() {
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={() => {
           setIsConfirmOpen(false);
-          alert('Hereket tassyklandy!');
+          alert('Действие подтверждено!');
         }}
-        title="Lody aýyrmak"
-        message="Siz hakykatdan hem bu lody we oňa degişli spensifikasiýa setirlerini aýyrmak isleýärsiňizmi? Bu hereketi yzyna gaýtaryp bolmaýar."
-        confirmText="Hawa, aýyr"
-        cancelText="Ýatyr"
+        title="Удаление позиции"
+        message="Вы уверены, что хотите удалить выбранную запись? Это действие необратимо."
+        confirmText="Да, удалить"
+        cancelText="Отмена"
         variant="danger"
       />
     </div>
-  );
-}
-
-function Eye(props) {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
   );
 }
