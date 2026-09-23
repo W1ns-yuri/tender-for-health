@@ -20,6 +20,7 @@ import SuppliersList from './pages/SuppliersList';
 import SupplierProfilePage from './pages/SupplierProfilePage';
 import CreateOfferPage from './pages/CreateOfferPage';
 import OfferDetailsPage from './pages/OfferDetailsPage';
+import UiKitGallery from './pages/UiKitGallery';
 import { getRoleTheme } from './utils/themeUtils';
 import { AlertProvider } from './context/AlertContext';
 import CustomSelect from './components/CustomSelect';
@@ -197,6 +198,7 @@ export default function App() {
               <Route path="/administrasiya" element={role === 'ADMIN' ? <AdminCatalogs section="administrasiya" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/admin-logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
+              <Route path="/ui-kit" element={<UiKitGallery role={role} isDarkMode={isDarkMode} lang={lang} />} />
               
               <Route path="/profile" element={<SupplierProfilePage role={role} isDarkMode={isDarkMode} lang={lang} isOwner={true} />} />
               
