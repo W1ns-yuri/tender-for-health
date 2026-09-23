@@ -28,7 +28,12 @@ import {
   Shield, 
   XCircle, 
   ExternalLink,
-  Camera
+  Camera,
+  Globe,
+  Award,
+  Calendar,
+  DollarSign,
+  AlertTriangle
 } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
@@ -59,6 +64,56 @@ const TURKMEN_BANKS = [
   { id: 'OTHER', name: 'Другой банк / Inisi...', key: 'otherBankOption', code: '', isCustom: true },
 ];
 
+// Целевые слоты загрузки документов поставщика
+const DOCUMENT_SLOTS = [
+  {
+    key: 'REG_CERTIFICATE',
+    titleKey: 'slotRegCertificateTitle',
+    defaultTitle: 'Свидетельство о гос. регистрации (ЕГР)',
+    descKey: 'slotRegCertificateDesc',
+    defaultDesc: 'Копия свидетельства о государственной регистрации юрлица или ИП',
+    required: true,
+    icon: Building2
+  },
+  {
+    key: 'CHARTER',
+    titleKey: 'slotCharterTitle',
+    defaultTitle: 'Устав организации (для юрлиц)',
+    descKey: 'slotCharterDesc',
+    defaultDesc: 'Устав хозяйственного общества или предприятия с отметками регистрации',
+    required: false,
+    icon: FileText
+  },
+  {
+    key: 'MINHEALTH_LICENSE',
+    titleKey: 'slotLicenseTitle',
+    defaultTitle: 'Копия лицензии Минздрава',
+    descKey: 'slotLicenseDesc',
+    defaultDesc: 'Для поставщиков фармацевтической продукции и медтехники',
+    required: false,
+    icon: Award,
+    isLicenseSlot: true
+  },
+  {
+    key: 'DIRECTOR_APPOINTMENT',
+    titleKey: 'slotDirectorAppointmentTitle',
+    defaultTitle: 'Документ о полномочиях руководителя',
+    descKey: 'slotDirectorAppointmentDesc',
+    defaultDesc: 'Приказ о назначении директора или протокол общего собрания',
+    required: false,
+    icon: User
+  },
+  {
+    key: 'OTHER',
+    titleKey: 'slotOtherTitle',
+    defaultTitle: 'Дополнительные сертификаты и лицензии',
+    descKey: 'slotOtherDesc',
+    defaultDesc: 'Сертификаты ISO, GMP, доверенности, патенты',
+    required: false,
+    icon: FileCheck
+  },
+];
+
 export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isOwner }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -75,14 +130,17 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
-  const [isDragging, setIsDragging] = useState(false);
+  const [activeUploadSlot, setActiveUploadSlot] = useState(null);
+
+  // Вкладка банковских реквизитов ('local' | 'foreign')
+  const [bankTab, setBankTab] = useState('local');
 
   // Состояние выпадающего списка банков с поиском
   const [isBankOpen, setIsBankOpen] = useState(false);
   const [bankSearch, setBankSearch] = useState('');
   const bankDropdownRef = useRef(null);
-  const fileInputRef = useRef(null);
   const logoInputRef = useRef(null);
+  const slotFileInputRefs = useRef({});
 
   // Состояние кастомного выпадающего списка велаятов
   const [isRegionOpen, setIsRegionOpen] = useState(false);
@@ -92,11 +150,24 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   const [formData, setFormData] = useState({
     name: '',
     type: 'ENTREPRENEUR',
+    countryCode: 'TM',
+    countryName: '',
     region: '',
     address: '',
+    legalAddress: '',
+    okpoCode: '',
+    directorPersonalCode: '',
+    isMedicalLicensed: false,
+    licenseNumber: '',
+    licenseIssuedBy: '',
+    licenseExpiryDate: '',
     bankName: '',
     bankAccount: '',
     bankMfo: '',
+    bankCorrAccount: '',
+    bankSwift: '',
+    bankIban: '',
+    bankCurrency: 'USD',
     passportSeries: '',
     passportIssuedBy: '',
     email: '',
@@ -107,7 +178,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
 
   const [isCustomBank, setIsCustomBank] = useState(false);
 
-  // Локальное отображение номера телефона (без префикса +993)
+  // Локальное отображение номера телефона (для TM: 8 цифр без +993; для других стран: полный ввод)
   const [phoneDigits, setPhoneDigits] = useState('');
 
   // Режим редактирования (для верифицированных компаний по умолчанию false)
@@ -116,6 +187,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   const [initialPhoneDigits, setInitialPhoneDigits] = useState('');
   const [showCompanyCard, setShowCompanyCard] = useState(false);
   const [passportError, setPassportError] = useState('');
+  const [personalCodeError, setPersonalCodeError] = useState('');
 
   // Безопасное удаление документов (стейджинг изменений при редактировании)
   const [pendingDeleteDocIds, setPendingDeleteDocIds] = useState([]);
@@ -126,6 +198,19 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   const effectiveIsOwner = Boolean(isOwner || (role === 'SUPPLIER' && !id));
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isModerating, setIsModerating] = useState(false);
+
+  // Определение: является ли компания иностранной
+  const isForeignCompany = Boolean(
+    (supplier?.country?.alpha2 && supplier.country.alpha2 !== 'TM') ||
+    (formData.countryCode && formData.countryCode !== 'TM')
+  );
+
+  // Проверка: просрочена ли лицензия Минздрава
+  const isLicenseExpired = Boolean(
+    formData.isMedicalLicensed &&
+    formData.licenseExpiryDate &&
+    new Date(formData.licenseExpiryDate) < new Date().setHours(0, 0, 0, 0)
+  );
 
   const handleAdminApprove = async () => {
     if (!supplier) return;
@@ -206,7 +291,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       .trim() || rawName.trim();
   };
 
-  // Получение монограммы бренда (например, «Медик-Фарм» -> «МФ», «ФармаЛогистик» -> «ФЛ»)
+  // Получение монограммы бренда
   const getBrandInitials = (rawName) => {
     const clean = getCleanCompanyName(rawName);
     if (!clean) return 'TU';
@@ -229,10 +314,11 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     if (type === 'BUSINESS_SOCIETY') return `ХО «${clean}» (HJ «${clean}»)`;
     if (type === 'PRIVATE_ENTERPRISE' || type === 'BUSINESS_COMPANY') return `ЧП «${clean}» (HK «${clean}»)`;
     if (type === 'DAÝHAN_HOJALYGY' || type === 'FARMER_ASSOCIATION') return `DH «${clean}» (Daýhan hojalygy «${clean}»)`;
+    if (type === 'FOREIGN_ENTITY') return `Иностранная компания «${clean}»`;
     return clean;
   };
 
-  // Надежное получение формы собственности компании (ИП / ХО / ЧП / DH)
+  // Надежное получение формы собственности компании
   const getCompanyTypeBadge = (customType) => {
     let type = customType || supplier?.type;
     if (!type && supplier?.name) {
@@ -241,13 +327,15 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       else if (n.startsWith('хо') || n.includes('hojalyk') || n.includes('hj')) type = 'BUSINESS_SOCIETY';
       else if (n.startsWith('чп') || n.includes('kärhana') || n.includes('hk')) type = 'PRIVATE_ENTERPRISE';
       else if (n.startsWith('dh') || n.includes('daýhan')) type = 'DAÝHAN_HOJALYGY';
+      else if (isForeignCompany) type = 'FOREIGN_ENTITY';
       else type = 'ENTREPRENEUR';
     }
     if (type === 'ENTREPRENEUR') return 'ИП (Hususy telekeçi)';
     if (type === 'BUSINESS_SOCIETY') return 'ХО (Hojalyk jemgyýeti)';
     if (type === 'PRIVATE_ENTERPRISE' || type === 'BUSINESS_COMPANY') return 'ЧП (Hususy kärhana)';
     if (type === 'DAÝHAN_HOJALYGY' || type === 'FARMER_ASSOCIATION') return 'DH (Daýhan hojalygy)';
-    if (type === 'GOVERNMENT') return 'Гос. предприятие';
+    if (type === 'GOVERNMENT') return 'Гос. предприятие (Döwlet kärhanasy)';
+    if (type === 'FOREIGN_ENTITY') return t('foreignEntity', 'Иностранное юр. лицо');
     return type || 'ИП (Hususy telekeçi)';
   };
 
@@ -279,7 +367,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     return formData.region;
   };
 
-  // Форматирование телефонного номера: 8 цифр -> "65 56-65-65"
+  // Форматирование телефонного номера для ТМ: 8 цифр -> "65 56-65-65"
   const formatPhoneString = (rawDigits) => {
     if (!rawDigits) return '';
     let res = '';
@@ -290,7 +378,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     return res;
   };
 
-  // Загрузка данных
+  // Загрузка данных профиля
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -300,7 +388,6 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
         let userPhone = '';
 
         if (effectiveIsOwner && !id) {
-          // Загружаем профиль текущего пользователя
           const meRes = await API.get('/auth/me');
           userEmail = meRes.data?.email || (meRes.data?.username?.includes('@') ? meRes.data.username : '');
           userPhone = meRes.data?.phone || '';
@@ -311,7 +398,6 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
             currentSupplier.email = currentSupplier.email || userEmail;
           }
         } else {
-          // Загружаем профиль по id через прямой эндпоинт
           try {
             const compRes = await API.get(`/suppliers/${id}`);
             currentSupplier = compRes.data;
@@ -333,7 +419,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
             if (Array.isArray(r.data)) setCategoriesList(r.data.filter(c => c.isActive));
           }).catch(() => {});
 
-          // Извлечение паспортных данных (если ранее были сохранены единой строкой)
+          // Извлечение паспортных данных
           let pSeries = currentSupplier.passportSeries || '';
           let pIssued = currentSupplier.passportIssuedBy || '';
           if (!pSeries && !pIssued && currentSupplier.passportInfo) {
@@ -346,34 +432,48 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
             }
           }
 
-          // Нормализация региона под официальный список
+          // Страна поставщика
+          const cCode = currentSupplier.country?.alpha2 || (currentSupplier.phone?.startsWith('+993') ? 'TM' : (currentSupplier.phone ? 'OTHER' : 'TM'));
+          const cName = currentSupplier.country?.nameRu || currentSupplier.country?.name || 'Туркменистан';
+          const isForeign = cCode !== 'TM';
+
+          // Нормализация региона под официальный список (если Туркменистан)
           let reg = currentSupplier.region || '';
           let addr = currentSupplier.address || '';
-          if (reg) {
-            const matched = REGIONS.find(r => 
-              r.id.toLowerCase() === reg.toLowerCase() || 
-              r.id.toLowerCase().startsWith(reg.toLowerCase()) ||
-              reg.toLowerCase().startsWith(r.id.toLowerCase().slice(0, 4))
-            );
-            if (matched) reg = matched.id;
-          } else if (addr) {
-            const foundRegion = REGIONS.find(r => addr.toLowerCase().includes(r.id.toLowerCase().slice(0, 4)));
-            if (foundRegion) {
-              reg = foundRegion.id;
+          if (!isForeign) {
+            if (reg) {
+              const matched = REGIONS.find(r => 
+                r.id.toLowerCase() === reg.toLowerCase() || 
+                r.id.toLowerCase().startsWith(reg.toLowerCase()) ||
+                reg.toLowerCase().startsWith(r.id.toLowerCase().slice(0, 4))
+              );
+              if (matched) reg = matched.id;
+            } else if (addr) {
+              const foundRegion = REGIONS.find(r => addr.toLowerCase().includes(r.id.toLowerCase().slice(0, 4)));
+              if (foundRegion) {
+                reg = foundRegion.id;
+              }
             }
           }
 
           // Обработка телефона
-          const rawP = (currentSupplier.phone || currentSupplier.user?.phone || userPhone || '').replace(/\D/g, '');
-          let pureDigits = rawP;
-          if (pureDigits.startsWith('993')) {
-            pureDigits = pureDigits.slice(3);
-          }
-          pureDigits = pureDigits.slice(0, 8);
-          const formattedP = formatPhoneString(pureDigits);
+          const fullPhone = currentSupplier.phone || currentSupplier.user?.phone || userPhone || '';
+          let formattedPhoneDisplay = fullPhone;
+          let phoneToStore = fullPhone;
 
-          setPhoneDigits(formattedP);
-          setInitialPhoneDigits(formattedP);
+          if (!isForeign) {
+            const rawP = fullPhone.replace(/\D/g, '');
+            let pureDigits = rawP;
+            if (pureDigits.startsWith('993')) {
+              pureDigits = pureDigits.slice(3);
+            }
+            pureDigits = pureDigits.slice(0, 8);
+            formattedPhoneDisplay = formatPhoneString(pureDigits);
+            phoneToStore = pureDigits ? `+993 ${formattedPhoneDisplay}` : '';
+          }
+
+          setPhoneDigits(formattedPhoneDisplay);
+          setInitialPhoneDigits(formattedPhoneDisplay);
 
           const cleanName = getCleanCompanyName(currentSupplier.name);
           const userFullName = currentSupplier.user?.firstName
@@ -386,18 +486,45 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
           );
           setIsCustomBank(bankIsCustom);
 
+          // Выбор вкладки банка (если есть SWIFT или IBAN - сразу открываем иностранную вкладку)
+          const hasForeignBankData = Boolean(currentSupplier.bankSwift || currentSupplier.bankIban || (isForeign && !currentSupplier.bankAccount));
+          setBankTab(hasForeignBankData ? 'foreign' : 'local');
+
+          // Форматирование даты лицензии Минздрава (YYYY-MM-DD)
+          let lExpDate = '';
+          if (currentSupplier.licenseExpiryDate) {
+            try {
+              lExpDate = new Date(currentSupplier.licenseExpiryDate).toISOString().split('T')[0];
+            } catch {
+              lExpDate = currentSupplier.licenseExpiryDate;
+            }
+          }
+
           const initialData = {
             name: cleanName,
-            type: currentSupplier.type || 'ENTREPRENEUR',
+            type: currentSupplier.type || (isForeign ? 'FOREIGN_ENTITY' : 'ENTREPRENEUR'),
+            countryCode: cCode,
+            countryName: cName,
             region: reg,
             address: addr,
+            legalAddress: currentSupplier.legalAddress || '',
+            okpoCode: currentSupplier.okpoCode || '',
+            directorPersonalCode: currentSupplier.directorPersonalCode || '',
+            isMedicalLicensed: Boolean(currentSupplier.isMedicalLicensed),
+            licenseNumber: currentSupplier.licenseNumber || '',
+            licenseIssuedBy: currentSupplier.licenseIssuedBy || '',
+            licenseExpiryDate: lExpDate,
             bankName: currentSupplier.bankName || '',
             bankAccount: currentSupplier.bankAccount || '',
             bankMfo: currentSupplier.bankMfo || '',
+            bankCorrAccount: currentSupplier.bankCorrAccount || '',
+            bankSwift: currentSupplier.bankSwift || '',
+            bankIban: currentSupplier.bankIban || '',
+            bankCurrency: currentSupplier.bankCurrency || 'USD',
             passportSeries: pSeries,
             passportIssuedBy: pIssued,
             email: currentSupplier.email || userEmail || '',
-            phone: pureDigits ? `+993 ${formattedP}` : '',
+            phone: phoneToStore,
             directorName: currentSupplier.directorName || userFullName || '',
             logoUrl: currentSupplier.logoUrl || ''
           };
@@ -447,9 +574,20 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       formData.type !== initialFormData.type ||
       formData.region !== initialFormData.region ||
       formData.address !== initialFormData.address ||
+      formData.legalAddress !== initialFormData.legalAddress ||
+      formData.okpoCode !== initialFormData.okpoCode ||
+      formData.directorPersonalCode !== initialFormData.directorPersonalCode ||
+      formData.isMedicalLicensed !== initialFormData.isMedicalLicensed ||
+      formData.licenseNumber !== initialFormData.licenseNumber ||
+      formData.licenseIssuedBy !== initialFormData.licenseIssuedBy ||
+      formData.licenseExpiryDate !== initialFormData.licenseExpiryDate ||
       formData.bankName !== initialFormData.bankName ||
       formData.bankAccount !== initialFormData.bankAccount ||
       formData.bankMfo !== initialFormData.bankMfo ||
+      formData.bankCorrAccount !== initialFormData.bankCorrAccount ||
+      formData.bankSwift !== initialFormData.bankSwift ||
+      formData.bankIban !== initialFormData.bankIban ||
+      formData.bankCurrency !== initialFormData.bankCurrency ||
       formData.passportSeries !== initialFormData.passportSeries ||
       formData.passportIssuedBy !== initialFormData.passportIssuedBy ||
       formData.phone !== initialFormData.phone ||
@@ -492,9 +630,11 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   };
 
   const handleAddressBlur = () => {
-    const cleaned = cleanAddressString(formData.address, formData.region);
-    if (cleaned !== formData.address) {
-      setFormData(prev => ({ ...prev, address: cleaned }));
+    if (!isForeignCompany) {
+      const cleaned = cleanAddressString(formData.address, formData.region);
+      if (cleaned !== formData.address) {
+        setFormData(prev => ({ ...prev, address: cleaned }));
+      }
     }
   };
 
@@ -503,13 +643,8 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     let input = e.target.value.toUpperCase();
     setPassportError('');
 
-    // Строго не более 6 цифр
     const digits = (input.match(/\d/g) || []).join('').slice(0, 6);
-    
-    // Буквенная часть серии
     let letters = input.replace(/[0-9]/g, '').trim();
-    
-    // Если введено слитно без дефиса, например "IAS" или "IIMR"
     letters = letters.replace(/^([I|V|X]+)[-\s]?([A-ZА-Я]{1,2})/i, '$1-$2');
     letters = letters.replace(/-+$/, '');
 
@@ -531,6 +666,13 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     }));
   };
 
+  // Обработка ввода 14-значного личного кода руководителя (Шехсы код / Şahsy kod)
+  const handlePersonalCodeChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 14);
+    setPersonalCodeError('');
+    setFormData(prev => ({ ...prev, directorPersonalCode: raw }));
+  };
+
   // Управление режимом редактирования
   const handleStartEdit = () => {
     setInitialDocuments([...documents]);
@@ -543,31 +685,37 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       setFormData({ ...initialFormData });
       setPhoneDigits(initialPhoneDigits);
     }
-    // Восстанавливаем исходный список документов (не удаленный на сервере)
     if (initialDocuments && initialDocuments.length > 0) {
       setDocuments([...initialDocuments]);
     }
     setPendingDeleteDocIds([]);
     setPassportError('');
+    setPersonalCodeError('');
     setIsEditing(false);
   };
 
   // Обработка изменения телефона
   const handlePhoneInputChange = (e) => {
-    let raw = e.target.value.replace(/\D/g, '');
-    if (raw.startsWith('993')) {
-      raw = raw.slice(3);
+    if (isForeignCompany) {
+      const val = e.target.value;
+      setPhoneDigits(val);
+      setFormData(prev => ({ ...prev, phone: val }));
+    } else {
+      let raw = e.target.value.replace(/\D/g, '');
+      if (raw.startsWith('993')) {
+        raw = raw.slice(3);
+      }
+      raw = raw.slice(0, 8);
+      const formatted = formatPhoneString(raw);
+      setPhoneDigits(formatted);
+      setFormData(prev => ({
+        ...prev,
+        phone: raw ? `+993 ${formatted}` : ''
+      }));
     }
-    raw = raw.slice(0, 8);
-    const formatted = formatPhoneString(raw);
-    setPhoneDigits(formatted);
-    setFormData(prev => ({
-      ...prev,
-      phone: raw ? `+993 ${formatted}` : ''
-    }));
   };
 
-  // Обработка выбора банка (поддержка свободного ввода при выборе "Другой банк")
+  // Обработка выбора банка
   const handleSelectBank = (bank) => {
     if (bank.id === 'OTHER' || bank.isCustom) {
       setIsCustomBank(true);
@@ -624,15 +772,6 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
           ? (res.data.filePath.startsWith('http') ? res.data.filePath : `http://localhost:5000/${res.data.filePath.replace(/\\/g, '/')}`) 
           : (res.data.url || '');
         setFormData(prev => ({ ...prev, logoUrl: logoPath }));
-        try {
-          const userStr = localStorage.getItem('tender_user');
-          if (userStr) {
-            const parsedUser = JSON.parse(userStr);
-            parsedUser.logoUrl = logoPath;
-            if (parsedUser.suppliers?.[0]) parsedUser.suppliers[0].logoUrl = logoPath;
-            localStorage.setItem('tender_user', JSON.stringify(parsedUser));
-          }
-        } catch {}
         showAlert({
           title: t('success', 'Успешно'),
           message: t('logoUploadedSuccess', 'Логотип успешно загружен'),
@@ -651,32 +790,31 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     }
   };
 
-  // Загрузка файлов с валидацией форматов и лимита размера (до 10 МБ)
-  const handleFileUpload = async (filesToUpload) => {
-    if (!filesToUpload || !filesToUpload.length || !supplier?.id) return;
+  // Загрузка документа в целевой слот
+  const handleSlotFileUpload = async (files, slotKey) => {
+    if (!files || !files.length || !supplier?.id) return;
     setUploading(true);
     setUploadError('');
+    setActiveUploadSlot(slotKey);
 
     const ALLOWED_EXTS = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'xls', 'xlsx'];
-    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MB
 
     try {
-      for (const file of Array.from(filesToUpload)) {
+      for (const file of Array.from(files)) {
         const ext = file.name.split('.').pop()?.toLowerCase() || '';
 
-        // Проверка расширения
         if (!ALLOWED_EXTS.includes(ext)) {
           setUploadError(t('unsupportedFileFormat', 'Поддерживаются форматы: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG'));
           setUploading(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
+          setActiveUploadSlot(null);
           return;
         }
 
-        // Проверка размера до 10 МБ
         if (file.size > MAX_FILE_SIZE) {
-          setUploadError(t('fileSizeExceeds10MB', 'Размер каждого файла не должен превышать 10 МБ'));
+          setUploadError(t('fileSizeExceeds10MB', 'Размер каждого файла не должен превышать 15 МБ'));
           setUploading(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
+          setActiveUploadSlot(null);
           return;
         }
 
@@ -684,6 +822,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
         uploadData.append('file', file);
         uploadData.append('supplierId', supplier.id);
         uploadData.append('name', file.name);
+        uploadData.append('description', slotKey);
 
         const res = await API.post('/documents/upload', uploadData, {
           headers: { 'Content-Type': 'multipart/form-data' }
@@ -698,44 +837,78 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       setUploadError(serverMsg || t('uploadError', 'Ошибка при загрузке файла'));
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setActiveUploadSlot(null);
+      if (slotFileInputRefs.current[slotKey]) {
+        slotFileInputRefs.current[slotKey].value = '';
+      }
     }
   };
 
-  // Удаление документа
+  // Получение документов, привязанных к конкретному слоту
+  const getDocsForSlot = (slotKey) => {
+    if (slotKey === 'OTHER') {
+      const standardKeys = ['REG_CERTIFICATE', 'CHARTER', 'MINHEALTH_LICENSE', 'DIRECTOR_APPOINTMENT'];
+      return documents.filter(d => d.description === 'OTHER' || !d.description || !standardKeys.includes(d.description));
+    }
+    return documents.filter(d => d.description === slotKey);
+  };
+
   // Безопасное удаление документа (стейджинг удаления при редактировании)
   const handleDeleteDocument = (docId) => {
     setDocuments(prev => prev.filter(d => d.id !== docId));
     setPendingDeleteDocIds(prev => [...prev, docId]);
   };
 
-  // Drag & Drop
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFileUpload(e.dataTransfer.files);
-    }
-  };
-
   // Отправка формы профиля
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e, shouldSubmitForReview = true) => {
+    if (e) e.preventDefault();
     if (!documents || documents.length === 0) {
       showAlert({
         title: t('attention', 'Внимание'),
-        message: t('attachDocsToSubmit', 'Прикрепите документы для отправки на проверку'),
+        message: t('attachDocsToSubmit', 'Прикрепите хотя бы один документ для отправки на проверку'),
         type: 'warning'
       });
       return;
+    }
+
+    // Валидация срока действия лицензии Минздрава
+    if (formData.isMedicalLicensed) {
+      if (!formData.licenseNumber?.trim()) {
+        showAlert({
+          title: t('validationError', 'Ошибка валидации'),
+          message: t('licenseNumberRequired', 'Укажите номер медицинской лицензии Минздрава'),
+          type: 'warning'
+        });
+        return;
+      }
+      if (formData.licenseExpiryDate) {
+        const expiry = new Date(formData.licenseExpiryDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (expiry < today) {
+          showAlert({
+            title: t('validationError', 'Ошибка валидации'),
+            message: t('licenseExpiredError', 'Внимание: срок действия вашей медицинской лицензии истек!'),
+            type: 'error'
+          });
+          return;
+        }
+      }
+    }
+
+    // Валидация Личного кода руководителя (Шехсы код / Şahsy kod)
+    if (formData.directorPersonalCode) {
+      const cleanPersonal = formData.directorPersonalCode.replace(/\D/g, '');
+      if (cleanPersonal.length !== 14) {
+        const pErr = t('directorPersonalCodeInvalid', 'Личный код руководителя (Şahsy kod) должен содержать строго 14 цифр');
+        setPersonalCodeError(pErr);
+        showAlert({
+          title: t('validationError', 'Ошибка валидации'),
+          message: pErr,
+          type: 'warning'
+        });
+        return;
+      }
     }
 
     // Блокировка повторной отправки если статус REJECTED и нет изменений
@@ -748,8 +921,8 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       return;
     }
 
-    // Проверка формата паспорта: строго 6 цифр
-    if (formData.passportSeries) {
+    // Проверка формата паспорта для ТМ резидентов
+    if (formData.passportSeries && !isForeignCompany) {
       const passportRegex = /^([I|V|X]+-[A-ZА-Я]{2}\s\d{6})$/i;
       if (!passportRegex.test(formData.passportSeries.trim())) {
         const pErr = t('passportInvalid', 'Некорректный номер паспорта (формат: I-XX 123456)');
@@ -798,23 +971,37 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
         setPendingDeleteDocIds([]);
       }
 
-      const cleanedAddr = cleanAddressString(formData.address, formData.region);
+      const cleanedAddr = !isForeignCompany ? cleanAddressString(formData.address, formData.region) : formData.address;
       const cleanedName = getCleanCompanyName(formData.name);
 
       const payload = {
         ...formData,
         name: cleanedName,
         address: cleanedAddr,
+        legalAddress: formData.legalAddress?.trim() || null,
+        okpoCode: formData.okpoCode?.trim() || null,
+        directorPersonalCode: formData.directorPersonalCode?.trim() || null,
+        isMedicalLicensed: Boolean(formData.isMedicalLicensed),
+        licenseNumber: formData.licenseNumber?.trim() || null,
+        licenseIssuedBy: formData.licenseIssuedBy?.trim() || null,
+        licenseExpiryDate: formData.licenseExpiryDate ? new Date(formData.licenseExpiryDate).toISOString() : null,
+        bankCorrAccount: formData.bankCorrAccount?.trim() || null,
+        bankSwift: formData.bankSwift?.trim() || null,
+        bankIban: formData.bankIban?.trim() || null,
+        bankCurrency: formData.bankCurrency || 'USD',
         directorName: formData.directorName?.trim() || null,
         logoUrl: formData.logoUrl || null,
         categoryIds: selectedCategoryIds,
-        passportInfo: [formData.passportSeries, formData.passportIssuedBy].filter(Boolean).join(', ')
+        passportInfo: [formData.passportSeries, formData.passportIssuedBy].filter(Boolean).join(', '),
+        submitForReview: shouldSubmitForReview
       };
+
       const res = await API.put('/suppliers/profile', payload);
       setSupplier(res.data);
       const updatedCatIds = res.data.categories ? res.data.categories.map(c => c.categoryId) : selectedCategoryIds;
       setSelectedCategoryIds(updatedCatIds);
       setInitialCategoryIds(updatedCatIds);
+
       const newSavedData = { 
         ...formData, 
         name: cleanedName, 
@@ -830,14 +1017,14 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       setIsEditing(false);
       showAlert({
         title: t('success', 'Успешно'),
-        message: t('profileSentSuccess', 'Профиль успешно отправлен на модерацию!'),
+        message: t('submittedForReviewSuccess', 'Анкета успешно отправлена на модерацию! Ожидайте проверки специалистами Минздрава.'),
         type: 'success'
       });
     } catch (error) {
       console.error(error);
       showAlert({
         title: t('error', 'Ошибка'),
-        message: t('profileSaveError', 'Ошибка при сохранении'),
+        message: error.response?.data?.error || t('profileSaveError', 'Ошибка при сохранении профиля'),
         type: 'error'
       });
     } finally {
@@ -863,19 +1050,29 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
 
   // Расчет готовности профиля
   const calculateReadiness = () => {
-    const isDetailsFilled = Boolean(
+    const isBasicDetailsFilled = Boolean(
       formData.name?.trim() &&
-      formData.region && 
       formData.address?.trim() && 
       formData.phone?.trim() && 
-      formData.email?.trim() && 
-      formData.bankName?.trim() && 
-      formData.bankAccount?.trim() && 
-      formData.bankMfo?.trim() && 
-      formData.passportSeries?.trim() && 
-      formData.passportIssuedBy?.trim()
+      formData.email?.trim()
     );
 
+    const isBankFilled = bankTab === 'foreign'
+      ? Boolean(formData.bankName?.trim() && formData.bankSwift?.trim() && formData.bankIban?.trim())
+      : Boolean(formData.bankName?.trim() && formData.bankAccount?.trim() && formData.bankMfo?.trim());
+
+    const isDirectorFilled = Boolean(
+      formData.directorName?.trim() && 
+      (formData.passportSeries?.trim() || formData.directorPersonalCode?.trim())
+    );
+
+    const isMedicalValid = !formData.isMedicalLicensed || Boolean(
+      formData.licenseNumber?.trim() && 
+      formData.licenseExpiryDate && 
+      new Date(formData.licenseExpiryDate) >= new Date().setHours(0, 0, 0, 0)
+    );
+
+    const isDetailsFilled = isBasicDetailsFilled && isBankFilled && isDirectorFilled && isMedicalValid;
     const isDocsUploaded = documents.length > 0;
     const isApproved = supplier?.verificationStatus === 'VERIFIED';
     const isPendingReview = supplier?.verificationStatus === 'PENDING_REVIEW';
@@ -885,7 +1082,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
         id: 'account',
         title: t('profileStepAccount', 'Создание учетной записи'),
         completed: true,
-        weight: 25
+        weight: 20
       },
       {
         id: 'details',
@@ -897,11 +1094,11 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
         id: 'documents',
         title: t('profileStepDocs', 'Загрузка сканов документов'),
         completed: isDocsUploaded,
-        weight: 25
+        weight: 30
       },
       {
         id: 'approval',
-        title: t('profileStepApproval', 'Одобрение администратором'),
+        title: t('profileStepApproval', 'Одобрение администратором Минздрава'),
         completed: isApproved,
         pending: isPendingReview,
         weight: 15
@@ -925,12 +1122,11 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
 
   const isVerified = supplier?.verificationStatus === 'VERIFIED';
   const isEditable = effectiveIsOwner && (isVerified ? isEditing : supplier?.verificationStatus !== 'PENDING_REVIEW');
-  const isSubmitDisabled = !isEditable || !hasDocuments || saving || (supplier?.verificationStatus === 'REJECTED' && !hasChanges);
+  const isSubmitDisabled = !isEditable || !hasDocuments || saving || isLicenseExpired || (supplier?.verificationStatus === 'REJECTED' && !hasChanges);
 
   const bgClass = isDarkMode ? 'text-slate-100' : 'text-slate-800';
   const cardBg = isDarkMode ? 'bg-slate-900 border-slate-800 shadow-none' : 'bg-white border-slate-200/60 shadow-xl shadow-slate-200/40';
   
-  // В режиме просмотра инпуты выглядят как неактивные поля (светлый/приглушенный текст, режим только для чтения)
   const inputBg = isEditable
     ? (isDarkMode 
         ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-text' 
@@ -958,7 +1154,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     );
   }
 
-  // Отрисовка баннера статуса верификации
+  // Отрисовка баннера статуса модерации / верификации
   const renderStatusBanner = () => {
     if (supplier.verificationStatus === 'VERIFIED') {
       if (isBannerDismissed || !effectiveIsOwner) return null;
@@ -967,7 +1163,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
           <div className="flex items-start space-x-3">
             <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-bold text-emerald-800">{t('companyVerifiedBadge', 'Компания верифицирована')}</h3>
+              <h3 className="font-bold text-emerald-800">{t('companyVerifiedBadge', 'Компания верифицирована на 100%')}</h3>
               <p className="text-emerald-600 text-sm mt-0.5">{t('biddingAccessGrantedNotice', 'Доступ к торгам открыт. Вы можете подавать заявки на тендеры.')}</p>
             </div>
           </div>
@@ -990,13 +1186,12 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
             <XCircle className="text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" size={24} />
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-rose-900 dark:text-rose-100 text-base">
-                {t('rejectionBannerTitle', 'Верификация отклонена администратором')}
+                {t('rejectionBannerTitle', 'Верификация отклонена администратором Минздрава')}
               </h3>
               <p className="text-rose-700 dark:text-rose-300 text-xs mt-1 leading-relaxed">
                 {t('rejectionBannerDesc', 'Администратор отклонил заявку на верификацию. Пожалуйста, ознакомьтесь с замечаниями ниже, внесите исправления и отправьте профиль на повторную проверку.')}
               </p>
 
-              {/* Блок с точной причиной отклонения */}
               <div className="mt-3 p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-rose-200 dark:border-rose-900/60 shadow-xs">
                 <span className="text-[11px] font-bold text-rose-500 uppercase tracking-wider block mb-1">
                   {t('rejectionReasonLabel', 'Причина отклонения')}:
@@ -1031,7 +1226,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
           <Clock className="text-amber-500 shrink-0 mt-0.5" />
           <div>
             <h3 className="font-bold text-amber-800">{t('docsUnderReviewTitle', 'Документы на проверке')}</h3>
-            <p className="text-amber-600 text-sm mt-1">{t('docsUnderReviewNotice', 'Ваши документы находятся на проверке администратором. Ожидайте подтверждения.')}</p>
+            <p className="text-amber-600 text-sm mt-1">{t('docsUnderReviewNotice', 'Ваши документы находятся на проверке специалистами Минздрава. Подача заявок временно заблокирована.')}</p>
           </div>
         </div>
       );
@@ -1039,12 +1234,22 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
 
     if (!effectiveIsOwner) return null;
 
+    // Статус PENDING: Гостевой режим
     return (
-      <div className="bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-start space-x-3 mb-6">
-        <AlertCircle className="text-blue-500 shrink-0 mt-0.5" />
+      <div className="bg-blue-50/90 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 p-4 sm:p-5 rounded-2xl flex items-start gap-3.5 mb-6">
+        <AlertCircle className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={22} />
         <div>
-          <h3 className="font-bold text-blue-800">{t('profileVerificationRequiredTitle', 'Требуется верификация профиля')}</h3>
-          <p className="text-blue-600 text-sm mt-1">{t('completeProfileVerificationNotice', 'Пожалуйста, заполните профиль и загрузите сканы документов для участия в электронных торгах.')}</p>
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-blue-900 dark:text-blue-200 text-sm">
+              {t('statusGuestTitle', 'Гостевой режим: доступен только просмотр торгов')}
+            </h3>
+            <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-[10px] font-black rounded-md">
+              {t('statusGuestBadge', 'Гостевой доступ')}
+            </span>
+          </div>
+          <p className="text-blue-700 dark:text-blue-300 text-xs mt-1 leading-relaxed">
+            {t('statusGuestNotice', 'Для подачи ценовых предложений заполните профиль, прикрепите документы и отправьте анкету на модерацию в Минздрав.')}
+          </p>
         </div>
       </div>
     );
@@ -1076,7 +1281,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
         {/* Левая колонка - Профиль и форма */}
         <div className={`flex-1 min-w-0 rounded-[2rem] p-6 sm:p-8 space-y-8 ${cardBg}`}>
           {/* Шапка профиля компании: чистый бренд + аватар-монограмма */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pb-6 border-b border-slate-100">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pb-6 border-b border-slate-100 dark:border-slate-800">
             <div className="relative group shrink-0">
               <div className="h-20 w-20 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-white rounded-[1.25rem] flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0 font-black text-2xl tracking-wider select-none overflow-hidden">
                 {(formData.logoUrl || supplier.logoUrl) ? (
@@ -1115,20 +1320,26 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
               </h1>
               <div className="flex flex-wrap items-center gap-2.5 mt-2">
                 {/* Форма собственности */}
-                <span className="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">
+                <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg">
                   {getCompanyTypeBadge(supplier.type)}
                 </span>
+
+                {/* Страна регистрации */}
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs font-bold rounded-lg">
+                  <Globe size={13} />
+                  <span>{formData.countryName || supplier.country?.nameRu || supplier.country?.name || 'Туркменистан'}</span>
+                </span>
                 
-                {/* Защищенный STŞK с иконкой замка и тултипом */}
+                {/* Налоговый идентификатор STŞK / TIN */}
                 <span 
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg cursor-help hover:bg-slate-200/70 transition-colors" 
-                  title={t('stskLockedHint', 'STŞK зафиксирован после верификации. Изменение возможно только через техподдержку')}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg cursor-help hover:bg-slate-200/70 transition-colors" 
+                  title={t('stskLockedHint', 'Идентификационный номер зафиксирован после верификации')}
                 >
                   <Lock size={12} className="text-slate-400" />
-                  <span>STŞK: <strong className="text-slate-900 font-bold">{supplier.taxId}</strong></span>
+                  <span>{isForeignCompany ? 'Tax ID / TIN:' : 'STŞK:'} <strong className="text-slate-900 dark:text-white font-bold">{supplier.taxId}</strong></span>
                 </span>
 
-                {/* 🟡 / 🟢 Бейдж статуса верификации в шапке */}
+                {/* Бейдж статуса верификации в шапке */}
                 {supplier.verificationStatus === 'VERIFIED' ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-full text-xs font-bold shadow-xs">
                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -1145,9 +1356,9 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                     {t('statusRejectedBadge', 'Отклонен')}
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200/80 rounded-full text-xs font-bold shadow-xs">
-                    <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                    {t('statusPendingBadge', 'Требует проверки')}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200/80 rounded-full text-xs font-bold shadow-xs">
+                    <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                    {t('statusGuestBadge', 'Гостевой доступ')}
                   </span>
                 )}
               </div>
@@ -1196,7 +1407,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* 0. Данные компании и форма собственности */}
               <div>
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                   <Building2 size={18} className="text-blue-600" />
                   {t('companyLegalData', 'Данные компании и форма')}
                 </h3>
@@ -1211,7 +1422,11 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                         role={role}
                         value={formData.type}
                         onChange={(val) => setFormData(prev => ({ ...prev, type: val }))}
-                        options={[
+                        options={isForeignCompany ? [
+                          { id: 'FOREIGN_ENTITY', name: t('foreignEntity', 'Иностранное юр. лицо (Foreign Entity)') },
+                          { id: 'FOREIGN_BRANCH', name: t('foreignBranch', 'Представительство / Филиал (Branch / Office)') },
+                          { id: 'FOREIGN_SOLE_TRADER', name: t('foreignSoleTrader', 'Индивидуальный предприниматель (Sole Proprietor)') },
+                        ] : [
                           { id: 'ENTREPRENEUR', name: 'ИП (Hususy telekeçi)' },
                           { id: 'BUSINESS_SOCIETY', name: 'ХО (Hojalyk jemgyýeti)' },
                           { id: 'PRIVATE_ENTERPRISE', name: 'ЧП (Hususy kärhana)' },
@@ -1251,6 +1466,26 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                     {isEditable && (
                       <p className="text-[11px] text-slate-400 mt-1 ml-1">
                         {t('companyBrandHint', 'Указывайте только название бренда без организационной формы (ИП, ХО, ЧП)')}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Код предприятия (ХОПО / ОКПО) для ТМ или регистрационный номер для иностранных компаний */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
+                      {isForeignCompany ? t('taxIdLabelForeign', 'Регистрационный номер / Tax ID') : t('okpoCodeLabel', 'Код предприятия (ХОПО / ОКПО)')}
+                    </label>
+                    <input
+                      type="text"
+                      disabled={!isEditable}
+                      value={formData.okpoCode}
+                      onChange={e => setFormData(prev => ({ ...prev, okpoCode: e.target.value }))}
+                      placeholder={isEditable ? (isForeignCompany ? 'Reg. No / TIN' : '8 цифр') : ''}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`}
+                    />
+                    {isEditable && (
+                      <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                        {isForeignCompany ? t('foreignRegCodeHint', 'Регистрационный номер в торговом реестре') : t('okpoCodeHint', '8-значный код ОКПО предприятия')}
                       </p>
                     )}
                   </div>
@@ -1336,82 +1571,154 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   </div>
                 </div>
               </div>
-              {/* 1. Контактные данные */}
+
+              {/* 1. Контактные и адресные данные (разделение Юридического и Фактического адресов) */}
               <div>
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                   <MapPin size={18} className="text-blue-600" />
-                  {t('contactInfo', 'Контактная информация')}
+                  {t('contactInfo', 'Контактная информация и адреса')}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Кастомный красивый выпадающий список «Велаят» (без поиска) */}
+                  {/* Регион: для ТМ - выпадающий список 6 велаятов; для иностранцев - текстовое поле «Штат / Провинция / Регион» */}
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('regionLabel', 'Велаят')} {isEditable && <span className="text-rose-500">*</span>}
+                      {isForeignCompany ? t('foreignRegionLabel', 'Штат / Провинция / Регион') : t('regionLabel', 'Велаят')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
 
-                    <div className="relative" ref={regionDropdownRef}>
-                      {/* Кнопка выбора региона: стрелочка только в режиме редактирования */}
-                      <button
-                        type="button"
-                        disabled={!isEditable}
-                        onClick={() => {
-                          if (!isEditable) return;
-                          setIsRegionOpen(!isRegionOpen);
-                          if (isBankOpen) setIsBankOpen(false);
-                        }}
-                        className={`w-full px-4 py-3 rounded-xl text-sm font-medium border flex items-center justify-between text-left transition-colors ${inputBg} ${
-                          isEditable ? 'cursor-pointer' : 'cursor-not-allowed'
-                        }`}
-                      >
-                        <span className={isEditable ? (formData.region ? (isDarkMode ? 'text-slate-100 font-medium' : 'text-slate-900 font-medium') : 'text-slate-400') : (isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
-                          {getSelectedRegionLabel() || (isEditable ? t('regionSelect', 'Выберите велаят...') : '—')}
-                        </span>
-                        {isEditable && (
-                          <ChevronDown size={18} className={`text-slate-400 transition-transform ${isRegionOpen ? 'rotate-180' : ''}`} />
-                        )}
-                      </button>
+                    {!isForeignCompany ? (
+                      <div className="relative" ref={regionDropdownRef}>
+                        <button
+                          type="button"
+                          disabled={!isEditable}
+                          onClick={() => {
+                            if (!isEditable) return;
+                            setIsRegionOpen(!isRegionOpen);
+                            if (isBankOpen) setIsBankOpen(false);
+                          }}
+                          className={`w-full px-4 py-3 rounded-xl text-sm font-medium border flex items-center justify-between text-left transition-colors ${inputBg} ${
+                            isEditable ? 'cursor-pointer' : 'cursor-not-allowed'
+                          }`}
+                        >
+                          <span className={isEditable ? (formData.region ? (isDarkMode ? 'text-slate-100 font-medium' : 'text-slate-900 font-medium') : 'text-slate-400') : (isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
+                            {getSelectedRegionLabel() || (isEditable ? t('regionSelect', 'Выберите велаят...') : '—')}
+                          </span>
+                          {isEditable && (
+                            <ChevronDown size={18} className={`text-slate-400 transition-transform ${isRegionOpen ? 'rotate-180' : ''}`} />
+                          )}
+                        </button>
 
-                      {/* Всплывающее меню без поиска */}
-                      {isEditable && isRegionOpen && (
-                        <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-1.5 divide-y divide-slate-50">
-                          {REGIONS.map(r => {
-                            const isSelected = formData.region === r.id || formData.region?.toLowerCase().startsWith(r.id.toLowerCase().slice(0, 4));
-                            const translatedLabel = t(r.key, r.defaultName);
-                            return (
-                              <button
-                                key={r.id}
-                                type="button"
-                                onClick={() => {
-                                  setFormData(prev => ({ ...prev, region: r.id }));
-                                  setIsRegionOpen(false);
-                                }}
-                                className={`w-full text-left px-3.5 py-3 rounded-xl transition-colors flex items-center justify-between group cursor-pointer ${
-                                  isSelected ? 'bg-blue-50/80 text-blue-700' : 'hover:bg-slate-50 text-slate-700'
-                                }`}
-                              >
-                                <div>
-                                  <p className={`text-xs ${isSelected ? 'font-bold text-blue-700' : 'font-semibold text-slate-800 group-hover:text-blue-700'}`}>
-                                    {translatedLabel}
-                                  </p>
-                                  {r.defaultName && r.defaultName !== r.name && (
-                                    <p className="text-[11px] text-slate-400 font-normal">{r.defaultName}</p>
+                        {isEditable && isRegionOpen && (
+                          <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-1.5 divide-y divide-slate-50">
+                            {REGIONS.map(r => {
+                              const isSelected = formData.region === r.id || formData.region?.toLowerCase().startsWith(r.id.toLowerCase().slice(0, 4));
+                              const translatedLabel = t(r.key, r.defaultName);
+                              return (
+                                <button
+                                  key={r.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData(prev => ({ ...prev, region: r.id }));
+                                    setIsRegionOpen(false);
+                                  }}
+                                  className={`w-full text-left px-3.5 py-3 rounded-xl transition-colors flex items-center justify-between group cursor-pointer ${
+                                    isSelected ? 'bg-blue-50/80 text-blue-700' : 'hover:bg-slate-50 text-slate-700'
+                                  }`}
+                                >
+                                  <div>
+                                    <p className={`text-xs ${isSelected ? 'font-bold text-blue-700' : 'font-semibold text-slate-800 group-hover:text-blue-700'}`}>
+                                      {translatedLabel}
+                                    </p>
+                                    {r.defaultName && r.defaultName !== r.name && (
+                                      <p className="text-[11px] text-slate-400 font-normal">{r.defaultName}</p>
+                                    )}
+                                  </div>
+                                  {isSelected && (
+                                    <Check size={16} className="text-blue-600 shrink-0 ml-2" />
                                   )}
-                                </div>
-                                {isSelected && (
-                                  <Check size={16} className="text-blue-600 shrink-0 ml-2" />
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        disabled={!isEditable}
+                        value={formData.region}
+                        onChange={e => setFormData(prev => ({ ...prev, region: e.target.value }))}
+                        placeholder={isEditable ? t('foreignRegionPlaceholder', 'Например: Бавария, Стамбул, Дубай') : ''}
+                        className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`}
+                      />
+                    )}
                   </div>
 
-                  {/* Текстовое поле «Точный адрес» с очисткой от повторения велаята */}
+                  {/* Рабочий телефон */}
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('exactAddress', 'Точный адрес (этрап, улица, дом/офис)')} {isEditable && <span className="text-rose-500">*</span>}
+                      {t('workPhone', 'Рабочий телефон')} {isEditable && <span className="text-rose-500">*</span>}
+                    </label>
+                    {isEditable ? (
+                      !isForeignCompany ? (
+                        <div className="relative flex items-center">
+                          <span className="absolute left-4 font-bold select-none pointer-events-none text-sm tracking-tight text-slate-600">
+                            +993
+                          </span>
+                          <input 
+                            type="tel" 
+                            required
+                            value={phoneDigits}
+                            onChange={handlePhoneInputChange}
+                            placeholder="65 56-65-65"
+                            className={`w-full pl-16 pr-4 py-3 rounded-xl text-sm font-medium border tracking-wider ${inputBg}`} 
+                          />
+                        </div>
+                      ) : (
+                        <input 
+                          type="tel" 
+                          required
+                          value={phoneDigits}
+                          onChange={handlePhoneInputChange}
+                          placeholder="+49 151 2345678"
+                          className={`w-full px-4 py-3 rounded-xl text-sm font-medium border tracking-wider ${inputBg}`} 
+                        />
+                      )
+                    ) : (
+                      <div className={`w-full px-4 py-3 rounded-xl text-sm font-semibold border ${inputBg} flex items-center`}>
+                        <span>
+                          {!isForeignCompany 
+                            ? (phoneDigits ? `+993 ${phoneDigits}` : (supplier?.phone || '-'))
+                            : (formData.phone || supplier?.phone || '-')}
+                        </span>
+                      </div>
+                    )}
+                    {isEditable && (
+                      <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                        {!isForeignCompany ? t('phoneFormatHint', 'Формат: +993 XX XX-XX-XX') : t('phoneFormatInternationalHint', 'Формат: +[код страны] [номер]')}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Юридический адрес (по Уставу / ЕГР) */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
+                      {t('legalAddressLabel', 'Юридический адрес (по Уставу / ЕГР)')} {isEditable && <span className="text-rose-500">*</span>}
+                    </label>
+                    <input 
+                      type="text" 
+                      required
+                      disabled={!isEditable}
+                      value={formData.legalAddress}
+                      onChange={e => setFormData({ ...formData, legalAddress: e.target.value })}
+                      placeholder={isEditable ? t('legalAddressPlaceholder', 'Официальный адрес государственной регистрации') : ''}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
+                    />
+                  </div>
+
+                  {/* Фактический адрес (Офис / Склад) */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
+                      {t('actualAddressLabel', 'Фактический адрес (Офис / Склад)')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
                     <input 
                       type="text" 
@@ -1423,257 +1730,426 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       placeholder={isEditable ? t('exactAddressPlaceholder', 'этрап, улица, дом/офис') : ''}
                       className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
                     />
-                    {isEditable && (
+                    {isEditable && !isForeignCompany && (
                       <p className="text-[11px] text-slate-400 mt-1 ml-1">
                         {t('addressCleanHint', 'Указывайте без повторения города/велаята: этрап, улица, дом, офис')}
                       </p>
                     )}
                   </div>
 
-                  {/* Рабочий телефон с чистым международным префиксом +993 */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('workPhone', 'Рабочий телефон')} {isEditable && <span className="text-rose-500">*</span>}
-                    </label>
-                    {isEditable ? (
-                      <div className="relative flex items-center">
-                        <span className="absolute left-4 font-bold select-none pointer-events-none text-sm tracking-tight text-slate-600">
-                          +993
-                        </span>
-                        <input 
-                          type="tel" 
-                          required
-                          value={phoneDigits}
-                          onChange={handlePhoneInputChange}
-                          placeholder="65 56-65-65"
-                          className={`w-full pl-16 pr-4 py-3 rounded-xl text-sm font-medium border tracking-wider ${inputBg}`} 
-                        />
-                      </div>
-                    ) : (
-                      <div className={`w-full px-4 py-3 rounded-xl text-sm font-semibold border ${inputBg} flex items-center`}>
-                        <span>
-                          {phoneDigits 
-                            ? `+993 ${phoneDigits}` 
-                            : (supplier?.phone || supplier?.user?.phone || '-')}
-                        </span>
-                      </div>
-                    )}
-                    {isEditable && (
-                      <p className="text-[11px] text-slate-400 mt-1 ml-1">
-                        {t('phoneFormatHint', 'Формат: +993 XX XX-XX-XX')}
-                      </p>
-                    )}
-                  </div>
-
                   {/* Автозаполнение Email */}
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
                       {t('corpEmail', 'Корпоративный Email')} {isEditable && <span className="text-rose-500">*</span>}
                     </label>
-                    <div className="relative">
+                    <input 
+                      type="email" 
+                      required
+                      disabled={!isEditable}
+                      value={formData.email}
+                      onChange={e => setFormData({ ...formData, email: e.target.value })}
+                      placeholder={isEditable ? "company@example.com" : ""}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Лицензии и сертификаты Минздрава (критично для фармацевтики и мед. оборудования) */}
+              <div className="p-5 bg-gradient-to-br from-indigo-50/60 via-blue-50/40 to-slate-50/60 dark:from-slate-800/50 dark:to-slate-900/50 border border-blue-100 dark:border-slate-700/80 rounded-2xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Award size={18} className="text-blue-600" />
+                      {t('medicalLicenseBlockTitle', 'Лицензии и сертификаты Минздрава')}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {t('medicalLicenseSubtitle', 'Обязательно для поставщиков медикаментов, мед. оборудования и изделий мед. назначения')}
+                    </p>
+                  </div>
+                  {isEditable && (
+                    <label className="inline-flex items-center gap-2 cursor-pointer shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={formData.isMedicalLicensed}
+                        onChange={e => setFormData(prev => ({ ...prev, isMedicalLicensed: e.target.checked }))}
+                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                      />
+                      <span className="text-xs font-bold text-blue-900 dark:text-blue-300">
+                        {t('isMedicalLicensedLabel', 'Есть лицензия Минздрава')}
+                      </span>
+                    </label>
+                  )}
+                </div>
+
+                {formData.isMedicalLicensed ? (
+                  <div className="space-y-3 pt-2 border-t border-blue-100 dark:border-slate-700">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 ml-1">
+                          {t('licenseNumberLabel', 'Номер лицензии Минздрава')} <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required={formData.isMedicalLicensed}
+                          disabled={!isEditable}
+                          value={formData.licenseNumber}
+                          onChange={e => setFormData(prev => ({ ...prev, licenseNumber: e.target.value }))}
+                          placeholder={isEditable ? '№ 12-34/56' : ''}
+                          className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-medium border ${inputBg}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 ml-1">
+                          {t('licenseIssuedByLabel', 'Кем выдана')}
+                        </label>
+                        <input
+                          type="text"
+                          disabled={!isEditable}
+                          value={formData.licenseIssuedBy}
+                          onChange={e => setFormData(prev => ({ ...prev, licenseIssuedBy: e.target.value }))}
+                          placeholder={isEditable ? t('licenseIssuedByPlaceholder', 'Минздрав Туркменистана') : ''}
+                          className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-medium border ${inputBg}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 ml-1">
+                          {t('licenseExpiryDateLabel', 'Срок действия до')} <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          required={formData.isMedicalLicensed}
+                          disabled={!isEditable}
+                          value={formData.licenseExpiryDate}
+                          onChange={e => setFormData(prev => ({ ...prev, licenseExpiryDate: e.target.value }))}
+                          className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-medium border ${
+                            isLicenseExpired 
+                              ? 'border-rose-400 bg-rose-50 text-rose-800' 
+                              : inputBg
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Предупреждение о просроченной лицензии */}
+                    {isLicenseExpired && (
+                      <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                        <AlertCircle size={18} className="text-rose-600 shrink-0" />
+                        <span>{t('licenseExpiredError', 'Внимание: срок действия вашей медицинской лицензии истек!')}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 italic">
+                    {t('medicalLicenseNotClaimed', 'Компания не заявляет наличие специальной лицензии Минздрава.')}
+                  </p>
+                )}
+              </div>
+
+              {/* 3. Банковские реквизиты (Вкладки: Местные TMT vs Международные USD/EUR) */}
+              <div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <CreditCard size={18} className="text-blue-600" />
+                    {t('bankDetails', 'Банковские реквизиты')}
+                  </h3>
+
+                  {/* Переключатель вкладок реквизитов */}
+                  <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setBankTab('local')}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        bankTab === 'local'
+                          ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                      }`}
+                    >
+                      {t('tabBankLocal', 'Местные реквизиты (TMT)')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBankTab('foreign')}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        bankTab === 'foreign'
+                          ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                      }`}
+                    >
+                      {t('tabBankForeign', 'Международные реквизиты (USD / EUR)')}
+                    </button>
+                  </div>
+                </div>
+
+                {bankTab === 'local' ? (
+                  /* Вкладка 1: Банк Туркменистана (TMT) */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in duration-150">
+                    {/* Селект с поиском для банка или свободный ввод если 'Другой банк' */}
+                    {isCustomBank && isEditable ? (
+                      <div className="sm:col-span-2">
+                        <div className="flex items-center justify-between mb-1.5 ml-1">
+                          <label className="block text-xs font-bold text-slate-500">
+                            {t('customBankNameLabel', 'Наименование банка (ручной ввод)')} <span className="text-rose-500">*</span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsCustomBank(false);
+                              setFormData(prev => ({ ...prev, bankName: '' }));
+                            }}
+                            className="text-xs font-bold text-blue-600 hover:text-blue-700 underline cursor-pointer"
+                          >
+                            ← {t('chooseFromBankList', 'Выбрать из списка банков')}
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          value={formData.bankName}
+                          onChange={e => setFormData(prev => ({ ...prev, bankName: e.target.value }))}
+                          placeholder={t('customBankPlaceholder', 'Введите точное наименование банка')}
+                          className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`}
+                        />
+                      </div>
+                    ) : (
+                      <div className="sm:col-span-2 relative" ref={bankDropdownRef}>
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
+                          {t('bankNameLabel', 'Наименование банка')} {isEditable && <span className="text-rose-500">*</span>}
+                        </label>
+                        
+                        <button
+                          type="button"
+                          disabled={!isEditable}
+                          onClick={() => {
+                            if (!isEditable) return;
+                            setIsBankOpen(!isBankOpen);
+                            if (isRegionOpen) setIsRegionOpen(false);
+                          }}
+                          className={`w-full px-4 py-3 rounded-xl text-sm font-medium border flex items-center justify-between text-left transition-colors ${inputBg} ${
+                            isEditable ? 'cursor-pointer' : 'cursor-not-allowed'
+                          }`}
+                        >
+                          <span className={isEditable ? (formData.bankName ? (isDarkMode ? 'text-slate-100 font-medium' : 'text-slate-900 font-medium') : 'text-slate-400') : (isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
+                            {formData.bankName || (isEditable ? t('bankSelectPlaceholder', 'Выберите банк из списка...') : '—')}
+                          </span>
+                          {isEditable && (
+                            <ChevronDown size={18} className={`text-slate-400 transition-transform ${isBankOpen ? 'rotate-180' : ''}`} />
+                          )}
+                        </button>
+
+                        {isEditable && isBankOpen && (
+                          <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                            <div className="p-3 border-b border-slate-100 bg-slate-50/50">
+                              <div className="relative">
+                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                  type="text"
+                                  value={bankSearch}
+                                  onChange={e => setBankSearch(e.target.value)}
+                                  placeholder={t('bankSearchPlaceholder', 'Поиск банка (название или МФО)...')}
+                                  className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  autoFocus
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="max-h-60 overflow-y-auto divide-y divide-slate-50 p-1">
+                              {filteredBanks.length > 0 ? (
+                                filteredBanks.map(bank => (
+                                  <button
+                                    key={bank.id}
+                                    type="button"
+                                    onClick={() => handleSelectBank(bank)}
+                                    className="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-blue-50/80 transition-colors flex items-center justify-between group cursor-pointer"
+                                  >
+                                    <div>
+                                      <p className="text-xs font-bold text-slate-800 group-hover:text-blue-700">{bank.name}</p>
+                                      <p className="text-[11px] text-slate-400">МФО: {bank.code}</p>
+                                    </div>
+                                    {formData.bankName === bank.name && (
+                                      <Check size={16} className="text-blue-600" />
+                                    )}
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="p-4 text-center text-xs text-slate-400">
+                                  {t('bankNotFound', 'Банк не найден в стандартном списке')}
+                                  {bankSearch && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setFormData(prev => ({ ...prev, bankName: bankSearch }));
+                                        setIsBankOpen(false);
+                                      }}
+                                      className="mt-2 block w-full py-1.5 px-3 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded-lg font-bold text-xs"
+                                    >
+                                      {t('useCustomBank', 'Использовать')}: "{bankSearch}"
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Расчетный счет (28 знаков) */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
+                        {t('bankAccountLabel', 'Расчетный счет (Hasap belgisi)')} {isEditable && <span className="text-rose-500">*</span>}
+                      </label>
                       <input 
-                        type="email" 
-                        required
+                        type="text" 
+                        required={bankTab === 'local'}
                         disabled={!isEditable}
-                        value={formData.email}
-                        onChange={e => setFormData({ ...formData, email: e.target.value })}
-                        placeholder={isEditable ? "company@example.com" : ""}
+                        maxLength={28}
+                        value={formData.bankAccount}
+                        onChange={e => setFormData({ ...formData, bankAccount: e.target.value.replace(/\s/g, '') })}
+                        placeholder={isEditable ? "23204934170123456789000" : ""}
+                        className={`w-full px-4 py-3 rounded-xl text-sm font-medium tracking-wider border ${inputBg}`} 
+                      />
+                      {isEditable && (
+                        <p className="text-[11px] text-slate-400 mt-1 ml-1">{t('bankAccountHint', '28 символов (стандарт ЦБ Туркменистана)')}</p>
+                      )}
+                    </div>
+
+                    {/* МФО банка (9 цифр) */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
+                        {t('bankMfoLabel', 'МФО банка (MFO kody)')} {isEditable && <span className="text-rose-500">*</span>}
+                      </label>
+                      <input 
+                        type="text" 
+                        required={bankTab === 'local'}
+                        disabled={!isEditable}
+                        maxLength={9}
+                        value={formData.bankMfo}
+                        onChange={e => setFormData({ ...formData, bankMfo: e.target.value })}
+                        placeholder={isEditable ? "xxxxxxxxx" : ""}
                         className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
                       />
                     </div>
-                    {isEditable && (
-                      <p className="text-[11px] text-slate-400 mt-1 ml-1">
-                        {t('emailSyncHint', 'Автоматически синхронизирован с аккаунтом')}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
 
-              {/* 2. Банковские реквизиты */}
-              <div>
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  <CreditCard size={18} className="text-blue-600" />
-                  {t('bankDetails', 'Банковские реквизиты')}
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Селект с поиском для банка или свободный ввод если 'Другой банк' */}
-                  {isCustomBank && isEditable ? (
+                    {/* Корреспондентский счет банка */}
                     <div className="sm:col-span-2">
-                      <div className="flex items-center justify-between mb-1.5 ml-1">
-                        <label className="block text-xs font-bold text-slate-500">
-                          {t('customBankNameLabel', 'Наименование банка (ручной ввод)')} <span className="text-rose-500">*</span>
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsCustomBank(false);
-                            setFormData(prev => ({ ...prev, bankName: '' }));
-                          }}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-700 underline cursor-pointer"
-                        >
-                          ← {t('chooseFromBankList', 'Выбрать из списка банков')}
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        required
-                        value={formData.bankName}
-                        onChange={e => setFormData(prev => ({ ...prev, bankName: e.target.value }))}
-                        placeholder={t('customBankPlaceholder', 'Введите точное наименование банка')}
-                        className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`}
+                      <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
+                        {t('bankCorrAccountLabel', 'Корреспондентский счет банка')}
+                      </label>
+                      <input 
+                        type="text" 
+                        disabled={!isEditable}
+                        value={formData.bankCorrAccount}
+                        onChange={e => setFormData({ ...formData, bankCorrAccount: e.target.value })}
+                        placeholder={isEditable ? "Корр. счет в Центральном банке ТМ" : ""}
+                        className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
                       />
                     </div>
-                  ) : (
-                    <div className="sm:col-span-2 relative" ref={bankDropdownRef}>
-                    <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('bankNameLabel', 'Наименование банка')} {isEditable && <span className="text-rose-500">*</span>}
-                    </label>
-                    
-                    {/* Кнопка выбора банка: стрелочка только в режиме редактирования */}
-                    <button
-                      type="button"
-                      disabled={!isEditable}
-                      onClick={() => {
-                        if (!isEditable) return;
-                        setIsBankOpen(!isBankOpen);
-                        if (isRegionOpen) setIsRegionOpen(false);
-                      }}
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border flex items-center justify-between text-left transition-colors ${inputBg} ${
-                        isEditable ? 'cursor-pointer' : 'cursor-not-allowed'
-                      }`}
-                    >
-                      <span className={isEditable ? (formData.bankName ? (isDarkMode ? 'text-slate-100 font-medium' : 'text-slate-900 font-medium') : 'text-slate-400') : (isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
-                        {formData.bankName || (isEditable ? t('bankSelectPlaceholder', 'Выберите банк из списка...') : '—')}
-                      </span>
-                      {isEditable && (
-                        <ChevronDown size={18} className={`text-slate-400 transition-transform ${isBankOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                ) : (
+                  /* Вкладка 2: Международные реквизиты (USD / EUR) */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in duration-150">
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
+                        {t('foreignBankNameLabel', 'Наименование иностранного банка')} {isEditable && <span className="text-rose-500">*</span>}
+                      </label>
+                      <input 
+                        type="text" 
+                        required={bankTab === 'foreign'}
+                        disabled={!isEditable}
+                        value={formData.bankName}
+                        onChange={e => setFormData({ ...formData, bankName: e.target.value })}
+                        placeholder={isEditable ? "Deutsche Bank AG, Ziraat Bankasi, etc." : ""}
+                        className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
+                      />
+                    </div>
+
+                    {/* SWIFT / BIC */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
+                        {t('bankSwiftLabel', 'SWIFT-код банка')} {isEditable && <span className="text-rose-500">*</span>}
+                      </label>
+                      <input 
+                        type="text" 
+                        required={bankTab === 'foreign'}
+                        disabled={!isEditable}
+                        maxLength={11}
+                        value={formData.bankSwift}
+                        onChange={e => setFormData({ ...formData, bankSwift: e.target.value.toUpperCase().trim() })}
+                        placeholder={isEditable ? "DEUTDEDDFXX" : ""}
+                        className={`w-full px-4 py-3 rounded-xl text-sm font-bold tracking-widest uppercase border ${inputBg}`} 
+                      />
+                    </div>
+
+                    {/* Валюта счета */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
+                        {t('bankCurrencyLabel', 'Валюта счета')} {isEditable && <span className="text-rose-500">*</span>}
+                      </label>
+                      {isEditable ? (
+                        <CustomSelect
+                          role={role}
+                          value={formData.bankCurrency}
+                          onChange={(val) => setFormData(prev => ({ ...prev, bankCurrency: val }))}
+                          options={[
+                            { id: 'USD', name: 'USD — Доллар США' },
+                            { id: 'EUR', name: 'EUR — Евро' },
+                            { id: 'TRY', name: 'TRY — Турецкая лира' },
+                            { id: 'RUB', name: 'RUB — Российский рубль' },
+                            { id: 'CNY', name: 'CNY — Китайский юань' },
+                            { id: 'AED', name: 'AED — Дирхам ОАЭ' },
+                          ]}
+                          isDarkMode={isDarkMode}
+                          size="md"
+                        />
+                      ) : (
+                        <div className={`w-full px-4 py-3 rounded-xl text-sm font-bold border ${inputBg}`}>
+                          {formData.bankCurrency || 'USD'}
+                        </div>
                       )}
-                    </button>
+                    </div>
 
-                    {/* Всплывающее меню с поиском */}
-                    {isEditable && isBankOpen && (
-                      <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                        <div className="p-3 border-b border-slate-100 bg-slate-50/50">
-                          <div className="relative">
-                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input
-                              type="text"
-                              value={bankSearch}
-                              onChange={e => setBankSearch(e.target.value)}
-                              placeholder={t('bankSearchPlaceholder', 'Поиск банка (название или МФО)...')}
-                              className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              autoFocus
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="max-h-60 overflow-y-auto divide-y divide-slate-50 p-1">
-                          {filteredBanks.length > 0 ? (
-                            filteredBanks.map(bank => (
-                              <button
-                                key={bank.id}
-                                type="button"
-                                onClick={() => handleSelectBank(bank)}
-                                className="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-blue-50/80 transition-colors flex items-center justify-between group cursor-pointer"
-                              >
-                                <div>
-                                  <p className="text-xs font-bold text-slate-800 group-hover:text-blue-700">{bank.name}</p>
-                                  <p className="text-[11px] text-slate-400">МФО: {bank.code}</p>
-                                </div>
-                                {formData.bankName === bank.name && (
-                                  <Check size={16} className="text-blue-600" />
-                                )}
-                              </button>
-                            ))
-                          ) : (
-                            <div className="p-4 text-center text-xs text-slate-400">
-                              {t('bankNotFound', 'Банк не найден в стандартном списке')}
-                              {bankSearch && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setFormData(prev => ({ ...prev, bankName: bankSearch }));
-                                    setIsBankOpen(false);
-                                  }}
-                                  className="mt-2 block w-full py-1.5 px-3 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded-lg font-bold text-xs"
-                                >
-                                  {t('useCustomBank', 'Использовать')}: "{bankSearch}"
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                    {/* IBAN / Номер международного счета */}
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
+                        {t('bankIbanLabel', 'IBAN / Международный номер счета')} {isEditable && <span className="text-rose-500">*</span>}
+                      </label>
+                      <input 
+                        type="text" 
+                        required={bankTab === 'foreign'}
+                        disabled={!isEditable}
+                        value={formData.bankIban}
+                        onChange={e => setFormData({ ...formData, bankIban: e.target.value.toUpperCase().replace(/\s/g, '') })}
+                        placeholder={isEditable ? "DE89370400440532013000" : ""}
+                        className={`w-full px-4 py-3 rounded-xl text-sm font-medium tracking-wider uppercase border ${inputBg}`} 
+                      />
+                    </div>
                   </div>
-                  )}
-
-                  {/* Расчетный счет */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('bankAccountLabel', 'Расчетный счет (Hasap belgisi)')} {isEditable && <span className="text-rose-500">*</span>}
-                    </label>
-                    <input 
-                      type="text" 
-                      required
-                      disabled={!isEditable}
-                      maxLength={28}
-                      value={formData.bankAccount}
-                      onChange={e => setFormData({ ...formData, bankAccount: e.target.value.replace(/\s/g, '') })}
-                      placeholder={isEditable ? "xxxxxxxxxxxxxxxxxxxxxxxxxxxx" : ""}
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium tracking-wider border ${inputBg}`} 
-                    />
-                    {isEditable && (
-                      <p className="text-[11px] text-slate-400 mt-1 ml-1">{t('bankAccountHint', '28 символов (стандарт ЦБ Туркменистана)')}</p>
-                    )}
-                  </div>
-
-                  {/* МФО банка */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('bankMfoLabel', 'МФО банка (MFO kody)')} {isEditable && <span className="text-rose-500">*</span>}
-                    </label>
-                    <input 
-                      type="text" 
-                      required
-                      disabled={!isEditable}
-                      maxLength={9}
-                      value={formData.bankMfo}
-                      onChange={e => setFormData({ ...formData, bankMfo: e.target.value })}
-                      placeholder={isEditable ? "xxxxxxxxx" : ""}
-                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
-                    />
-                    {isEditable && (
-                      <p className="text-[11px] text-slate-400 mt-1 ml-1">
-                        {t('bankMfoAutoHint', 'Подставляется автоматически при выборе банка (9 цифр)')}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
 
-              {/* 3. Данные руководителя (разделено на два аккуратных поля с маской) */}
+              {/* 4. Данные руководителя (Паспорт + 14-значный Личный код / Şahsy kod) */}
               <div>
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                   <User size={18} className="text-blue-600" />
                   {t('directorData', 'Данные руководителя')}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Серия и номер паспорта */}
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('passportSeriesLabel', 'Серия и номер паспорта')} {isEditable && <span className="text-rose-500">*</span>}
+                      {t('passportSeriesLabel', 'Серия и номер паспорта')} {isEditable && !isForeignCompany && <span className="text-rose-500">*</span>}
                     </label>
                     <input 
                       type="text" 
-                      required
+                      required={!isForeignCompany}
                       disabled={!isEditable}
                       value={formData.passportSeries}
-                      onChange={handlePassportChange}
-                      placeholder={isEditable ? "I-AS 123456" : ""}
+                      onChange={!isForeignCompany ? handlePassportChange : (e => setFormData(prev => ({ ...prev, passportSeries: e.target.value })))}
+                      placeholder={isEditable ? (!isForeignCompany ? "I-AS 123456" : "Паспорт руководителя") : ""}
                       className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
                     />
-                    {isEditable && (
+                    {isEditable && !isForeignCompany && (
                       passportError ? (
                         <p className="text-[11px] text-rose-500 font-semibold mt-1 ml-1">{passportError}</p>
                       ) : (
@@ -1681,13 +2157,15 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       )
                     )}
                   </div>
+
+                  {/* Кем и когда выдан */}
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-                      {t('passportIssuedLabel', 'Кем и когда выдан')} {isEditable && <span className="text-rose-500">*</span>}
+                      {t('passportIssuedLabel', 'Кем и когда выдан')} {isEditable && !isForeignCompany && <span className="text-rose-500">*</span>}
                     </label>
                     <input 
                       type="text" 
-                      required
+                      required={!isForeignCompany}
                       disabled={!isEditable}
                       value={formData.passportIssuedBy}
                       onChange={e => setFormData({ ...formData, passportIssuedBy: e.target.value })}
@@ -1695,190 +2173,186 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
                     />
                   </div>
+
+                  {/* Личный код руководителя (Şahsy kod / 14 цифр) */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
+                      {t('directorPersonalCodeLabel', 'Личный код руководителя (Şahsy kody)')} {!isForeignCompany && isEditable && <span className="text-slate-400 font-normal"> (14 цифр из паспорта)</span>}
+                    </label>
+                    <input 
+                      type="text" 
+                      disabled={!isEditable}
+                      maxLength={14}
+                      value={formData.directorPersonalCode}
+                      onChange={handlePersonalCodeChange}
+                      placeholder={isEditable ? "14-значный номер из паспорта" : ""}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium tracking-wider border ${inputBg}`} 
+                    />
+                    {isEditable && (
+                      personalCodeError ? (
+                        <p className="text-[11px] text-rose-500 font-semibold mt-1 ml-1">{personalCodeError}</p>
+                      ) : (
+                        <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                          {t('directorPersonalCodeHint', '14-значный персональный номер гражданина ТМ из биометрического паспорта')}
+                        </p>
+                      )
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* 4. Загрузка документов с отображением списка и строгим фильтром */}
+              {/* 5. Документы компании: Целевые слоты загрузки (ЕГР, Устав, Лицензия Минздрава, Полномочия) */}
               <div>
                 <div className="mb-4">
-                  <h3 className="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-2">
                     <FileCheck size={18} className="text-blue-600" />
                     {t('companyDocumentsTitle', 'Документы компании')}
                   </h3>
-                  <p className="text-xs text-slate-400 ml-6">
-                    {t('documentFormatsHelp', 'Поддерживаются форматы: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (до 10 МБ)')}
+                  <p className="text-xs text-slate-400">
+                    {t('documentFormatsHelp', 'Поддерживаются форматы: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (до 15 МБ)')}
                   </p>
                 </div>
-                
-                {/* Скрытый input с жестким accept: проводник ОС отфильтровывает все недопустимые файлы */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  onChange={e => handleFileUpload(e.target.files)}
-                  className="hidden"
-                  disabled={!isEditable || uploading}
-                />
 
-                {/* 1. Список загруженных документов с бейджами проверки */}
-                {documents.length > 0 && (
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center justify-between ml-1">
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                        {t('uploadedDocsCount', 'Загруженные файлы')} ({documents.length})
-                      </p>
-                      {isVerified && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 border border-emerald-200/80 text-emerald-700 rounded-lg text-[11px] font-bold">
-                          <CheckCircle2 size={12} className="text-emerald-500" />
-                          {t('docVerifiedBadge', 'Проверено администратором ✔️')}
-                        </span>
-                      )}
-                    </div>
+                {uploadError && (
+                  <div className="p-3 mb-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-semibold flex items-center gap-2">
+                    <AlertCircle size={16} className="text-rose-600 shrink-0" />
+                    <span>{uploadError}</span>
+                  </div>
+                )}
 
-                    <div className="space-y-2">
-                      {documents.map(doc => (
-                        <div 
-                          key={doc.id} 
-                          className="flex items-center justify-between p-3.5 bg-slate-50/80 border border-slate-200 rounded-xl hover:bg-slate-100/60 transition-colors"
-                        >
-                          <div className="flex items-center space-x-3 overflow-hidden min-w-0 flex-1">
-                            <div className="p-2 bg-white rounded-lg border border-slate-200 shadow-xs shrink-0">
-                              {getFileIcon(doc.fileName || doc.name)}
+                {/* Сетка целевых слотов документов */}
+                <div className="space-y-3.5">
+                  {DOCUMENT_SLOTS.map(slot => {
+                    const slotDocs = getDocsForSlot(slot.key);
+                    const hasDoc = slotDocs.length > 0;
+                    const SlotIcon = slot.icon;
+                    const isTargetUploading = uploading && activeUploadSlot === slot.key;
+
+                    return (
+                      <div 
+                        key={slot.key}
+                        className={`p-4 rounded-2xl border transition-all ${
+                          hasDoc 
+                            ? 'bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700' 
+                            : (slot.required 
+                                ? 'bg-amber-50/40 dark:bg-amber-950/10 border-amber-200/80 dark:border-amber-900/40' 
+                                : 'bg-slate-50/30 dark:bg-slate-800/20 border-slate-200/60 dark:border-slate-800')
+                        }`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                          <div className="flex items-start gap-3">
+                            <div className={`p-2.5 rounded-xl shrink-0 ${
+                              hasDoc ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-300'
+                            }`}>
+                              <SlotIcon size={18} />
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-bold text-slate-800 truncate">{doc.name || doc.fileName}</p>
-                              <p className="text-[11px] text-slate-400">
-                                {formatFileSize(doc.fileSize)} {doc.createdAt ? `• ${new Date(doc.createdAt).toLocaleDateString()}` : ''}
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                                  {t(slot.titleKey, slot.defaultTitle)}
+                                </h4>
+                                {slot.required && (
+                                  <span className="text-[10px] font-black text-rose-500 uppercase tracking-wider">
+                                    *{t('docSlotRequired', 'Обязательно')}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                {t(slot.descKey, slot.defaultDesc)}
                               </p>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
-                            {/* Ссылка на открытие / скачивание документа */}
-                            <a
-                              href={`http://localhost:5000/${(doc.filePath || `uploads/${doc.fileName || doc.name}`).replace(/\\/g, '/')}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="p-1.5 px-2.5 text-blue-600 hover:text-blue-700 bg-blue-50/80 hover:bg-blue-100/80 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-bold cursor-pointer"
-                              title={t('downloadDocTooltip', 'Скачать / открыть документ')}
-                            >
-                              <ExternalLink size={14} />
-                              <span className="hidden sm:inline">{t('openActionBtn', 'Открыть')}</span>
-                            </a>
-
-                            {isEditable && (
-                              <button 
-                                type="button" 
-                                onClick={() => handleDeleteDocument(doc.id)} 
-                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors shrink-0 cursor-pointer"
-                                title={t('deleteDocumentTooltip', 'Удалить документ')}
+                          {/* Скрытый input для этого слота */}
+                          {isEditable && (
+                            <>
+                              <input
+                                ref={el => slotFileInputRefs.current[slot.key] = el}
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+                                className="hidden"
+                                disabled={!isEditable || uploading}
+                                onChange={e => handleSlotFileUpload(e.target.files, slot.key)}
+                              />
+                              <button
+                                type="button"
+                                disabled={uploading}
+                                onClick={() => slotFileInputRefs.current[slot.key]?.click()}
+                                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 ${
+                                  hasDoc 
+                                    ? 'bg-slate-200/70 hover:bg-slate-300/70 text-slate-700 dark:bg-slate-700 dark:text-slate-200' 
+                                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20'
+                                }`}
                               >
-                                <Trash2 size={16} />
+                                {isTargetUploading ? (
+                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <UploadCloud size={14} />
+                                )}
+                                <span>{hasDoc ? t('replaceSlotFileBtn', '+ Добавить / Заменить') : t('uploadToSlotBtn', 'Загрузить скан')}</span>
                               </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 2. Зона добавления файлов: компактная под документами или полноразмерная если пусто */}
-                {isEditable ? (
-                  hasDocuments ? (
-                    /* Компактная плашка добавления файлов снизу списка */
-                    <div 
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`p-3.5 border-2 border-dashed rounded-2xl flex items-center justify-between gap-3 cursor-pointer transition-all ${
-                        isDragging 
-                          ? 'border-blue-500 bg-blue-50/70' 
-                          : 'border-slate-200 bg-slate-50/50 hover:bg-blue-50/40 hover:border-blue-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                          {uploading ? (
-                            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                          ) : (
-                            <UploadCloud size={18} />
+                            </>
                           )}
                         </div>
-                        <div>
-                          <p className="text-xs font-bold text-slate-700">
-                            {uploading ? t('uploadingDocs', 'Загрузка документов...') : t('addMoreDocsBtn', '+ Прикрепить дополнительный документ')}
-                          </p>
-                          <p className="text-[11px] text-slate-400">
-                            {t('upload15MBNotice', 'PDF, JPG, PNG до 15 МБ (перетащите или нажмите)')}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        disabled={uploading}
-                        className="px-4 py-2 bg-white border border-slate-200 shadow-xs rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shrink-0 cursor-pointer"
-                      >
-                        {t('chooseFilesBtn', 'Выбрать файл')}
-                      </button>
-                    </div>
-                  ) : (
-                    /* Полноразмерная дропзона, когда нет ни одного загруженного документа */
-                    <div 
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
-                        isDragging 
-                          ? 'border-blue-500 bg-blue-50/70 scale-[1.01]' 
-                          : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-3 text-blue-600">
-                        {uploading ? (
-                          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+
+                        {/* Список прикрепленных к данному слоту файлов */}
+                        {slotDocs.length > 0 ? (
+                          <div className="space-y-1.5 mt-2">
+                            {slotDocs.map(doc => (
+                              <div 
+                                key={doc.id}
+                                className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                  {getFileIcon(doc.fileName || doc.name)}
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                                      {doc.name || doc.fileName}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400">
+                                      {formatFileSize(doc.fileSize)} {doc.createdAt ? `• ${new Date(doc.createdAt).toLocaleDateString()}` : ''}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <a
+                                    href={`http://localhost:5000/${(doc.filePath || `uploads/${doc.fileName || doc.name}`).replace(/\\/g, '/')}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-1 px-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 text-[11px] font-bold"
+                                  >
+                                    <ExternalLink size={12} />
+                                    <span>{t('openActionBtn', 'Открыть')}</span>
+                                  </a>
+                                  {isEditable && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteDocument(doc.id)}
+                                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                      title={t('deleteDocumentTooltip', 'Удалить')}
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         ) : (
-                          <UploadCloud size={24} />
+                          <div className="py-2 text-[11px] text-slate-400 italic">
+                            {t('noDocInSlot', 'Документ в данный раздел еще не загружен')}
+                          </div>
                         )}
                       </div>
-                      
-                      <p className="text-sm font-bold text-slate-700 mb-1">
-                        {uploading 
-                          ? t('uploadingDocs', 'Загрузка документов...') 
-                          : t('companyDocsDesc', 'Свидетельство, Выписка ЕГРЮЛ, Патент, Устав')}
-                      </p>
-                      <p className="text-xs text-slate-400 mb-4">
-                        {t('companyDocsDropHint', 'Перетащите файлы сюда или выберите на компьютере')}
-                      </p>
-
-                      <button 
-                        type="button" 
-                        disabled={!isEditable || uploading} 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="px-5 py-2.5 bg-white border border-slate-200 shadow-sm rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
-                      >
-                        {t('chooseFilesBtn', 'Выбрать файлы')}
-                      </button>
-
-                      {uploadError && (
-                        <p className="text-xs text-rose-500 font-medium mt-3">{uploadError}</p>
-                      )}
-                    </div>
-                  )
-                ) : (
-                  !hasDocuments && (
-                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center text-xs text-slate-400">
-                      {t('noDocsUploaded', 'Документы не прикреплены')}
-                    </div>
-                  )
-                )}
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* 5. Кнопки действий: Режим просмотра vs Режим редактирования */}
-              {isOwner && (
-                <div className="pt-6 border-t border-slate-100">
+              {/* 6. Кнопки действий: Режим просмотра vs Режим редактирования */}
+              {effectiveIsOwner && (
+                <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
                   {isVerified ? (
                     !isEditing ? (
                       /* ВЕРИФИЦИРОВАН: Режим просмотра */
@@ -1914,7 +2388,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                             <div>
                               <p className="font-bold">{t('resubmitWarningTitle', 'Повторная модерация')}</p>
                               <p className="mt-0.5 leading-relaxed">
-                                {t('resubmitWarning', 'При изменении юридических или банковских реквизитов статус верификации будет временно приостановлен до проверки администратором.')}
+                                {t('resubmitWarning', 'При изменении юридических или банковских реквизитов статус верификации будет временно приостановлен до проверки администратором Минздрава.')}
                               </p>
                             </div>
                           </div>
@@ -1933,7 +2407,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                           {hasChanges ? (
                             <button
                               type="submit"
-                              disabled={saving || !hasDocuments}
+                              disabled={saving || !hasDocuments || isLicenseExpired}
                               className="w-full sm:flex-1 py-4 px-6 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-amber-600/20 flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-[0.99]"
                             >
                               {saving ? (
@@ -1954,12 +2428,19 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       </div>
                     )
                   ) : (
-                    /* НЕ ВЕРИФИЦИРОВАН: Стандартная кнопка отправки на модерацию */
+                    /* НЕ ВЕРИФИЦИРОВАН (PENDING / REJECTED): Кнопка отправки на модерацию */
                     <div className="space-y-3">
                       {!hasDocuments && (
                         <div className="flex items-center gap-2.5 p-3.5 bg-amber-50 border border-amber-200/80 rounded-xl text-xs font-semibold text-amber-800 animate-in fade-in">
                           <AlertCircle size={16} className="text-amber-600 shrink-0" />
                           <span>{t('attachDocsToSubmit', 'Прикрепите документы для отправки на проверку')}</span>
+                        </div>
+                      )}
+
+                      {isLicenseExpired && (
+                        <div className="flex items-center gap-2.5 p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-800 animate-in fade-in">
+                          <AlertCircle size={16} className="text-rose-600 shrink-0" />
+                          <span>{t('licenseExpiredError', 'Внимание: срок действия вашей медицинской лицензии истек!')}</span>
                         </div>
                       )}
 
@@ -1973,7 +2454,6 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                       <button 
                         type="submit" 
                         disabled={isSubmitDisabled} 
-                        title={!hasDocuments ? t('attachDocsToSubmit', 'Прикрепите документы для отправки на проверку') : ''}
                         className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center space-x-2 text-base ${
                           isSubmitDisabled
                             ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-50 shadow-none'
@@ -1986,7 +2466,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                             <span>{t('submitting', 'Отправка...')}</span>
                           </>
                         ) : (
-                          <span>{t('submitToModeration', 'Отправить профиль на модерацию')}</span>
+                          <span>{t('submitToModerationBtn', 'Отправить анкету на модерацию в Минздрав')}</span>
                         )}
                       </button>
                     </div>
@@ -1994,7 +2474,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                 </div>
               )}
 
-              {/* Панель модерации для администратора */}
+              {/* Панель модерации для администратора Минздрава */}
               {isAdmin && (
                 supplier.verificationStatus !== 'VERIFIED' ? (
                   <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
@@ -2105,7 +2585,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
           )}
         </div>
 
-        {/* Правая колонка: Всегда липкая (sticky top-6 self-start) плашка готовности профиля */}
+        {/* Правая колонка: Виджет готовности профиля / Статистика */}
         <div className="w-full lg:w-80 shrink-0">
           <div className="sticky top-6 self-start space-y-6">
             {isAdmin ? (
@@ -2147,9 +2627,9 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                         {t('statusRejectedBadge', 'Отклонен')}
                       </span>
                     ) : (
-                      <span className="text-xs font-bold text-amber-600 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                        {t('statusPendingBadge', 'Требует проверки')}
+                      <span className="text-xs font-bold text-blue-600 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                        {t('statusGuestBadge', 'Гостевой доступ')}
                       </span>
                     )}
                   </div>
@@ -2158,13 +2638,25 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                 {/* Сводка реквизитов */}
                 <div className="space-y-2.5 text-xs">
                   <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400">{t('countryLabel', 'Страна')}:</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300">{formData.countryName || 'Туркменистан'}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
                     <span className="text-slate-400">{t('companyLegalForm', 'Форма')}:</span>
                     <span className="font-bold text-slate-700 dark:text-slate-300">{getCompanyTypeBadge(supplier.type)}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-400">STŞK:</span>
+                    <span className="text-slate-400">{isForeignCompany ? 'Tax ID:' : 'STŞK:'}</span>
                     <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{supplier.taxId || '-'}</span>
                   </div>
+                  {formData.isMedicalLicensed && (
+                    <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                      <span className="text-slate-400">Лицензия:</span>
+                      <span className={`font-bold ${isLicenseExpired ? 'text-rose-600' : 'text-emerald-600'}`}>
+                        {formData.licenseNumber} ({isLicenseExpired ? 'Просрочена' : 'Действует'})
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
                     <span className="text-slate-400">{t('uploadedDocsCount', 'Документы')}:</span>
                     <span className="font-bold text-blue-600">{documents.length} {t('attachedCountSuffix', 'прикреплено')}</span>
@@ -2230,28 +2722,28 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
               /* Для невалидированного поставщика показываем виджет готовности профиля */
               supplier.verificationStatus !== 'VERIFIED' ? (
                 <div className={`rounded-[2rem] p-6 space-y-6 ${cardBg} border`}>
-                  <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
                     <div className="flex items-center space-x-2.5">
                       <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                         <ShieldCheck size={20} />
                       </div>
                       <div>
-                        <h3 className="font-bold text-slate-800 text-sm leading-tight">
+                        <h3 className="font-bold text-slate-800 dark:text-white text-sm leading-tight">
                           {t('profileReadiness', 'Готовность профиля')}
                         </h3>
                         <p className="text-[11px] text-slate-400 mt-0.5">
-                          {t('profileReadinessSub', 'Для доступа к торгам')}
+                          {t('profileReadinessSub', 'Для допуска к торгам')}
                         </p>
                       </div>
                     </div>
-                    <span className="text-xs font-black text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
+                    <span className="text-xs font-black text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-lg">
                       {readiness.percent}%
                     </span>
                   </div>
 
                   {/* Прогресс-бар */}
                   <div className="space-y-1.5">
-                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
                       <div 
                         className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full transition-all duration-500" 
                         style={{ width: `${readiness.percent}%` }}
@@ -2276,17 +2768,17 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                             <Clock size={12} strokeWidth={2.5} />
                           </div>
                         ) : (
-                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center shrink-0 mt-0.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center shrink-0 mt-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700"></span>
                           </div>
                         )}
                         <div className="text-xs leading-snug">
-                          <p className={`font-semibold ${step.completed ? 'text-slate-800' : 'text-slate-500'}`}>
+                          <p className={`font-semibold ${step.completed ? 'text-slate-800 dark:text-slate-200' : 'text-slate-500'}`}>
                             {step.title}
                           </p>
                           {step.pending && (
                             <span className="text-[10px] text-amber-600 font-medium">
-                              {t('profileStepWaiting', 'Ожидает решения модератора')}
+                              {t('profileStepWaiting', 'Ожидает решения модератора Минздрава')}
                             </span>
                           )}
                         </div>
@@ -2295,51 +2787,51 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   </div>
 
                   {/* Подсказка */}
-                  <div className="p-3.5 bg-blue-50/70 border border-blue-100 rounded-xl text-xs text-blue-700 leading-relaxed">
+                  <div className="p-3.5 bg-blue-50/70 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
                     {t('profileFillTip', 'Заполните все разделы формы, прикрепите сканы документов и отправьте профиль на проверку.')}
                   </div>
                 </div>
               ) : (
-                // Для подтвержденного пользователя возвращаем карточки статистики
+                /* Для подтвержденного пользователя возвращаем карточки статистики */
                 <div className="space-y-4">
-                <div className={`rounded-[2rem] p-6 flex flex-col items-center justify-center text-center space-y-3 ${cardBg}`}>
-                  <div className="p-4 bg-blue-50 text-blue-600 rounded-full">
-                    <FileText size={32} />
+                  <div className={`rounded-[2rem] p-6 flex flex-col items-center justify-center text-center space-y-3 ${cardBg}`}>
+                    <div className="p-4 bg-blue-50 text-blue-600 rounded-full">
+                      <FileText size={32} />
+                    </div>
+                    <div>
+                      <p className="text-4xl font-black text-slate-800 dark:text-white">{stats.totalOffers}</p>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">
+                        {t('totalProposalsCount', 'Всего заявок')}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-4xl font-black text-slate-800 dark:text-white">{stats.totalOffers}</p>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">
-                      {t('totalProposalsCount', 'Всего заявок')}
+
+                  <div className={`rounded-[2rem] p-6 flex flex-col items-center justify-center text-center space-y-3 ${cardBg}`}>
+                    <div className="p-4 bg-amber-50 text-amber-600 rounded-full">
+                      <Trophy size={32} />
+                    </div>
+                    <div>
+                      <p className="text-4xl font-black text-slate-800 dark:text-white">{stats.wonOffers}</p>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">
+                        {t('tenderWinsCount', 'Побед в тендерах')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
+                    <p className="text-xs font-bold text-emerald-800">
+                      {t('profileVerified100', '🟢 Профиль активен на 100%')}
+                    </p>
+                    <p className="text-[11px] text-emerald-600 mt-0.5">
+                      {t('profileVerified100Sub', 'Вы можете подавать ценовые предложения')}
                     </p>
                   </div>
                 </div>
-
-                <div className={`rounded-[2rem] p-6 flex flex-col items-center justify-center text-center space-y-3 ${cardBg}`}>
-                  <div className="p-4 bg-amber-50 text-amber-600 rounded-full">
-                    <Trophy size={32} />
-                  </div>
-                  <div>
-                    <p className="text-4xl font-black text-slate-800 dark:text-white">{stats.wonOffers}</p>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">
-                      {t('tenderWinsCount', 'Побед в тендерах')}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
-                  <p className="text-xs font-bold text-emerald-800">
-                    {t('profileVerified100', '🟢 Профиль активен на 100%')}
-                  </p>
-                  <p className="text-[11px] text-emerald-600 mt-0.5">
-                    {t('profileVerified100Sub', 'Вы можете подавать ценовые предложения')}
-                  </p>
-                </div>
-              </div>
-            )
-          )}
+              )
+            )}
+          </div>
         </div>
       </div>
-    </div>
 
       {/* Модальное окно "Карточка предприятия (PDF / Печать)" */}
       {showCompanyCard && (
@@ -2365,7 +2857,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
           `}</style>
           <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden print:shadow-none print:max-w-none print:max-h-none print:w-full print:rounded-none">
             
-            {/* Панель управления печатью (скрыта при печати) */}
+            {/* Панель управления печатью */}
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 print:hidden">
               <div className="flex items-center gap-2">
                 <FileText className="text-blue-600" size={20} />
@@ -2395,7 +2887,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
             {/* Карточка предприятия */}
             <div id="company-card-printable" className="p-8 overflow-y-auto space-y-6 text-slate-800 print:overflow-visible print:p-6 bg-white">
               
-              {/* Фирменная шапка с гербом / заголовком */}
+              {/* Фирменная шапка */}
               <div className="border-b-2 border-slate-900 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
@@ -2405,7 +2897,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                     {getFullFormalCompanyName(supplier.name, supplier.type)}
                   </h2>
                   <p className="text-xs text-slate-600 font-medium mt-0.5">
-                    {getCompanyTypeBadge(supplier.type)}
+                    {getCompanyTypeBadge(supplier.type)} • {formData.countryName || 'Туркменистан'}
                   </p>
                 </div>
                 <div className="text-left sm:text-right shrink-0">
@@ -2428,11 +2920,15 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                     {t('contactInfo', 'Адрес и контакты')}
                   </p>
                   <div>
-                    <p className="text-slate-500">{t('regionLabel', 'Велаят / Регион')}:</p>
-                    <p className="font-bold text-slate-800">{getSelectedRegionLabel() || supplier.region || '-'}</p>
+                    <p className="text-slate-500">{isForeignCompany ? 'Страна / Регион:' : 'Велаят / Регион:'}</p>
+                    <p className="font-bold text-slate-800">{getSelectedRegionLabel() || supplier.region || formData.countryName || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-slate-500">{t('exactAddress', 'Точный адрес')}:</p>
+                    <p className="text-slate-500">{t('legalAddressLabel', 'Юридический адрес')}:</p>
+                    <p className="font-bold text-slate-800">{formData.legalAddress || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">{t('actualAddressLabel', 'Фактический адрес')}:</p>
                     <p className="font-bold text-slate-800">{formData.address || '-'}</p>
                   </div>
                   <div>
@@ -2445,51 +2941,86 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   </div>
                 </div>
 
-                {/* Блок банковских реквизитов */}
+                {/* Блок банковских и налоговых реквизитов */}
                 <div className="p-4 bg-slate-50 rounded-2xl space-y-2.5 border border-slate-200/80">
                   <p className="font-black text-slate-400 uppercase tracking-wider text-[10px]">
-                    {t('bankDetails', 'Банковские реквизиты')}
+                    {t('bankDetails', 'Банковские и налоговые реквизиты')}
                   </p>
                   <div>
-                    <p className="text-slate-500">STŞK / Салык коду:</p>
+                    <p className="text-slate-500">{isForeignCompany ? 'Tax ID / TIN:' : 'STŞK / Салык коду:'}</p>
                     <p className="font-bold text-slate-900 text-sm tracking-wide">{supplier.taxId}</p>
                   </div>
+                  {formData.okpoCode && (
+                    <div>
+                      <p className="text-slate-500">{isForeignCompany ? 'Reg. Code:' : 'Код предприятия (ОКПО):'}</p>
+                      <p className="font-bold text-slate-800 font-mono">{formData.okpoCode}</p>
+                    </div>
+                  )}
                   <div>
                     <p className="text-slate-500">{t('bankNameLabel', 'Банк')}:</p>
                     <p className="font-bold text-slate-800">{formData.bankName || '-'}</p>
                   </div>
-                  <div>
-                    <p className="text-slate-500">{t('bankAccountLabel', 'Расчетный счет')}:</p>
-                    <p className="font-bold text-slate-800 tracking-wider font-mono">{formData.bankAccount || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500">{t('bankMfoLabel', 'МФО банка')}:</p>
-                    <p className="font-bold text-slate-800">{formData.bankMfo || '-'}</p>
-                  </div>
+                  {formData.bankAccount && (
+                    <div>
+                      <p className="text-slate-500">{t('bankAccountLabel', 'Расчетный счет')}:</p>
+                      <p className="font-bold text-slate-800 tracking-wider font-mono">{formData.bankAccount}</p>
+                    </div>
+                  )}
+                  {formData.bankIban && (
+                    <div>
+                      <p className="text-slate-500">IBAN:</p>
+                      <p className="font-bold text-slate-800 tracking-wider font-mono">{formData.bankIban} ({formData.bankCurrency})</p>
+                    </div>
+                  )}
+                  {formData.bankSwift && (
+                    <div>
+                      <p className="text-slate-500">SWIFT / BIC:</p>
+                      <p className="font-bold text-slate-800 font-mono">{formData.bankSwift}</p>
+                    </div>
+                  )}
+                  {formData.bankMfo && (
+                    <div>
+                      <p className="text-slate-500">{t('bankMfoLabel', 'МФО банка')}:</p>
+                      <p className="font-bold text-slate-800">{formData.bankMfo}</p>
+                    </div>
+                  )}
                 </div>
 
               </div>
 
-              {/* Данные руководителя */}
+              {/* Данные руководителя и медицинские лицензии */}
               <div className="p-4 bg-slate-50 rounded-2xl space-y-2 border border-slate-200/80 text-xs">
                 <p className="font-black text-slate-400 uppercase tracking-wider text-[10px]">
-                  {t('directorData', 'Данные руководителя')}
+                  {t('directorData', 'Руководитель и разрешения')}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {formData.directorName && (
-                    <div className="sm:col-span-2">
+                    <div>
                       <p className="text-slate-500">{t('directorFullNameLabel', 'ФИО Руководителя')}:</p>
                       <p className="font-bold text-slate-800 text-sm">{formData.directorName}</p>
                     </div>
                   )}
-                  <div>
-                    <p className="text-slate-500">{t('passportSeriesLabel', 'Серия и номер паспорта')}:</p>
-                    <p className="font-bold text-slate-800 text-sm tracking-wider font-mono">{formData.passportSeries || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500">{t('passportIssuedLabel', 'Кем и когда выдан')}:</p>
-                    <p className="font-bold text-slate-800">{formData.passportIssuedBy || '-'}</p>
-                  </div>
+                  {formData.directorPersonalCode && (
+                    <div>
+                      <p className="text-slate-500">{t('directorPersonalCodeLabel', 'Личный код руководителя (Şahsy kody)')}:</p>
+                      <p className="font-bold text-slate-800 font-mono tracking-wider">{formData.directorPersonalCode}</p>
+                    </div>
+                  )}
+                  {formData.passportSeries && (
+                    <div>
+                      <p className="text-slate-500">{t('passportSeriesLabel', 'Серия и номер паспорта')}:</p>
+                      <p className="font-bold text-slate-800 tracking-wider font-mono">{formData.passportSeries}</p>
+                    </div>
+                  )}
+                  {formData.isMedicalLicensed && (
+                    <div className="sm:col-span-2 p-2.5 bg-blue-50/80 rounded-xl border border-blue-100 flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-blue-900">Лицензия Минздрава: № {formData.licenseNumber}</p>
+                        <p className="text-[11px] text-blue-700">Выдана: {formData.licenseIssuedBy || 'Минздрав ТМ'}</p>
+                      </div>
+                      <span className="text-xs font-bold text-blue-800">до {formData.licenseExpiryDate}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2510,12 +3041,12 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                 </div>
               )}
 
-              {/* Официальный подвал с электронной подписью системы */}
+              {/* Официальный подвал с электронной подписью */}
               <div className="pt-5 border-t-2 border-slate-200 flex flex-col sm:flex-row items-center justify-between text-[10px] text-slate-400 gap-2">
                 <p>
                   {t('ePlatformFooterOfficial', 'Электронная торговая площадка Министерства здравоохранения Туркменистана • Сформировано автоматически')}
                 </p>
-                <p className="font-mono">ID: {supplier.id} • STŞK: {supplier.taxId}</p>
+                <p className="font-mono">ID: {supplier.id} • Tax ID: {supplier.taxId}</p>
               </div>
 
             </div>
@@ -2523,6 +3054,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
           </div>
         </div>
       )}
+
       {isAdmin && (
         <RejectSupplierModal
           isOpen={isRejectModalOpen}

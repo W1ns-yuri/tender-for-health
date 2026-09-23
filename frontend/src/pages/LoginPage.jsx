@@ -7,11 +7,41 @@ import CustomSelect from '../components/CustomSelect';
 export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
   const t = (key, fallback) => getTranslation(lang, key, fallback);
 
-  const formatPhone = (val) => {
+  const COUNTRIES = [
+    { id: 'TM', name: t('countryTM', 'Туркменистан (+993)'), prefix: '+993' },
+    { id: 'RU', name: t('countryRU', 'Россия (+7)'), prefix: '+7' },
+    { id: 'TR', name: t('countryTR', 'Турция (+90)'), prefix: '+90' },
+    { id: 'DE', name: t('countryDE', 'Германия (+49)'), prefix: '+49' },
+    { id: 'CN', name: t('countryCN', 'Китай (+86)'), prefix: '+86' },
+    { id: 'IN', name: t('countryIN', 'Индия (+91)'), prefix: '+91' },
+    { id: 'AE', name: t('countryAE', 'ОАЭ (+971)'), prefix: '+971' },
+    { id: 'KZ', name: t('countryKZ', 'Казахстан (+7)'), prefix: '+7' },
+    { id: 'UZ', name: t('countryUZ', 'Узбекистан (+998)'), prefix: '+998' },
+    { id: 'OTHER', name: t('countryOther', 'Другая страна (Международный)'), prefix: '+' },
+  ];
+
+  const formatPhoneTM = (val) => {
     const v = val.replace(/\D/g, '').slice(0, 8);
     if (v.length > 6) return `${v.slice(0, 2)} ${v.slice(2, 4)}-${v.slice(4, 6)}-${v.slice(6)}`;
     if (v.length > 4) return `${v.slice(0, 2)} ${v.slice(2, 4)}-${v.slice(4)}`;
     if (v.length > 2) return `${v.slice(0, 2)} ${v.slice(2)}`;
+    return v;
+  };
+
+  const formatPhoneRU = (val) => {
+    const v = val.replace(/\D/g, '').slice(0, 10);
+    if (v.length > 7) return `(${v.slice(0, 3)}) ${v.slice(3, 6)}-${v.slice(6, 8)}-${v.slice(8)}`;
+    if (v.length > 5) return `(${v.slice(0, 3)}) ${v.slice(3, 6)}-${v.slice(6)}`;
+    if (v.length > 3) return `(${v.slice(0, 3)}) ${v.slice(3)}`;
+    if (v.length > 0) return `(${v}`;
+    return v;
+  };
+
+  const formatPhoneTR = (val) => {
+    const v = val.replace(/\D/g, '').slice(0, 10);
+    if (v.length > 6) return `${v.slice(0, 3)} ${v.slice(3, 6)} ${v.slice(6, 8)} ${v.slice(8)}`;
+    if (v.length > 3) return `${v.slice(0, 3)} ${v.slice(3, 6)} ${v.slice(6)}`;
+    if (v.length > 0) return `${v.slice(0, 3)} ${v.slice(3)}`;
     return v;
   };
 
@@ -28,15 +58,53 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
     password: '',
     firstName: '',
     lastName: '',
+    countryCode: 'TM',
     phone: '',
     companyName: '',
-    companyType: 'ENTREPRENEUR',
+    companyType: 'BUSINESS_SOCIETY',
     taxId: '',
     categoryIds: [],
     termsAccepted: false
   });
   const [regStep, setRegStep] = useState(1);
   const [categoriesList, setCategoriesList] = useState([]);
+
+  const selectedCountryObj = COUNTRIES.find(c => c.id === regData.countryCode) || COUNTRIES[0];
+
+  const companyTypeOptions = regData.countryCode === 'TM' ? [
+    { id: 'BUSINESS_SOCIETY', name: t('typeBusinessSociety', 'ХО (Хозяйственное общество)') },
+    { id: 'ENTREPRENEUR', name: t('typeEntrepreneur', 'ИП (Индивидуальный предприниматель)') },
+    { id: 'BUSINESS_COMPANY', name: t('typeBusinessCompany', 'ЧП / ХП (Частное предприятие)') },
+    { id: 'GOVERNMENT', name: t('typeGovernment', 'ГП (Государственное предприятие)') },
+    { id: 'FARMER_ASSOCIATION', name: t('typeFarmer', 'ДО (Дочернее общество / Daýhan hojalygy)') }
+  ] : [
+    { id: 'FOREIGN_ENTITY', name: t('foreignEntity', 'Иностранное юридическое лицо (Foreign Entity)') },
+    { id: 'FOREIGN_BRANCH', name: t('foreignBranch', 'Представительство / Филиал (Branch / Office)') },
+    { id: 'FOREIGN_SOLE_TRADER', name: t('foreignSoleTrader', 'Индивидуальный предприниматель (Sole Proprietor)') }
+  ];
+
+  const handlePhoneChange = (val) => {
+    if (regData.countryCode === 'TM') {
+      setRegData(p => ({ ...p, phone: formatPhoneTM(val) }));
+    } else if (regData.countryCode === 'RU' || regData.countryCode === 'KZ') {
+      setRegData(p => ({ ...p, phone: formatPhoneRU(val) }));
+    } else if (regData.countryCode === 'TR') {
+      setRegData(p => ({ ...p, phone: formatPhoneTR(val) }));
+    } else if (regData.countryCode === 'OTHER') {
+      setRegData(p => ({ ...p, phone: val.replace(/[^\d+\s-]/g, '').slice(0, 20) }));
+    } else {
+      setRegData(p => ({ ...p, phone: val.replace(/[^\d\s-]/g, '').slice(0, 16) }));
+    }
+  };
+
+  const handleCountryChange = (cCode) => {
+    setRegData(p => ({
+      ...p,
+      countryCode: cCode,
+      phone: '',
+      companyType: cCode === 'TM' ? 'BUSINESS_SOCIETY' : 'FOREIGN_ENTITY'
+    }));
+  };
 
   React.useEffect(() => {
     API.get('/catalogs/categories')
@@ -80,7 +148,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
     e.preventDefault();
     setError('');
     if (!regData.categoryIds || regData.categoryIds.length === 0) {
-      setError(t('atLeastOneCategoryRequired', 'Выберите хотя бы одну категорию деятельности'));
+      setError(t('selectAtLeastOneCategoryWarning', 'Для завершения регистрации выберите хотя бы одну категорию деятельности'));
       return;
     }
 
@@ -91,7 +159,18 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
         .replace(/^(ип|хо|ооо|чп|hj|dh|hk|telekeçi|hojalyk\s+jemgyýeti|hususy\s+telekeçi|hususy\s+kärhana)\s*["«'”]?\s*/i, '')
         .replace(/["»'”]$/, '').trim() || regData.companyName.trim();
 
-      const res = await API.post('/auth/register', { ...regData, companyName: cleanedName });
+      const fullPhone = regData.countryCode === 'OTHER'
+        ? (regData.phone.startsWith('+') ? regData.phone : `+${regData.phone}`.trim())
+        : `${selectedCountryObj.prefix} ${regData.phone}`.trim();
+
+      const payload = {
+        ...regData,
+        phone: fullPhone,
+        companyName: cleanedName,
+        okpoCode: regData.countryCode === 'TM' ? regData.taxId : null,
+      };
+
+      const res = await API.post('/auth/register', payload);
       if (res.data?.token) {
         localStorage.setItem('tender_token', res.data.token);
         localStorage.setItem('tender_user', JSON.stringify(res.data.user));
@@ -104,19 +183,31 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
     }
   };
 
+  const phoneDigits = regData.phone?.replace(/\D/g, '') || '';
+  const isPhoneValid = regData.countryCode === 'TM'
+    ? phoneDigits.length === 8
+    : (regData.countryCode === 'RU' || regData.countryCode === 'KZ' || regData.countryCode === 'TR')
+    ? phoneDigits.length >= 10
+    : regData.countryCode === 'OTHER'
+    ? phoneDigits.length >= 7
+    : phoneDigits.length >= 6;
+
   const isStep1Valid = Boolean(
     regData.firstName?.trim() &&
     regData.lastName?.trim() &&
+    regData.countryCode &&
     regData.username?.trim() &&
     regData.username.includes('@') &&
-    regData.phone?.replace(/\D/g, '').length >= 8 &&
+    isPhoneValid &&
     regData.password?.length >= 6
   );
 
   const isStep2Valid = Boolean(
     regData.companyType &&
     regData.companyName?.trim().length >= 2 &&
-    regData.taxId?.replace(/\D/g, '').length === 8
+    (regData.countryCode === 'TM'
+      ? regData.taxId?.replace(/\D/g, '').length === 8
+      : regData.taxId?.trim().length >= 4)
   );
 
   const isStep3Valid = Boolean(
@@ -465,6 +556,20 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                     </div>
                   </div>
 
+                  {/* 🌍 ВЫБОР СТРАНЫ СРАЗУ ПОСЛЕ ФАМИЛИИ */}
+                  <div>
+                    <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
+                      {t('countryLabel', 'Страна')}*
+                    </label>
+                    <CustomSelect
+                      role="SUPPLIER"
+                      value={regData.countryCode}
+                      onChange={handleCountryChange}
+                      options={COUNTRIES}
+                      size="md"
+                    />
+                  </div>
+
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
                       {t('emailLabel', 'Почта')}*
@@ -482,23 +587,42 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                     </div>
                   </div>
 
+                  {/* 📞 ДИНАМИЧЕСКИЙ ТЕЛЕФОН С УЧЕТОМ СТРАНЫ */}
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
                       {t('phoneLabel', 'Номер телефона')}*
                     </label>
                     <div className="relative flex items-center">
                       <Phone size={18} className="absolute left-4 text-slate-400" />
-                      <span className="absolute left-11 text-slate-800 font-medium text-sm">+993</span>
+                      {regData.countryCode !== 'OTHER' && (
+                        <span className="absolute left-11 text-slate-800 font-bold text-sm tracking-tight select-none pointer-events-none">
+                          {selectedCountryObj.prefix}
+                        </span>
+                      )}
                       <input
-                        type="text"
+                        type="tel"
                         required
                         value={regData.phone}
-                        onChange={(e) => setRegData({ ...regData, phone: formatPhone(e.target.value) })}
-                        placeholder="65 12-34-56"
-                        maxLength={11}
-                        className="w-full pl-[5.3rem] pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        placeholder={
+                          regData.countryCode === 'TM' ? '65 12-34-56' :
+                          (regData.countryCode === 'RU' || regData.countryCode === 'KZ') ? '(999) 123-45-67' :
+                          regData.countryCode === 'TR' ? '555 123 45 67' :
+                          regData.countryCode === 'OTHER' ? '+49 151 2345678' :
+                          '123456789'
+                        }
+                        className={`w-full ${
+                          regData.countryCode !== 'OTHER' 
+                            ? (selectedCountryObj.prefix.length > 3 ? 'pl-[5.5rem]' : 'pl-[4.5rem]') 
+                            : 'pl-11'
+                        } pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium`}
                       />
                     </div>
+                    {regData.countryCode === 'OTHER' && (
+                      <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                        {t('phoneFormatInternationalHint', 'Формат: +[код страны] [номер], например: +49 151 2345678')}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -541,19 +665,13 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                 <>
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                      {t('participantTypeLabel', 'Тип участника')}*
+                      {t('participantTypeLabel', 'Форма собственности / Тип участника')}*
                     </label>
                     <CustomSelect
                       role="SUPPLIER"
                       value={regData.companyType}
                       onChange={(val) => setRegData(prev => ({ ...prev, companyType: val }))}
-                      options={[
-                        { id: 'ENTREPRENEUR', name: t('typeEntrepreneur', 'ИП (Индивидуальный предприниматель)') },
-                        { id: 'BUSINESS_SOCIETY', name: t('typeBusinessSociety', 'ХО (Хозяйственное общество)') },
-                        { id: 'BUSINESS_COMPANY', name: t('typeBusinessCompany', 'ХП (Хозяйственное предприятие)') },
-                        { id: 'GOVERNMENT', name: t('typeGovernment', 'ГП (Государственное предприятие)') },
-                        { id: 'FARMER_ASSOCIATION', name: t('typeFarmer', 'ДО (Дочернее общество)') }
-                      ]}
+                      options={companyTypeOptions}
                       size="md"
                     />
                   </div>
@@ -580,27 +698,45 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
 
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-                      {t('taxIdLabel', 'ИНН')}*
+                      {regData.countryCode === 'TM'
+                        ? t('taxIdLabelTM', 'Код предприятия (ХОПО / ОКПО) / ИНН')
+                        : t('taxIdLabelForeign', 'Регистрационный номер / Tax ID / TIN')
+                      }*
                     </label>
                     <div className="relative flex items-center">
                       <FileText size={18} className="absolute left-4 text-slate-400" />
                       <input
                         type="text"
                         required
-                        maxLength={8}
+                        maxLength={regData.countryCode === 'TM' ? 8 : 24}
                         value={regData.taxId}
-                        onChange={(e) => setRegData({ ...regData, taxId: e.target.value.replace(/\D/g, '').slice(0, 8) })}
-                        placeholder="12345678"
-                        className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium tracking-widest font-mono"
+                        onChange={(e) => {
+                          const val = regData.countryCode === 'TM' 
+                            ? e.target.value.replace(/\D/g, '').slice(0, 8)
+                            : e.target.value.slice(0, 24);
+                          setRegData({ ...regData, taxId: val });
+                        }}
+                        placeholder={
+                          regData.countryCode === 'TM'
+                            ? t('taxIdPlaceholderTM', '8-значный код (например: 12345678)')
+                            : t('taxIdPlaceholderForeign', 'Введите налоговый номер или TIN')
+                        }
+                        className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium tracking-wider font-mono"
                       />
                     </div>
+                    <p className="text-[11px] text-slate-400 mt-1 ml-1">
+                      {regData.countryCode === 'TM'
+                        ? 'Основной идентификатор юридического лица в Туркменистане (8 цифр)'
+                        : 'Международный налоговый или регистрационный номер компании'
+                      }
+                    </p>
                   </div>
 
                   <div className="flex space-x-3 mt-6">
                     <button
                       type="button"
                       onClick={() => { setError(''); setRegStep(1); }}
-                      className="w-1/3 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition-all text-sm"
+                      className="w-1/3 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition-all text-sm cursor-pointer"
                     >
                       {t('backToList', 'Назад')}
                     </button>
@@ -608,7 +744,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                       type="button"
                       onClick={handleNextStep}
                       disabled={!isStep2Valid}
-                      className="w-2/3 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] text-[15px]"
+                      className="w-2/3 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] text-[15px] cursor-pointer"
                     >
                       <span>{t('nextStepBtn', 'Далее')}</span>
                       <ChevronRight size={18} />
@@ -624,7 +760,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                       <label className="block text-[13px] font-bold text-slate-700">
                         {t('supplierCategories', 'Категории деятельности')}*
                       </label>
-                      <span className="text-[11px] font-bold text-blue-600">
+                      <span className={`text-[11px] font-bold ${regData.categoryIds.length > 0 ? 'text-blue-600' : 'text-rose-500'}`}>
                         {t('categoriesSelected', 'Выбрано')}: {regData.categoryIds.length}
                       </span>
                     </div>
@@ -670,6 +806,14 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                         })
                       )}
                     </div>
+
+                    {/* ПРЕДУПРЕЖДЕНИЕ ПРИ 0 ВЫБРАННЫХ КАТЕГОРИЯХ */}
+                    {regData.categoryIds.length === 0 && (
+                      <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium flex items-center gap-2 animate-in fade-in">
+                        <AlertCircle size={16} className="text-amber-600 shrink-0" />
+                        <span>{t('selectAtLeastOneCategoryWarning', 'Для завершения регистрации выберите хотя бы одну категорию деятельности')}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-start mt-4">
@@ -690,14 +834,14 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                     <button
                       type="button"
                       onClick={() => { setError(''); setRegStep(2); }}
-                      className="w-1/3 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition-all text-sm"
+                      className="w-1/3 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition-all text-sm cursor-pointer"
                     >
                       {t('backToList', 'Назад')}
                     </button>
                     <button
                       type="submit"
                       disabled={loading || !isStep3Valid}
-                      className="w-2/3 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] text-[15px]"
+                      className="w-2/3 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] text-[15px] cursor-pointer"
                     >
                       <span>{loading ? t('registering', 'Создание...') : t('registerBtn', 'Зарегистрироваться')}</span>
                     </button>

@@ -496,8 +496,18 @@ model Supplier {
   passportInfo  String?       @map("passport_info")
   passportSeries String?      @map("passport_series")
   passportIssuedBy String?    @map("passport_issued_by")
-  directorName  String?       @map("director_name")
-  logoUrl       String?       @map("logo_url")
+  directorName        String?       @map("director_name")
+  directorPersonalCode String?      @map("director_personal_code")
+  okpoCode            String?       @map("okpo_code")
+  legalAddress        String?       @map("legal_address")
+  isMedicalLicensed   Boolean?      @default(false) @map("is_medical_licensed")
+  licenseIssuedBy     String?       @map("license_issued_by")
+  licenseExpiryDate   String?       @map("license_expiry_date")
+  bankCorrAccount     String?       @map("bank_corr_account")
+  bankSwift           String?       @map("bank_swift")
+  bankIban            String?       @map("bank_iban")
+  bankCurrency        String?       @default("TMT") @map("bank_currency")
+  logoUrl             String?       @map("logo_url")
 
   offers Offer[]
   files  SupplierFile[]

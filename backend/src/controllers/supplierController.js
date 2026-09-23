@@ -4,7 +4,14 @@ const prisma = require('../lib/prisma');
 const updateProfile = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { name, type, address, region, bankName, bankAccount, bankMfo, passportInfo, passportSeries, passportIssuedBy, email, phone, categoryIds, directorName, logoUrl } = req.body;
+        const { 
+            name, type, address, legalAddress, region, 
+            bankName, bankAccount, bankMfo, bankCorrAccount, bankSwift, bankIban, bankCurrency,
+            passportInfo, passportSeries, passportIssuedBy, 
+            directorName, directorPersonalCode, okpoCode, taxId,
+            isMedicalLicensed, licenseNumber, licenseIssuedBy, licenseExpiryDate,
+            email, phone, categoryIds, logoUrl, countryId, submitForReview 
+        } = req.body;
 
         // Ищем поставщика
         const supplier = await prisma.supplier.findFirst({
@@ -15,6 +22,22 @@ const updateProfile = async (req, res) => {
             return res.status(404).json({ error: 'Профиль поставщика не найден' });
         }
 
+        // Валидация срока действия медицинской лицензии при отправке на проверку
+        const willSubmitForReview = submitForReview !== false;
+        if (willSubmitForReview && isMedicalLicensed) {
+            if (!licenseNumber || !licenseNumber.trim()) {
+                return res.status(400).json({ error: 'Укажите номер медицинской лицензии Минздрава' });
+            }
+            if (licenseExpiryDate) {
+                const expiry = new Date(licenseExpiryDate);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (expiry < today) {
+                    return res.status(400).json({ error: 'Внимание: срок действия вашей медицинской лицензии истек' });
+                }
+            }
+        }
+
         // Очищаем наименование от случайных приставок формы
         let cleanName = supplier.name;
         if (name && typeof name === 'string' && name.trim()) {
@@ -23,6 +46,7 @@ const updateProfile = async (req, res) => {
 
         const combinedPassport = passportInfo || [passportSeries, passportIssuedBy].filter(Boolean).join(', ');
         const previousStatus = supplier.verificationStatus;
+        const newStatus = willSubmitForReview ? 'PENDING_REVIEW' : supplier.verificationStatus;
 
         // Обновляем Supplier и его категории в транзакции
         const updatedSupplier = await prisma.$transaction(async (tx) => {
@@ -32,16 +56,29 @@ const updateProfile = async (req, res) => {
                     name: cleanName,
                     type: type || supplier.type,
                     address,
+                    ...(legalAddress !== undefined ? { legalAddress } : {}),
                     region,
                     bankName,
                     bankAccount,
                     bankMfo,
+                    ...(bankCorrAccount !== undefined ? { bankCorrAccount } : {}),
+                    ...(bankSwift !== undefined ? { bankSwift } : {}),
+                    ...(bankIban !== undefined ? { bankIban } : {}),
+                    ...(bankCurrency !== undefined ? { bankCurrency } : {}),
                     passportInfo: combinedPassport,
                     passportSeries,
                     passportIssuedBy,
+                    ...(directorPersonalCode !== undefined ? { directorPersonalCode } : {}),
+                    ...(okpoCode !== undefined ? { okpoCode } : {}),
+                    ...(taxId !== undefined ? { taxId } : {}),
+                    ...(isMedicalLicensed !== undefined ? { isMedicalLicensed: Boolean(isMedicalLicensed) } : {}),
+                    ...(licenseNumber !== undefined ? { licenseNumber } : {}),
+                    ...(licenseIssuedBy !== undefined ? { licenseIssuedBy } : {}),
+                    ...(licenseExpiryDate !== undefined ? { licenseExpiryDate } : {}),
+                    ...(countryId !== undefined ? { countryId: countryId || null } : {}),
                     email,
                     phone, // Сохраняем рабочий телефон в профиле компании
-                    verificationStatus: 'PENDING_REVIEW', // Переводим на проверку
+                    verificationStatus: newStatus,
                     ...(directorName !== undefined ? { directorName } : {}),
                     ...(logoUrl !== undefined ? { logoUrl } : {}),
                 },
@@ -67,11 +104,30 @@ const updateProfile = async (req, res) => {
             return tx.supplier.findUnique({
                 where: { id: supplier.id },
                 include: {
+                    country: true,
                     files: { include: { document: true } },
                     categories: { include: { category: true } }
                 }
             });
         });
+
+        if (willSubmitForReview && previousStatus !== 'PENDING_REVIEW') {
+            try {
+                await prisma.supplierModerationLog.create({
+                    data: {
+                        supplierId: supplier.id,
+                        action: previousStatus === 'REJECTED' ? 'RESUBMITTED' : 'SUBMITTED',
+                        previousStatus,
+                        newStatus: 'PENDING_REVIEW',
+                        reason: previousStatus === 'REJECTED' 
+                            ? 'Повторная подача профиля на проверку после исправления замечаний' 
+                            : 'Подача профиля на верификацию'
+                    }
+                });
+            } catch (logErr) {
+                console.error('Ошибка записи лога модерации:', logErr);
+            }
+        }
 
         // Записываем событие в архив / лог модерации
         try {
@@ -250,7 +306,12 @@ const deleteSupplier = async (req, res) => {
 const adminUpdateSupplier = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, inn, taxId, phone, address, email, license, licenseNumber, countryId, isActive, categoryIds, directorName, logoUrl } = req.body;
+        const { 
+            name, inn, taxId, okpoCode, phone, address, legalAddress, email, 
+            license, licenseNumber, licenseIssuedBy, licenseExpiryDate, isMedicalLicensed,
+            bankName, bankAccount, bankMfo, bankCorrAccount, bankSwift, bankIban, bankCurrency,
+            directorName, directorPersonalCode, countryId, isActive, categoryIds, logoUrl 
+        } = req.body;
         const finalTaxId = taxId || inn;
         const finalLicense = licenseNumber || license;
 
@@ -260,10 +321,23 @@ const adminUpdateSupplier = async (req, res) => {
                 data: {
                     ...(name ? { name } : {}),
                     ...(finalTaxId !== undefined ? { taxId: finalTaxId } : {}),
+                    ...(okpoCode !== undefined ? { okpoCode } : {}),
                     ...(phone !== undefined ? { phone } : {}),
                     ...(address !== undefined ? { address } : {}),
+                    ...(legalAddress !== undefined ? { legalAddress } : {}),
                     ...(email !== undefined ? { email } : {}),
                     ...(finalLicense !== undefined ? { licenseNumber: finalLicense } : {}),
+                    ...(licenseIssuedBy !== undefined ? { licenseIssuedBy } : {}),
+                    ...(licenseExpiryDate !== undefined ? { licenseExpiryDate } : {}),
+                    ...(isMedicalLicensed !== undefined ? { isMedicalLicensed: Boolean(isMedicalLicensed) } : {}),
+                    ...(bankName !== undefined ? { bankName } : {}),
+                    ...(bankAccount !== undefined ? { bankAccount } : {}),
+                    ...(bankMfo !== undefined ? { bankMfo } : {}),
+                    ...(bankCorrAccount !== undefined ? { bankCorrAccount } : {}),
+                    ...(bankSwift !== undefined ? { bankSwift } : {}),
+                    ...(bankIban !== undefined ? { bankIban } : {}),
+                    ...(bankCurrency !== undefined ? { bankCurrency } : {}),
+                    ...(directorPersonalCode !== undefined ? { directorPersonalCode } : {}),
                     ...(countryId !== undefined ? { countryId: countryId || null } : {}),
                     ...(isActive !== undefined ? { isActive: Boolean(isActive) } : {}),
                     ...(directorName !== undefined ? { directorName } : {}),

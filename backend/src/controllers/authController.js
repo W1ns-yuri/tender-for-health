@@ -5,16 +5,33 @@ const prisma = require('../lib/prisma');
 // Регистрация нового пользователя
 const register = async (req, res) => {
     try {
-        const { username, password, firstName, lastName, middleName, position, phone, companyType, companyName, taxId, categoryIds } = req.body;
+        const { username, password, firstName, lastName, middleName, position, phone, companyType, companyName, taxId, okpoCode, categoryIds, countryCode } = req.body;
 
         if (!username || !password || !firstName || !lastName || !phone) {
             return res.status(400).json({ error: 'Пожалуйста, заполните обязательные поля: username, password, firstName, lastName, phone' });
+        }
+
+        if (!Array.isArray(categoryIds) || categoryIds.length === 0) {
+            return res.status(400).json({ error: 'Пожалуйста, выберите хотя бы одну категорию деятельности компании' });
         }
 
         // Проверяем, существует ли уже пользователь с таким логином
         const existingUser = await prisma.user.findUnique({ where: { username } });
         if (existingUser) {
             return res.status(400).json({ error: 'Пользователь с таким логином уже существует' });
+        }
+
+        // Находим countryId по countryCode (по умолчанию Туркменистан)
+        let countryId = null;
+        if (countryCode) {
+            const country = await prisma.country.findFirst({
+                where: { alpha2: countryCode.toUpperCase() }
+            });
+            if (country) countryId = country.id;
+        }
+        if (!countryId) {
+            const defaultTm = await prisma.country.findFirst({ where: { alpha2: 'TM' } });
+            if (defaultTm) countryId = defaultTm.id;
         }
 
         // Хешируем пароль (10 раундов соли)
@@ -47,6 +64,8 @@ const register = async (req, res) => {
                     name: cleanCompanyName || `${firstName} ${lastName}`,
                     type: companyType || 'ENTREPRENEUR',
                     taxId: taxId || null,
+                    okpoCode: okpoCode || (countryCode === 'TM' ? taxId : null),
+                    countryId: countryId || null,
                     phone: phone || null,
                     email: username.includes('@') ? username : null,
                     verificationStatus: 'PENDING',
@@ -91,7 +110,14 @@ const login = async (req, res) => {
         }
 
         // Ищем пользователя в БД (пароль в лог сервера не пишется из соображений безопасности)
-        const user = await prisma.user.findUnique({ where: { username }, include: { suppliers: true } });
+        const user = await prisma.user.findUnique({ 
+            where: { username }, 
+            include: { 
+                suppliers: {
+                    include: { country: true }
+                } 
+            } 
+        });
         if (!user) {
             return res.status(401).json({ error: 'Неверный логин или пароль' });
         }
@@ -146,6 +172,7 @@ const getMe = async (req, res) => {
                 companies: true, 
                 suppliers: {
                     include: {
+                        country: true,
                         categories: {
                             include: { category: true }
                         }

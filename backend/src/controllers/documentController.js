@@ -7,12 +7,13 @@ const uploadDocument = async (req, res) => {
             return res.status(400).json({ error: 'Файл не был загружен' });
         }
 
-        const { name, documentTypeId, tenderId, lotId, supplierId, offerId } = req.body;
+        const { name, description, documentTypeId, tenderId, lotId, supplierId, offerId } = req.body;
 
         // Создаем запись базового документа
         const document = await prisma.document.create({
             data: {
                 name: name || Buffer.from(req.file.originalname, 'latin1').toString('utf8'),
+                description: description || null,
                 fileName: Buffer.from(req.file.originalname, 'latin1').toString('utf8'),
                 filePath: (req.file.path || '').replace(/\\/g, '/'),
                 fileType: req.file.mimetype,
