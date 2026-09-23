@@ -1,221 +1,22 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Plus, Save, Trash2, ChevronDown, AlertCircle, RefreshCw, FileText, 
-  Paperclip, Package, Check, ArrowRight, Eye, 
-  Bookmark, MapPin, Clock, ShieldCheck, ChevronUp, X
-} from 'lucide-react';
+import { RefreshCw, Package, Plus } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import CatalogFormModal from '../components/CatalogFormModal';
-import CustomDatePicker from '../components/CustomDatePicker';
-import CustomSelect from '../components/CustomSelect';
 import { useAlert } from '../context/AlertContext';
 
-// Запрещенные спецсимволы (<, >, {, }, |, ^, ~, `, \)
-const FORBIDDEN_CHARS_REGEX = /[<>{}|^~`\\]/g;
-
-const sanitizeInputText = (text) => {
-  if (typeof text !== 'string') return text;
-  return text.replace(FORBIDDEN_CHARS_REGEX, '');
-};
-
-const CustomDateInput = ({ value, onChange, placeholder, isDarkMode, theme, required, min, max, lang, size = 'md', className = '' }) => {
-  return (
-    <CustomDatePicker
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      isDarkMode={isDarkMode}
-      theme={theme}
-      required={required}
-      min={min}
-      max={max}
-      lang={lang}
-      size={size}
-      className={className}
-    />
-  );
-};
-
-const ProductSearchableSelect = ({
-  products,
-  value,
-  generalProductId,
-  onChange,
-  onOpenCreateModal,
-  placeholder,
-  isDarkMode,
-  theme,
-  lang = 'RU',
-  isDuplicate
-}) => {
-  const t = (key, fallback, params) => getTranslation(lang, key, fallback, params);
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
-  const wrapperRef = useRef(null);
-  const dropdownRef = useRef(null);
-
-  const updateCoords = () => {
-    if (wrapperRef.current) {
-      const rect = wrapperRef.current.getBoundingClientRect();
-      const dropdownHeight = 240;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const openUpwards = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
-
-      setCoords({
-        top: openUpwards ? (rect.top - dropdownHeight - 4) : (rect.bottom + 4),
-        left: Math.max(10, Math.min(rect.left, window.innerWidth - Math.max(rect.width, 320) - 10)),
-        width: Math.max(rect.width, 320),
-      });
-    }
-  };
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (
-        wrapperRef.current && !wrapperRef.current.contains(event.target) &&
-        dropdownRef.current && !dropdownRef.current.contains(event.target)
-      ) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      updateCoords();
-      window.addEventListener('resize', updateCoords);
-      window.addEventListener('scroll', updateCoords, true);
-    }
-    return () => {
-      window.removeEventListener('resize', updateCoords);
-      window.removeEventListener('scroll', updateCoords, true);
-    };
-  }, [isOpen]);
-
-  const filteredProducts = products.filter(p => 
-    (p.name || '').toLowerCase().includes(search.toLowerCase()) || 
-    (p.tradeName && p.tradeName.toLowerCase().includes(search.toLowerCase())) ||
-    (p.code && p.code.toLowerCase().includes(search.toLowerCase()))
-  );
-
-  const selectedProduct = products.find(p => p.id === generalProductId) || products.find(p => p.name === value);
-
-  const handleSelect = (product) => {
-    onChange(product.name, product.id);
-    setIsOpen(false);
-    setSearch('');
-  };
-
-  const handleOpenModalAndCloseDropdown = (initialName = '') => {
-    setIsOpen(false);
-    setSearch('');
-    onOpenCreateModal(initialName);
-  };
-
-  return (
-    <div ref={wrapperRef} className="relative w-full">
-      <div className="flex items-center gap-1">
-        <div 
-          onClick={() => {
-            const nextState = !isOpen;
-            setIsOpen(nextState);
-            if (nextState) {
-              setSearch('');
-              updateCoords();
-            }
-          }}
-          className={`flex-1 px-2.5 py-1.5 rounded-md text-xs cursor-pointer flex justify-between items-center transition-all duration-150 font-medium ${
-            isDuplicate
-              ? 'border border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 ring-1 ring-rose-500/30'
-              : `${theme.inputBg} ${isOpen ? '!border-emerald-500 !ring-2 !ring-emerald-500/25 shadow-xs' : ''}`
-          }`}
-        >
-          <span className={`truncate ${!value && !selectedProduct ? 'opacity-50' : 'text-slate-800 dark:text-slate-100 font-semibold'}`}>
-            {selectedProduct ? selectedProduct.name : (value || placeholder)}
-          </span>
-          <ChevronDown size={14} className="opacity-50 shrink-0 ml-1" />
-        </div>
-
-        <button
-          type="button"
-          onClick={() => handleOpenModalAndCloseDropdown(search || '')}
-          className="w-7 h-7 shrink-0 rounded-md border border-slate-200 dark:border-slate-700 bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
-          title={t('createNewCatalogProduct', 'Создать новый товар в справочнике')}
-        >
-          <Plus size={13} />
-        </button>
-      </div>
-
-      {isOpen && createPortal(
-        <div
-          ref={dropdownRef}
-          style={{
-            position: 'fixed',
-            top: `${coords.top}px`,
-            left: `${coords.left}px`,
-            width: `${coords.width}px`,
-            zIndex: 999999,
-          }}
-          className={`rounded-xl border shadow-2xl overflow-hidden flex flex-col max-h-60 ${
-            isDarkMode ? 'bg-[#151c28] border-slate-700' : 'bg-white border-slate-200'
-          }`}
-        >
-          <div className="p-2 border-b border-slate-100 dark:border-slate-800">
-            <input
-              type="text"
-              autoFocus
-              className={`w-full px-2.5 py-1.5 text-xs rounded-lg border outline-none ${theme.inputBg}`}
-              placeholder={t('searchProductPlaceholder', 'Поиск товара...')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          <div className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 flex-1">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map(p => (
-                <div
-                  key={p.id}
-                  className={`px-3 py-2 text-xs cursor-pointer hover:bg-emerald-500/10 flex items-center justify-between gap-2 transition-colors ${
-                    (generalProductId === p.id || value === p.name) ? 'bg-emerald-500/20 font-bold text-emerald-700 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-200'
-                  }`}
-                  onClick={() => handleSelect(p)}
-                >
-                  <span className="truncate">{p.name}</span>
-                  {p.code && <span className="text-[10px] text-slate-400 font-mono shrink-0">{p.code}</span>}
-                </div>
-              ))
-            ) : (
-              <div className="p-3 text-center text-xs text-slate-400">
-                {t('productNotFoundInCatalog', 'Товар не найден в справочнике')}
-              </div>
-            )}
-
-            {search.trim().length > 0 && !filteredProducts.some(p => p.name.toLowerCase() === search.trim().toLowerCase()) && (
-              <div
-                className="p-2.5 text-xs bg-emerald-50/80 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 cursor-pointer font-bold flex items-center gap-2 border-t border-emerald-200/50 dark:border-emerald-800/50 transition-colors"
-                onClick={() => handleOpenModalAndCloseDropdown(search.trim())}
-              >
-                <Plus size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span className="truncate">
-                  {t('addToCatalogPrompt', `Добавить в справочник: "${search.trim()}"`, { query: search.trim() })}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-};
+// Subcomponents & Constants
+import { sanitizeInputText } from '../components/tender/tenderConstants';
+import TenderHeader from '../components/tender/TenderHeader';
+import TenderGeneralParamsTab from '../components/tender/TenderGeneralParamsTab';
+import TenderLotsTabBar from '../components/tender/TenderLotsTabBar';
+import TenderLotDetailsCard from '../components/tender/TenderLotDetailsCard';
+import TenderLotDocuments from '../components/tender/TenderLotDocuments';
+import TenderLotItemsTable from '../components/tender/TenderLotItemsTable';
+import TenderLotStickyFooter from '../components/tender/TenderLotStickyFooter';
+import TenderGeneralDocumentsTab from '../components/tender/TenderGeneralDocumentsTab';
 
 export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDarkMode, lang = 'RU', isEdit: _isEdit = false }) {
   const { id } = useParams();
@@ -448,6 +249,7 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
         description: sanitizeInputText(formData.description),
         technicalSpecs: sanitizeInputText(formData.technicalSpecs),
         type: formData.type,
+        status: formData.status,
         visibility: formData.visibility,
         categoryId: formData.categoryId || undefined,
         clientId: formData.clientId || undefined,
@@ -922,351 +724,41 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
 
   return (
     <div className="space-y-6 pb-20 max-w-7xl mx-auto">
-      {/* 🟢 ВЕРХНЯЯ ШАПКА: Статус, Название, Номер и Кнопки действий */}
-      <div className={`p-5 rounded-2xl border shadow-xs flex flex-wrap items-center justify-between gap-4 ${theme.cardBg}`}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-base shadow-xs">
-            {tenderId ? '📋' : '✨'}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-black tracking-wide border border-emerald-500/20">
-                {formData.tenderNumber || 'TNDR-NEW'}
-              </span>
-              <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                formData.status === 'TASLAMA' 
-                  ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' 
-                  : 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
-              }`}>
-                {formData.status === 'TASLAMA' ? t('draftStatusBadge', 'Черновик (Taslama)') : t('statusAcyk', 'Открыт (Açyk)')}
-              </span>
-            </div>
-            <h1 className={`text-lg font-black tracking-tight mt-1 ${theme.primaryText}`}>
-              {formData.title || t('newTenderTitle', 'Новый тендер')}
-            </h1>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          {tenderId && (
-            <button
-              type="button"
-              onClick={() => navigate(`/tenders/${tenderId}`)}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-            >
-              <Eye size={15} />
-              <span>{t('previewTenderBtn', 'Просмотр тендера')}</span>
-            </button>
-          )}
-
-          {tenderId && formData.status === 'TASLAMA' && (
-            <div className="relative group flex items-center">
-              <button
-                type="button"
-                onClick={handlePublishTender}
-                disabled={!canPublish || publishing}
-                className={`px-5 py-2.5 font-black rounded-xl text-xs flex items-center gap-2 transition-all shadow-sm ${
-                  canPublish 
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 active:scale-95 cursor-pointer' 
-                    : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-300 dark:border-slate-700'
-                }`}
-              >
-                <Check size={16} />
-                <span>{publishing ? t('publishing', 'Публикация...') : t('publishTenderBtn', 'Опубликовать тендер')}</span>
-              </button>
-              {!canPublish && publishDisabledReason && (
-                <div className="absolute right-0 top-full mt-2 hidden group-hover:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-[11px] font-medium shadow-xl z-50 whitespace-nowrap animate-in fade-in">
-                  <AlertCircle size={13} className="text-amber-400 shrink-0" />
-                  <span>{publishDisabledReason}</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {errorMsg && (
-        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5 font-medium shadow-xs">
-          <AlertCircle size={18} className="shrink-0 text-rose-600" />
-          <span>{errorMsg}</span>
-        </div>
-      )}
-
-      {/* 🟢 НАВИГАЦИОННЫЕ ВКЛАДКИ 1-ГО УРОВНЯ (ТАБЫ) */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-px">
-        <button
-          type="button"
-          onClick={() => setActiveTopTab('params')}
-          className={`px-4 py-2.5 rounded-t-xl font-bold text-xs flex items-center gap-2 border-t border-x transition-all cursor-pointer ${
-            activeTopTab === 'params'
-              ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 border-t-2 border-t-emerald-500 shadow-xs'
-              : 'bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-800/40 text-slate-500 border-transparent'
-          }`}
-        >
-          <FileText size={15} />
-          <span>{t('tabGeneralParams', 'Параметры закупки')}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (tenderId) setActiveTopTab('lots');
-          }}
-          disabled={!tenderId}
-          className={`px-4 py-2.5 rounded-t-xl font-bold text-xs flex items-center gap-2 border-t border-x transition-all ${
-            !tenderId
-              ? 'opacity-40 cursor-not-allowed text-slate-400 border-transparent'
-              : activeTopTab === 'lots'
-              ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 border-t-2 border-t-emerald-500 shadow-xs cursor-pointer'
-              : 'bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-800/40 text-slate-500 border-transparent cursor-pointer'
-          }`}
-        >
-          <Package size={15} />
-          <span>{t('tabLotsSpecs', 'Лоты и спецификации')}</span>
-          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black">
-            {lots.length}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (tenderId) setActiveTopTab('docs');
-          }}
-          disabled={!tenderId}
-          className={`px-4 py-2.5 rounded-t-xl font-bold text-xs flex items-center gap-2 border-t border-x transition-all ${
-            !tenderId
-              ? 'opacity-40 cursor-not-allowed text-slate-400 border-transparent'
-              : activeTopTab === 'docs'
-              ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 border-t-2 border-t-emerald-500 shadow-xs cursor-pointer'
-              : 'bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-800/40 text-slate-500 border-transparent cursor-pointer'
-          }`}
-        >
-          <Paperclip size={15} />
-          <span>{t('tabGeneralDocs', 'Общие документы')}</span>
-          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold">
-            {tenderFiles.length}
-          </span>
-        </button>
-      </div>
+      {/* 🟢 ШАПКА ТЕНДЕРА И ТАБЫ 1-ГО УРОВНЯ */}
+      <TenderHeader
+        tenderId={tenderId}
+        formData={formData}
+        lots={lots}
+        tenderFiles={tenderFiles}
+        activeTopTab={activeTopTab}
+        setActiveTopTab={setActiveTopTab}
+        canPublish={canPublish}
+        publishing={publishing}
+        publishDisabledReason={publishDisabledReason}
+        onPublishTender={handlePublishTender}
+        errorMsg={errorMsg}
+        theme={theme}
+        t={t}
+      />
 
       {/* 🟢 ВКЛАДКА 1: ПАРАМЕТРЫ ЗАКУПКИ */}
-      {activeTopTab === 'params' && (
-        <div className={`p-6 rounded-2xl border shadow-xs space-y-5 animate-in fade-in duration-200 ${theme.cardBg}`}>
-          <div className="pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <div>
-              <h2 className={`text-base font-black ${theme.primaryText}`}>
-                {t('tabGeneralParams', 'Параметры закупки')}
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {t('generalParamsHint', 'Основные реквизиты, классификация, сроки и квалификационные требования')}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Номер тендера */}
-            <div>
-              <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                {t('tenderNumberLabel', 'Номер тендера')} *
-              </label>
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="text"
-                  value={formData.tenderNumber}
-                  onChange={(e) => handleFormChange('tenderNumber', e.target.value)}
-                  className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-bold outline-none border ${theme.inputBg}`}
-                  placeholder="TNDR-2026-09-001"
-                />
-                {!tenderId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      API.get('/tenders/next-number').then(res => {
-                        if (res.data?.nextTenderNumber) setFormData(p => ({ ...p, tenderNumber: res.data.nextTenderNumber }));
-                      });
-                    }}
-                    className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold shrink-0 cursor-pointer"
-                    title={t('generateNumber', 'Автогенерация')}
-                  >
-                    <RefreshCw size={14} />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Заказчик */}
-            <div>
-              <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                {t('client', 'Заказчик')} *
-              </label>
-              <CustomSelect
-                role={role}
-                value={formData.clientId}
-                onChange={(val) => handleFormChange('clientId', val)}
-                options={clients.map(c => ({ id: c.id, name: c.name }))}
-                placeholder={t('selectClient', 'Выберите заказчика...')}
-                isDarkMode={isDarkMode}
-                theme={theme}
-                t={t}
-              />
-            </div>
-
-            {/* Общая категория тендера */}
-            <div>
-              <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                {t('tenderGeneralCategory', 'Категория тендера')} *
-              </label>
-              <CustomSelect
-                role={role}
-                value={formData.categoryId}
-                onChange={(val) => handleFormChange('categoryId', val)}
-                options={categories.map(c => ({ id: c.id, name: c.name }))}
-                placeholder={t('selectCategory', 'Выберите категорию...')}
-                isDarkMode={isDarkMode}
-                theme={theme}
-                t={t}
-              />
-            </div>
-          </div>
-
-          {/* Наименование тендера */}
-          <div>
-            <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-              {t('tenderTitleLabel', 'Наименование тендера')} *
-            </label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => handleFormChange('title', e.target.value)}
-              className={`w-full px-3.5 py-2 rounded-xl text-xs font-semibold outline-none border ${theme.inputBg}`}
-              placeholder={t('tenderTitlePlaceholder', 'Например: Закупка лекарственных средств и расходных материалов для стационаров')}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Дата объявления */}
-            <div>
-              <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                {t('announcementDate', 'Дата объявления')} *
-              </label>
-              <CustomDateInput
-                value={formData.announcementDate}
-                onChange={(val) => handleFormChange('announcementDate', val)}
-                isDarkMode={isDarkMode}
-                theme={theme}
-                lang={lang}
-              />
-            </div>
-
-            {/* Дедлайн */}
-            <div>
-              <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                {t('deadline', 'Крайний срок подачи')} *
-              </label>
-              <CustomDateInput
-                value={formData.deadline}
-                onChange={(val) => handleFormChange('deadline', val)}
-                isDarkMode={isDarkMode}
-                theme={theme}
-                lang={lang}
-              />
-            </div>
-
-            {/* Тип тендера (Местный / Международный) */}
-            <div>
-              <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                {t('tenderTypeLabel', 'Тип тендера')}
-              </label>
-              <CustomSelect
-                role={role}
-                value={formData.type}
-                onChange={(val) => handleFormChange('type', val)}
-                options={[
-                  { id: 'YERLI', name: t('typeLocal', 'Местный (Ýerli)') },
-                  { id: 'HALKARA', name: t('typeGlobal', 'Международный (Halkara)') }
-                ]}
-                isDarkMode={isDarkMode}
-                theme={theme}
-                t={t}
-              />
-            </div>
-
-            {/* Тип закупки (Товары / Работы / Услуги) */}
-            <div>
-              <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                {t('procurementTypeLabel', 'Тип предмета закупки')}
-              </label>
-              <CustomSelect
-                role={role}
-                value={formData.procurementType}
-                onChange={(val) => handleFormChange('procurementType', val)}
-                options={[
-                  { id: 'GOODS', name: t('catProducts', 'Товары (Harytlar)') },
-                  { id: 'SERVICES_WORKS', name: t('servicesAndWorks', 'Работы и услуги') },
-                  { id: 'MIXED', name: t('mixedType', 'Смешанный') }
-                ]}
-                isDarkMode={isDarkMode}
-                theme={theme}
-                t={t}
-              />
-            </div>
-          </div>
-
-          {/* Описание и требования */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                {t('description', 'Описание тендера')}
-              </label>
-              <textarea
-                rows={3}
-                value={formData.description}
-                onChange={(e) => handleFormChange('description', e.target.value)}
-                className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme.inputBg}`}
-                placeholder={t('descriptionPlaceholder', 'Краткая аннотация и цели закупки...')}
-              />
-            </div>
-            <div>
-              <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                {t('technicalSpecs', 'Общие требования к участникам')}
-              </label>
-              <textarea
-                rows={3}
-                value={formData.technicalSpecs}
-                onChange={(e) => handleFormChange('technicalSpecs', e.target.value)}
-                className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme.inputBg}`}
-                placeholder={t('techSpecsPlaceholder', 'Общие квалификационные требования...')}
-              />
-            </div>
-          </div>
-
-          {/* Кнопка сохранения общих данных */}
-          <div className="pt-2 flex justify-end">
-            {tenderId ? (
-              <button
-                type="button"
-                onClick={handleUpdateBaseTender}
-                disabled={savingBase}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-              >
-                <Save size={15} />
-                <span>{savingBase ? t('saving', 'Сохранение...') : t('saveBaseInfo', 'Сохранить общие данные')}</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleCreateBaseTender}
-                disabled={savingBase}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-              >
-                <span>{savingBase ? t('saving', 'Создание...') : t('saveDraftAndProceed', 'Создать черновик и перейти к лотам →')}</span>
-                <ArrowRight size={16} />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      <TenderGeneralParamsTab
+        activeTopTab={activeTopTab}
+        formData={formData}
+        handleFormChange={handleFormChange}
+        tenderId={tenderId}
+        setFormData={setFormData}
+        clients={clients}
+        categories={categories}
+        role={role}
+        isDarkMode={isDarkMode}
+        theme={theme}
+        lang={lang}
+        savingBase={savingBase}
+        handleUpdateBaseTender={handleUpdateBaseTender}
+        handleCreateBaseTender={handleCreateBaseTender}
+        t={t}
+      />
 
       {/* 🟢 ВКЛАДКА 2: ЛОТЫ И СПЕЦИФИКАЦИИ */}
       {activeTopTab === 'lots' && tenderId && (
@@ -1287,575 +779,69 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
           </div>
 
           {/* 📑 БРАУЗЕРНЫЕ ВКЛАДКИ ЛОТОВ (CHROME/EDGE TABS STYLE) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-px border-b border-slate-200 dark:border-slate-800 scrollbar-thin">
-            {lots.map((lot, idx) => {
-              const isActive = activeLotIndex === idx;
-              const specsCount = (lot.specs || []).length;
-              const isDirty = isActive && activeLotDirty;
-              const isReady = specsCount > 0 && !isDirty;
-
-              return (
-                <div
-                  key={lot.id || idx}
-                  onClick={() => {
-                    if (activeLotIndex !== idx) {
-                      setActiveLotIndex(idx);
-                      setActiveLotDirty(false);
-                    }
-                  }}
-                  className={`group relative flex items-center gap-2 px-3.5 py-2.5 rounded-t-xl text-xs font-bold border-t border-x transition-all cursor-pointer shrink-0 select-none ${
-                    isActive
-                      ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 border-t-2 border-t-emerald-500 shadow-xs z-10 -mb-px'
-                      : 'bg-slate-100/80 hover:bg-slate-200/80 dark:bg-slate-800/40 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent'
-                  }`}
-                >
-                  {/* Трехцветный микро-индикатор готовности */}
-                  {isDirty ? (
-                    <span 
-                      className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" 
-                      title={t('unsavedDraft', 'Есть несохраненные правки')}
-                    />
-                  ) : isReady ? (
-                    <span 
-                      className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" 
-                      title={t('lotReady', 'Готов к торгам')}
-                    />
-                  ) : (
-                    <span 
-                      className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0" 
-                      title={t('lotEmpty', 'Пустой (0 поз.)')}
-                    />
-                  )}
-
-                  <Bookmark size={13} className={isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'} />
-                  
-                  {/* Информативный заголовок лота без агрессивного truncate */}
-                  <span className="max-w-xs md:max-w-sm truncate font-bold">
-                    {`Лот ${lot.lotNumber || idx + 1}: ${lot.name || `Лот №${lot.lotNumber || idx + 1}`}`}
-                  </span>
-
-                  {/* Счетчик позиций спецификации */}
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono font-bold ${
-                    isActive
-                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
-                  }`}>
-                    {specsCount} {t('shortPosition', 'поз.')}
-                  </span>
-
-                  {/* Кнопка закрытия / удаления лота */}
-                  {lots.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteActiveLot(idx);
-                      }}
-                      className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 opacity-40 group-hover:opacity-100 transition-all cursor-pointer"
-                      title={t('closeLotTab', 'Удалить лот')}
-                    >
-                      <X size={12} />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Кнопка добавления нового таба лота */}
-            <button
-              type="button"
-              onClick={handleAddNewLotTab}
-              className="px-3.5 py-2.5 rounded-t-xl font-bold text-xs flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer shrink-0 border border-dashed border-emerald-400/60 dark:border-emerald-700/60"
-            >
-              <Plus size={14} />
-              <span>{t('addLotTab', '+ Добавить лот')}</span>
-            </button>
-          </div>
+          <TenderLotsTabBar
+            lots={lots}
+            activeLotIndex={activeLotIndex}
+            setActiveLotIndex={setActiveLotIndex}
+            activeLotDirty={activeLotDirty}
+            setActiveLotDirty={setActiveLotDirty}
+            handleDeleteActiveLot={handleDeleteActiveLot}
+            handleAddNewLotTab={handleAddNewLotTab}
+            t={t}
+          />
 
           {/* 📄 СОДЕРЖИМОЕ АКТИВНОГО ЛОТА */}
           {activeLot ? (
             <div className={`p-6 rounded-2xl border shadow-xs space-y-6 ${theme.cardBg}`}>
-              {/* Шапка карточки лота: Номер, Название и безопасная кнопка Удалить лот */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <Bookmark size={16} className="text-emerald-600 dark:text-emerald-400" />
-                  <h3 className={`text-sm font-black ${theme.primaryText}`}>
-                    {`Лот №${activeLot.lotNumber || activeLotIndex + 1}: ${activeLot.name || ''}`}
-                  </h3>
-                </div>
+              {/* Параметры лота */}
+              <TenderLotDetailsCard
+                activeLot={activeLot}
+                activeLotIndex={activeLotIndex}
+                lots={lots}
+                handleActiveLotChange={handleActiveLotChange}
+                handleDeleteActiveLot={handleDeleteActiveLot}
+                categories={categories}
+                deliveryTerms={deliveryTerms}
+                role={role}
+                isDarkMode={isDarkMode}
+                theme={theme}
+                t={t}
+              />
 
-                {lots.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteActiveLot(activeLotIndex)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors flex items-center gap-1.5 cursor-pointer border border-transparent hover:border-rose-200 dark:hover:border-rose-800"
-                  >
-                    <Trash2 size={13} />
-                    <span>{t('deleteLotBtn', 'Удалить этот лот')}</span>
-                  </button>
-                )}
-              </div>
+              {/* Документы лота */}
+              <TenderLotDocuments
+                activeLot={activeLot}
+                handleLotFileUpload={handleLotFileUpload}
+                handleLotFileDelete={handleLotFileDelete}
+                t={t}
+              />
 
-              {/* Ряд 1: Номер, Название, Тип, Категория */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                    {t('lotNumberLabel', 'Номер лота')} *
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={activeLot.lotNumber || ''}
-                    onChange={(e) => handleActiveLotChange('lotNumber', e.target.value)}
-                    className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-bold outline-none border ${theme.inputBg}`}
-                  />
-                </div>
+              {/* Спецификация позиций */}
+              <TenderLotItemsTable
+                activeLot={activeLot}
+                products={products}
+                units={units}
+                manufacturers={manufacturers}
+                handleAddSpecRow={handleAddSpecRow}
+                handleSpecChange={handleSpecChange}
+                handleRemoveSpec={handleRemoveSpec}
+                handleOpenProductModal={handleOpenProductModal}
+                isDarkMode={isDarkMode}
+                theme={theme}
+                lang={lang}
+                t={t}
+                role={role}
+              />
 
-                <div>
-                  <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                    {t('lotNameLabel', 'Название лота')} *
-                  </label>
-                  <input
-                    type="text"
-                    value={activeLot.name || ''}
-                    onChange={(e) => handleActiveLotChange('name', e.target.value)}
-                    className={`w-full px-3.5 py-2 rounded-xl text-xs font-bold outline-none border ${theme.inputBg}`}
-                    placeholder="Например: Поставка антибиотиков"
-                  />
-                </div>
-
-                <div>
-                  <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                    {t('lotTypeLabel', 'Тип лота')}
-                  </label>
-                  <CustomSelect
-                    role={role}
-                    value={activeLot.lotType || 'GOODS'}
-                    onChange={(val) => handleActiveLotChange('lotType', val)}
-                    options={[
-                      { id: 'GOODS', name: t('catProducts', 'Товары (Goods)') },
-                      { id: 'WORKS', name: t('worksType', 'Работы (Works)') },
-                      { id: 'SERVICES', name: t('servicesType', 'Услуги (Services)') }
-                    ]}
-                    isDarkMode={isDarkMode}
-                    theme={theme}
-                    t={t}
-                  />
-                </div>
-
-                <div>
-                  <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                    {t('lotCategory', 'Категория лота')}
-                  </label>
-                  <CustomSelect
-                    role={role}
-                    value={activeLot.categoryId || ''}
-                    onChange={(val) => handleActiveLotChange('categoryId', val)}
-                    options={categories.map(c => ({ id: c.id, name: c.name }))}
-                    placeholder={t('selectCategory', 'Категория лота...')}
-                    isDarkMode={isDarkMode}
-                    theme={theme}
-                    t={t}
-                  />
-                </div>
-              </div>
-
-              {/* Ряд 2: Симметричная сетка параметров поставки (Incoterms, Получатель, Адрес) */}
-              {activeLot.lotType === 'GOODS' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                      {t('deliveryTerm', 'Условие поставки (Incoterms)')}
-                    </label>
-                    <CustomSelect
-                      role={role}
-                      value={activeLot.deliveryTermId || ''}
-                      onChange={(val) => handleActiveLotChange('deliveryTermId', val)}
-                      options={deliveryTerms.map(dt => ({ id: dt.id, name: `${dt.shortName} — ${dt.name}` }))}
-                      placeholder={t('selectDeliveryTerm', 'Выберите базис поставки...')}
-                      isDarkMode={isDarkMode}
-                      theme={theme}
-                      t={t}
-                    />
-                  </div>
-                  <div>
-                    <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                      {t('endUser', 'Конечный получатель (Бенефициар)')}
-                    </label>
-                    <input
-                      type="text"
-                      value={activeLot.endUser || ''}
-                      onChange={(e) => handleActiveLotChange('endUser', e.target.value)}
-                      className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme.inputBg}`}
-                      placeholder={t('endUserPlaceholder', 'Например: Госпиталь №1, Центр кардиологии')}
-                    />
-                  </div>
-                  <div>
-                    <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                      {t('deliveryAddressLabel', 'Пункт назначения / Адрес поставки')}
-                    </label>
-                    <input
-                      type="text"
-                      value={activeLot.deliveryAddress || ''}
-                      onChange={(e) => handleActiveLotChange('deliveryAddress', e.target.value)}
-                      className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme.inputBg}`}
-                      placeholder={t('deliveryAddressPlaceholder', 'г. Ашхабад, Склад №2')}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {activeLot.lotType === 'SERVICES' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                        {t('serviceFormat', 'Формат оказания услуг')}
-                      </label>
-                      <CustomSelect
-                        role={role}
-                        value={activeLot.serviceFormat || 'ON_SITE'}
-                        onChange={(val) => handleActiveLotChange('serviceFormat', val)}
-                        options={[
-                          { id: 'ON_SITE', name: t('onCustomerSiteFormat', 'На объекте заказчика (On-site)') },
-                          { id: 'REMOTE', name: t('remoteFormat', 'Удаленно (Remote)') },
-                          { id: 'HYBRID', name: t('formatHybrid', 'Гибридный (Hybrid)') }
-                        ]}
-                        isDarkMode={isDarkMode}
-                        theme={theme}
-                        t={t}
-                      />
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                        {t('endUser', 'Конечный получатель (Бенефициар)')}
-                      </label>
-                      <input
-                        type="text"
-                        value={activeLot.endUser || ''}
-                        onChange={(e) => handleActiveLotChange('endUser', e.target.value)}
-                        className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme.inputBg}`}
-                        placeholder={t('endUserPlaceholder', 'Например: Госпиталь №1')}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                        {t('slaPeriod', 'Требования к SLA / Реакции')}
-                      </label>
-                      <input
-                        type="text"
-                        value={activeLot.slaPeriod || ''}
-                        onChange={(e) => handleActiveLotChange('slaPeriod', e.target.value)}
-                        className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme.inputBg}`}
-                        placeholder="24/7, реакция до 2 часов"
-                      />
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                        {t('deliveryAddressLabel', 'Место оказания услуг')}
-                      </label>
-                      <input
-                        type="text"
-                        value={activeLot.deliveryAddress || ''}
-                        onChange={(e) => handleActiveLotChange('deliveryAddress', e.target.value)}
-                        className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme.inputBg}`}
-                        placeholder="г. Ашхабад, Центр телемедицины"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeLot.lotType === 'WORKS' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                        {t('termLabel', 'Срок выполнения работ')}
-                      </label>
-                      <input
-                        type="text"
-                        value={activeLot.workPeriod || ''}
-                        onChange={(e) => handleActiveLotChange('workPeriod', e.target.value)}
-                        className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme.inputBg}`}
-                        placeholder="60 календарных дней"
-                      />
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                        {t('endUser', 'Конечный получатель (Бенефициар)')}
-                      </label>
-                      <input
-                        type="text"
-                        value={activeLot.endUser || ''}
-                        onChange={(e) => handleActiveLotChange('endUser', e.target.value)}
-                        className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme.inputBg}`}
-                        placeholder={t('endUserPlaceholder', 'Например: Госпиталь №1')}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className={`block text-xs font-bold mb-1.5 ${theme.subText}`}>
-                        {t('siteLabel', 'Объект выполнения работ / Адрес')}
-                      </label>
-                      <input
-                        type="text"
-                        value={activeLot.workAddress || ''}
-                        onChange={(e) => handleActiveLotChange('workAddress', e.target.value)}
-                        className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme.inputBg}`}
-                        placeholder="г. Ашхабад, ул. Здоровья 14"
-                      />
-                    </div>
-                    <div className="flex items-center pt-6">
-                      <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(activeLot.licenseRequired)}
-                          onChange={(e) => handleActiveLotChange('licenseRequired', e.target.checked)}
-                          className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                        />
-                        <span>{t('licenseRequired', 'Требуется строительная лицензия')}</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 📎 ИЗОЛИРОВАННАЯ ДОКУМЕНТАЦИЯ ЛОТА (Вторичное аккуратное действие) */}
-              <div className="p-4 rounded-xl border border-dashed border-emerald-500/40 bg-emerald-50/20 dark:bg-emerald-950/20 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Paperclip size={16} className="text-emerald-600" />
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                      {t('lotDocuments', 'Документация лота')}
-                    </span>
-                    <span className="text-[11px] text-slate-400">
-                      ({t('lotDocsIsolatedHint', 'Файлы, прикрепленные именно к этому лоту')})
-                    </span>
-                  </div>
-
-                  <label className="px-3.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 font-bold rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors">
-                    <Plus size={13} />
-                    <span>{t('uploadLotDocBtn', 'Прикрепить документ')}</span>
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={handleLotFileUpload}
-                    />
-                  </label>
-                </div>
-
-                {activeLot.files && activeLot.files.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1">
-                    {activeLot.files.map((fileObj, fIdx) => {
-                      const doc = fileObj.document || fileObj;
-                      return (
-                        <div 
-                          key={doc.id || fIdx} 
-                          className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs text-xs"
-                        >
-                          <div className="flex items-center gap-2 truncate">
-                            <FileText size={14} className="text-emerald-600 shrink-0" />
-                            <a 
-                              href={doc.filePath ? `http://localhost:5000/${doc.filePath}` : '#'} 
-                              target="_blank" 
-                              rel="noreferrer"
-                              className="font-semibold text-emerald-700 dark:text-emerald-300 hover:underline truncate"
-                              title={doc.fileName || doc.name}
-                            >
-                              {doc.fileName || doc.name}
-                            </a>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleLotFileDelete(doc.id)}
-                            className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer transition-colors"
-                            title={t('delete', 'Удалить')}
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-400 text-center py-2">
-                    {t('noLotDocumentsYet', 'Для этого лота пока не загружено документов.')}
-                  </p>
-                )}
-              </div>
-
-              {/* 📋 ТАБЛИЦА СПЕЦИФИКАЦИИ ПОЗИЦИЙ ДАННОГО ЛОТА */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">
-                    {t('specificationsList', 'Спецификация позиций')} ({activeLot.specs?.length || 0})
-                  </h3>
-                  {/* Заметная акцентная кнопка добавления позиции */}
-                  <button
-                    type="button"
-                    onClick={handleAddSpecRow}
-                    className="px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-emerald-300 dark:border-emerald-700 shadow-2xs"
-                  >
-                    <Plus size={14} />
-                    <span>{t('addPosition', 'Добавить позицию')}</span>
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
-                        <th className="py-2.5 px-3 w-12 text-center font-bold">#</th>
-                        <th className="py-2.5 px-3 min-w-56 font-bold">
-                          {activeLot.lotType === 'WORKS' 
-                            ? t('workStages', 'Этап / вид работ')
-                            : activeLot.lotType === 'SERVICES'
-                            ? t('serviceName', 'Наименование услуги')
-                            : t('product', 'Товар / МНН')} *
-                        </th>
-                        <th className="py-2.5 px-3 w-28 text-center font-bold">{t('unit', 'Ед. изм.')}</th>
-                        {activeLot.lotType === 'GOODS' && (
-                          <th className="py-2.5 px-3 w-36 text-center font-bold">{t('manufacturer', 'Производитель')}</th>
-                        )}
-                        <th className="py-2.5 px-3 w-24 text-center font-bold">
-                          {activeLot.lotType === 'SERVICES' ? t('volumePeriod', 'Объем') : t('quantity', 'Кол-во')} *
-                        </th>
-                        <th className="py-2.5 px-3 min-w-44 font-bold">{t('description', 'Описание / Требования')}</th>
-                        <th className="py-2.5 px-3 w-12 text-center font-bold"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {(!activeLot.specs || activeLot.specs.length === 0) ? (
-                        <tr>
-                          <td colSpan={activeLot.lotType === 'GOODS' ? 7 : 6} className="py-8 text-center text-slate-400">
-                            {t('noSpecsInLot', 'В этом лоте пока нет позиций. Нажмите «+ Добавить позицию».')}
-                          </td>
-                        </tr>
-                      ) : (
-                        activeLot.specs.map((spec, sIdx) => (
-                          <tr key={spec.id || sIdx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                            <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-400">
-                              {sIdx + 1}
-                            </td>
-
-                            <td className="py-2.5 px-3">
-                              <ProductSearchableSelect
-                                products={products}
-                                value={spec.haryt || spec.name}
-                                generalProductId={spec.generalProductId}
-                                onChange={(val, genId) => handleSpecChange(sIdx, 'productSelect', val, genId)}
-                                onOpenCreateModal={(initialName) => handleOpenProductModal(initialName, sIdx)}
-                                placeholder={t('selectProduct', 'Выберите или введите...')}
-                                isDarkMode={isDarkMode}
-                                theme={theme}
-                                lang={lang}
-                              />
-                            </td>
-
-                            <td className="py-2.5 px-3">
-                              <CustomSelect
-                                role={role}
-                                size="sm"
-                                value={spec.unit || ''}
-                                onChange={(val) => handleSpecChange(sIdx, 'unit', val)}
-                                options={units.map(u => ({ id: u.id, name: u.shortName || u.name }))}
-                                isDarkMode={isDarkMode}
-                                theme={theme}
-                                t={t}
-                              />
-                            </td>
-
-                            {activeLot.lotType === 'GOODS' && (
-                              <td className="py-2.5 px-3">
-                                <CustomSelect
-                                  role={role}
-                                  size="sm"
-                                  value={spec.brand || ''}
-                                  onChange={(val) => handleSpecChange(sIdx, 'brand', val)}
-                                  options={manufacturers.map(m => ({ id: m.id, name: m.name }))}
-                                  placeholder={t('selectBrand', 'Бренд...')}
-                                  isDarkMode={isDarkMode}
-                                  theme={theme}
-                                  t={t}
-                                />
-                              </td>
-                            )}
-
-                            <td className="py-2.5 px-3">
-                              <input
-                                type="number"
-                                min="0.01"
-                                step="any"
-                                value={spec.mukdar || 1}
-                                onChange={(e) => handleSpecChange(sIdx, 'mukdar', e.target.value)}
-                                className={`w-full px-2 py-1 rounded-md text-xs text-center font-mono font-bold outline-none border ${theme.inputBg}`}
-                              />
-                            </td>
-
-                            <td className="py-2.5 px-3">
-                              <input
-                                type="text"
-                                value={spec.desc || ''}
-                                onChange={(e) => handleSpecChange(sIdx, 'desc', e.target.value)}
-                                className={`w-full px-2.5 py-1 rounded-md text-xs outline-none border ${theme.inputBg}`}
-                                placeholder={t('specDescPlaceholder', 'Доп. требования...')}
-                              />
-                            </td>
-
-                            <td className="py-2.5 px-3 text-center">
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveSpec(sIdx)}
-                                className="w-7 h-7 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
-                                title={t('delete', 'Удалить позицию')}
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* 🟢 ЗАКРЕПЛЕННЫЙ STICKY FOOTER КАРТОЧКИ ЛОТА */}
-              <div className="sticky bottom-0 z-20 backdrop-blur-md bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 p-4 -mx-6 -mb-6 rounded-b-2xl shadow-lg flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {activeLotDirty ? (
-                    <span className="text-xs text-amber-600 font-bold flex items-center gap-1.5 animate-pulse">
-                      <AlertCircle size={15} />
-                      <span>● {t('unsavedChanges', 'Есть несохраненные изменения')}</span>
-                    </span>
-                  ) : (
-                    <span className="text-xs text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1.5">
-                      <Check size={15} className="text-emerald-600" />
-                      <span>{t('allChangesSaved', 'Все изменения сохранены')}</span>
-                    </span>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleSaveActiveLot}
-                  disabled={savingActiveLot}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                >
-                  <Save size={15} />
-                  <span>
-                    {savingActiveLot 
-                      ? t('saving', 'Сохранение...') 
-                      : t('saveLotBtn', `Сохранить лот №${activeLot.lotNumber || activeLotIndex + 1}`)}
-                  </span>
-                </button>
-              </div>
+              {/* Закрепленный футер лота */}
+              <TenderLotStickyFooter
+                activeLot={activeLot}
+                activeLotIndex={activeLotIndex}
+                activeLotDirty={activeLotDirty}
+                savingActiveLot={savingActiveLot}
+                handleSaveActiveLot={handleSaveActiveLot}
+                t={t}
+              />
             </div>
           ) : (
             <div className="p-12 text-center rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 text-slate-400 space-y-3">
@@ -1878,72 +864,14 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
 
       {/* 🟢 ВКЛАДКА 3: ОБЩИЕ ДОКУМЕНТЫ ТЕНДЕРА */}
       {activeTopTab === 'docs' && tenderId && (
-        <div className={`p-6 rounded-2xl border shadow-xs space-y-6 animate-in fade-in duration-200 ${theme.cardBg}`}>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <div>
-              <h2 className={`text-base font-black ${theme.primaryText}`}>
-                {t('tabGeneralDocs', 'Общие документы тендера')}
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {t('generalDocsHint', 'Проект договора, общие регламенты, квалификационные требования и инструкции к закупке')}
-              </p>
-            </div>
-
-            <label className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-2 cursor-pointer shadow-xs transition-colors self-start md:self-auto">
-              <Plus size={15} />
-              <span>{t('uploadGeneralDocBtn', 'Прикрепить общий документ')}</span>
-              <input
-                type="file"
-                className="hidden"
-                onChange={handleTenderFileUpload}
-              />
-            </label>
-          </div>
-
-          {tenderFiles && tenderFiles.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {tenderFiles.map((fileObj, fIdx) => {
-                const doc = fileObj.document || fileObj;
-                return (
-                  <div 
-                    key={doc.id || fIdx} 
-                    className="flex items-center justify-between gap-2 p-3 rounded-xl bg-slate-50/70 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 shadow-2xs text-xs"
-                  >
-                    <div className="flex items-center gap-2.5 truncate">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center shrink-0">
-                        <FileText size={16} />
-                      </div>
-                      <a 
-                        href={doc.filePath ? `http://localhost:5000/${doc.filePath}` : '#'} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="font-bold text-slate-800 dark:text-slate-200 hover:text-emerald-600 truncate"
-                        title={doc.fileName || doc.name}
-                      >
-                        {doc.fileName || doc.name}
-                      </a>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleTenderFileDelete(doc.id)}
-                      className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer transition-colors"
-                      title={t('delete', 'Удалить')}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="py-12 text-center text-slate-400 space-y-2">
-              <Paperclip size={32} className="mx-auto opacity-30" />
-              <p className="text-xs">
-                {t('noGeneralDocsYet', 'Общих документов к тендеру пока не прикреплено')}
-              </p>
-            </div>
-          )}
-        </div>
+        <TenderGeneralDocumentsTab
+          tenderId={tenderId}
+          tenderFiles={tenderFiles}
+          handleTenderFileUpload={handleTenderFileUpload}
+          handleTenderFileDelete={handleTenderFileDelete}
+          theme={theme}
+          t={t}
+        />
       )}
 
       {/* Модальное окно быстрого добавления товара в каталог */}
