@@ -60,17 +60,23 @@ const Select = forwardRef(function Select(
             </option>
           )}
 
-          {options.length > 0
-            ? options.map((opt) => (
-                <option
-                  key={opt.value}
-                  value={opt.value}
-                  disabled={opt.disabled}
-                  className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 py-1"
-                >
-                  {opt.label}
-                </option>
-              ))
+          {Array.isArray(options) && options.length > 0
+            ? options.map((opt, idx) => {
+                const isObj = typeof opt === 'object' && opt !== null;
+                const val = isObj ? (opt.value ?? opt.id ?? '') : opt;
+                const lab = isObj ? (opt.label ?? opt.name ?? opt.title ?? opt.value ?? opt.id ?? '') : opt;
+                const optDisabled = isObj ? Boolean(opt.disabled) : false;
+                return (
+                  <option
+                    key={isObj && opt.value !== undefined ? opt.value : (isObj && opt.id !== undefined ? opt.id : `${val}-${idx}`)}
+                    value={val}
+                    disabled={optDisabled}
+                    className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 py-1"
+                  >
+                    {lab}
+                  </option>
+                );
+              })
             : children}
         </select>
 

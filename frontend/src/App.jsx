@@ -127,6 +127,14 @@ export default function App() {
       <AlertProvider isDarkMode={isDarkMode} lang={lang}>
         <Routes>
           <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} lang={lang} setLang={setLang} />} />
+          <Route
+            path="/ui-kit"
+            element={
+              <div className={`min-h-screen p-6 overflow-y-auto ${isDarkMode ? 'bg-[#0b0f17] text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
+                <UiKitGallery role="ADMIN" isDarkMode={isDarkMode} lang={lang} />
+              </div>
+            }
+          />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AlertProvider>

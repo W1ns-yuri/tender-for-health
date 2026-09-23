@@ -41,7 +41,16 @@ export default function Alert({
   ...props
 }) {
   const currentVariant = VARIANTS[variant] || VARIANTS.info;
-  const IconComponent = icon || currentVariant.defaultIcon;
+
+  const renderIcon = () => {
+    if (React.isValidElement(icon)) return icon;
+    const IconComp = icon || currentVariant.defaultIcon;
+    if (IconComp) {
+      const Comp = IconComp;
+      return <Comp size={20} />;
+    }
+    return null;
+  };
 
   return (
     <div
@@ -53,7 +62,7 @@ export default function Alert({
       {...props}
     >
       <div className={`shrink-0 mt-0.5 ${currentVariant.iconColor}`}>
-        {typeof IconComponent === 'function' ? <IconComponent size={20} /> : IconComponent}
+        {renderIcon()}
       </div>
 
       <div className="flex-1 min-w-0">

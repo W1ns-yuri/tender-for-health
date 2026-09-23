@@ -68,7 +68,7 @@ export default function Pagination({
           <button
             type="button"
             disabled={currentPage <= 1}
-            onClick={() => onPageChange(1)}
+            onClick={() => onPageChange?.(1)}
             className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             title="Birinji sahypa"
           >
@@ -79,7 +79,7 @@ export default function Pagination({
           <button
             type="button"
             disabled={currentPage <= 1}
-            onClick={() => onPageChange(currentPage - 1)}
+            onClick={() => onPageChange?.(currentPage - 1)}
             className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             title="Öňki"
           >
@@ -101,7 +101,7 @@ export default function Pagination({
               <button
                 key={page}
                 type="button"
-                onClick={() => onPageChange(page)}
+                onClick={() => onPageChange?.(page)}
                 className={`
                   w-8 h-8 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer
                   ${
@@ -120,7 +120,7 @@ export default function Pagination({
           <button
             type="button"
             disabled={currentPage >= totalPages}
-            onClick={() => onPageChange(currentPage + 1)}
+            onClick={() => onPageChange?.(currentPage + 1)}
             className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             title="Indiki"
           >
@@ -131,7 +131,7 @@ export default function Pagination({
           <button
             type="button"
             disabled={currentPage >= totalPages}
-            onClick={() => onPageChange(totalPages)}
+            onClick={() => onPageChange?.(totalPages)}
             className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             title="Soňky sahypa"
           >
