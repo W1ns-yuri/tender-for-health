@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, User, AlertCircle, Globe, Building2, Eye, EyeOff, ChevronRight, Mail, Phone, FileText } from 'lucide-react';
+import { Lock, User, AlertCircle, Globe, Building2, Eye, EyeOff, ChevronRight, Mail, Phone, FileText, CheckCircle2 } from 'lucide-react';
 import { getTranslation } from '../utils/translations';
 import API from '../services/api';
 import CustomSelect from '../components/CustomSelect';
