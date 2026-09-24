@@ -1184,7 +1184,7 @@ export const translations = {
     gotItBtn: 'Понятно',
     clearBtn: 'Очистить',
     todayBtn: 'Сегодня',
-    dateFormatPlaceholder: 'ДД.ММ.ГГГГ',
+    dateFormatPlaceholder: 'дд.мм.гггг',
     submittedOffers: 'Поданные предложения',
     evaluationTab: 'Оценка заявок',
     systemSettings: 'Системные настройки',

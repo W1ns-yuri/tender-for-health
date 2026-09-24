@@ -148,7 +148,7 @@ export default function TenderGeneralParamsTab({
         {/* Тип тендера (Местный / Международный) */}
         <div>
           <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
-            {t('tenderTypeLabel', 'Тип тендера')}
+            {t('tenderTypeLabel', 'Тип тендера')} *
           </label>
           <CustomSelect
             role={role}
@@ -167,7 +167,7 @@ export default function TenderGeneralParamsTab({
         {/* Тип закупки (Товары / Работы / Услуги) */}
         <div>
           <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
-            {t('procurementTypeLabel', 'Тип предмета закупки')}
+            {t('procurementTypeLabel', 'Направление закупки')} *
           </label>
           <CustomSelect
             role={role}

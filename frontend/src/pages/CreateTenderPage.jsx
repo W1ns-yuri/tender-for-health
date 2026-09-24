@@ -728,6 +728,8 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
       <TenderHeader
         tenderId={tenderId}
         formData={formData}
+        activeTopTab={activeTopTab}
+        setActiveTopTab={setActiveTopTab}
         canPublish={canPublish}
         publishing={publishing}
         publishDisabledReason={publishDisabledReason}
@@ -739,8 +741,8 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
 
       {/* 🟢 ЕДИНЫЙ БРАУЗЕРНЫЙ БЛОК: ВКЛАДКИ + СОДЕРЖИМОЕ (CHROME-STYLE TABS) */}
       <div className="relative">
-        {/* Вкладки браузера: прикреплены вплотную к верхнему краю окна */}
-        <div className="flex items-end gap-1.5 px-3 -mb-[1px] relative z-10 overflow-x-auto scrollbar-thin">
+        {/* Вкладки браузера: прикреплены вплотную к верхнему краю окна без отступа слева */}
+        <div className="flex items-end gap-1.5 -mb-[1px] relative z-10 overflow-x-auto scrollbar-thin">
           <button
             type="button"
             onClick={() => setActiveTopTab('params')}

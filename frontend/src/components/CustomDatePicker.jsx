@@ -70,7 +70,7 @@ export const formatDisplayDate = (str) => {
 export default function CustomDatePicker({
   value,
   onChange,
-  placeholder = 'ДД.ММ.ГГГГ',
+  placeholder = 'дд.мм.гггг',
   min,
   max,
   isDarkMode = false,
@@ -79,7 +79,7 @@ export default function CustomDatePicker({
   disabled = false,
   size = 'md',
   className = '',
-  displayFormat = 'iso', // 'iso' (2026-09-15) or 'display' (15.09.2026)
+  displayFormat = 'display', // 'display' (15.09.2026) or 'iso' (2026-09-15)
   ariaLabel
 }) {
   const [isOpen, setIsOpen] = useState(false);

@@ -233,7 +233,7 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
             return (
               <div className="relative">
                 {/* Линейка браузерных закладок лотов */}
-                <div className="flex items-end gap-1.5 px-3 -mb-[1px] relative z-10 overflow-x-auto scrollbar-thin">
+                <div className="flex items-end gap-1.5 -mb-[1px] relative z-10 overflow-x-auto scrollbar-thin">
                   {data.lots.map((lItem, lIdx) => {
                     const isActive = (activeLotTab === lIdx) || (!data.lots[activeLotTab] && lIdx === 0);
                     return (
