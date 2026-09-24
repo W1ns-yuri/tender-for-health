@@ -23,6 +23,7 @@ import OfferDetailsPage from './pages/OfferDetailsPage';
 import UiKitGallery from './pages/UiKitGallery';
 import { AlertProvider } from './context/AlertContext';
 import SettingsPage from './pages/SettingsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('tender_token') || '');
@@ -192,6 +193,7 @@ export default function App() {
                   lang={lang}
                 />
               } />
+              <Route path="/analytics" element={<AnalyticsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
               
               <Route path="/create-tender" element={role === 'ADMIN' ? <CreateTenderPage onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/tenders/:id/edit" element={role === 'ADMIN' ? <CreateTenderPage onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} isEdit={true} /> : <Navigate to="/dashboard" replace />} />
