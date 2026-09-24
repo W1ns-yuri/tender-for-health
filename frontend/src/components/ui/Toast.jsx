@@ -11,7 +11,7 @@ export default function Toast({
   title,
   message,
   onClose,
-  duration = 4000,
+  duration = 3000,
   showProgress = true,
   role = 'ADMIN',
   className = '',

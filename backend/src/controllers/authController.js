@@ -188,8 +188,47 @@ const getMe = async (req, res) => {
     }
 };
 
+// Смена пароля текущего пользователя
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'Пожалуйста, укажите текущий и новый пароль' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'Новый пароль должен содержать не менее 6 символов' });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: req.user.id },
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Неверный текущий пароль' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await prisma.user.update({
+            where: { id: req.user.id },
+            data: { password: hashedPassword },
+        });
+
+        res.json({ success: true, message: 'Пароль успешно изменен' });
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при смене пароля', details: error.message });
+    }
+};
+
 module.exports = {
     register,
     login,
     getMe,
+    changePassword,
 };

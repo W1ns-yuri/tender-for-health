@@ -21,10 +21,8 @@ import SupplierProfilePage from './pages/SupplierProfilePage';
 import CreateOfferPage from './pages/CreateOfferPage';
 import OfferDetailsPage from './pages/OfferDetailsPage';
 import UiKitGallery from './pages/UiKitGallery';
-import { getRoleTheme } from './utils/themeUtils';
 import { AlertProvider } from './context/AlertContext';
-import CustomSelect from './components/CustomSelect';
-import { getTranslation } from './utils/translations';
+import SettingsPage from './pages/SettingsPage';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('tender_token') || '');
@@ -63,8 +61,6 @@ export default function App() {
 
   // Язык по умолчанию — RU
   const [lang, setLang] = useState('RU');
-
-  const theme = getRoleTheme(role, isDarkMode);
 
   // Синхронизация сессии при монтировании
   useEffect(() => {
@@ -222,30 +218,19 @@ export default function App() {
               
               <Route path="/profile" element={<SupplierProfilePage role={role} isDarkMode={isDarkMode} lang={lang} isOwner={true} />} />
               
-              <Route path="/settings" element={
-                <div className={`p-6 rounded-xl border shadow-xs max-w-xl ${theme.cardBg}`}>
-                  <h2 className="text-lg font-bold mb-4">{getTranslation(lang, 'catSettings', 'Системные настройки')}</h2>
-                  <div className="space-y-4 text-xs">
-                    <div>
-                      <label className={`block font-semibold mb-1 ${theme.subText}`}>
-                        {getTranslation(lang, 'interfaceLanguage', 'Язык интерфейса приложения')}
-                      </label>
-                      <CustomSelect
-                        role={role}
-                        value={lang}
-                        onChange={(val) => setLang(val)}
-                        options={[
-                          { id: 'RU', name: 'Русский (По умолчанию)' },
-                          { id: 'TM', name: 'Türkmençe' },
-                          { id: 'EN', name: 'English' }
-                        ]}
-                        isDarkMode={isDarkMode}
-                        theme={theme}
-                      />
-                    </div>
-                  </div>
-                </div>
-              } />
+              <Route 
+                path="/settings" 
+                element={
+                  <SettingsPage 
+                    role={role} 
+                    isDarkMode={isDarkMode} 
+                    setIsDarkMode={setIsDarkMode} 
+                    lang={lang} 
+                    setLang={setLang}
+                    user={user}
+                  />
+                } 
+              />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </ErrorBoundary>

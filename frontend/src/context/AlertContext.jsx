@@ -19,7 +19,7 @@ export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU', role 
     const msg = isString ? options : (options.message || '');
     const title = isString ? '' : options.title;
     const type = isString ? 'info' : (options.type || 'info');
-    const duration = !isString && options.duration !== undefined ? options.duration : 4000;
+    const duration = !isString && options.duration !== undefined ? options.duration : 3000;
     const toastRole = !isString && options.role ? options.role : role;
     const id = Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
 
