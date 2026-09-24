@@ -685,6 +685,12 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
       return;
     }
 
+    const hasDocs = (tenderFiles && tenderFiles.length > 0) || lots.some(l => l.files && l.files.length > 0);
+    if (!hasDocs) {
+      showToast({ title: t('attentionTitle', 'Внимание'), message: t('mustAttachDocToPublish', 'Прикрепите хотя бы один документ для публикации тендера'), type: 'warning' });
+      return;
+    }
+
     const confirmed = await showConfirm({
       title: t('publishTenderBtn', 'Опубликовать тендер'),
       message: t('publishConfirm', 'Вы уверены, что хотите опубликовать тендер? Он станет открытым и поставщики смогут подавать предложения.'),
@@ -747,15 +753,72 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
     }
   };
 
-  // Проверка готовности к публикации
+  // Проверка готовности к публикации и прогресса шагов
+  const isStep1Done = Boolean(tenderId);
   const hasEmptyLots = lots.length === 0 || lots.some(l => !l.specs || l.specs.length === 0 || !l.specs.some(s => (s.haryt || s.name)?.trim()));
-  const canPublish = Boolean(tenderId) && lots.length > 0 && !hasEmptyLots && !activeLotDirty;
+  const hasValidLots = isStep1Done && lots.length > 0 && !hasEmptyLots && !activeLotDirty;
+  const hasDocuments = Boolean(tenderFiles && tenderFiles.length > 0) || lots.some(l => l.files && l.files.length > 0);
+
+  // Динамический прогресс:
+  // 0% - Черновик еще не сохранен (вход на страницу создания)
+  // 33% - Шаг 1 заполнен и сохранен (tenderId присвоен)
+  // 66% - Добавлен хотя бы один лот со спецификацией, сохранен
+  // 100% - Прикреплен хотя бы один документ
+  const progressPercent = !isStep1Done ? 0 : (!hasValidLots ? 33 : (!hasDocuments ? 66 : 100));
+
+  const canAccessLots = isStep1Done;
+  const canAccessDocs = isStep1Done && lots.length > 0 && !hasEmptyLots;
+
+  const handleNavigateTab = (targetTab) => {
+    if (targetTab === 'params') {
+      setActiveTopTab('params');
+      return;
+    }
+    if (targetTab === 'lots') {
+      if (!canAccessLots) {
+        showToast({
+          title: t('stepLocked', 'Шаг заблокирован'),
+          message: t('fillBaseParamsFirst', 'Заполните параметры закупки и сохраните черновик для перехода к лотам'),
+          type: 'warning'
+        });
+        return;
+      }
+      setActiveTopTab('lots');
+      return;
+    }
+    if (targetTab === 'docs') {
+      if (!canAccessLots) {
+        showToast({
+          title: t('stepLocked', 'Шаг заблокирован'),
+          message: t('fillBaseParamsFirst', 'Заполните параметры закупки и сохраните черновик для перехода к документам'),
+          type: 'warning'
+        });
+        return;
+      }
+      if (!canAccessDocs) {
+        showToast({
+          title: t('stepLocked', 'Шаг заблокирован'),
+          message: t('addLotBeforeDocs', 'Добавьте хотя бы один лот с заполненной спецификацией для перехода к документам'),
+          type: 'warning'
+        });
+        return;
+      }
+      setActiveTopTab('docs');
+      return;
+    }
+  };
+
+  const canPublish = isStep1Done && hasValidLots && hasDocuments;
 
   let publishDisabledReason = '';
-  if (activeLotDirty) {
+  if (!isStep1Done) {
+    publishDisabledReason = t('fillBaseParamsFirst', 'Заполните параметры закупки и сохраните черновик');
+  } else if (activeLotDirty) {
     publishDisabledReason = t('cannotPublishUnsavedChanges', 'Сохраните изменения в текущем лоте перед публикацией');
   } else if (hasEmptyLots) {
     publishDisabledReason = t('cannotPublishEmptyLots', 'Для публикации добавьте минимум 1 позицию спецификации во все лоты');
+  } else if (!hasDocuments) {
+    publishDisabledReason = t('mustAttachDocToPublish', 'Прикрепите хотя бы один документ для публикации тендера');
   }
 
   if (pageLoading) {
@@ -775,6 +838,10 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
         formData={formData}
         activeTopTab={activeTopTab}
         setActiveTopTab={setActiveTopTab}
+        progressPercent={progressPercent}
+        canAccessLots={canAccessLots}
+        canAccessDocs={canAccessDocs}
+        onNavigateTab={handleNavigateTab}
         canPublish={canPublish}
         publishing={publishing}
         publishDisabledReason={publishDisabledReason}
@@ -789,7 +856,7 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
         <div className="flex items-end gap-1.5 -mb-[1px] relative z-10 overflow-x-auto scrollbar-thin">
           <button
             type="button"
-            onClick={() => setActiveTopTab('params')}
+            onClick={() => handleNavigateTab('params')}
             className={`px-5 py-3 rounded-t-2xl font-black text-xs sm:text-sm flex items-center gap-2.5 border-t-2 border-x transition-all cursor-pointer select-none ${
               activeTopTab === 'params'
                 ? 'bg-white dark:bg-[#111827] border-t-emerald-500 border-x-slate-200 dark:border-x-slate-800 border-b-transparent text-emerald-600 dark:text-emerald-400 shadow-xs'
@@ -802,12 +869,9 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
 
           <button
             type="button"
-            onClick={() => {
-              if (tenderId) setActiveTopTab('lots');
-            }}
-            disabled={!tenderId}
+            onClick={() => handleNavigateTab('lots')}
             className={`px-5 py-3 rounded-t-2xl font-black text-xs sm:text-sm flex items-center gap-2.5 border-t-2 border-x transition-all select-none ${
-              !tenderId
+              !canAccessLots
                 ? 'opacity-40 cursor-not-allowed text-slate-400 border-transparent bg-slate-100/40 dark:bg-slate-800/20'
                 : activeTopTab === 'lots'
                 ? 'bg-white dark:bg-[#111827] border-t-emerald-500 border-x-slate-200 dark:border-x-slate-800 border-b-transparent text-emerald-600 dark:text-emerald-400 shadow-xs cursor-pointer'
@@ -827,12 +891,9 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
 
           <button
             type="button"
-            onClick={() => {
-              if (tenderId) setActiveTopTab('docs');
-            }}
-            disabled={!tenderId}
+            onClick={() => handleNavigateTab('docs')}
             className={`px-5 py-3 rounded-t-2xl font-black text-xs sm:text-sm flex items-center gap-2.5 border-t-2 border-x transition-all select-none ${
-              !tenderId
+              !canAccessDocs
                 ? 'opacity-40 cursor-not-allowed text-slate-400 border-transparent bg-slate-100/40 dark:bg-slate-800/20'
                 : activeTopTab === 'docs'
                 ? 'bg-white dark:bg-[#111827] border-t-emerald-500 border-x-slate-200 dark:border-x-slate-800 border-b-transparent text-emerald-600 dark:text-emerald-400 shadow-xs cursor-pointer'

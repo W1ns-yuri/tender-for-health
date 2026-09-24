@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, Eye, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Eye, RefreshCw, AlertCircle } from 'lucide-react';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
 import { useNavigate } from 'react-router-dom';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
-import CustomSelect from '../components/CustomSelect';
+import { TableFilters } from '../components/ui';
 
 export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
@@ -19,9 +19,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
   const [loading, setLoading] = useState(true);
 
   // Фильтры
-  const [filterLot, setFilterLot] = useState('');
   const [filterCurrency, setFilterCurrency] = useState('');
-  const [filterCode, setFilterCode] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -155,67 +153,52 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
         </div>
       </div>
 
-      {/* 2. Таблица коммерческих предложений */}
-      <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
-        {/* Интерактивные фильтры */}
-        <div className={`p-3 border-b grid grid-cols-2 md:grid-cols-5 gap-2 text-xs ${isDarkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-          <input
-            type="text"
-            placeholder={`${t('lotNo', 'Tender №')}: ...`}
-            value={filterLot}
-            onChange={(e) => setFilterLot(e.target.value)}
-            className={`px-2.5 py-1.5 border rounded text-xs focus:outline-none ${theme.inputBg}`}
-          />
-          <CustomSelect
-            role={role}
-            size="sm"
-            value={filterCurrency}
-            onChange={(val) => setFilterCurrency(val)}
-            options={[
-              { id: '', name: `${t('currency', 'Walýuta')}: ${t('allBtn', 'Все')}` },
+      {/* 2. Унифицированная панель фильтров */}
+      <TableFilters
+        role={role}
+        isDarkMode={isDarkMode}
+        theme={theme}
+        t={t}
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder={t('searchOffersPlaceholder', 'Поиск по номеру предложения, тендеру, коду...')}
+        hasActiveFilters={Boolean(searchQuery || filterCurrency || filterStatus)}
+        onReset={() => {
+          setSearchQuery('');
+          setFilterCurrency('');
+          setFilterStatus('');
+        }}
+        filters={[
+          {
+            id: 'currency',
+            value: filterCurrency,
+            onChange: (val) => setFilterCurrency(val),
+            options: [
+              { id: '', name: t('allCurrenciesFilter', 'Все валюты') },
               { id: 'TMT', name: 'TMT (Манат)' },
               { id: 'USD', name: 'USD ($ Доллар)' },
               { id: 'EUR', name: 'EUR (€ Евро)' }
-            ]}
-            isDarkMode={isDarkMode}
-            theme={theme}
-            t={t}
-          />
-          <input
-            type="text"
-            placeholder={`${t('code', 'Belgisi')}: ...`}
-            value={filterCode}
-            onChange={(e) => setFilterCode(e.target.value)}
-            className={`px-2.5 py-1.5 border rounded text-xs focus:outline-none ${theme.inputBg}`}
-          />
-          <CustomSelect
-            role={role}
-            size="sm"
-            value={filterStatus}
-            onChange={(val) => setFilterStatus(val)}
-            options={[
-              { id: '', name: `${t('status', 'Status')}: ${t('allBtn', 'Все')}` },
+            ],
+            width: 'min-w-[160px]'
+          },
+          {
+            id: 'status',
+            value: filterStatus,
+            onChange: (val) => setFilterStatus(val),
+            options: [
+              { id: '', name: t('allStatusesFilter', 'Все статусы') },
               { id: 'TABSARYLDY', name: t('statusTabsyryldy', 'Подано') },
               { id: 'YENIJI', name: t('statusYeniji', 'Победитель') },
               { id: 'RET_EDILDI', name: t('statusRet', 'Отклонено') },
               { id: 'TASLAMA', name: t('statusTaslama', 'Черновик') }
-            ]}
-            isDarkMode={isDarkMode}
-            theme={theme}
-            t={t}
-          />
-          <div className="relative">
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder={t('searchPlaceholder', 'Gözleg...')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full pl-8 pr-3 py-1.5 border rounded text-xs focus:outline-none ${theme.inputBg}`}
-            />
-          </div>
-        </div>
+            ],
+            width: 'min-w-[170px]'
+          }
+        ]}
+      />
 
+      {/* 3. Таблица коммерческих предложений */}
+      <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead className={theme.tableHeaderBg}>

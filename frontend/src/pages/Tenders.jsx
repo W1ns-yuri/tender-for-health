@@ -6,7 +6,7 @@ import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { useAlert } from '../context/AlertContext';
 import CustomDatePicker from '../components/CustomDatePicker';
-import CustomSelect from '../components/CustomSelect';
+import { TableFilters } from '../components/ui';
 
 export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
   const [tenders, setTenders] = useState([]);
@@ -117,86 +117,76 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
       </div>
 
       {/* Панель фильтров */}
-      <div className={`p-4 rounded-xl border shadow-xs space-y-3 ${theme.cardBg}`}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
-          <div>
-            <label className={`block text-[11px] font-medium mb-1 ${theme.subText}`}>{t('type', 'Görnüşi')}</label>
-            <CustomSelect
-              role={role}
-              size="sm"
-              value={typeFilter}
-              onChange={(val) => setTypeFilter(val)}
-              options={[
-                { id: '', name: t('allBtn', 'Все') },
-                { id: 'YERLI', name: t('typeLocal', 'Местный') },
-                { id: 'HALKARA', name: t('typeGlobal', 'Международный') }
-              ]}
-              isDarkMode={isDarkMode}
-              theme={theme}
-              t={t}
-            />
-          </div>
-
-          <div>
-            <label className={`block text-[11px] font-medium mb-1 ${theme.subText}`}>{t('status', 'Status')}</label>
-            <CustomSelect
-              role={role}
-              size="sm"
-              value={statusFilter}
-              onChange={(val) => setStatusFilter(val)}
-              options={[
-                { id: '', name: t('allBtn', 'Все') },
-                { id: 'ACYK', name: t('statusAcyk', 'Открыт') },
-                { id: 'YAPYK', name: t('statusYapyk', 'Закрыт') },
-                { id: 'BAHALANDYRYLDY', name: t('statusBahalandyryldy', 'На рассмотрении') },
-                { id: 'YENIJI_YGLAN_EDILDI', name: t('winnerBadge', 'Победитель') }
-              ]}
-              isDarkMode={isDarkMode}
-              theme={theme}
-              t={t}
-            />
-          </div>
-
-          <div>
-            <label className={`block text-[11px] font-medium mb-1 ${theme.subText}`}>{t('announcementDate', 'Yglan edilen senesi')}</label>
-            <CustomDatePicker
-              size="sm"
-              value={announcementDateFilter}
-              onChange={setAnnouncementDateFilter}
-              isDarkMode={isDarkMode}
-              lang={lang}
-              theme={theme}
-              placeholder={t('dateFormatPlaceholder', 'ДД.ММ.ГГГГ')}
-            />
-          </div>
-
-          <div>
-            <label className={`block text-[11px] font-medium mb-1 ${theme.subText}`}>{t('deadline', 'Soňky möhleti')}</label>
-            <CustomDatePicker
-              size="sm"
-              value={deadlineFilter}
-              onChange={setDeadlineFilter}
-              isDarkMode={isDarkMode}
-              lang={lang}
-              theme={theme}
-              placeholder={t('dateFormatPlaceholder', 'ДД.ММ.ГГГГ')}
-            />
-          </div>
-
-          <div className="flex items-end">
-            <div className="relative w-full">
-              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder={t('searchPlaceholder', 'Gözleg...')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className={`w-full pl-8 pr-3 py-1.5 rounded-lg text-xs ${theme.inputBg}`}
+      <TableFilters
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder={t('searchPlaceholder', 'Gözleg...')}
+        filters={[
+          {
+            id: 'type',
+            value: typeFilter,
+            onChange: setTypeFilter,
+            options: [
+              { id: '', name: t('allTypes', 'Все типы') },
+              { id: 'YERLI', name: t('typeLocal', 'Местный') },
+              { id: 'HALKARA', name: t('typeGlobal', 'Международный') }
+            ],
+            width: 'min-w-[140px]'
+          },
+          {
+            id: 'status',
+            value: statusFilter,
+            onChange: setStatusFilter,
+            options: [
+              { id: '', name: t('allStatuses', 'Все статусы') },
+              { id: 'ACYK', name: t('statusAcyk', 'Открыт') },
+              { id: 'YAPYK', name: t('statusYapyk', 'Закрыт') },
+              { id: 'BAHALANDYRYLDY', name: t('statusBahalandyryldy', 'На рассмотрении') },
+              { id: 'YENIJI_YGLAN_EDILDI', name: t('winnerBadge', 'Победитель') },
+              { id: 'TASLAMA', name: t('statusDraft', 'Черновик') }
+            ],
+            width: 'min-w-[160px]'
+          }
+        ]}
+        customControls={
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="w-36">
+              <CustomDatePicker
+                size="sm"
+                value={announcementDateFilter}
+                onChange={setAnnouncementDateFilter}
+                isDarkMode={isDarkMode}
+                lang={lang}
+                theme={theme}
+                placeholder={t('announcementDateShort', 'Дата публ.')}
+              />
+            </div>
+            <div className="w-36">
+              <CustomDatePicker
+                size="sm"
+                value={deadlineFilter}
+                onChange={setDeadlineFilter}
+                isDarkMode={isDarkMode}
+                lang={lang}
+                theme={theme}
+                placeholder={t('deadlineShort', 'Дедлайн')}
               />
             </div>
           </div>
-        </div>
-      </div>
+        }
+        hasActiveFilters={Boolean(search || typeFilter || statusFilter || announcementDateFilter || deadlineFilter)}
+        onReset={() => {
+          setSearch('');
+          setTypeFilter('');
+          setStatusFilter('');
+          setAnnouncementDateFilter('');
+          setDeadlineFilter('');
+        }}
+        role={role}
+        isDarkMode={isDarkMode}
+        theme={theme}
+        t={t}
+      />
 
       <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
         <div className="overflow-x-auto">

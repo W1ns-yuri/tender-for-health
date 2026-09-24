@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { 
-  Settings, 
   Palette, 
   Bell, 
   Shield, 
@@ -14,29 +13,18 @@ import {
   Volume2, 
   VolumeX, 
   Lock, 
-  User, 
   Download, 
-  Activity,
-  Layers,
-  Clock,
-  Sparkles
+  Server,
+  KeyRound
 } from 'lucide-react';
 import { 
   Button, 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription, 
-  CardContent, 
-  CardFooter,
   Badge, 
-  IconBox, 
-  Tabs,
   CustomSelect
 } from '../components/ui';
 import API from '../services/api';
 import { useAlert } from '../context/AlertContext';
-import { getRoleTheme } from '../utils/themeUtils';
+import { getRoleTheme, getAvatarInitials } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 
 export default function SettingsPage({
@@ -158,40 +146,6 @@ export default function SettingsPage({
       title: t('languageUpdated', 'Dil üýtgedildi'),
       message: newLang === 'RU' ? 'Выбран русский язык' : newLang === 'TM' ? 'Türkmen dili saýlandy' : 'English language selected',
     });
-  };
-
-  // Проверка звукового оповещения (Web Audio API)
-  const playTestChime = () => {
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12); // A5
-      gain.gain.setValueAtTime(0.12, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
-      
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.28);
-
-      showToast({
-        type: 'info',
-        title: t('soundTestTitle', 'Звуковой сигнал'),
-        message: t('soundTestMsg', 'Тестовый звуковой сигнал успешно воспроизведен'),
-      });
-    } catch {
-      showToast({
-        type: 'warning',
-        title: t('soundError', 'Аудио недоступно'),
-        message: t('soundErrorMsg', 'Браузер ограничил воспроизведение звука'),
-      });
-    }
   };
 
   // Сохранение уведомлений
@@ -332,70 +286,100 @@ export default function SettingsPage({
     }] : [])
   ];
 
+  const userInitials = getAvatarInitials(user, role);
+
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12 animate-in fade-in duration-200">
-      {/* Шапка страницы */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <IconBox
-            icon={<Settings size={22} />}
-            variant={isSupplier ? 'blue' : 'emerald'}
-            size="lg"
-            className="shadow-xs"
-          />
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-                {t('settings', 'Настройки')}
-              </h1>
-              <Badge
-                variant={isSupplier ? 'blue' : 'emerald'}
-                status={isSupplier ? 'PENDING' : 'ACTIVE'}
-                size="sm"
-              >
-                {isSupplier ? t('supplierStr', 'Поставщик') : t('adminStr', 'Администратор')}
-              </Badge>
+    <div className="space-y-6 max-w-5xl mx-auto pb-16 animate-in fade-in duration-200">
+      {/* 1. Заголовок страницы в строгом стиле B2B GovTech */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              {t('settings', 'Настройки системы')}
+            </h1>
+            <Badge
+              variant={isSupplier ? 'blue' : 'emerald'}
+              status="ACTIVE"
+              size="sm"
+            >
+              {isSupplier ? t('supplierStr', 'Поставщик') : t('adminStr', 'Администратор')}
+            </Badge>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {t('settingsSubtitle', 'Управление параметрами интерфейса, уведомлений и безопасности')}
+          </p>
+        </div>
+
+        {/* Индикатор текущей учетной записи в шапке */}
+        <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs self-start sm:self-auto">
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${
+            isSupplier 
+              ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300' 
+              : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+          }`}>
+            {userInitials}
+          </div>
+          <div className="text-left text-xs leading-tight">
+            <div className="font-bold text-slate-900 dark:text-white">
+              {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Пользователь'}
             </div>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              {t('settingsSubtitle', 'Управление параметрами интерфейса, уведомлений и безопасности')}
-            </p>
+            <div className="text-[11px] text-slate-400 font-mono">
+              @{user?.username || 'user'}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Навигационные табы */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
-        <Tabs
-          tabs={tabs}
-          activeTab={activeTab}
-          onChange={setActiveTab}
-          role={role}
-          variant="pills"
-          size="md"
-        />
+      {/* 2. Сегментированная панель навигации (Executive Segmented Navigation) */}
+      <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 overflow-x-auto scrollbar-none">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`
+                px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap select-none
+                ${
+                  isActive
+                    ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-2xs border border-slate-200/60 dark:border-slate-700/60'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }
+              `}
+            >
+              <span className={isActive ? (isSupplier ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400') : 'text-slate-400'}>
+                {tab.icon}
+              </span>
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* 1. ВКЛАДКА: ВНЕШНИЙ ВИД И ЯЗЫК */}
+      {/* 3.1. ВКЛАДКА: ВНЕШНИЙ ВИД И ЯЗЫК */}
       {activeTab === 'general' && (
-        <div className="space-y-6">
-          {/* Язык интерфейса */}
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle icon={<Sparkles size={18} className={isSupplier ? 'text-blue-500' : 'text-emerald-500'} />}>
-                  {t('interfaceLanguage', 'Язык интерфейса')}
-                </CardTitle>
-                <CardDescription>
-                  {t('interfaceLanguageDesc', 'Выберите основной язык системы для всех форм, меню и системных уведомлений')}
-                </CardDescription>
+        <div className="space-y-5">
+          {/* Группа настроек отображения */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden">
+            
+            {/* Язык платформы */}
+            <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="max-w-md">
+                <div className="font-bold text-sm text-slate-900 dark:text-white">
+                  {t('interfaceLanguage', 'Язык платформы')}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {t('interfaceLanguageDesc', 'Основной язык отображения форм, таблиц, меню и системных уведомлений')}
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+              {/* Сегментированный переключатель языка */}
+              <div className="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shrink-0">
                 {[
-                  { id: 'RU', name: 'Русский', sub: 'По умолчанию', flag: '🇷🇺' },
-                  { id: 'TM', name: 'Türkmençe', sub: 'Döwlet dili', flag: '🇹🇲' },
-                  { id: 'EN', name: 'English', sub: 'International', flag: '🇬🇧' },
+                  { id: 'RU', label: 'Русский', code: 'RU' },
+                  { id: 'TM', label: 'Türkmençe', code: 'TM' },
+                  { id: 'EN', label: 'English', code: 'EN' },
                 ].map((item) => {
                   const isSelected = lang === item.id;
                   return (
@@ -404,53 +388,41 @@ export default function SettingsPage({
                       type="button"
                       onClick={() => handleLanguageChange(item.id)}
                       className={`
-                        p-4 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer
+                        px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5
                         ${
                           isSelected
-                            ? isSupplier
-                              ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 text-blue-950 dark:text-blue-100 shadow-xs ring-2 ring-blue-500/20'
-                              : 'border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 shadow-xs ring-2 ring-emerald-500/20'
-                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700 text-slate-800 dark:text-slate-200'
+                            ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-2xs border border-slate-200/60 dark:border-slate-700/60'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                         }
                       `}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{item.flag}</span>
-                        <div>
-                          <div className="font-bold text-sm leading-tight">{item.name}</div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{item.sub}</div>
-                        </div>
-                      </div>
-                      {isSelected && (
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-white ${isSupplier ? 'bg-blue-600' : 'bg-emerald-600'}`}>
-                          <Check size={12} strokeWidth={3} />
-                        </div>
-                      )}
+                      <span className="font-mono text-[10px] px-1 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-black">
+                        {item.code}
+                      </span>
+                      <span>{item.label}</span>
                     </button>
                   );
                 })}
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Тема оформления */}
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle icon={<Palette size={18} className={isSupplier ? 'text-blue-500' : 'text-emerald-500'} />}>
+            {/* Тема интерфейса */}
+            <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="max-w-md">
+                <div className="font-bold text-sm text-slate-900 dark:text-white">
                   {t('colorThemeTitle', 'Тема оформления')}
-                </CardTitle>
-                <CardDescription>
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   {t('colorThemeDesc', 'Настройте цветовую схему для комфортной работы в дневное или ночное время')}
-                </CardDescription>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+              {/* Сегментированный переключатель темы */}
+              <div className="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shrink-0">
                 {[
-                  { id: 'light', label: t('themeLight', 'Светлая тема'), icon: <Sun size={20} className="text-amber-500" />, sub: 'Классический светлый фон' },
-                  { id: 'dark', label: t('themeDark', 'Тёмная тема'), icon: <Moon size={20} className="text-indigo-400" />, sub: 'Снижает нагрузку на глаза' },
-                  { id: 'system', label: t('themeSystem', 'Системная (Авто)'), icon: <Laptop size={20} className="text-slate-400" />, sub: 'Синхронизация с настройками ОС' },
+                  { id: 'light', label: t('themeLight', 'Светлая'), icon: <Sun size={14} className="text-amber-500" /> },
+                  { id: 'dark', label: t('themeDark', 'Тёмная'), icon: <Moon size={14} className="text-indigo-400" /> },
+                  { id: 'system', label: t('themeSystem', 'Системная'), icon: <Laptop size={14} className="text-slate-400" /> },
                 ].map((item) => {
                   const isSelected = themeMode === item.id;
                   return (
@@ -459,64 +431,38 @@ export default function SettingsPage({
                       type="button"
                       onClick={() => handleThemeModeChange(item.id)}
                       className={`
-                        p-4 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer
+                        px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5
                         ${
                           isSelected
-                            ? isSupplier
-                              ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 text-blue-950 dark:text-blue-100 shadow-xs ring-2 ring-blue-500/20'
-                              : 'border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 shadow-xs ring-2 ring-emerald-500/20'
-                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700 text-slate-800 dark:text-slate-200'
+                            ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-2xs border border-slate-200/60 dark:border-slate-700/60'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                         }
                       `}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                          {item.icon}
-                        </div>
-                        <div>
-                          <div className="font-bold text-sm leading-tight">{item.label}</div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{item.sub}</div>
-                        </div>
-                      </div>
-                      {isSelected && (
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-white ${isSupplier ? 'bg-blue-600' : 'bg-emerald-600'}`}>
-                          <Check size={12} strokeWidth={3} />
-                        </div>
-                      )}
+                      {item.icon}
+                      <span>{item.label}</span>
                     </button>
                   );
                 })}
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Плотность интерфейса таблиц */}
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle icon={<Layers size={18} className={isSupplier ? 'text-blue-500' : 'text-emerald-500'} />}>
-                  {t('densityTitle', 'Плотность отображения таблиц')}
-                </CardTitle>
-                <CardDescription>
+            {/* Плотность строк в таблицах */}
+            <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="max-w-md">
+                <div className="font-bold text-sm text-slate-900 dark:text-white">
+                  {t('densityTitle', 'Плотность табличных данных')}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   {t('densityDesc', 'Режим отступов для работы с большими перечнями спецификаций и реестрами')}
-                </CardDescription>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+              {/* Сегментированный переключатель плотности */}
+              <div className="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shrink-0">
                 {[
-                  { 
-                    id: 'comfortable', 
-                    name: t('densityComfortable', 'Комфортная (По умолчанию)'), 
-                    desc: 'Стандартные отступы строк (12-14px), просторный просмотр',
-                    previewRows: [14, 14, 14]
-                  },
-                  { 
-                    id: 'compact', 
-                    name: t('densityCompact', 'Компактная'), 
-                    desc: 'Сжатая высота строк (6-8px), помещается до 40% больше позиций',
-                    previewRows: [8, 8, 8]
-                  },
+                  { id: 'comfortable', label: t('densityComfortable', 'Стандартная'), sub: '48px' },
+                  { id: 'compact', label: t('densityCompact', 'Компактная'), sub: '36px' },
                 ].map((item) => {
                   const isSelected = density === item.id;
                   return (
@@ -525,321 +471,251 @@ export default function SettingsPage({
                       type="button"
                       onClick={() => handleDensityChange(item.id)}
                       className={`
-                        p-4 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer
+                        px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5
                         ${
                           isSelected
-                            ? isSupplier
-                              ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 text-blue-950 dark:text-blue-100 shadow-xs ring-2 ring-blue-500/20'
-                              : 'border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 shadow-xs ring-2 ring-emerald-500/20'
-                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700 text-slate-800 dark:text-slate-200'
+                            ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-2xs border border-slate-200/60 dark:border-slate-700/60'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                         }
                       `}
                     >
-                      <div className="flex items-start justify-between w-full mb-3">
-                        <div>
-                          <div className="font-bold text-sm">{item.name}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{item.desc}</div>
-                        </div>
-                        {isSelected && (
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-white shrink-0 ml-2 ${isSupplier ? 'bg-blue-600' : 'bg-emerald-600'}`}>
-                            <Check size={12} strokeWidth={3} />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Мини-превью структуры строк */}
-                      <div className="w-full space-y-1.5 p-2 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60">
-                        {item.previewRows.map((h, idx) => (
-                          <div 
-                            key={idx} 
-                            style={{ height: `${h}px` }} 
-                            className="w-full bg-slate-200 dark:bg-slate-700/80 rounded-sm flex items-center px-2"
-                          >
-                            <div className="w-1/3 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full" />
-                          </div>
-                        ))}
-                      </div>
+                      <span>{item.label}</span>
+                      <span className="font-mono text-[10px] text-slate-400 font-normal">
+                        ({item.sub})
+                      </span>
                     </button>
                   );
                 })}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+          </div>
         </div>
       )}
 
-      {/* 2. ВКЛАДКА: ЦЕНТР УВЕДОМЛЕНИЙ */}
+      {/* 3.2. ВКЛАДКА: ЦЕНТР УВЕДОМЛЕНИЙ */}
       {activeTab === 'notifications' && (
-        <div className="space-y-6">
-          {/* Информационный баннер про Toast-уведомления */}
-          <div className={`p-4 rounded-xl border flex items-center justify-between gap-4 ${isSupplier ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50' : 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50'}`}>
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg text-white ${isSupplier ? 'bg-blue-600' : 'bg-emerald-600'}`}>
-                <Bell size={18} />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                  {t('pushNotificationsActive', 'Системные всплывающие уведомления (Toasts)')}
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                  {t('toastConfiguredStandard', 'Стандартное время показа уведомлений установлено на 3 секунды с возможностью паузы при наведении мыши')}
-                </p>
-              </div>
+        <div className="space-y-5">
+          {/* Каналы оповещений */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs overflow-hidden">
+            <div className="px-5 py-4 bg-slate-50 dark:bg-slate-800/40 border-b border-slate-200/80 dark:border-slate-800">
+              <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">
+                Каналы оповещений
+              </h3>
             </div>
-            <Badge variant={isSupplier ? 'blue' : 'emerald'} size="sm">
-              3 сек
-            </Badge>
-          </div>
 
-          {/* Звуковые оповещения */}
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle icon={<Volume2 size={18} className={isSupplier ? 'text-blue-500' : 'text-emerald-500'} />}>
-                  {t('soundAlertsTitle', 'Звуковые сигналы')}
-                </CardTitle>
-                <CardDescription>
-                  {t('soundAlertsDesc', 'Воспроизводить легкий аудио-сигнал при получении системных сообщений')}
-                </CardDescription>
+            <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+              {/* Toast уведомления */}
+              <div className="p-5 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    isSupplier 
+                      ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/40' 
+                      : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/40'
+                  }`}>
+                    <Bell size={18} />
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm text-slate-900 dark:text-white">
+                      {t('pushNotificationsActive', 'Всплывающие уведомления (Toasts)')}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {t('toastConfiguredStandard', 'Стандартное время показа уведомлений установлено на 3 секунды с возможностью паузы при наведении мыши')}
+                    </div>
+                  </div>
+                </div>
+
+                <Badge variant={isSupplier ? 'blue' : 'emerald'} size="sm">
+                  3 сек
+                </Badge>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${soundEnabled ? (isSupplier ? 'bg-blue-100 dark:bg-blue-950 text-blue-600' : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-600') : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
+
+              {/* Звуковые оповещения */}
+              <div className="p-5 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    soundEnabled
+                      ? (isSupplier ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600' : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600')
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                  } border border-slate-200/60 dark:border-slate-800`}>
                     {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
                   </div>
                   <div>
-                    <div className="font-bold text-sm text-slate-800 dark:text-slate-200">
-                      {soundEnabled ? t('soundEnabled', 'Звук включен') : t('soundDisabled', 'Звук выключен')}
+                    <div className="font-bold text-sm text-slate-900 dark:text-white">
+                      {t('soundAlertsTitle', 'Звуковые сигналы')}
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {t('soundDescription', 'Мягкий сигнал при появлении Toasts и результатов оценки')}
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {t('soundAlertsDesc', 'Воспроизводить мягкий звуковой индикатор при получении системных оповещений')}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {soundEnabled && (
-                    <Button 
-                      type="button"
-                      variant="outline" 
-                      size="sm" 
-                      onClick={playTestChime}
-                    >
-                      {t('testSound', 'Проверить звук')}
-                    </Button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setSoundEnabled(!soundEnabled)}
+                <button
+                  type="button"
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  className={`
+                    w-11 h-6 rounded-full transition-colors relative p-0.5 cursor-pointer shrink-0
+                    ${soundEnabled ? (isSupplier ? 'bg-blue-600' : 'bg-emerald-600') : 'bg-slate-300 dark:bg-slate-700'}
+                  `}
+                >
+                  <div
                     className={`
-                      w-12 h-6 rounded-full transition-colors relative p-0.5 cursor-pointer
-                      ${soundEnabled ? (isSupplier ? 'bg-blue-600' : 'bg-emerald-600') : 'bg-slate-300 dark:bg-slate-700'}
+                      w-5 h-5 rounded-full bg-white transition-transform shadow-xs
+                      ${soundEnabled ? 'translate-x-5' : 'translate-x-0'}
                     `}
-                  >
-                    <div
-                      className={`
-                        w-5 h-5 rounded-full bg-white transition-transform
-                        ${soundEnabled ? 'translate-x-6' : 'translate-x-0'}
-                      `}
-                    />
-                  </button>
-                </div>
+                  />
+                </button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Событийные триггеры */}
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle icon={<Activity size={18} className={isSupplier ? 'text-blue-500' : 'text-emerald-500'} />}>
-                  {t('eventNotificationsTitle', 'Событийные уведомления')}
-                </CardTitle>
-                <CardDescription>
-                  {isSupplier
-                    ? t('supplierEventDesc', 'Выберите события закупочного процесса, по которым вы хотите получать оповещения')
-                    : t('adminEventDesc', 'Параметры оповещения организатора торгов о действиях участников')}
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {isSupplier ? (
-                  // Опции для Поставщика
-                  [
-                    {
-                      key: 'deadlineReminder24h',
-                      title: t('notifyDeadline24h', 'Напоминание о дедлайне за 24 часа'),
-                      desc: t('notifyDeadline24hDesc', 'Предупреждать до наступления крайнего срока подачи заявок по открытым процедурам'),
-                    },
-                    {
-                      key: 'newTendersAlert',
-                      title: t('notifyNewTenders', 'Новые тендеры по моим категориям'),
-                      desc: t('notifyNewTendersDesc', 'Оповещать при публикации процедур по профилю вашей медицинской деятельности'),
-                    },
-                    {
-                      key: 'evaluationResults',
-                      title: t('notifyEvalResults', 'Итоги оценки и объявление победителя'),
-                      desc: t('notifyEvalResultsDesc', 'Мгновенное уведомление о результатах рассмотрения ваших поданных предложений'),
-                    },
-                    {
-                      key: 'verificationStatus',
-                      title: t('notifyVerification', 'Статус верификации компании'),
-                      desc: t('notifyVerificationDesc', 'Оповещения об одобрении модератором или замечаниях к документам организации'),
-                    },
-                  ].map((item) => {
-                    const isChecked = Boolean(notifications[item.key]);
-                    return (
-                      <div key={item.key} className="py-3.5 flex items-center justify-between gap-4">
-                        <div>
-                          <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{item.title}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{item.desc}</div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setNotifications({ ...notifications, [item.key]: !isChecked })}
-                          className={`
-                            w-11 h-6 rounded-full transition-colors relative p-0.5 cursor-pointer shrink-0
-                            ${isChecked ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'}
-                          `}
-                        >
-                          <div
-                            className={`
-                              w-5 h-5 rounded-full bg-white transition-transform
-                              ${isChecked ? 'translate-x-5' : 'translate-x-0'}
-                            `}
-                          />
-                        </button>
-                      </div>
-                    );
-                  })
-                ) : (
-                  // Опции для Администратора
-                  [
-                    {
-                      key: 'newOfferSubmitted',
-                      title: t('notifyNewOffer', 'Подача нового предложения'),
-                      desc: t('notifyNewOfferDesc', 'Оповещать организатора, когда поставщик отправляет конверт с предложением'),
-                    },
-                    {
-                      key: 'supplierPendingReview',
-                      title: t('notifyPendingSupplier', 'Новый поставщик на модерацию'),
-                      desc: t('notifyPendingSupplierDesc', 'Уведомлять при регистрации компании, требующей проверки документов'),
-                    },
-                    {
-                      key: 'tendersOpeningDue',
-                      title: t('notifyOpeningDue', 'Наступление дедлайна тендера'),
-                      desc: t('notifyOpeningDueDesc', 'Оповещать о закрытии приема предложений и готовности процедуры к вскрытию конвертов'),
-                    },
-                    {
-                      key: 'securityAlerts',
-                      title: t('notifySecurityAlerts', 'Критические системные события'),
-                      desc: t('notifySecurityAlertsDesc', 'Оповещения об ошибках авторизации и модификации ключевых справочников'),
-                    },
-                  ].map((item) => {
-                    const isChecked = Boolean(notifications[item.key]);
-                    return (
-                      <div key={item.key} className="py-3.5 flex items-center justify-between gap-4">
-                        <div>
-                          <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{item.title}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{item.desc}</div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setNotifications({ ...notifications, [item.key]: !isChecked })}
-                          className={`
-                            w-11 h-6 rounded-full transition-colors relative p-0.5 cursor-pointer shrink-0
-                            ${isChecked ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'}
-                          `}
-                        >
-                          <div
-                            className={`
-                              w-5 h-5 rounded-full bg-white transition-transform
-                              ${isChecked ? 'translate-x-5' : 'translate-x-0'}
-                            `}
-                          />
-                        </button>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-end">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs overflow-hidden">
+            <div className="px-5 py-4 bg-slate-50 dark:bg-slate-800/40 border-b border-slate-200/80 dark:border-slate-800">
+              <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">
+                {isSupplier ? 'События закупок поставщика' : 'События мониторинга организатора'}
+              </h3>
+            </div>
+
+            <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+              {(isSupplier ? [
+                {
+                  key: 'deadlineReminder24h',
+                  title: t('notifyDeadline24h', 'Напоминание о дедлайне за 24 часа'),
+                  desc: t('notifyDeadline24hDesc', 'Предупреждать до наступления крайнего срока подачи заявок по открытым процедурам'),
+                },
+                {
+                  key: 'newTendersAlert',
+                  title: t('notifyNewTenders', 'Новые тендеры по моим категориям'),
+                  desc: t('notifyNewTendersDesc', 'Оповещать при публикации процедур по профилю вашей медицинской деятельности'),
+                },
+                {
+                  key: 'evaluationResults',
+                  title: t('notifyEvalResults', 'Итоги оценки и объявление победителя'),
+                  desc: t('notifyEvalResultsDesc', 'Мгновенное уведомление о результатах рассмотрения ваших поданных предложений'),
+                },
+                {
+                  key: 'verificationStatus',
+                  title: t('notifyVerification', 'Статус верификации компании'),
+                  desc: t('notifyVerificationDesc', 'Оповещения об одобрении модератором или замечаниях к документам организации'),
+                },
+              ] : [
+                {
+                  key: 'newOfferSubmitted',
+                  title: t('notifyNewOffer', 'Подача нового предложения'),
+                  desc: t('notifyNewOfferDesc', 'Оповещать организатора, когда поставщик отправляет конверт с предложением'),
+                },
+                {
+                  key: 'supplierPendingReview',
+                  title: t('notifyPendingSupplier', 'Новый поставщик на модерацию'),
+                  desc: t('notifyPendingSupplierDesc', 'Уведомлять при регистрации компании, требующей проверки документов'),
+                },
+                {
+                  key: 'tendersOpeningDue',
+                  title: t('notifyOpeningDue', 'Наступление дедлайна тендера'),
+                  desc: t('notifyOpeningDueDesc', 'Оповещать о закрытии приема предложений и готовности процедуры к вскрытию конвертов'),
+                },
+                {
+                  key: 'securityAlerts',
+                  title: t('notifySecurityAlerts', 'Критические системные события'),
+                  desc: t('notifySecurityAlertsDesc', 'Оповещения об ошибках авторизации и модификации ключевых справочников'),
+                },
+              ]).map((item) => {
+                const isChecked = Boolean(notifications[item.key]);
+                return (
+                  <div key={item.key} className="p-5 flex items-center justify-between gap-4">
+                    <div className="max-w-2xl">
+                      <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{item.title}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{item.desc}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setNotifications({ ...notifications, [item.key]: !isChecked })}
+                      className={`
+                        w-11 h-6 rounded-full transition-colors relative p-0.5 cursor-pointer shrink-0
+                        ${isChecked ? (isSupplier ? 'bg-blue-600' : 'bg-emerald-600') : 'bg-slate-300 dark:bg-slate-700'}
+                      `}
+                    >
+                      <div
+                        className={`
+                          w-5 h-5 rounded-full bg-white transition-transform shadow-xs
+                          ${isChecked ? 'translate-x-5' : 'translate-x-0'}
+                        `}
+                      />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="p-4 bg-slate-50/70 dark:bg-slate-800/40 border-t border-slate-200/80 dark:border-slate-800 flex justify-end">
               <Button
                 type="button"
-                variant="primary"
-                role={role}
+                variant={isSupplier ? 'primary' : 'success'}
+                size="sm"
                 onClick={handleSaveNotifications}
               >
-                {t('saveSettings', 'Сохранить настройки')}
+                <Check size={14} className="mr-1.5" />
+                <span>{t('saveSettings', 'Сохранить настройки')}</span>
               </Button>
-            </CardFooter>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* 3. ВКЛАДКА: БЕЗОПАСНОСТЬ И АККАУНТ */}
+      {/* 3.3. ВКЛАДКА: БЕЗОПАСНОСТЬ И АККАУНТ */}
       {activeTab === 'security' && (
-        <div className="space-y-6">
-          {/* Карточка учетной записи */}
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle icon={<User size={18} className={isSupplier ? 'text-blue-500' : 'text-emerald-500'} />}>
-                  {t('accountInfoTitle', 'Информация об учетной записи')}
-                </CardTitle>
-                <CardDescription>
-                  {t('accountInfoDesc', 'Данные авторизованного профиля в системе «Tender Ulgamy»')}
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
-                <div className="flex items-center gap-3.5">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg ${isSupplier ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300' : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'}`}>
-                    {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 'U'}
+        <div className="space-y-5">
+          {/* Профиль пользователя */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs p-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-base shadow-xs shrink-0 ${
+                  isSupplier 
+                    ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800' 
+                    : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                }`}>
+                  {userInitials}
+                </div>
+                <div>
+                  <div className="font-bold text-base text-slate-900 dark:text-white">
+                    {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Авторизованный пользователь'}
                   </div>
-                  <div>
-                    <div className="font-bold text-base text-slate-900 dark:text-slate-100">
-                      {user?.firstName} {user?.lastName}
-                    </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                      @{user?.username || 'user'}
-                    </div>
+                  <div className="text-xs text-slate-400 font-mono mt-0.5">
+                    @{user?.username || 'user'} {user?.email ? `• ${user.email}` : ''}
                   </div>
                 </div>
+              </div>
 
-                <div className="flex items-center gap-2">
-                  <Badge variant={isSupplier ? 'blue' : 'emerald'} status="ACTIVE">
-                    {user?.roleType || role}
-                  </Badge>
-                  <Badge variant="outline" status="ACTIVE">
-                    {t('accountActive', 'Активен')}
-                  </Badge>
-                </div>
+              <div className="flex items-center gap-2">
+                <Badge variant={isSupplier ? 'blue' : 'emerald'} size="sm">
+                  {user?.roleType || role}
+                </Badge>
+                <Badge variant="outline" size="sm">
+                  {t('accountActive', 'Активен')}
+                </Badge>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Форма смены пароля */}
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle icon={<Lock size={18} className={isSupplier ? 'text-blue-500' : 'text-emerald-500'} />}>
-                  {t('changePasswordTitle', 'Смена пароля')}
-                </CardTitle>
-                <CardDescription>
-                  {t('changePasswordDesc', 'Регулярно обновляйте пароль для надежной защиты закупочных данных')}
-                </CardDescription>
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs overflow-hidden">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800/80">
+              <div className="flex items-center gap-2.5">
+                <KeyRound size={17} className={isSupplier ? 'text-blue-500' : 'text-emerald-500'} />
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                  {t('changePasswordTitle', 'Смена пароля учетной записи')}
+                </h3>
               </div>
-            </CardHeader>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {t('changePasswordDesc', 'Регулярно обновляйте пароль для надежной защиты закупочных данных')}
+              </p>
+            </div>
+
             <form onSubmit={handleChangePassword}>
-              <CardContent className="space-y-4">
+              <div className="p-5 space-y-4">
                 {/* Текущий пароль */}
-                <div>
+                <div className="max-w-md">
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     {t('currentPassword', 'Текущий пароль')} <span className="text-rose-500">*</span>
                   </label>
@@ -849,20 +725,20 @@ export default function SettingsPage({
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full pl-3.5 pr-10 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                      className={`w-full pl-3.5 pr-10 py-2 rounded-xl text-xs ${theme.inputBg}`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowCurrent(!showCurrent)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                     >
-                      {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+                      {showCurrent ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
                   </div>
                 </div>
 
-                {/* Новый пароль */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Новый пароль и подтверждение */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                       {t('newPassword', 'Новый пароль')} <span className="text-rose-500">*</span>
@@ -873,14 +749,14 @@ export default function SettingsPage({
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder={t('passwordMinLengthHint', 'Минимум 6 символов')}
-                        className="w-full pl-3.5 pr-10 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                        className={`w-full pl-3.5 pr-10 py-2 rounded-xl text-xs ${theme.inputBg}`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowNew(!showNew)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                       >
-                        {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showNew ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>
                     </div>
                   </div>
@@ -895,14 +771,14 @@ export default function SettingsPage({
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder={t('repeatNewPassword', 'Повторите новый пароль')}
-                        className="w-full pl-3.5 pr-10 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                        className={`w-full pl-3.5 pr-10 py-2 rounded-xl text-xs ${theme.inputBg}`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirm(!showConfirm)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                       >
-                        {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>
                     </div>
                   </div>
@@ -910,127 +786,114 @@ export default function SettingsPage({
 
                 {newPassword && (
                   <div className="flex items-center gap-2 text-xs">
-                    <span className="text-slate-500 dark:text-slate-400">{t('passwordStrength', 'Надежность')}:</span>
+                    <span className="text-slate-500 dark:text-slate-400">{t('passwordStrength', 'Сложность пароля')}:</span>
                     <span className={`font-bold ${newPassword.length >= 8 ? 'text-emerald-600' : newPassword.length >= 6 ? 'text-amber-500' : 'text-rose-500'}`}>
                       {newPassword.length >= 8 ? t('strong', 'Надежный') : newPassword.length >= 6 ? t('medium', 'Средний') : t('weak', 'Слабый')}
                     </span>
                   </div>
                 )}
-              </CardContent>
+              </div>
 
-              <CardFooter className="flex justify-end">
+              <div className="p-4 bg-slate-50/70 dark:bg-slate-800/40 border-t border-slate-200/80 dark:border-slate-800 flex justify-end">
                 <Button
                   type="submit"
-                  variant="primary"
-                  role={role}
+                  variant={isSupplier ? 'primary' : 'success'}
+                  size="sm"
                   isLoading={isChangingPassword}
                 >
-                  {t('updatePasswordBtn', 'Обновить пароль')}
+                  <Lock size={14} className="mr-1.5" />
+                  <span>{t('updatePasswordBtn', 'Обновить пароль')}</span>
                 </Button>
-              </CardFooter>
+              </div>
             </form>
-          </Card>
+          </div>
 
           {/* Таймаут неактивности / Автовыход */}
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle icon={<Clock size={18} className={isSupplier ? 'text-blue-500' : 'text-emerald-500'} />}>
-                  {t('sessionAutoLockTitle', 'Таймаут неактивности (Автовыход)')}
-                </CardTitle>
-                <CardDescription>
-                  {t('sessionAutoLockDesc', 'Автоматическое завершение сеанса при отсутствии действий для защиты рабочего места')}
-                </CardDescription>
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="max-w-md">
+              <div className="font-bold text-sm text-slate-900 dark:text-white">
+                {t('sessionAutoLockTitle', 'Таймаут неактивности (Автовыход)')}
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="max-w-md">
-                <CustomSelect
-                  role={role}
-                  value={sessionTimeout}
-                  onChange={handleSessionTimeoutChange}
-                  options={[
-                    { id: '15', name: `15 ${t('minutes', 'минут')}` },
-                    { id: '30', name: `30 ${t('minutes', 'минут (Рекомендуется)')}` },
-                    { id: '60', name: `1 ${t('hour', 'час')}` },
-                    { id: 'never', name: t('neverTimeout', 'Не блокировать сеанс') },
-                  ]}
-                  isDarkMode={isDarkMode}
-                  theme={theme}
-                />
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {t('sessionAutoLockDesc', 'Автоматическое завершение сеанса при отсутствии действий для защиты рабочего места')}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            <div className="w-full md:w-64 shrink-0">
+              <CustomSelect
+                role={role}
+                size="sm"
+                value={sessionTimeout}
+                onChange={handleSessionTimeoutChange}
+                options={[
+                  { id: '15', name: `15 ${t('minutes', 'минут')}` },
+                  { id: '30', name: `30 ${t('minutes', 'минут (Рекомендуется)')}` },
+                  { id: '60', name: `1 ${t('hour', 'час')}` },
+                  { id: 'never', name: t('neverTimeout', 'Не блокировать сеанс') },
+                ]}
+                isDarkMode={isDarkMode}
+                theme={theme}
+                t={t}
+              />
+            </div>
+          </div>
         </div>
       )}
 
-      {/* 4. ВКЛАДКА: СИСТЕМА И ЭКСПОРТ (ДЛЯ АДМИНА) */}
+      {/* 3.4. ВКЛАДКА: СИСТЕМА И ЭКСПОРТ (ДЛЯ АДМИНИСТРАТОРА) */}
       {activeTab === 'system' && role === 'ADMIN' && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Экспорт системного журнала */}
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle icon={<Download size={18} className="text-emerald-500" />}>
-                  {t('exportAuditLogsTitle', 'Экспорт системного журнала аудита')}
-                </CardTitle>
-                <CardDescription>
-                  {t('exportAuditLogsDesc', 'Выгрузка последних 500 записей действий пользователей, изменений статусов и транзакций в JSON-файл')}
-                </CardDescription>
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="font-bold text-sm text-slate-900 dark:text-white">
+                {t('exportAuditLogsTitle', 'Выгрузка системного журнала аудита')}
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
-                <div>
-                  <div className="font-bold text-sm text-slate-800 dark:text-slate-200">
-                    {t('auditLogsDump', 'Журнал операций (Audit Logs)')}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {t('auditLogsFormatDesc', 'Формат: JSON с временными метками, IP-адресами, пользователями и деталями запросов')}
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="primary"
-                  role="ADMIN"
-                  icon={<Download size={16} />}
-                  isLoading={isExportingLogs}
-                  onClick={handleExportAuditLogs}
-                >
-                  {t('downloadJson', 'Скачать JSON')}
-                </Button>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {t('exportAuditLogsDesc', 'Выгрузка последних 500 записей действий пользователей, изменений статусов и транзакций в JSON-файл')}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              isLoading={isExportingLogs}
+              onClick={handleExportAuditLogs}
+            >
+              <Download size={14} className="mr-1.5" />
+              <span>{t('downloadJson', 'Скачать JSON')}</span>
+            </Button>
+          </div>
 
           {/* Сведения о платформе */}
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle icon={<Database size={18} className="text-emerald-500" />}>
-                  {t('systemInfoTitle', 'Информация о платформе')}
-                </CardTitle>
-                <CardDescription>
-                  {t('systemInfoDesc', 'Архитектурные и системные параметры инсталляции «Tender Ulgamy»')}
-                </CardDescription>
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-2xs p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <Server size={16} className="text-emerald-600 dark:text-emerald-400" />
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                {t('systemInfoTitle', 'Информация об инфраструктуре')}
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
+                <span className="text-slate-400 text-[11px] block">Платформа</span>
+                <span className="font-bold text-slate-900 dark:text-white mt-0.5 block">Tender Ulgamy</span>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                  { label: 'Платформа', value: 'Tender Ulgamy' },
-                  { label: 'Версия ПО', value: '1.0.0 (Production)' },
-                  { label: 'База данных', value: 'PostgreSQL + Prisma' },
-                  { label: 'UI Стек', value: 'React 19 + Tailwind v4' },
-                ].map((item, idx) => (
-                  <div key={idx} className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
-                    <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{item.label}</div>
-                    <div className="font-bold text-sm text-slate-900 dark:text-slate-100 mt-1">{item.value}</div>
-                  </div>
-                ))}
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
+                <span className="text-slate-400 text-[11px] block">Версия сборки</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white mt-0.5 block">v1.2.4-prod</span>
               </div>
-            </CardContent>
-          </Card>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
+                <span className="text-slate-400 text-[11px] block">База данных</span>
+                <span className="font-bold text-slate-900 dark:text-white mt-0.5 block">PostgreSQL (Prisma)</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
+                <span className="text-slate-400 text-[11px] block">Среда запуска</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block">Production</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

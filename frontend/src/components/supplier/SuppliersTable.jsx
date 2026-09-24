@@ -10,11 +10,9 @@ import {
   TableCell,
   TableEmptyState,
   Badge,
-  Button,
-  SearchInput,
-  CustomSelect,
+  TableFilters,
 } from '../ui';
-import { safeString } from '../../utils/themeUtils';
+import { safeString, getRoleTheme } from '../../utils/themeUtils';
 import { getTranslation } from '../../utils/translations';
 
 export default function SuppliersTable({
@@ -33,6 +31,7 @@ export default function SuppliersTable({
   lang = 'RU',
 }) {
   const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const theme = getRoleTheme(role, isDarkMode);
 
   const categoryOptions = [
     { id: 'ALL', name: `🏢 ${t('allCategories', 'Все направления деятельности')}` },
@@ -42,26 +41,30 @@ export default function SuppliersTable({
   return (
     <div className="space-y-3">
       {/* 1. Панель фильтров и поиска */}
-      <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="col-span-1 md:col-span-2">
-          <SearchInput
-            placeholder={t('searchPlaceholder', 'Gözleg...')}
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
-        </div>
-
-        <div className="col-span-1 md:col-span-2">
-          <CustomSelect
-            role={role}
-            isDarkMode={isDarkMode}
-            value={categoryFilter}
-            onChange={onCategoryFilterChange}
-            options={categoryOptions}
-            size="md"
-          />
-        </div>
-      </div>
+      <TableFilters
+        searchValue={search}
+        onSearchChange={onSearchChange}
+        searchPlaceholder={t('searchPlaceholder', 'Gözleg...')}
+        filters={[
+          {
+            id: 'category',
+            value: categoryFilter,
+            onChange: onCategoryFilterChange,
+            options: categoryOptions,
+            searchable: categoryOptions.length > 5,
+            width: 'min-w-[240px]'
+          }
+        ]}
+        hasActiveFilters={Boolean(search || categoryFilter !== 'ALL')}
+        onReset={() => {
+          onSearchChange?.('');
+          onCategoryFilterChange?.('ALL');
+        }}
+        role={role}
+        isDarkMode={isDarkMode}
+        theme={theme}
+        t={t}
+      />
 
       {/* 2. Таблица со списком поставщиков */}
       <TableContainer>
@@ -130,22 +133,38 @@ export default function SuppliersTable({
 
                   {/* Страна */}
                   <TableCell className="text-slate-600 dark:text-slate-400">
-                    {safeString(s.country?.name || s.countryName)}
+                    {(s.country?.name || s.countryName) ? (
+                      safeString(s.country?.name || s.countryName)
+                    ) : (
+                      <span className="text-slate-300 dark:text-slate-600 font-normal select-none">—</span>
+                    )}
                   </TableCell>
 
                   {/* Регистрационный номер */}
                   <TableCell className="font-mono text-xs text-slate-500 dark:text-slate-400">
-                    {safeString(s.regNumber)}
+                    {s.regNumber ? (
+                      safeString(s.regNumber)
+                    ) : (
+                      <span className="text-slate-300 dark:text-slate-600 font-normal select-none">—</span>
+                    )}
                   </TableCell>
 
                   {/* ИНН (STSK) */}
                   <TableCell className="font-mono text-xs text-slate-500 dark:text-slate-400">
-                    {safeString(s.taxId)}
+                    {s.taxId ? (
+                      safeString(s.taxId)
+                    ) : (
+                      <span className="text-slate-300 dark:text-slate-600 font-normal select-none">—</span>
+                    )}
                   </TableCell>
 
                   {/* Номер лицензии */}
                   <TableCell className="text-slate-500 dark:text-slate-400">
-                    {safeString(s.licenseNumber)}
+                    {s.licenseNumber ? (
+                      safeString(s.licenseNumber)
+                    ) : (
+                      <span className="text-slate-300 dark:text-slate-600 font-normal select-none">—</span>
+                    )}
                   </TableCell>
 
                   {/* Статус */}
@@ -157,38 +176,36 @@ export default function SuppliersTable({
 
                   {/* Действия */}
                   <TableCell align="right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
                         onClick={() => onView(s)}
+                        className={theme.actionBtn}
                         title={t('viewProfileTooltip', 'Посмотреть профиль')}
                       >
                         <Eye size={15} />
-                      </Button>
+                      </button>
 
                       {onEdit && (
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
+                        <button
+                          type="button"
                           onClick={() => onEdit(s)}
+                          className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 dark:hover:border-amber-700 transition-all active:scale-95 cursor-pointer"
                           title={t('edit', 'Düzetmek')}
-                          className="hover:text-emerald-600"
                         >
                           <Edit2 size={15} />
-                        </Button>
+                        </button>
                       )}
 
                       {onDelete && (
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
+                        <button
+                          type="button"
                           onClick={() => onDelete(s.id)}
+                          className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 dark:hover:border-rose-700 transition-all active:scale-95 cursor-pointer"
                           title={t('delete', 'Pozmak')}
-                          className="hover:text-rose-600 text-slate-400"
                         >
                           <Trash2 size={15} />
-                        </Button>
+                        </button>
                       )}
                     </div>
                   </TableCell>

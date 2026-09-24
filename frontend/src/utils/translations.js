@@ -1079,6 +1079,13 @@ export const translations = {
     generalParamsHint: "Esasy maglumatlar, toparlara bölmek, möhletler we hünär talaplary",
     shortPosition: "orun",
     generalDocsHint: "Şertnamanyň taslamasy, umumy tertipler, hünär talaplary we satyn alyş boýunça gözükdirmeler",
+    stepLocked: "Ädim gulplany",
+    fillBaseParamsFirst: "Lotlara geçmek üçin satyn alyş parametrlerini dolduryň we taslamany ýazdyryň",
+    addLotBeforeDocs: "Resminamalara geçmek üçin iň bolmanda bir sany spesifikasiýaly lot goşuň",
+    mustAttachDocToPublish: "Tenderi çap etmek üçin iň bolmanda bir resminama goşuň",
+    paramsShort: "Parametrler",
+    lotsShort: "Lotlar",
+    docsShort: "Resminamalar",
   },
   RU: {
     select: 'Выберите...',
@@ -1292,7 +1299,7 @@ export const translations = {
     // Статусы
     statusAcyk: 'Открыт',
     statusYapyk: 'Закрыт',
-    statusTaslama: 'Проект',
+    statusTaslama: 'Черновик',
     statusBahalandyryldy: 'На рассмотрении',
     statusYeniji: 'Объявлен победитель',
     statusTabsyryldy: 'Подано',
@@ -2161,6 +2168,13 @@ export const translations = {
     generalParamsHint: "Основные реквизиты, классификация, сроки и квалификационные требования",
     shortPosition: "поз.",
     generalDocsHint: "Проект договора, общие регламенты, квалификационные требования и инструкции к закупке",
+    stepLocked: "Шаг заблокирован",
+    fillBaseParamsFirst: "Заполните параметры закупки и сохраните черновик для перехода к лотам",
+    addLotBeforeDocs: "Добавьте хотя бы один лот с заполненной спецификацией для перехода к документам",
+    mustAttachDocToPublish: "Прикрепите хотя бы один документ для публикации тендера",
+    paramsShort: "Параметры",
+    lotsShort: "Лоты",
+    docsShort: "Документы",
   },
   EN: {
     select: 'Select...',
@@ -3241,6 +3255,13 @@ export const translations = {
     generalParamsHint: "Basic details, classification, deadlines, and qualification requirements",
     shortPosition: "pos.",
     generalDocsHint: "Draft contract, general regulations, qualification requirements, and procurement instructions",
+    stepLocked: "Step locked",
+    fillBaseParamsFirst: "Fill procurement parameters and save draft to proceed to lots",
+    addLotBeforeDocs: "Add at least one lot with specifications to proceed to documents",
+    mustAttachDocToPublish: "Attach at least one document to publish the tender",
+    paramsShort: "Parameters",
+    lotsShort: "Lots",
+    docsShort: "Documents",
   }
 };
 

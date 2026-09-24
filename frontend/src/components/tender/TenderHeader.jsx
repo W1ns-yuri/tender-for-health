@@ -8,6 +8,10 @@ export default function TenderHeader({
   formData,
   activeTopTab = 'params',
   setActiveTopTab,
+  progressPercent = 0,
+  canAccessLots = false,
+  canAccessDocs = false,
+  onNavigateTab,
   canPublish,
   publishing,
   publishDisabledReason,
@@ -23,19 +27,16 @@ export default function TenderHeader({
       step: 1,
       label: t('tabGeneralParams', 'Параметры закупки'),
       subtitle: t('paramsStepSubtitle', 'Шаг 1: Основные реквизиты, сроки и классификаторы закупки'),
-      percent: 33
     },
     lots: {
       step: 2,
       label: t('tabLotsSpecs', 'Лоты и спецификации'),
       subtitle: t('lotsStepSubtitle', 'Шаг 2: Спецификации, параметры лотов и требования к поставке'),
-      percent: 66
     },
     docs: {
       step: 3,
       label: t('tabGeneralDocs', 'Общие документы'),
       subtitle: t('docsStepSubtitle', 'Шаг 3: Прикрепление общей документации и регламентов'),
-      percent: 100
     }
   };
 
@@ -88,7 +89,7 @@ export default function TenderHeader({
                 <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{currentStepInfo.label}</span>
               </span>
               <span className="font-mono text-[11px] font-bold text-slate-500 dark:text-slate-400 ml-2">
-                {currentStepInfo.percent}%
+                {progressPercent}%
               </span>
             </div>
             
@@ -96,7 +97,7 @@ export default function TenderHeader({
             <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-300 ease-out"
-                style={{ width: `${currentStepInfo.percent}%` }}
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
 
@@ -104,26 +105,26 @@ export default function TenderHeader({
             <div className="flex justify-between items-center text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-semibold">
               <button
                 type="button"
-                onClick={() => setActiveTopTab?.('params')}
-                className={`transition-colors cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 ${currentStepInfo.step >= 1 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''}`}
+                onClick={() => onNavigateTab ? onNavigateTab('params') : setActiveTopTab?.('params')}
+                className={`transition-colors cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 ${progressPercent >= 33 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''}`}
               >
-                1. Параметры
+                1. {t('paramsShort', 'Параметры')}
               </button>
               <button
                 type="button"
-                disabled={!tenderId}
-                onClick={() => tenderId && setActiveTopTab?.('lots')}
-                className={`transition-colors ${tenderId ? 'cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400' : 'cursor-not-allowed opacity-50'} ${currentStepInfo.step >= 2 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''}`}
+                disabled={!canAccessLots}
+                onClick={() => onNavigateTab ? onNavigateTab('lots') : (canAccessLots && setActiveTopTab?.('lots'))}
+                className={`transition-colors ${canAccessLots ? 'cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400' : 'cursor-not-allowed opacity-40'} ${progressPercent >= 66 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''}`}
               >
-                2. Лоты
+                2. {t('lotsShort', 'Лоты')}
               </button>
               <button
                 type="button"
-                disabled={!tenderId}
-                onClick={() => tenderId && setActiveTopTab?.('docs')}
-                className={`transition-colors ${tenderId ? 'cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400' : 'cursor-not-allowed opacity-50'} ${currentStepInfo.step >= 3 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''}`}
+                disabled={!canAccessDocs}
+                onClick={() => onNavigateTab ? onNavigateTab('docs') : (canAccessDocs && setActiveTopTab?.('docs'))}
+                className={`transition-colors ${canAccessDocs ? 'cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400' : 'cursor-not-allowed opacity-40'} ${progressPercent >= 100 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''}`}
               >
-                3. Документы
+                3. {t('docsShort', 'Документы')}
               </button>
             </div>
           </div>

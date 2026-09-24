@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, CheckCircle2, FileText, Search, X, Clock, Building2, Layers, AlertCircle, ArrowRight, Eye } from 'lucide-react';
+import { Trophy, CheckCircle2, FileText, Clock, Building2, Layers, AlertCircle, ArrowRight, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { getStatusBadge } from '../utils/statusUtils';
-import CustomSelect from '../components/CustomSelect';
+import { TableFilters } from '../components/ui';
 
 export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = (key, fallback, params) => getTranslation(lang, key, fallback, params);
 
   const [tenders, setTenders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -196,82 +196,58 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
       </div>
 
       {/* 3. Comprehensive Filter Toolbar */}
-      <div className={`p-4 rounded-xl border shadow-xs ${theme.cardBg} flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3`}>
-        {/* Search */}
-        <div className="relative flex-1 min-w-[240px] max-w-md">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('searchTenderFullPlaceholder', 'Поиск по номеру, названию, заказчику...')}
-            className={`w-full pl-9 pr-8 py-2 text-xs rounded-lg ${theme.inputBg}`}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-            >
-              <X size={13} />
-            </button>
-          )}
-        </div>
-
-        {/* Dropdowns */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Client filter */}
-          <div className="min-w-[170px]">
-            <CustomSelect
-              role="ADMIN"
-              value={selectedClient}
-              onChange={(val) => setSelectedClient(val)}
-              options={[
-                { id: 'ALL', name: t('allCustomersFilter', 'Все заказчики') },
-                ...uniqueClients.map(c => ({ id: c, name: c }))
-              ]}
-              searchable={uniqueClients.length > 5}
-              isDarkMode={isDarkMode}
-              theme={theme}
-              t={t}
-            />
-          </div>
-
-          {/* Status filter */}
-          <div className="min-w-[160px]">
-            <CustomSelect
-              role="ADMIN"
-              value={selectedStatus}
-              onChange={(val) => setSelectedStatus(val)}
-              options={[
-                { id: 'ALL', name: t('allStatusesFilter', 'Все статусы') },
-                { id: 'IN_PROGRESS', name: t('statusBahalandyryldy', 'На рассмотрении') },
-                { id: 'COMPLETED', name: t('finalizedStatus', 'Итоги подведены') }
-              ]}
-              isDarkMode={isDarkMode}
-              theme={theme}
-              t={t}
-            />
-          </div>
-
-          {/* Sort */}
-          <div className="min-w-[180px]">
-            <CustomSelect
-              role="ADMIN"
-              value={sortBy}
-              onChange={(val) => setSortBy(val)}
-              options={[
-                { id: 'DEADLINE_ASC', name: t('sortDeadlineAsc', 'Срок: сначала срочные') },
-                { id: 'DEADLINE_DESC', name: t('sortDeadlineDesc', 'Срок: по убыванию') },
-                { id: 'OFFERS_DESC', name: t('sortOffersDesc', 'Заявки: больше предложений') },
-                { id: 'NEWEST', name: t('sortDateDesc', 'Дата: сначала новые') }
-              ]}
-              isDarkMode={isDarkMode}
-              theme={theme}
-              t={t}
-            />
-          </div>
-        </div>
-      </div>
+      <TableFilters
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder={t('searchTenderFullPlaceholder', 'Поиск по номеру, названию, заказчику...')}
+        filters={[
+          {
+            id: 'client',
+            value: selectedClient,
+            onChange: setSelectedClient,
+            options: [
+              { id: 'ALL', name: t('allCustomersFilter', 'Все заказчики') },
+              ...uniqueClients.map(c => ({ id: c, name: c }))
+            ],
+            searchable: uniqueClients.length > 5,
+            width: 'min-w-[170px]'
+          },
+          {
+            id: 'status',
+            value: selectedStatus,
+            onChange: setSelectedStatus,
+            options: [
+              { id: 'ALL', name: t('allStatusesFilter', 'Все статусы') },
+              { id: 'IN_PROGRESS', name: t('statusBahalandyryldy', 'На рассмотрении') },
+              { id: 'COMPLETED', name: t('finalizedStatus', 'Итоги подведены') }
+            ],
+            width: 'min-w-[160px]'
+          },
+          {
+            id: 'sort',
+            value: sortBy,
+            onChange: setSortBy,
+            options: [
+              { id: 'DEADLINE_ASC', name: t('sortDeadlineAsc', 'Срок: сначала срочные') },
+              { id: 'DEADLINE_DESC', name: t('sortDeadlineDesc', 'Срок: по убыванию') },
+              { id: 'OFFERS_DESC', name: t('sortOffersDesc', 'Заявки: больше предложений') },
+              { id: 'NEWEST', name: t('sortDateDesc', 'Дата: сначала новые') }
+            ],
+            width: 'min-w-[180px]'
+          }
+        ]}
+        hasActiveFilters={Boolean(searchQuery || selectedClient !== 'ALL' || selectedStatus !== 'ALL' || sortBy !== 'DEADLINE_ASC')}
+        onReset={() => {
+          setSearchQuery('');
+          setSelectedClient('ALL');
+          setSelectedStatus('ALL');
+          setSortBy('DEADLINE_ASC');
+        }}
+        role="ADMIN"
+        isDarkMode={isDarkMode}
+        theme={theme}
+        t={t}
+      />
 
       {/* 4. Full-Width 100% Registry Table */}
       <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>

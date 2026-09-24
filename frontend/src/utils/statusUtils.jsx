@@ -8,8 +8,8 @@ export const getStatusBadge = (status, lang = 'RU', isDarkMode = false) => {
   switch (normalized) {
     case 'TASLAMA':
       return (
-        <span className={`${baseClass} font-medium ${isDarkMode ? 'bg-zinc-800 text-zinc-300 border-zinc-700' : 'bg-zinc-100 text-zinc-600 border-zinc-200'}`}>
-          {getTranslation(lang, 'statusTaslama', 'Taslama')}
+        <span className={`${baseClass} font-semibold ${isDarkMode ? 'bg-amber-950/60 text-amber-300 border-amber-800/60' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+          {getTranslation(lang, 'statusTaslama', 'Черновик')}
         </span>
       );
     case 'ACYK':
