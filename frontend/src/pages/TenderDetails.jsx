@@ -338,7 +338,7 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                         return (
                           <a
                             key={doc.id || fIdx}
-                            href={doc.filePath ? `http://localhost:5000/${doc.filePath}` : '#'}
+                            href={fileUrl}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shadow-2xs transition-colors"

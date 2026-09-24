@@ -56,7 +56,6 @@ import {
   Sun,
   Moon,
   HelpCircle,
-  Bell,
   AlertCircle,
   AlertTriangle,
   Info,

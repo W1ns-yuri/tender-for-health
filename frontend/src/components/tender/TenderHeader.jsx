@@ -12,7 +12,6 @@ export default function TenderHeader({
   publishing,
   publishDisabledReason,
   onPublishTender,
-  errorMsg,
   theme,
   t = (k, f) => f
 }) {

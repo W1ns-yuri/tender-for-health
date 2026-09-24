@@ -1,4 +1,4 @@
-# PROJECT_CONTEXT.md — Технический паспорт системы «Tender Ulgamy»
+﻿# PROJECT_CONTEXT.md — Технический паспорт системы «Tender Ulgamy»
 
 Сгенерировано: 2026-09-14. Версия: 1.0.0. Источник: реальный код репозитория.
 
@@ -1148,3 +1148,31 @@ PS = PURCHASING_SPECIALIST, CM = COMMISSION_MEMBER
      - Линтер `npm run lint`: 0 ошибок во всем репозитории.
      - Сборка `npm run build`: 1 945 модулей собраны успешно за ~700 мс.
      - Все изменения зафиксированы в локальном Git-репозитории (ветка `main`).
+
+### 7.13 Полная генеральная очистка и аудит структуры проекта (Clean Production Release)
+
+- **Дата выполнения**: 2026-09-24.
+- **Цель**: Приведение репозитория в идеальный порядок перед релизом: удаление всех тестовых, временных и сторонних служебных файлов, аудит файловой структуры фронтенда и бэкенда.
+- **Выполненные работы**:
+  1. **Удаление временных и тестовых скриптов из корня проекта**:
+     - Удалены разовые дампы и парсеры: `extract_pdf.js`, `flow_ru_extracted.txt`, `quation.txt`, `Roadmap_extracted.txt`, `scratch_read.ps1`, `temp.txt`.
+     - Сохранены эталонные проектные спецификации и файлы клиента: `Roadmap.docx`, `Referens/`, `Tender TSGDS/`.
+  2. **Очистка бэкенда (`backend/`)**:
+     - Удалены устаревшие тестовые скрипты: `test-db.js`, `test_db.js`, `test.txt`, `test_flow.js`, `test_post.js`, `test_prisma.js`, `test_spec.pdf`, `test_update.js`.
+     - Удалены разовые скрипты модификации: `scratch_check_user.js`, `scratch_fix_users.js`, `scratch_old_tender_controller.js` и вся папка `backend/scratch/` (18 одноразовых утилит).
+     - Удалены непреднамеренно попавшие в git дампы сторонних AI IDE: `backend/.agents/`, `backend/.claude/`, `backend/.windsurf/` (более 100 сторонних файлов навыков Prisma) и `backend/skills-lock.json`.
+     - Сохранена штатная инициализация БД: `seed.js`, `clearDb.js`, `simulate_flow.js`.
+  3. **Очистка и организация фронтенда (`frontend/`)**:
+     - Удалены неиспользуемые дефолтные шаблоны Vite: `frontend/src/App.css` (185 строк мертвого кода), `frontend/src/assets/hero.png`, `frontend/src/assets/react.svg`, `frontend/src/assets/vite.svg`.
+     - Вся стилизация строго централизована в `frontend/src/index.css` (Tailwind CSS v4).
+     - В `frontend/src/components/ui/index.js` добавлен экспорт `CustomDatePicker`, обеспечивающий единый интерфейс дизайн-системы W1ns UI Kit.
+     - Устранены неиспользуемые переменные и параметры: `Bell` в `UiKitGallery.jsx`, `errorMsg` в `CreateTenderPage.jsx` и `TenderHeader.jsx`.
+  4. **Аудит архитектуры и связей**:
+     - Все 16 маршрутов страниц в `frontend/src/pages/` имеют строгое соответствие в `App.jsx`.
+     - Все контроллеры в `backend/src/controllers/` имеют строгое соответствие в `backend/src/routes/`.
+     - Обновлен и стандартизирован `.gitignore` (исключены локальные логи, артефакты сборки `dist/`, среды `.env`, папки IDE).
+  5. **Итоги валидации**:
+     - Линтер: **0 ошибок**.
+     - Сборка: **Vite build успешно завершен за 616 мс**.
+     - Backend: все 18 JS-файлов архитектуры прошли синтаксическую валидацию `node --check`.
+     - Репозиторий очищен и готов к публикации.

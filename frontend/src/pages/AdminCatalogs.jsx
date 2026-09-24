@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { 
-  PlusCircle, Search, Filter, Edit2, ToggleRight, ToggleLeft, Trash2, Database, Package, Settings, 
+  PlusCircle, Search, Edit2, ToggleRight, ToggleLeft, Trash2, Database, Package, Settings, 
   Hash, Globe, Truck, DollarSign, Layers, ShieldAlert, 
   Users, FolderTree, ArrowLeft
 } from 'lucide-react';

@@ -56,7 +56,6 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
   const [savingBase, setSavingBase] = useState(false);
   const [savingActiveLot, setSavingActiveLot] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
   const [activeLotDirty, setActiveLotDirty] = useState(false);
 
   // Справочники

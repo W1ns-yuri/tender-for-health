@@ -46,4 +46,4 @@ export { default as IconBox } from './IconBox';
 export { default as Toast } from './Toast';
 export { default as Tooltip } from './Tooltip';
 export { CustomSelect, default as DropdownSelect } from '../CustomSelect';
-
+export { default as CustomDatePicker } from '../CustomDatePicker';

@@ -1,13 +1,13 @@
 node_modules/
 .env
+.env.*
+!.env.example
 .DS_Store
+Thumbs.db
 backend/uploads/
-quation.txt
-scratch*
-backend/scratch*
-temp.txt
-*extracted.txt
-extract_pdf.js
-test_prisma.js
-backend/test_prisma.js
+dist/
+dist-ssr/
+*.log
+.vscode/
+.idea/
 
