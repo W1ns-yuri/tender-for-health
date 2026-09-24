@@ -150,11 +150,31 @@ const TEXTS = {
   },
 };
 
-export default function UiKitGallery({ role: initialRole = 'ADMIN', isDarkMode: initialDark = false, lang: initialLang = 'RU' }) {
+export default function UiKitGallery({
+  role: initialRole = 'ADMIN',
+  isDarkMode = false,
+  setIsDarkMode,
+  lang: initialLang = 'RU'
+}) {
   // Gallery interactive controls
   const [currentRole, setCurrentRole] = useState(initialRole);
-  const [isDark, setIsDark] = useState(initialDark);
+  const [isDark, setIsDark] = useState(isDarkMode);
   const [currentLang, setCurrentLang] = useState(initialLang);
+
+  useEffect(() => {
+    setIsDark(isDarkMode);
+  }, [isDarkMode]);
+
+  const handleToggleDark = () => {
+    const nextVal = !isDark;
+    setIsDark(nextVal);
+    if (setIsDarkMode) {
+      setIsDarkMode(nextVal);
+    } else {
+      document.documentElement.classList.toggle('dark', nextVal);
+      localStorage.setItem('tender_theme', nextVal ? 'dark' : 'light');
+    }
+  };
 
   const t = TEXTS[currentLang] || TEXTS.RU;
   const isAdmin = currentRole === 'ADMIN';
@@ -260,7 +280,7 @@ export default function UiKitGallery({ role: initialRole = 'ADMIN', isDarkMode: 
             <div className="flex items-center justify-between gap-4 text-xs">
               <span className="font-semibold text-blue-100">{t.themeMode}:</span>
               <button
-                onClick={() => setIsDark(!isDark)}
+                onClick={handleToggleDark}
                 className="px-3 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 {isDark ? <Moon size={13} className="text-amber-300" /> : <Sun size={13} className="text-amber-300" />}

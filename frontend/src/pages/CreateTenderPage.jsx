@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { RefreshCw, Package, Plus } from 'lucide-react';
+import { RefreshCw, Package, Plus, FileText, Paperclip } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
@@ -724,14 +724,10 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
 
   return (
     <div className="space-y-6 pb-20 max-w-7xl mx-auto">
-      {/* 🟢 ШАПКА ТЕНДЕРА И ТАБЫ 1-ГО УРОВНЯ */}
+      {/* 🟢 ШАПКА ТЕНДЕРА: Номер, статус, действия */}
       <TenderHeader
         tenderId={tenderId}
         formData={formData}
-        lots={lots}
-        tenderFiles={tenderFiles}
-        activeTopTab={activeTopTab}
-        setActiveTopTab={setActiveTopTab}
         canPublish={canPublish}
         publishing={publishing}
         publishDisabledReason={publishDisabledReason}
@@ -741,138 +737,212 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
         t={t}
       />
 
-      {/* 🟢 ВКЛАДКА 1: ПАРАМЕТРЫ ЗАКУПКИ */}
-      <TenderGeneralParamsTab
-        activeTopTab={activeTopTab}
-        formData={formData}
-        handleFormChange={handleFormChange}
-        tenderId={tenderId}
-        setFormData={setFormData}
-        clients={clients}
-        categories={categories}
-        role={role}
-        isDarkMode={isDarkMode}
-        theme={theme}
-        lang={lang}
-        savingBase={savingBase}
-        handleUpdateBaseTender={handleUpdateBaseTender}
-        handleCreateBaseTender={handleCreateBaseTender}
-        t={t}
-      />
+      {/* 🟢 ЕДИНЫЙ БРАУЗЕРНЫЙ БЛОК: ВКЛАДКИ + СОДЕРЖИМОЕ (CHROME-STYLE TABS) */}
+      <div className="relative">
+        {/* Вкладки браузера: прикреплены вплотную к верхнему краю окна */}
+        <div className="flex items-end gap-1.5 px-3 -mb-[1px] relative z-10 overflow-x-auto scrollbar-thin">
+          <button
+            type="button"
+            onClick={() => setActiveTopTab('params')}
+            className={`px-5 py-3 rounded-t-2xl font-black text-xs sm:text-sm flex items-center gap-2.5 border-t-2 border-x transition-all cursor-pointer select-none ${
+              activeTopTab === 'params'
+                ? 'bg-white dark:bg-[#111827] border-t-emerald-500 border-x-slate-200 dark:border-x-slate-800 border-b-transparent text-emerald-600 dark:text-emerald-400 shadow-xs'
+                : 'bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-800/40 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent'
+            }`}
+          >
+            <FileText size={16} />
+            <span>{t('tabGeneralParams', 'Параметры закупки')}</span>
+          </button>
 
-      {/* 🟢 ВКЛАДКА 2: ЛОТЫ И СПЕЦИФИКАЦИИ */}
-      {activeTopTab === 'lots' && tenderId && (
-        <div className="space-y-4 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className={`text-base font-black ${theme.primaryText}`}>
-                {t('step2Title', 'Управление лотами и спецификацией')}
-              </h2>
-              <p className="text-xs text-slate-400">
-                {t('lotsAtomicHint', 'Каждый лот сохраняется и обрабатывается независимо в виде отдельной вкладки')}
-              </p>
-            </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (tenderId) setActiveTopTab('lots');
+            }}
+            disabled={!tenderId}
+            className={`px-5 py-3 rounded-t-2xl font-black text-xs sm:text-sm flex items-center gap-2.5 border-t-2 border-x transition-all select-none ${
+              !tenderId
+                ? 'opacity-40 cursor-not-allowed text-slate-400 border-transparent bg-slate-100/40 dark:bg-slate-800/20'
+                : activeTopTab === 'lots'
+                ? 'bg-white dark:bg-[#111827] border-t-emerald-500 border-x-slate-200 dark:border-x-slate-800 border-b-transparent text-emerald-600 dark:text-emerald-400 shadow-xs cursor-pointer'
+                : 'bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-800/40 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent cursor-pointer'
+            }`}
+          >
+            <Package size={16} />
+            <span>{t('tabLotsSpecs', 'Лоты и спецификации')}</span>
+            <span className={`font-mono text-xs px-2 py-0.5 rounded-full font-black ${
+              activeTopTab === 'lots'
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+            }`}>
+              {lots.length}
+            </span>
+          </button>
 
-            <div className="text-xs font-bold text-slate-500">
-              {t('totalLotsCount', 'Всего лотов')}: <span className="text-emerald-600 font-mono text-sm">{lots.length}</span>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (tenderId) setActiveTopTab('docs');
+            }}
+            disabled={!tenderId}
+            className={`px-5 py-3 rounded-t-2xl font-black text-xs sm:text-sm flex items-center gap-2.5 border-t-2 border-x transition-all select-none ${
+              !tenderId
+                ? 'opacity-40 cursor-not-allowed text-slate-400 border-transparent bg-slate-100/40 dark:bg-slate-800/20'
+                : activeTopTab === 'docs'
+                ? 'bg-white dark:bg-[#111827] border-t-emerald-500 border-x-slate-200 dark:border-x-slate-800 border-b-transparent text-emerald-600 dark:text-emerald-400 shadow-xs cursor-pointer'
+                : 'bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-800/40 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent cursor-pointer'
+            }`}
+          >
+            <Paperclip size={16} />
+            <span>{t('tabGeneralDocs', 'Общие документы')}</span>
+            <span className={`font-mono text-xs px-2 py-0.5 rounded-full font-black ${
+              activeTopTab === 'docs'
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+            }`}>
+              {tenderFiles.length}
+            </span>
+          </button>
+        </div>
 
-          {/* 📑 БРАУЗЕРНЫЕ ВКЛАДКИ ЛОТОВ (CHROME/EDGE TABS STYLE) */}
-          <TenderLotsTabBar
-            lots={lots}
-            activeLotIndex={activeLotIndex}
-            setActiveLotIndex={setActiveLotIndex}
-            activeLotDirty={activeLotDirty}
-            setActiveLotDirty={setActiveLotDirty}
-            handleDeleteActiveLot={handleDeleteActiveLot}
-            handleAddNewLotTab={handleAddNewLotTab}
+        {/* Тело окна: единое целое со вкладками, активная вкладка сливается с карточкой */}
+        <div className={`rounded-2xl ${activeTopTab === 'params' ? 'rounded-tl-none' : ''} border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-xs overflow-hidden`}>
+          {/* 🟢 ВКЛАДКА 1: ПАРАМЕТРЫ ЗАКУПКИ */}
+          <TenderGeneralParamsTab
+            activeTopTab={activeTopTab}
+            formData={formData}
+            handleFormChange={handleFormChange}
+            tenderId={tenderId}
+            setFormData={setFormData}
+            clients={clients}
+            categories={categories}
+            role={role}
+            isDarkMode={isDarkMode}
+            theme={theme}
+            lang={lang}
+            savingBase={savingBase}
+            handleUpdateBaseTender={handleUpdateBaseTender}
+            handleCreateBaseTender={handleCreateBaseTender}
             t={t}
           />
 
-          {/* 📄 СОДЕРЖИМОЕ АКТИВНОГО ЛОТА */}
-          {activeLot ? (
-            <div className={`p-6 rounded-2xl border shadow-xs space-y-6 ${theme.cardBg}`}>
-              {/* Параметры лота */}
-              <TenderLotDetailsCard
-                activeLot={activeLot}
-                activeLotIndex={activeLotIndex}
-                lots={lots}
-                handleActiveLotChange={handleActiveLotChange}
-                handleDeleteActiveLot={handleDeleteActiveLot}
-                categories={categories}
-                deliveryTerms={deliveryTerms}
-                role={role}
-                isDarkMode={isDarkMode}
-                theme={theme}
-                t={t}
-              />
+          {/* 🟢 ВКЛАДКА 2: ЛОТЫ И СПЕЦИФИКАЦИИ */}
+          {activeTopTab === 'lots' && tenderId && (
+            <div className="p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                  <h2 className={`text-base font-black ${theme.primaryText}`}>
+                    {t('step2Title', 'Управление лотами и спецификацией')}
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {t('lotsAtomicHint', 'Каждый лот сохраняется и обрабатывается независимо в виде отдельной вкладки')}
+                  </p>
+                </div>
 
-              {/* Документы лота */}
-              <TenderLotDocuments
-                activeLot={activeLot}
-                handleLotFileUpload={handleLotFileUpload}
-                handleLotFileDelete={handleLotFileDelete}
-                t={t}
-              />
+                <div className="text-xs font-bold text-slate-500">
+                  {t('totalLotsCount', 'Всего лотов')}: <span className="text-emerald-600 font-mono text-sm">{lots.length}</span>
+                </div>
+              </div>
 
-              {/* Спецификация позиций */}
-              <TenderLotItemsTable
-                activeLot={activeLot}
-                products={products}
-                units={units}
-                manufacturers={manufacturers}
-                handleAddSpecRow={handleAddSpecRow}
-                handleSpecChange={handleSpecChange}
-                handleRemoveSpec={handleRemoveSpec}
-                handleOpenProductModal={handleOpenProductModal}
-                isDarkMode={isDarkMode}
-                theme={theme}
-                lang={lang}
-                t={t}
-                role={role}
-              />
+              {/* 📑 БРАУЗЕРНЫЕ ВКЛАДКИ ЛОТОВ (CHROME/EDGE TABS STYLE) */}
+              <div className="relative">
+                <TenderLotsTabBar
+                  lots={lots}
+                  activeLotIndex={activeLotIndex}
+                  setActiveLotIndex={setActiveLotIndex}
+                  activeLotDirty={activeLotDirty}
+                  setActiveLotDirty={setActiveLotDirty}
+                  handleDeleteActiveLot={handleDeleteActiveLot}
+                  handleAddNewLotTab={handleAddNewLotTab}
+                  t={t}
+                />
 
-              {/* Закрепленный футер лота */}
-              <TenderLotStickyFooter
-                activeLot={activeLot}
-                activeLotIndex={activeLotIndex}
-                activeLotDirty={activeLotDirty}
-                savingActiveLot={savingActiveLot}
-                handleSaveActiveLot={handleSaveActiveLot}
-                t={t}
-              />
-            </div>
-          ) : (
-            <div className="p-12 text-center rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 text-slate-400 space-y-3">
-              <Package size={36} className="mx-auto text-slate-400 opacity-50" />
-              <p className="text-sm font-medium">
-                {t('noLotsYet', 'У тендера пока нет лотов. Нажмите «+ Добавить лот», чтобы создать первый лот.')}
-              </p>
-              <button
-                type="button"
-                onClick={handleAddNewLotTab}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 cursor-pointer"
-              >
-                <Plus size={15} />
-                <span>{t('addLotTab', '+ Добавить лот')}</span>
-              </button>
+                {/* 📄 СОДЕРЖИМОЕ АКТИВНОГО ЛОТА */}
+                {activeLot ? (
+                  <div className={`p-6 rounded-2xl rounded-tl-none border border-slate-200 dark:border-slate-800 shadow-xs space-y-6 ${theme.cardBg}`}>
+                    {/* Параметры лота */}
+                    <TenderLotDetailsCard
+                      activeLot={activeLot}
+                      activeLotIndex={activeLotIndex}
+                      lots={lots}
+                      handleActiveLotChange={handleActiveLotChange}
+                      handleDeleteActiveLot={handleDeleteActiveLot}
+                      categories={categories}
+                      deliveryTerms={deliveryTerms}
+                      role={role}
+                      isDarkMode={isDarkMode}
+                      theme={theme}
+                      t={t}
+                    />
+
+                    {/* Документы лота */}
+                    <TenderLotDocuments
+                      activeLot={activeLot}
+                      handleLotFileUpload={handleLotFileUpload}
+                      handleLotFileDelete={handleLotFileDelete}
+                      t={t}
+                    />
+
+                    {/* Спецификация позиций */}
+                    <TenderLotItemsTable
+                      activeLot={activeLot}
+                      products={products}
+                      units={units}
+                      manufacturers={manufacturers}
+                      handleAddSpecRow={handleAddSpecRow}
+                      handleSpecChange={handleSpecChange}
+                      handleRemoveSpec={handleRemoveSpec}
+                      handleOpenProductModal={handleOpenProductModal}
+                      isDarkMode={isDarkMode}
+                      theme={theme}
+                      lang={lang}
+                      t={t}
+                      role={role}
+                    />
+
+                    {/* Закрепленный футер лота */}
+                    <TenderLotStickyFooter
+                      activeLot={activeLot}
+                      activeLotIndex={activeLotIndex}
+                      activeLotDirty={activeLotDirty}
+                      savingActiveLot={savingActiveLot}
+                      handleSaveActiveLot={handleSaveActiveLot}
+                      t={t}
+                    />
+                  </div>
+                ) : (
+                  <div className="p-12 text-center rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 text-slate-400 space-y-3">
+                    <Package size={36} className="mx-auto text-slate-400 opacity-50" />
+                    <p className="text-sm font-medium">
+                      {t('noLotsYet', 'У тендера пока нет лотов. Нажмите «+ Добавить лот», чтобы создать первый лот.')}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleAddNewLotTab}
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 cursor-pointer"
+                    >
+                      <Plus size={15} />
+                      <span>{t('addLotTab', '+ Добавить лот')}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
-        </div>
-      )}
 
-      {/* 🟢 ВКЛАДКА 3: ОБЩИЕ ДОКУМЕНТЫ ТЕНДЕРА */}
-      {activeTopTab === 'docs' && tenderId && (
-        <TenderGeneralDocumentsTab
-          tenderId={tenderId}
-          tenderFiles={tenderFiles}
-          handleTenderFileUpload={handleTenderFileUpload}
-          handleTenderFileDelete={handleTenderFileDelete}
-          theme={theme}
-          t={t}
-        />
-      )}
+          {/* 🟢 ВКЛАДКА 3: ОБЩИЕ ДОКУМЕНТЫ ТЕНДЕРА */}
+          {activeTopTab === 'docs' && tenderId && (
+            <TenderGeneralDocumentsTab
+              tenderId={tenderId}
+              tenderFiles={tenderFiles}
+              handleTenderFileUpload={handleTenderFileUpload}
+              handleTenderFileDelete={handleTenderFileDelete}
+              theme={theme}
+              t={t}
+            />
+          )}
+        </div>
+      </div>
 
       {/* Модальное окно быстрого добавления товара в каталог */}
       <CatalogFormModal

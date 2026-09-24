@@ -231,9 +231,9 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
             const isGoods = !isWorks && !isServices;
 
             return (
-              <div className="space-y-4">
-                {/* Линейка закладок лотов */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+              <div className="relative">
+                {/* Линейка браузерных закладок лотов */}
+                <div className="flex items-end gap-1.5 px-3 -mb-[1px] relative z-10 overflow-x-auto scrollbar-thin">
                   {data.lots.map((lItem, lIdx) => {
                     const isActive = (activeLotTab === lIdx) || (!data.lots[activeLotTab] && lIdx === 0);
                     return (
@@ -241,18 +241,18 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                         key={lItem.id || lIdx}
                         type="button"
                         onClick={() => setActiveLotTab(lIdx)}
-                        className={`relative px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 border transition-all cursor-pointer shrink-0 ${
+                        className={`px-4 py-2.5 rounded-t-2xl font-black text-xs flex items-center gap-2 border-t-2 border-x transition-all cursor-pointer shrink-0 select-none ${
                           isActive
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/25 ring-2 ring-emerald-500/30'
-                            : isDarkMode
-                            ? 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border-slate-700/80'
-                            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                            ? 'bg-white dark:bg-[#111827] border-t-emerald-500 border-x-slate-200 dark:border-x-slate-800 border-b-transparent text-emerald-600 dark:text-emerald-400 shadow-xs'
+                            : 'bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-800/40 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent'
                         }`}
                       >
-                        <Bookmark size={14} className={isActive ? 'text-emerald-200' : 'text-slate-400'} />
+                        <Bookmark size={14} className={isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'} />
                         <span className="truncate max-w-44">{lItem.name || `Лот №${lItem.lotNumber || lIdx + 1}`}</span>
                         <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-black ${
-                          isActive ? 'bg-emerald-700 text-emerald-100' : isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'
+                          isActive
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                         }`}>
                           {lItem.specs?.length || 0}
                         </span>
@@ -261,8 +261,8 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                   })}
                 </div>
 
-                {/* Карточка активного лота */}
-                <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
+                {/* Карточка активного лота: единое целое со вкладками */}
+                <div className={`rounded-2xl ${(activeLotTab === 0 || !data.lots[activeLotTab]) ? 'rounded-tl-none' : ''} border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-xs overflow-hidden`}>
                   <div className={`p-4 border-b flex flex-wrap items-center justify-between gap-3 ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-white'}`}>
                     <div>
                       <div className="flex items-center gap-2">

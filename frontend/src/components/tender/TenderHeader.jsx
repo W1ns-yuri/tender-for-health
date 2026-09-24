@@ -1,14 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Check, AlertCircle, FileText, Package, Paperclip } from 'lucide-react';
+import { Eye, Check, AlertCircle } from 'lucide-react';
 
 export default function TenderHeader({
   tenderId,
   formData,
-  lots = [],
-  tenderFiles = [],
-  activeTopTab,
-  setActiveTopTab,
   canPublish,
   publishing,
   publishDisabledReason,
@@ -20,7 +16,7 @@ export default function TenderHeader({
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 🟢 ВЕРХНЯЯ ШАПКА: Статус, Название, Номер и Кнопки действий */}
       <div className={`p-5 rounded-2xl border shadow-xs flex flex-wrap items-center justify-between gap-4 ${theme?.cardBg || ''}`}>
         <div className="flex items-center gap-3">
@@ -90,64 +86,6 @@ export default function TenderHeader({
           <span>{errorMsg}</span>
         </div>
       )}
-
-      {/* 🟢 НАВИГАЦИОННЫЕ ВКЛАДКИ 1-ГО УРОВНЯ (ТАБЫ) */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-px">
-        <button
-          type="button"
-          onClick={() => setActiveTopTab('params')}
-          className={`px-4 py-2.5 rounded-t-xl font-bold text-xs flex items-center gap-2 border-t border-x transition-all cursor-pointer ${
-            activeTopTab === 'params'
-              ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 border-t-2 border-t-emerald-500 shadow-xs'
-              : 'bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-800/40 text-slate-500 border-transparent'
-          }`}
-        >
-          <FileText size={15} />
-          <span>{t('tabGeneralParams', 'Параметры закупки')}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (tenderId) setActiveTopTab('lots');
-          }}
-          disabled={!tenderId}
-          className={`px-4 py-2.5 rounded-t-xl font-bold text-xs flex items-center gap-2 border-t border-x transition-all ${
-            !tenderId
-              ? 'opacity-40 cursor-not-allowed text-slate-400 border-transparent'
-              : activeTopTab === 'lots'
-              ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 border-t-2 border-t-emerald-500 shadow-xs cursor-pointer'
-              : 'bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-800/40 text-slate-500 border-transparent cursor-pointer'
-          }`}
-        >
-          <Package size={15} />
-          <span>{t('tabLotsSpecs', 'Лоты и спецификации')}</span>
-          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black">
-            {lots.length}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (tenderId) setActiveTopTab('docs');
-          }}
-          disabled={!tenderId}
-          className={`px-4 py-2.5 rounded-t-xl font-bold text-xs flex items-center gap-2 border-t border-x transition-all ${
-            !tenderId
-              ? 'opacity-40 cursor-not-allowed text-slate-400 border-transparent'
-              : activeTopTab === 'docs'
-              ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 border-t-2 border-t-emerald-500 shadow-xs cursor-pointer'
-              : 'bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-800/40 text-slate-500 border-transparent cursor-pointer'
-          }`}
-        >
-          <Paperclip size={15} />
-          <span>{t('tabGeneralDocs', 'Общие документы')}</span>
-          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold">
-            {tenderFiles.length}
-          </span>
-        </button>
-      </div>
     </div>
   );
 }

@@ -24,7 +24,7 @@ export default function TenderGeneralParamsTab({
   if (activeTopTab !== 'params') return null;
 
   return (
-    <div className={`p-6 rounded-2xl border shadow-xs space-y-5 animate-in fade-in duration-200 ${theme?.cardBg || ''}`}>
+    <div className="p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
       <div className="pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
         <div>
           <h2 className={`text-base font-black ${theme?.primaryText || ''}`}>

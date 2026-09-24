@@ -12,7 +12,7 @@ export default function TenderGeneralDocumentsTab({
   if (!tenderId) return null;
 
   return (
-    <div className={`p-6 rounded-2xl border shadow-xs space-y-6 animate-in fade-in duration-200 ${theme.cardBg}`}>
+    <div className="p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
         <div>
           <h2 className={`text-base font-black ${theme.primaryText}`}>

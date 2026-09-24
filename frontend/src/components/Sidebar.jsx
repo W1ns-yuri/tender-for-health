@@ -15,8 +15,7 @@ import {
   ShieldAlert,
   PlusCircle,
   Users,
-  Package,
-  Sparkles
+  Package
 } from 'lucide-react';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
@@ -260,18 +259,6 @@ export default function Sidebar({
               >
                 <ShieldAlert size={19} />
                 {!isCollapsed && <span className="ml-3">{t('sectionActivityLogs', 'Hereketler gündeligi')}</span>}
-              </button>
-
-              <button
-                onClick={() => setActiveTab('ui-kit')}
-                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'ui-kit'
-                    ? theme.primaryBg + ' font-semibold shadow-sm'
-                    : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
-              >
-                <Sparkles size={19} className="text-amber-500" />
-                {!isCollapsed && <span className="ml-3">{t('uiKitNav', 'W1ns UI Kit')}</span>}
               </button>
             </nav>
           </div>

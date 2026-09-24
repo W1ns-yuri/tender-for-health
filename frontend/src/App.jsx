@@ -40,7 +40,19 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('tender_theme') === 'dark';
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('tender_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('tender_theme', 'light');
+    }
+  }, [isDarkMode]);
 
   const pathParts = location.pathname.split('/').filter(Boolean);
   const activeTab = pathParts.length > 0 ? pathParts[0] : 'dashboard';
@@ -131,7 +143,7 @@ export default function App() {
             path="/ui-kit"
             element={
               <div className={`min-h-screen p-6 overflow-y-auto ${isDarkMode ? 'bg-[#0b0f17] text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
-                <UiKitGallery role="ADMIN" isDarkMode={isDarkMode} lang={lang} />
+                <UiKitGallery role="ADMIN" isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} lang={lang} />
               </div>
             }
           />
@@ -206,7 +218,7 @@ export default function App() {
               <Route path="/administrasiya" element={role === 'ADMIN' ? <AdminCatalogs section="administrasiya" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/admin-logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
-              <Route path="/ui-kit" element={<UiKitGallery role={role} isDarkMode={isDarkMode} lang={lang} />} />
+              <Route path="/ui-kit" element={<UiKitGallery role={role} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} lang={lang} />} />
               
               <Route path="/profile" element={<SupplierProfilePage role={role} isDarkMode={isDarkMode} lang={lang} isOwner={true} />} />
               
