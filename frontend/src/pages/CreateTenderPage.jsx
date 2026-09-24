@@ -21,7 +21,7 @@ import TenderGeneralDocumentsTab from '../components/tender/TenderGeneralDocumen
 export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDarkMode, lang = 'RU', isEdit: _isEdit = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { showAlert, showConfirm } = useAlert();
+  const { showAlert, showConfirm, showToast } = useAlert();
   const theme = getRoleTheme(role, isDarkMode);
   const t = useCallback((key, fallback, params) => getTranslation(lang, key, fallback, params), [lang]);
 
@@ -182,12 +182,34 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
   const handleCreateBaseTender = async (e) => {
     if (e) e.preventDefault();
     if (!formData.title?.trim()) {
-      setErrorMsg(t('titleRequired', 'Пожалуйста, введите название тендера'));
+      showToast({
+        title: t('attentionTitle', 'Внимание'),
+        message: t('titleRequired', 'Пожалуйста, введите название тендера'),
+        type: 'warning',
+      });
       return;
     }
     if (!formData.deadline) {
-      setErrorMsg(t('deadlineRequired', 'Укажите крайний срок подачи заявок (дедлайн)'));
+      showToast({
+        title: t('attentionTitle', 'Внимание'),
+        message: t('deadlineRequired', 'Укажите крайний срок подачи заявок (дедлайн)'),
+        type: 'warning',
+      });
       return;
+    }
+
+    // Проверка соответствия сроков дедлайна и даты объявления
+    if (formData.deadline && formData.announcementDate) {
+      const ann = new Date(formData.announcementDate);
+      const ddl = new Date(formData.deadline);
+      if (ddl <= ann) {
+        showToast({
+          title: t('validationError', 'Ошибка валидации'),
+          message: t('deadlineBeforeAnnouncementError', 'Крайний срок подачи заявок (дедлайн) должен быть позже даты объявления тендера'),
+          type: 'error',
+        });
+        return;
+      }
     }
 
     try {
@@ -221,7 +243,7 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
           lotType: formData.procurementType === 'SERVICES_WORKS' ? 'WORKS' : 'GOODS'
         });
 
-        showAlert({
+        showToast({
           title: t('successTitle', 'Успешно'),
           message: t('tenderDraftCreated', 'Черновик тендера создан! Теперь добавьте позиции в лоты.'),
           type: 'success'
@@ -232,7 +254,12 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
       }
     } catch (err) {
       console.error('Error creating base tender draft', err);
-      setErrorMsg(err.response?.data?.error || t('errorSaving', 'Ошибка сохранения данных'));
+      const backendError = err.response?.data?.error || t('errorSaving', 'Ошибка сохранения данных');
+      showToast({
+        title: t('errorTitle', 'Ошибка'),
+        message: backendError,
+        type: 'error'
+      });
     } finally {
       setSavingBase(false);
     }
@@ -241,6 +268,21 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
   // Сохранение общих данных существующего тендера (PUT /api/tenders/:id)
   const handleUpdateBaseTender = async () => {
     if (!tenderId) return;
+
+    // Проверка соответствия сроков дедлайна и даты объявления
+    if (formData.deadline && formData.announcementDate) {
+      const ann = new Date(formData.announcementDate);
+      const ddl = new Date(formData.deadline);
+      if (ddl <= ann) {
+        showToast({
+          title: t('validationError', 'Ошибка валидации'),
+          message: t('deadlineBeforeAnnouncementError', 'Крайний срок подачи заявок (дедлайн) должен быть позже даты объявления тендера'),
+          type: 'error',
+        });
+        return;
+      }
+    }
+
     try {
       setSavingBase(true);
       await API.put(`/tenders/${tenderId}`, {
@@ -258,7 +300,7 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
         deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
       });
 
-      showAlert({
+      showToast({
         title: t('successTitle', 'Успешно'),
         message: t('generalDataSaved', 'Общие сведения о тендере успешно обновлены!'),
         type: 'success'
@@ -268,7 +310,11 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
       }
     } catch (err) {
       console.error('Error updating tender info', err);
-      showAlert({ message: err.response?.data?.error || t('errorSaving', 'Ошибка обновления'), type: 'error' });
+      showToast({
+        title: t('errorTitle', 'Ошибка'),
+        message: err.response?.data?.error || t('errorSaving', 'Ошибка обновления'),
+        type: 'error'
+      });
     } finally {
       setSavingBase(false);
     }
@@ -625,18 +671,18 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
     if (!tenderId) return;
 
     if (lots.length === 0) {
-      showAlert({ message: t('noLotsYet', 'Добавьте хотя бы один лот для публикации тендера'), type: 'warning' });
+      showToast({ title: t('attentionTitle', 'Внимание'), message: t('noLotsYet', 'Добавьте хотя бы один лот для публикации тендера'), type: 'warning' });
       return;
     }
 
     if (activeLotDirty) {
-      showAlert({ message: t('cannotPublishUnsavedChanges', 'Сохраните изменения в текущем лоте перед публикацией тендера'), type: 'warning' });
+      showToast({ title: t('attentionTitle', 'Внимание'), message: t('cannotPublishUnsavedChanges', 'Сохраните изменения в текущем лоте перед публикацией тендера'), type: 'warning' });
       return;
     }
 
     const hasEmptyLots = lots.some(l => !l.specs || l.specs.length === 0 || !l.specs.some(s => (s.haryt || s.name)?.trim()));
     if (hasEmptyLots) {
-      showAlert({ message: t('cannotPublishEmptyLots', 'Для публикации добавьте минимум 1 позицию спецификации во все лоты'), type: 'warning' });
+      showToast({ title: t('attentionTitle', 'Внимание'), message: t('cannotPublishEmptyLots', 'Для публикации добавьте минимум 1 позицию спецификации во все лоты'), type: 'warning' });
       return;
     }
 
@@ -663,7 +709,7 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
       navigate(`/tenders/${tenderId}`);
     } catch (err) {
       console.error('Error publishing tender', err);
-      showAlert({ message: err.response?.data?.error || t('errorSaving', 'Ошибка публикации тендера'), type: 'error' });
+      showToast({ title: t('errorTitle', 'Ошибка'), message: err.response?.data?.error || t('errorSaving', 'Ошибка публикации тендера'), type: 'error' });
     } finally {
       setPublishing(false);
     }
@@ -734,7 +780,6 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
         publishing={publishing}
         publishDisabledReason={publishDisabledReason}
         onPublishTender={handlePublishTender}
-        errorMsg={errorMsg}
         theme={theme}
         t={t}
       />

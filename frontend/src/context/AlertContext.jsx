@@ -2,11 +2,30 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { createPortal } from 'react-dom';
 import { CheckCircle2, AlertTriangle, AlertOctagon, XCircle, Info, X } from 'lucide-react';
 import { getTranslation } from '../utils/translations';
+import Toast from '../components/ui/Toast';
 
 const AlertContext = createContext(null);
 
 export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU', role = 'ADMIN' }) => {
   const [dialog, setDialog] = useState(null); // { isOpen, mode, title, message, type, confirmText, cancelText, isDanger, role, resolve }
+  const [toasts, setToasts] = useState([]);
+
+  const closeToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const showToast = useCallback((options) => {
+    const isString = typeof options === 'string';
+    const msg = isString ? options : (options.message || '');
+    const title = isString ? '' : options.title;
+    const type = isString ? 'info' : (options.type || 'info');
+    const duration = !isString && options.duration !== undefined ? options.duration : 4000;
+    const toastRole = !isString && options.role ? options.role : role;
+    const id = Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+
+    setToasts((prev) => [...prev, { id, title, message: msg, type, duration, role: toastRole }]);
+    return id;
+  }, [role]);
 
   const closeDialog = useCallback((result) => {
     if (dialog && dialog.resolve) {
@@ -62,11 +81,13 @@ export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU', role 
   useEffect(() => {
     window.$alert = showAlert;
     window.$confirm = showConfirm;
+    window.$toast = showToast;
     return () => {
       delete window.$alert;
       delete window.$confirm;
+      delete window.$toast;
     };
-  }, [showAlert, showConfirm]);
+  }, [showAlert, showConfirm, showToast]);
 
   // Блокировка скролла и обработка Escape / Enter
   useEffect(() => {
@@ -157,8 +178,30 @@ export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU', role 
   };
 
   return (
-    <AlertContext.Provider value={{ showAlert, showConfirm }}>
+    <AlertContext.Provider value={{ showAlert, showConfirm, showToast, closeToast }}>
       {children}
+
+      {/* Floating Push-Notification Toasts in Top-Right Corner */}
+      {createPortal(
+        <aside
+          aria-label="Всплывающие уведомления"
+          className="fixed top-5 right-5 z-[10001] flex flex-col gap-3 pointer-events-none max-w-sm w-full px-3"
+        >
+          {toasts.map((t) => (
+            <Toast
+              key={t.id}
+              id={t.id}
+              type={t.type}
+              title={t.title}
+              message={t.message}
+              duration={t.duration}
+              role={t.role}
+              onClose={closeToast}
+            />
+          ))}
+        </aside>,
+        document.body
+      )}
 
       {dialog && createPortal(
         <div 
@@ -246,8 +289,17 @@ export const useAlert = () => {
       showConfirm: (opts) => {
         const msg = typeof opts === 'string' ? opts : opts.message;
         return Promise.resolve(window.confirm(msg));
-      }
+      },
+      showToast: (opts) => {
+        console.warn('Toast called outside of AlertProvider:', opts);
+      },
+      closeToast: () => {},
     };
   }
   return context;
+};
+
+export const useToast = () => {
+  const { showToast, closeToast } = useAlert();
+  return { showToast, closeToast };
 };

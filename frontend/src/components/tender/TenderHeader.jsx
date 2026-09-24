@@ -168,13 +168,6 @@ export default function TenderHeader({
           )}
         </div>
       </div>
-
-      {errorMsg && (
-        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5 font-medium shadow-xs">
-          <AlertCircle size={18} className="shrink-0 text-rose-600" />
-          <span>{errorMsg}</span>
-        </div>
-      )}
     </div>
   );
 }

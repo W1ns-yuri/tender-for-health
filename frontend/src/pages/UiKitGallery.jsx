@@ -34,7 +34,10 @@ import {
   SearchInput,
   SkeletonTable,
   FileDropzone,
+  Toast,
+  Tooltip,
 } from '../components/ui';
+import { useAlert } from '../context/AlertContext';
 
 import {
   Plus,
@@ -52,6 +55,11 @@ import {
   Layers,
   Sun,
   Moon,
+  HelpCircle,
+  Bell,
+  AlertCircle,
+  AlertTriangle,
+  Info,
 } from 'lucide-react';
 
 const TEXTS = {
@@ -82,6 +90,8 @@ const TEXTS = {
     sectionDropzone: '7. Зона загрузки документов (File Dropzone)',
     sectionModals: '8. Модальные окна и подтверждения (Modals & Dialogs)',
     sectionSkeletons: '9. Скелетоны загрузки (Skeleton Loaders)',
+    sectionToasts: '10. Всплывающие Push-уведомления (W1ns Toast)',
+    sectionTooltips: '11. Подсказки при наведении (W1ns Tooltip)',
     openModalBtn: 'Открыть стандартный модал',
     openConfirmBtn: 'Открыть диалог удаления',
     searchPlaceholder: 'Поиск по названию или коду...',
@@ -113,6 +123,8 @@ const TEXTS = {
     sectionDropzone: '7. Resminama ýükleýiş zolagy (File Dropzone)',
     sectionModals: '8. Modallar we Tassyklama penjireleri (Modals & Dialogs)',
     sectionSkeletons: '9. Ýükleniş skeletleri (Skeleton Loaders)',
+    sectionToasts: '10. Gyra çykýan Push-habarnamalar (W1ns Toast)',
+    sectionTooltips: '11. Üstüne getirilende çykýan kömekçi maglumat (W1ns Tooltip)',
     openModalBtn: 'Standart Modaly açmak',
     openConfirmBtn: 'Pozmak tassyklama penjiresini açmak',
     searchPlaceholder: 'Ady ýa-da kody boýunça gözleg...',
@@ -144,6 +156,8 @@ const TEXTS = {
     sectionDropzone: '7. Document Upload Area (File Dropzone)',
     sectionModals: '8. Modals & Confirmation Dialogs (Modals & Dialogs)',
     sectionSkeletons: '9. Skeleton Loaders',
+    sectionToasts: '10. Push Notifications (W1ns Toast)',
+    sectionTooltips: '11. Hover Tooltips (W1ns Tooltip)',
     openModalBtn: 'Open Standard Modal',
     openConfirmBtn: 'Open Delete Confirmation',
     searchPlaceholder: 'Search by title or code...',
@@ -178,6 +192,7 @@ export default function UiKitGallery({
 
   const t = TEXTS[currentLang] || TEXTS.RU;
   const isAdmin = currentRole === 'ADMIN';
+  const { showToast } = useAlert();
 
   // Demo interactive states
   const [btnLoading, setBtnLoading] = useState(false);
@@ -792,6 +807,248 @@ export default function UiKitGallery({
           {t.sectionSkeletons}
         </h2>
         <SkeletonTable rows={3} cols={5} />
+      </section>
+
+      {/* 10. TOAST PUSH-NOTIFICATIONS */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
+            {t.sectionToasts}
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {currentLang === 'RU'
+              ? 'Тосты появляются в правом верхнем углу экрана и автоматически закрываются с анимацией таймера. Не сдвигают контент страниц.'
+              : currentLang === 'TM'
+              ? 'Push-habarnamalar sahypanyň sag ýokarky burçunda çykýar we taýmer bilen awtomatiki ýapylýar. Sahypanyň dizaýnyny bozmaýar.'
+              : 'Toasts slide in at the top-right corner with a smooth progress bar and auto-dismiss. Zero page layout shift.'}
+          </p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{currentLang === 'RU' ? 'Интерактивный вызов Push-уведомлений' : currentLang === 'TM' ? 'Interaktiw Push-habarnama çagyryşy' : 'Interactive Toast Triggers'}</CardTitle>
+            <CardDescription>
+              {currentLang === 'RU'
+                ? 'Нажмите на кнопку, чтобы протестировать появление тоста в правом верхнем углу экрана'
+                : 'Sag ýokarky burçda habarnamany synap görmek üçin aşakdaky düwmeleri basyň'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant={isAdmin ? 'success' : 'primary'}
+                onClick={() =>
+                  showToast({
+                    title: currentLang === 'RU' ? 'Успешно' : 'Üstünlikli',
+                    message: currentLang === 'RU' ? 'Заявка поставщика успешно зарегистрирована в реестре!' : 'Teklip üstünlikli hasaba alyndy!',
+                    type: 'success',
+                    role: currentRole,
+                  })
+                }
+              >
+                <CheckCircle2 size={16} />
+                <span>Показать Success Toast</span>
+              </Button>
+
+              <Button
+                variant="danger"
+                onClick={() =>
+                  showToast({
+                    title: currentLang === 'RU' ? 'Ошибка валидации' : 'Ýalňyşlyk',
+                    message: currentLang === 'RU' ? 'Крайний срок подачи заявок (дедлайн) должен быть позже даты объявления тендера' : 'Teklip bermegiň soňky möhleti bildiriş senesinden soň bolmaly',
+                    type: 'error',
+                  })
+                }
+              >
+                <AlertCircle size={16} />
+                <span>Показать Error Toast</span>
+              </Button>
+
+              <Button
+                variant="warning"
+                onClick={() =>
+                  showToast({
+                    title: currentLang === 'RU' ? 'Внимание' : 'Üns beriň',
+                    message: currentLang === 'RU' ? 'Пожалуйста, заполните наименование и спецификацию лота перед отправкой' : 'Ugratmazdan öň lotyň adyny we aýratynlyklaryny dolduryň',
+                    type: 'warning',
+                  })
+                }
+              >
+                <AlertTriangle size={16} />
+                <span>Показать Warning Toast</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() =>
+                  showToast({
+                    title: currentLang === 'RU' ? 'Уведомление' : 'Habarnama',
+                    message: currentLang === 'RU' ? 'Новая версия протокола доступна для скачивания в документах' : 'Täze teswirnama nusgasy resminamalarda elýeterli',
+                    type: 'info',
+                  })
+                }
+              >
+                <Info size={16} />
+                <span>Показать Info Toast</span>
+              </Button>
+            </div>
+
+            {/* Static Visual Showcase of 4 Toast Cards */}
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                {currentLang === 'RU' ? 'Внешний вид компонентов Toast:' : 'Toast komponentleriniň daşky görnüşi:'}
+              </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Toast
+                  type="success"
+                  title="Успешное сохранение"
+                  message="Черновик тендера создан! Теперь добавьте позиции в лоты."
+                  role={currentRole}
+                  showProgress={false}
+                  duration={0}
+                />
+                <Toast
+                  type="error"
+                  title="Ошибка валидации"
+                  message="Крайний срок подачи заявок (дедлайн) должен быть позже даты объявления тендера"
+                  role={currentRole}
+                  showProgress={false}
+                  duration={0}
+                />
+                <Toast
+                  type="warning"
+                  title="Внимание"
+                  message="Для публикации добавьте минимум 1 позицию спецификации во все лоты"
+                  role={currentRole}
+                  showProgress={false}
+                  duration={0}
+                />
+                <Toast
+                  type="info"
+                  title="Системное уведомление"
+                  message="Вскрытие предложений станет доступно после наступления дедлайна"
+                  role={currentRole}
+                  showProgress={false}
+                  duration={0}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* 11. TOOLTIPS (ВСПЛЫВАЮЩИЕ ПОДСКАЗКИ) */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
+            {t.sectionTooltips}
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {currentLang === 'RU'
+              ? 'Универсальный компонент подсказок при наведении курсора на неизвестные поля, иконки помощи, статусы или кнопки.'
+              : currentLang === 'TM'
+              ? 'Näbelli meýdançalara, kömek nyşanlaryna ýa-da düwmä eltilende çykýan amatly kömekçi maglumat komponenti.'
+              : 'Universal tooltip component for unknown fields, help icons, status badges, and action buttons.'}
+          </p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{currentLang === 'RU' ? 'Позиционирование и варианты Tooltip' : 'Tooltip ýerleşişi we görnüşleri'}</CardTitle>
+            <CardDescription>
+              {currentLang === 'RU'
+                ? 'Наведите курсор мыши на любой элемент ниже, чтобы увидеть подсказку со стрелкой'
+                : 'Kömekçi maglumaty görmek üçin aşakdaky elementleriň üstüne syçanjygy getiriň'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* 4 Directions */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                {currentLang === 'RU' ? 'Направления показа (top, bottom, left, right):' : 'Görkeziliş ugurlary:'}
+              </span>
+              <div className="flex flex-wrap items-center justify-around gap-6 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+                <Tooltip content="Подсказка сверху: Регламентный срок поставки" position="top">
+                  <Button variant="outline" size="sm">
+                    Hover: Сверху (Top)
+                  </Button>
+                </Tooltip>
+
+                <Tooltip content="Подсказка снизу: Уникальный код МНН" position="bottom">
+                  <Button variant="outline" size="sm">
+                    Hover: Снизу (Bottom)
+                  </Button>
+                </Tooltip>
+
+                <Tooltip content="Подсказка слева: Требуется сертификат GMP" position="left">
+                  <Button variant="outline" size="sm">
+                    Hover: Слева (Left)
+                  </Button>
+                </Tooltip>
+
+                <Tooltip content="Подсказка справа: Нажмите для подробного описания" position="right">
+                  <Button variant="outline" size="sm">
+                    Hover: Справа (Right)
+                  </Button>
+                </Tooltip>
+              </div>
+            </div>
+
+            {/* Practical Form Field Example */}
+            <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                {currentLang === 'RU' ? 'Пример использования в формах (неизвестное поле с подсказкой):' : 'Formalarda ulanylyş mysaly:'}
+              </span>
+              <div className="max-w-md p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 space-y-3">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <span>Регламентный срок поставки товаров</span>
+                  <Tooltip
+                    content="Количество календарных дней с даты подписания контракта до передачи партии на склад получателя."
+                    position="top"
+                    maxWidth="max-w-xs"
+                  >
+                    <span className="p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-help text-slate-400 hover:text-emerald-600 transition-colors">
+                      <HelpCircle size={14} />
+                    </span>
+                  </Tooltip>
+                </div>
+                <Input placeholder="Например: 45 дней" />
+              </div>
+            </div>
+
+            {/* Color Variants */}
+            <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                {currentLang === 'RU' ? 'Цветовые темы Tooltip (Dark, Emerald, Blue, Light):' : 'Reňk temalary:'}
+              </span>
+              <div className="flex flex-wrap items-center gap-4">
+                <Tooltip content="Темная строгая тема (по умолчанию)" variant="dark" position="top">
+                  <span className="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold cursor-pointer shadow-xs">
+                    Dark Tooltip
+                  </span>
+                </Tooltip>
+
+                <Tooltip content="Изумрудная подсказка для панели Администратора" variant="emerald" position="top">
+                  <span className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold cursor-pointer shadow-xs shadow-emerald-500/20">
+                    Emerald Tooltip
+                  </span>
+                </Tooltip>
+
+                <Tooltip content="Синяя подсказка для личного кабинета Поставщика" variant="blue" position="top">
+                  <span className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold cursor-pointer shadow-xs shadow-blue-500/20">
+                    Blue Tooltip
+                  </span>
+                </Tooltip>
+
+                <Tooltip content="Светлая подсказка с контрастным текстом" variant="light" position="top">
+                  <span className="px-3 py-1.5 rounded-lg bg-white text-slate-800 border border-slate-200 text-xs font-bold cursor-pointer shadow-xs">
+                    Light Tooltip
+                  </span>
+                </Tooltip>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
       {/* Interactive Modal Demo */}

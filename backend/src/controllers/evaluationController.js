@@ -186,7 +186,7 @@ const selectWinnerOffer = async (req, res) => {
 const getEvaluationTenders = async (req, res) => {
     try {
         const whereClause = {
-            status: { in: ['TASLAMA', 'ACYK', 'YAPYK', 'BAHALANDYRYLDY', 'YENIJI_YGLAN_EDILDI'] }
+            status: { in: ['ACYK', 'YAPYK', 'BAHALANDYRYLDY', 'YENIJI_YGLAN_EDILDI'] }
         };
 
         // Если пользователь обычный Заказчик (CLIENT) или Специалист, показываем только его тендеры

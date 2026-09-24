@@ -43,4 +43,7 @@ export { default as SearchInput } from './SearchInput';
 export { Skeleton, SkeletonTable, default as SkeletonDefault } from './Skeleton';
 export { default as FileDropzone } from './FileDropzone';
 export { default as IconBox } from './IconBox';
+export { default as Toast } from './Toast';
+export { default as Tooltip } from './Tooltip';
 export { CustomSelect, default as DropdownSelect } from '../CustomSelect';
+

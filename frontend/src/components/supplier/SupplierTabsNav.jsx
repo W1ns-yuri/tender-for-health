@@ -8,6 +8,7 @@ export default function SupplierTabsNav({
   onChange,
   pendingCount = 0,
   archiveCount = 0,
+  role = 'ADMIN',
   lang = 'RU',
 }) {
   const t = (key, fallback) => getTranslation(lang, key, fallback);
@@ -39,6 +40,7 @@ export default function SupplierTabsNav({
         activeTab={activeTab}
         onChange={onChange}
         tabs={tabs}
+        role={role}
       />
     </div>
   );

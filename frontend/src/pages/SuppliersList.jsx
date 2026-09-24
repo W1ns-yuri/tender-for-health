@@ -248,6 +248,7 @@ export default function SuppliersList({ role = 'ADMIN', isDarkMode = false, lang
       {/* 2. Навигационные вкладки для администратора */}
       {role === 'ADMIN' && (
         <SupplierTabsNav
+          role={role}
           activeTab={activeTab}
           onChange={setActiveTab}
           pendingCount={pendingSuppliers.length}

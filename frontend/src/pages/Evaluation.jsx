@@ -34,17 +34,20 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
     }
   };
 
+  // Исключаем черновики (TASLAMA) - они не опубликованы и не подлежат оценке
+  const publishedTenders = tenders.filter(t => t.status !== 'TASLAMA');
+
   // Unique clients for filter
   const uniqueClients = Array.from(
     new Set(
-      tenders
+      publishedTenders
         .map(c => c.client?.name)
         .filter(Boolean)
     )
   ).sort();
 
   // Filter & sort tenders
-  const filteredTenders = tenders
+  const filteredTenders = publishedTenders
     .filter(tender => {
       // Text search
       if (searchQuery.trim()) {
@@ -86,10 +89,10 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
     });
 
   // Summary statistics
-  const totalTendersCount = tenders.length;
-  const inProgressCount = tenders.filter(item => item.status !== 'YENIJI_YGLAN_EDILDI').length;
-  const completedCount = tenders.filter(item => item.status === 'YENIJI_YGLAN_EDILDI').length;
-  const totalOffersCount = tenders.reduce((sum, item) => sum + (item._count?.offers || 0), 0);
+  const totalTendersCount = publishedTenders.length;
+  const inProgressCount = publishedTenders.filter(item => item.status !== 'YENIJI_YGLAN_EDILDI').length;
+  const completedCount = publishedTenders.filter(item => item.status === 'YENIJI_YGLAN_EDILDI').length;
+  const totalOffersCount = publishedTenders.reduce((sum, item) => sum + (item._count?.offers || 0), 0);
 
   const getDeadlineBadge = (deadlineStr) => {
     if (!deadlineStr) return null;
