@@ -71,29 +71,22 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
 
   // Фильтрация списка предложений
   const filteredOffers = offers.filter(item => {
-    if (filterLot) {
-      const tenderNum = item.tender?.tenderNumber || '';
-      if (!tenderNum.toLowerCase().includes(filterLot.toLowerCase())) return false;
-    }
     if (filterCurrency) {
       const curr = item.baseCurrency?.code || item.currency || '';
       if (curr !== filterCurrency) return false;
-    }
-    if (filterCode) {
-      const num = item.number || item.code || '';
-      if (!num.toLowerCase().includes(filterCode.toLowerCase())) return false;
     }
     if (filterStatus) {
       if (item.status !== filterStatus) return false;
     }
     if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
       const matchTender = (item.tender?.title || '').toLowerCase().includes(q);
+      const matchTenderNum = (item.tender?.tenderNumber || '').toLowerCase().includes(q);
       const matchSupplier = (item.supplier?.name || '').toLowerCase().includes(q);
       const matchClient = (item.tender?.client?.name || '').toLowerCase().includes(q);
-      const matchNumber = (item.number || '').toLowerCase().includes(q);
+      const matchNumber = (item.number || item.code || '').toLowerCase().includes(q);
       const matchComment = (item.comment || '').toLowerCase().includes(q);
-      if (!matchTender && !matchSupplier && !matchClient && !matchNumber && !matchComment) return false;
+      if (!matchTender && !matchTenderNum && !matchSupplier && !matchClient && !matchNumber && !matchComment) return false;
     }
     return true;
   });

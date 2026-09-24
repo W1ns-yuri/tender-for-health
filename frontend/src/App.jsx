@@ -179,7 +179,7 @@ export default function App() {
 
         {/* 🟢 ЦЕНТРАЛЬНОЕ ОКНО С ЗАЩИТОЙ ERROR BOUNDARY */}
         <main className={`p-6 flex-1 overflow-y-auto ${isDarkMode ? 'bg-[#0b0f17]' : 'bg-slate-50'}`}>
-          <ErrorBoundary onReset={() => navigate('/dashboard')}>
+          <ErrorBoundary key={location.pathname} resetKey={location.pathname} onReset={() => navigate('/dashboard')}>
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/login" element={<Navigate to="/dashboard" replace />} />
