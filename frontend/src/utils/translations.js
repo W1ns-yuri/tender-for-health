@@ -1132,6 +1132,15 @@ export const translations = {
     tendersCount: 'tender',
     averageCompetition: 'Bäsdeşlik derejesi',
     updatedJustNow: 'Häzir täzelendi',
+    cancelledFull: 'Amala aşmadyk ýa-da ýatyrylan',
+    noCompletedTendersYet: 'Saýlanan döwürde tamamlanan söwda ýok',
+    noCompletedTendersDesc: 'Açyk amallaryň netijeleri jemlenenden soň üpjün edijileriň reýtingi awtomatiki emele geler.',
+    noActiveTradesInPeriod: 'Saýlanan döwür üçin söwda maglumaty ýok',
+    noCategoriesData: 'Hasaba alnan kategoriýa ýok',
+    noRegionsData: 'Sebit maglumatlary ýok',
+    noClientsData: 'Buýrujylar boýunça maglumat ýok',
+    lotsPlanShort: 'Lotlaryň möçberi (Meýilnama)',
+    lotsFactShort: 'Utulan şertnamalar (Fakt)',
 
   },
   RU: {
@@ -2268,6 +2277,15 @@ export const translations = {
     tendersCount: 'тендеров',
     averageCompetition: 'Ср. конкуренция',
     updatedJustNow: 'Обновлено только что',
+    cancelledFull: 'Не состоялись / Отменены',
+    noCompletedTendersYet: 'Нет завершенных торгов за выбранный период',
+    noCompletedTendersDesc: 'Рейтинг поставщиков сформируется автоматически после подведения итогов открытых процедур.',
+    noActiveTradesInPeriod: 'Нет данных о торгах за выбранный период',
+    noCategoriesData: 'Нет зарегистрированных категорий за период',
+    noRegionsData: 'Нет региональных данных за период',
+    noClientsData: 'Нет данных по заказчикам',
+    lotsPlanShort: 'Объявлено (План)',
+    lotsFactShort: 'Разыграно (Факт)',
 
   },
   EN: {
@@ -3402,6 +3420,15 @@ export const translations = {
     tendersCount: 'tenders',
     averageCompetition: 'Avg. Competition',
     updatedJustNow: 'Updated just now',
+    cancelledFull: 'Cancelled / Void',
+    noCompletedTendersYet: 'No completed tenders for selected period',
+    noCompletedTendersDesc: 'Supplier rankings will be generated automatically once active tenders are completed.',
+    noActiveTradesInPeriod: 'No trade data for selected period',
+    noCategoriesData: 'No registered categories for period',
+    noRegionsData: 'No regional data for period',
+    noClientsData: 'No client data',
+    lotsPlanShort: 'Announced (Plan)',
+    lotsFactShort: 'Awarded (Fact)',
 
   }
 };

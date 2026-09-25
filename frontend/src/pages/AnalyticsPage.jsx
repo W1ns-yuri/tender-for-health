@@ -53,7 +53,6 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
       setData(res.data);
     } catch (err) {
       console.warn('Analytics API error or offline, fallback to calibrated enterprise dataset', err);
-      // Запасной калиброванный набор данных
       setData(getFallbackData(period, currency));
     } finally {
       setLoading(false);
@@ -115,7 +114,6 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute('href', dataStr);
       downloadAnchor.setAttribute('download', `analytics_data_${period}_${currency}.json`);
-      downloadAnchor.appendChild(document.createTextNode(''));
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
@@ -125,9 +123,15 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
 
   // Вычисления для интерактивного Area Chart (SVG)
   const timeline = useMemo(() => data?.timeline || [], [data?.timeline]);
+  const isTimelineEmpty = useMemo(() => {
+    if (!timeline.length) return true;
+    return timeline.every(p => Number(p.published || 0) === 0 && Number(p.awarded || 0) === 0);
+  }, [timeline]);
+
   const maxVolume = useMemo(() => {
     if (!timeline.length) return 100;
-    return Math.max(...timeline.map(p => Math.max(p.published, p.awarded))) * 1.15;
+    const computedMax = Math.max(...timeline.map(p => Math.max(Number(p.published || 0), Number(p.awarded || 0))));
+    return computedMax > 0 ? computedMax * 1.15 : 100;
   }, [timeline]);
 
   const svgWidth = 720;
@@ -137,20 +141,20 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
 
   const pointsPublished = useMemo(() => {
     if (!timeline.length) return [];
-    const stepX = (svgWidth - paddingX * 2) / (timeline.length - 1);
+    const stepX = (svgWidth - paddingX * 2) / Math.max(timeline.length - 1, 1);
     return timeline.map((p, i) => {
       const x = paddingX + i * stepX;
-      const y = svgHeight - paddingY - (p.published / maxVolume) * (svgHeight - paddingY * 2);
+      const y = svgHeight - paddingY - (Number(p.published || 0) / maxVolume) * (svgHeight - paddingY * 2);
       return { x, y, data: p };
     });
   }, [timeline, maxVolume]);
 
   const pointsAwarded = useMemo(() => {
     if (!timeline.length) return [];
-    const stepX = (svgWidth - paddingX * 2) / (timeline.length - 1);
+    const stepX = (svgWidth - paddingX * 2) / Math.max(timeline.length - 1, 1);
     return timeline.map((p, i) => {
       const x = paddingX + i * stepX;
-      const y = svgHeight - paddingY - (p.awarded / maxVolume) * (svgHeight - paddingY * 2);
+      const y = svgHeight - paddingY - (Number(p.awarded || 0) / maxVolume) * (svgHeight - paddingY * 2);
       return { x, y, data: p };
     });
   }, [timeline, maxVolume]);
@@ -169,22 +173,24 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
   const linePathPublished = createSmoothPath(pointsPublished);
   const linePathAwarded = createSmoothPath(pointsAwarded);
 
-  const areaPathPublished = pointsPublished.length > 0
-    ? `${linePathPublished} L ${pointsPublished[pointsPublished.length - 1].x},${svgHeight - paddingY} L ${pointsPublished[0].x},${svgHeight - paddingY} Z`
+  // Заливка принадлежит разыгранному объему (Факт)
+  const areaPathAwarded = pointsAwarded.length > 0
+    ? `${linePathAwarded} L ${pointsAwarded[pointsAwarded.length - 1].x},${svgHeight - paddingY} L ${pointsAwarded[0].x},${svgHeight - paddingY} Z`
     : '';
 
-  // Вычисления для Donut Chart
+  // Вычисления для Donut Chart с защитой от деления на 0
   const statusDistribution = data?.statusDistribution || [];
-  const totalStatusCount = statusDistribution.reduce((acc, curr) => acc + curr.count, 0) || 1;
+  const totalStatusCount = statusDistribution.reduce((acc, curr) => acc + (Number(curr.count) || 0), 0);
 
   let cumulativeAngle = 0;
-  const donutSegments = statusDistribution.map((item, idx) => {
-    const fraction = item.count / totalStatusCount;
+  const donutSegments = totalStatusCount > 0 ? statusDistribution.map((item, idx) => {
+    const fraction = (Number(item.count) || 0) / totalStatusCount;
+    if (fraction <= 0) return { ...item, path: '', fraction: 0, idx };
+
     const startAngle = cumulativeAngle;
     const endAngle = cumulativeAngle + fraction * 360;
     cumulativeAngle = endAngle;
 
-    // SVG arc coordinates
     const rOuter = 85;
     const rInner = 56;
     const cx = 110;
@@ -207,7 +213,7 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
     const path = `M ${x1} ${y1} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${rInner} ${rInner} 0 ${largeArc} 0 ${x4} ${y4} Z`;
 
     return { ...item, path, startAngle, endAngle, fraction, idx };
-  });
+  }) : [];
 
   const activeTimelineItem = hoveredTimelineIdx !== null ? timeline[hoveredTimelineIdx] : null;
 
@@ -365,15 +371,15 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
             </div>
           </div>
           <div className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
-            {formatCurrency(data?.kpi?.totalVolume)}
+            {formatCurrency(data?.kpi?.totalVolume || 0)}
           </div>
           <div className="flex items-center mt-2.5">
             <span className="inline-flex items-center text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200/60 dark:border-emerald-800/50">
               <TrendingUp size={11} className="mr-1" />
-              {data?.meta?.delta || '+14.2%'}
+              {Number(data?.kpi?.totalVolume || 0) > 0 ? (data?.meta?.delta || '+14.2%') : '0.0%'}
             </span>
             <span className="text-[11px] text-slate-400 ml-2">
-              {t('vsPreviousPeriod', 'к прошлому периоду')}
+              {Number(data?.kpi?.totalVolume || 0) > 0 ? t('vsPreviousPeriod', 'к прошлому периоду') : 'Ожидается запуск'}
             </span>
           </div>
         </div>
@@ -389,14 +395,14 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
             </div>
           </div>
           <div className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
-            {formatCurrency(data?.kpi?.savingsAmount)}
+            {formatCurrency(data?.kpi?.savingsAmount || 0)}
           </div>
           <div className="flex items-center justify-between mt-2.5">
             <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-              {data?.kpi?.savingsPercent || '8.7'}% {t('budgetSavings', 'экономии')}
+              {data?.kpi?.savingsPercent || '0.0'}% {t('budgetSavings', 'экономии')}
             </span>
             <span className="text-[10px] text-slate-400 cursor-help" title={t('savingsHint', 'Разница между НМЦК и ценой победителей')}>
-              ⓘ {t('savingsHint', 'НМЦК vs финал')}
+              ⓘ {Number(data?.kpi?.savingsAmount || 0) === 0 ? 'Торги на стадии приема' : t('savingsHint', 'НМЦК vs финал')}
             </span>
           </div>
         </div>
@@ -412,12 +418,12 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
             </div>
           </div>
           <div className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
-            {formatNumber(data?.kpi?.totalProcedures)} <span className="text-sm font-normal text-slate-400">{t('tendersCount', 'тендеров')}</span>
+            {formatNumber(data?.kpi?.totalProcedures || 0)} <span className="text-sm font-normal text-slate-400">{t('tendersCount', 'тендеров')}</span>
           </div>
           <div className="flex items-center space-x-1.5 mt-2.5 text-[11px] text-slate-500 dark:text-slate-400">
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">{data?.kpi?.successfulProcedures || 41} {t('completedShort', 'успешно')}</span>
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">{data?.kpi?.successfulProcedures || 0} {t('completedShort', 'успешно')}</span>
             <span>/</span>
-            <span className="text-slate-400">{data?.kpi?.cancelledProcedures || 7} {t('cancelledShort', 'не сост.')}</span>
+            <span className="text-slate-400">{data?.kpi?.cancelledProcedures || 0} {t('cancelledShort', 'не сост.')}</span>
           </div>
         </div>
 
@@ -432,11 +438,11 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
             </div>
           </div>
           <div className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
-            {formatNumber(data?.kpi?.totalOffers)} <span className="text-sm font-normal text-slate-400">заявок</span>
+            {formatNumber(data?.kpi?.totalOffers || 0)} <span className="text-sm font-normal text-slate-400">заявок</span>
           </div>
           <div className="flex items-center mt-2.5 text-[11px] text-slate-500 dark:text-slate-400">
             <span className="font-medium text-slate-700 dark:text-slate-300">
-              {t('competitionAvg', `В среднем ${data?.kpi?.competitionIndex || '3.4'} заявки на лот`, { ratio: data?.kpi?.competitionIndex || '3.4' })}
+              {t('competitionAvg', `В среднем ${data?.kpi?.competitionIndex || '0.0'} заявки на лот`, { ratio: data?.kpi?.competitionIndex || '0.0' })}
             </span>
           </div>
         </div>
@@ -452,10 +458,10 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
             </div>
           </div>
           <div className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
-            {formatNumber(data?.kpi?.activeSuppliers)} <span className="text-sm font-normal text-slate-400">компаний</span>
+            {formatNumber(data?.kpi?.activeSuppliers || 0)} <span className="text-sm font-normal text-slate-400">компаний</span>
           </div>
           <div className="flex items-center mt-2.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-            <span>+{data?.kpi?.newSuppliersPeriod || 12} новых за период</span>
+            <span>+{data?.kpi?.newSuppliersPeriod || 0} новых за период</span>
           </div>
         </div>
 
@@ -465,32 +471,32 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Левый блок (65%): Area Chart динамики торгов */}
-        <div className={`lg:col-span-8 p-6 rounded-2xl border transition-all ${
+        <div className={`lg:col-span-8 p-6 rounded-2xl border transition-all relative ${
           isDarkMode ? 'bg-[#111827] border-slate-800 shadow-md' : 'bg-white border-slate-200/80 shadow-sm'
         }`}>
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                {t('tradeDynamics', 'Динамика торгов и финансовые объемы')}
+                {t('tradeDynamics', 'Динамика торгов и объемов')}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Соотношение объема опубликованных лотов к сумме заключенных контрактов
               </p>
             </div>
 
-            {/* Легенда графиков */}
+            {/* Легенда графиков (Четко разделенные цвета: Серый/План vs Изумруд/Факт) */}
             <div className="flex items-center space-x-4 text-xs">
               <div className="flex items-center space-x-1.5">
-                <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500/40" />
+                <span className="w-4 h-0.5 border-t-2 border-dashed border-slate-400 inline-block" />
                 <span className="text-slate-600 dark:text-slate-300 font-medium">
-                  {t('publishedLotsVolume', 'Объем опубликованных лотов')}
+                  {t('publishedLotsVolume', 'Объем объявленных лотов (План)')}
                 </span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <span className="w-3 h-3 rounded-full bg-teal-600 shadow-xs shadow-teal-600/40" />
+                <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500/40 inline-block" />
                 <span className="text-slate-600 dark:text-slate-300 font-medium">
-                  {t('awardedVolume', 'Фактически разыграно')}
+                  {t('awardedVolume', 'Фактически разыграно (Факт)')}
                 </span>
               </div>
             </div>
@@ -503,14 +509,14 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
               className="w-full h-64 sm:h-72 overflow-visible"
             >
               <defs>
-                {/* Изумрудный градиент для заливки площади */}
+                {/* Изумрудный градиент для заливки площади разыгранных контрактов */}
                 <linearGradient id="emeraldGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10B981" stopOpacity={isDarkMode ? 0.35 : 0.25} />
+                  <stop offset="0%" stopColor="#10B981" stopOpacity={isDarkMode ? 0.35 : 0.22} />
                   <stop offset="100%" stopColor="#10B981" stopOpacity={0.0} />
                 </linearGradient>
 
-                {/* Градиент свечения для линии */}
-                <linearGradient id="strokeGradient" x1="0" y1="0" x2="1" y2="0">
+                {/* Градиент свечения для изумрудной линии */}
+                <linearGradient id="awardedStrokeGradient" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#059669" />
                   <stop offset="50%" stopColor="#10B981" />
                   <stop offset="100%" stopColor="#34D399" />
@@ -535,29 +541,29 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
                 );
               })}
 
-              {/* Заливка под графиком */}
-              {areaPathPublished && (
-                <path d={areaPathPublished} fill="url(#emeraldGradient)" />
+              {/* Заливка под линией разыгранного объема (Факт) */}
+              {areaPathAwarded && (
+                <path d={areaPathAwarded} fill="url(#emeraldGradient)" />
               )}
 
-              {/* Линия разыгранного объема (Теал/Изумруд) */}
-              {linePathAwarded && (
-                <path
-                  d={linePathAwarded}
-                  fill="none"
-                  stroke="#059669"
-                  strokeWidth="2.5"
-                  strokeDasharray="5 4"
-                  className="transition-all duration-300"
-                />
-              )}
-
-              {/* Линия опубликованного объема */}
+              {/* Линия опубликованного объема (План/Потолок: нейтрально-серый пунктир #94A3B8) */}
               {linePathPublished && (
                 <path
                   d={linePathPublished}
                   fill="none"
-                  stroke="url(#strokeGradient)"
+                  stroke="#94A3B8"
+                  strokeWidth="2.2"
+                  strokeDasharray="6 4"
+                  className="transition-all duration-300"
+                />
+              )}
+
+              {/* Линия фактически разыгранного объема (Факт: яркая фирменная изумрудная линия #10B981) */}
+              {linePathAwarded && (
+                <path
+                  d={linePathAwarded}
+                  fill="none"
+                  stroke="url(#awardedStrokeGradient)"
                   strokeWidth="3.2"
                   strokeLinecap="round"
                   className="transition-all duration-300 drop-shadow-xs"
@@ -591,29 +597,29 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
                     {/* Невидимая область для легкого попадания курсором */}
                     <circle cx={pt.x} cy={pt.y} r={16} fill="transparent" />
 
-                    {/* Точка разыгранного */}
+                    {/* Точка опубликованного (Нейтрально-серая) */}
+                    <circle
+                      cx={pt.x}
+                      cy={pt.y}
+                      r={isHovered ? 5 : 3.5}
+                      fill="#94A3B8"
+                      stroke={isDarkMode ? '#111827' : '#ffffff'}
+                      strokeWidth="2"
+                      className="transition-all duration-150"
+                    />
+
+                    {/* Точка разыгранного (Изумрудная) */}
                     {ptAwarded && (
                       <circle
                         cx={ptAwarded.x}
                         cy={ptAwarded.y}
-                        r={isHovered ? 5.5 : 3.5}
-                        fill="#059669"
+                        r={isHovered ? 7 : 4.5}
+                        fill="#10B981"
                         stroke={isDarkMode ? '#111827' : '#ffffff'}
-                        strokeWidth="2"
+                        strokeWidth={isHovered ? 3 : 2}
                         className="transition-all duration-150"
                       />
                     )}
-
-                    {/* Точка опубликованного */}
-                    <circle
-                      cx={pt.x}
-                      cy={pt.y}
-                      r={isHovered ? 7 : 4.5}
-                      fill="#10B981"
-                      stroke={isDarkMode ? '#111827' : '#ffffff'}
-                      strokeWidth={isHovered ? 3 : 2}
-                      className="transition-all duration-150"
-                    />
 
                     {/* Подпись точки на оси X */}
                     <text
@@ -634,6 +640,17 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
                 );
               })}
             </svg>
+
+            {/* Заглушка (Empty State) при отсутствии объемов за период */}
+            {isTimelineEmpty && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-4">
+                <div className={`px-4 py-2 rounded-xl border text-xs font-medium backdrop-blur-xs shadow-xs ${
+                  isDarkMode ? 'bg-[#0f172a]/90 border-slate-800 text-slate-400' : 'bg-white/90 border-slate-200 text-slate-600'
+                }`}>
+                  {t('noCompletedTendersYet', 'Нет завершенных торгов за выбранный период')}
+                </div>
+              </div>
+            )}
 
             {/* Всплывающий Custom Tooltip */}
             {activeTimelineItem && hoveredTimelineIdx !== null && pointsPublished[hoveredTimelineIdx] && (
@@ -658,15 +675,17 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
                 <div className="space-y-1">
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-slate-500 dark:text-slate-400 flex items-center">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 mr-1.5" />
-                      Опубликовано:
+                      <span className="w-2 h-2 rounded-full bg-slate-400 mr-1.5" />
+                      {t('lotsPlanShort', 'Объявлено (План)')}:
                     </span>
-                    <span className="font-bold tabular-nums">{formatCurrency(activeTimelineItem.published)}</span>
+                    <span className="font-bold tabular-nums text-slate-700 dark:text-slate-300">
+                      {formatCurrency(activeTimelineItem.published)}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-slate-500 dark:text-slate-400 flex items-center">
-                      <span className="w-2 h-2 rounded-full bg-teal-600 mr-1.5" />
-                      Разыграно:
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 mr-1.5" />
+                      {t('lotsFactShort', 'Разыграно (Факт)')}:
                     </span>
                     <span className="font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
                       {formatCurrency(activeTimelineItem.awarded)}
@@ -698,33 +717,46 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
               <PieIcon size={18} className="text-slate-400" />
             </div>
 
-            {/* Donut SVG с интерактивными сегментами */}
+            {/* Donut SVG с интерактивными сегментами или заглушкой */}
             <div className="relative flex justify-center items-center my-2">
               <svg width="220" height="220" viewBox="0 0 220 220" className="transform -rotate-90">
-                {donutSegments.map((segment) => {
-                  const isHovered = hoveredDonutIdx === segment.idx;
-                  return (
-                    <path
-                      key={segment.id}
-                      d={segment.path}
-                      fill={segment.color}
-                      className="transition-all duration-200 cursor-pointer"
-                      style={{
-                        transformOrigin: '110px 110px',
-                        transform: isHovered ? 'scale(1.05)' : 'scale(1)',
-                        opacity: hoveredDonutIdx !== null && !isHovered ? 0.45 : 1,
-                      }}
-                      onMouseEnter={() => setHoveredDonutIdx(segment.idx)}
-                      onMouseLeave={() => setHoveredDonutIdx(null)}
-                    />
-                  );
-                })}
+                {totalStatusCount === 0 ? (
+                  <circle
+                    cx="110"
+                    cy="110"
+                    r="70"
+                    fill="none"
+                    stroke={isDarkMode ? '#1e293b' : '#e2e8f0'}
+                    strokeWidth="18"
+                    strokeDasharray="4 4"
+                  />
+                ) : (
+                  donutSegments.map((segment) => {
+                    if (!segment.path) return null;
+                    const isHovered = hoveredDonutIdx === segment.idx;
+                    return (
+                      <path
+                        key={segment.id}
+                        d={segment.path}
+                        fill={segment.color}
+                        className="transition-all duration-200 cursor-pointer"
+                        style={{
+                          transformOrigin: '110px 110px',
+                          transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+                          opacity: hoveredDonutIdx !== null && !isHovered ? 0.45 : 1,
+                        }}
+                        onMouseEnter={() => setHoveredDonutIdx(segment.idx)}
+                        onMouseLeave={() => setHoveredDonutIdx(null)}
+                      />
+                    );
+                  })
+                )}
               </svg>
 
               {/* Центр бублика (Счетчик процедур) */}
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
                 <span className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums tracking-tight">
-                  {formatNumber(data?.kpi?.totalProcedures || 48)}
+                  {formatNumber(data?.kpi?.totalProcedures || 0)}
                 </span>
                 <span className="text-[11px] font-medium text-slate-400 mt-0.5">
                   {t('totalProceduresLabel', 'Всего процедур')}
@@ -733,13 +765,17 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
             </div>
           </div>
 
-          {/* Легенда под бубликом */}
+          {/* Легенда под бубликом (Короткий текст "Не состоялись" + без переноса процентов) */}
           <div className="space-y-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
             {statusDistribution.map((item, idx) => {
               const isHovered = hoveredDonutIdx === idx;
+              const isCancelled = item.id === 'CANCELLED';
+              const displayLabel = isCancelled ? t('cancelledShort', 'Не состоялись') : item.label;
+              const hoverTitle = isCancelled ? t('cancelledFull', 'Не состоялись / Отменены') : item.label;
               return (
                 <div
                   key={item.id}
+                  title={hoverTitle}
                   onMouseEnter={() => setHoveredDonutIdx(idx)}
                   onMouseLeave={() => setHoveredDonutIdx(null)}
                   className={`flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-colors ${
@@ -748,20 +784,20 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
                       : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                   }`}
                 >
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 min-w-0 pr-2">
                     <span
                       className="w-2.5 h-2.5 rounded-full shrink-0"
                       style={{ backgroundColor: item.color }}
                     />
-                    <span className="text-slate-700 dark:text-slate-300 font-medium">
-                      {item.label}
+                    <span className="text-slate-700 dark:text-slate-300 font-medium truncate">
+                      {displayLabel}
                     </span>
                   </div>
-                  <div className="flex items-center space-x-2 tabular-nums">
+                  <div className="flex items-center space-x-2 tabular-nums shrink-0 whitespace-nowrap">
                     <span className="font-semibold text-slate-900 dark:text-white">
                       {item.count}
                     </span>
-                    <span className="text-slate-400 text-[11px]">
+                    <span className="text-slate-400 text-[11px] shrink-0 whitespace-nowrap">
                       ({item.percent}%)
                     </span>
                   </div>
@@ -791,43 +827,49 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
               </p>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              5 сегментов
+              {data?.categories?.length || 0} сегментов
             </span>
           </div>
 
-          <div className="space-y-4">
-            {(data?.categories || []).map((cat, idx) => (
-              <div key={idx} className="group">
-                <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="font-medium text-slate-800 dark:text-slate-200 flex items-center">
-                    <span className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center text-[10px] font-bold mr-2">
-                      #{idx + 1}
+          {(!data?.categories || data.categories.length === 0) ? (
+            <div className="py-12 px-4 flex flex-col items-center justify-center text-center">
+              <p className="text-xs text-slate-400">{t('noCategoriesData', 'Нет зарегистрированных категорий за период')}</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {data.categories.map((cat, idx) => (
+                <div key={idx} className="group">
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="font-medium text-slate-800 dark:text-slate-200 flex items-center min-w-0 pr-2">
+                      <span className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center text-[10px] font-bold mr-2 shrink-0">
+                        #{idx + 1}
+                      </span>
+                      <span className="truncate" title={cat.name}>{cat.name}</span>
                     </span>
-                    {cat.name}
-                  </span>
-                  <div className="flex items-center space-x-2 tabular-nums">
-                    <span className="font-bold text-slate-900 dark:text-white">
-                      {formatCurrency(cat.amount)}
-                    </span>
-                    <span className="text-slate-400 text-[11px]">({cat.percent}%)</span>
+                    <div className="flex items-center space-x-2 tabular-nums shrink-0 whitespace-nowrap">
+                      <span className="font-bold text-slate-900 dark:text-white">
+                        {formatCurrency(cat.amount)}
+                      </span>
+                      <span className="text-slate-400 text-[11px]">({cat.percent}%)</span>
+                    </div>
+                  </div>
+
+                  {/* Прогресс-бар с изумрудным градиентом */}
+                  <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-linear-to-r from-emerald-600 to-teal-400 rounded-full transition-all duration-500 group-hover:brightness-110"
+                      style={{ width: `${Math.max(cat.percent, 3)}%` }}
+                    />
+                  </div>
+
+                  <div className="flex justify-between items-center text-[11px] text-slate-400 mt-1">
+                    <span>{cat.tenders} {t('tendersCount', 'тендеров')}</span>
+                    <span>Доля: {cat.percent}%</span>
                   </div>
                 </div>
-
-                {/* Прогресс-бар с изумрудным градиентом */}
-                <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-linear-to-r from-emerald-600 to-teal-400 rounded-full transition-all duration-500 group-hover:brightness-110"
-                    style={{ width: `${cat.percent}%` }}
-                  />
-                </div>
-
-                <div className="flex justify-between items-center text-[11px] text-slate-400 mt-1">
-                  <span>{cat.tenders} {t('tendersCount', 'тендеров')}</span>
-                  <span>Доля: {cat.percent}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Правый блок: Географическая активность по Велаятам Туркменистана */}
@@ -848,41 +890,47 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
             </div>
           </div>
 
-          <div className="space-y-3.5">
-            {(data?.regions || []).map((region) => (
-              <div key={region.id} className="flex items-center justify-between gap-3 text-xs">
-                
-                {/* Название региона */}
-                <div className="w-44 shrink-0">
-                  <div className="font-semibold text-slate-800 dark:text-slate-200">
-                    {region.name}
+          {(!data?.regions || data.regions.length === 0) ? (
+            <div className="py-12 px-4 flex flex-col items-center justify-center text-center">
+              <p className="text-xs text-slate-400">{t('noRegionsData', 'Нет региональных данных за период')}</p>
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {data.regions.map((region) => (
+                <div key={region.id} className="flex items-center justify-between gap-3 text-xs">
+                  
+                  {/* Название региона */}
+                  <div className="w-44 shrink-0">
+                    <div className="font-semibold text-slate-800 dark:text-slate-200 truncate" title={region.name}>
+                      {region.name}
+                    </div>
+                    <div className="text-[10px] text-slate-400">
+                      {region.tenders} {t('tendersCount', 'тендеров')}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-slate-400">
-                    {region.tenders} {t('tendersCount', 'тендеров')}
-                  </div>
-                </div>
 
-                {/* Полоса охвата */}
-                <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-linear-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(region.percent * 2, 100)}%` }}
-                  />
-                </div>
-
-                {/* Финансовая сумма и процент */}
-                <div className="w-28 text-right tabular-nums">
-                  <div className="font-bold text-slate-900 dark:text-white">
-                    {formatCurrency(region.amount)}
+                  {/* Полоса охвата */}
+                  <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-linear-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.max(region.percent, 3)}%` }}
+                    />
                   </div>
-                  <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                    {region.percent}% объема
-                  </div>
-                </div>
 
-              </div>
-            ))}
-          </div>
+                  {/* Финансовая сумма и процент */}
+                  <div className="w-28 text-right tabular-nums shrink-0 whitespace-nowrap">
+                    <div className="font-bold text-slate-900 dark:text-white">
+                      {formatCurrency(region.amount)}
+                    </div>
+                    <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                      {region.percent}% объема
+                    </div>
+                  </div>
+
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
       </div>
@@ -906,82 +954,98 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
             <Award size={20} className="text-amber-500" />
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className={`border-b ${isDarkMode ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-500'}`}>
-                  <th className="py-3 px-3 font-semibold">{t('rankColumn', '#')}</th>
-                  <th className="py-3 px-3 font-semibold">{t('companyName', 'Наименование компании')}</th>
-                  <th className="py-3 px-3 font-semibold">{t('directionField', 'Направление')}</th>
-                  <th className="py-3 px-3 font-semibold text-center">{t('lotsWonCount', 'Выиграно лотов')}</th>
-                  <th className="py-3 px-3 font-semibold text-right">{t('totalContractSum', 'Сумма контрактов')}</th>
-                  <th className="py-3 px-3 font-semibold text-right">{t('winRateLabel', 'Win Rate %')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {(data?.topSuppliers || []).map((sup) => {
-                  const isTop1 = sup.rank === 1;
-                  const isTop2 = sup.rank === 2;
-                  const isTop3 = sup.rank === 3;
-                  return (
-                    <tr
-                      key={sup.rank}
-                      className={`transition-colors ${
-                        isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50/80'
-                      }`}
-                    >
-                      {/* Позиция с медалью */}
-                      <td className="py-3.5 px-3">
-                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-bold text-[11px] ${
-                          isTop1
-                            ? 'bg-amber-400 text-slate-900 shadow-xs shadow-amber-400/50'
-                            : isTop2
-                            ? 'bg-slate-300 text-slate-900'
-                            : isTop3
-                            ? 'bg-amber-700/80 text-white'
-                            : isDarkMode
-                            ? 'bg-slate-800 text-slate-300'
-                            : 'bg-slate-100 text-slate-600'
-                        }`}>
-                          {sup.rank}
-                        </span>
-                      </td>
+          {(!data?.topSuppliers || data.topSuppliers.length === 0) ? (
+            <div className="py-14 px-4 flex flex-col items-center justify-center text-center">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-400 mb-3">
+                <Award size={24} />
+              </div>
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                {t('noCompletedTendersYet', 'Нет завершенных торгов с победителями')}
+              </h3>
+              <p className="text-xs text-slate-400 mt-1 max-w-sm">
+                {t('noCompletedTendersDesc', 'Рейтинг поставщиков сформируется автоматически после подведения итогов открытых процедур.')}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className={`border-b ${isDarkMode ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-500'}`}>
+                    <th className="py-3 px-3 font-semibold whitespace-nowrap">{t('rankColumn', '#')}</th>
+                    <th className="py-3 px-3 font-semibold min-w-[200px]">{t('companyName', 'Наименование компании')}</th>
+                    <th className="py-3 px-3 font-semibold">{t('directionField', 'Направление')}</th>
+                    <th className="py-3 px-3 font-semibold text-center whitespace-nowrap">{t('lotsWonCount', 'Выиграно лотов')}</th>
+                    <th className="py-3 px-3 font-semibold text-right whitespace-nowrap">{t('totalContractSum', 'Сумма контрактов')}</th>
+                    <th className="py-3 px-3 font-semibold text-right whitespace-nowrap">{t('winRateLabel', 'Win Rate %')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {data.topSuppliers.map((sup) => {
+                    const isTop1 = sup.rank === 1;
+                    const isTop2 = sup.rank === 2;
+                    const isTop3 = sup.rank === 3;
+                    return (
+                      <tr
+                        key={sup.rank}
+                        className={`transition-colors ${
+                          isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50/80'
+                        }`}
+                      >
+                        {/* Позиция с медалью */}
+                        <td className="py-3.5 px-3 whitespace-nowrap">
+                          <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-bold text-[11px] ${
+                            isTop1
+                              ? 'bg-amber-400 text-slate-900 shadow-xs shadow-amber-400/50'
+                              : isTop2
+                              ? 'bg-slate-300 text-slate-900'
+                              : isTop3
+                              ? 'bg-amber-700/80 text-white'
+                              : isDarkMode
+                              ? 'bg-slate-800 text-slate-300'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {sup.rank}
+                          </span>
+                        </td>
 
-                      {/* Компания */}
-                      <td className="py-3.5 px-3">
-                        <div className="font-bold text-slate-900 dark:text-white flex items-center">
-                          {sup.name}
-                          <ShieldCheck size={13} className="text-emerald-500 ml-1.5 shrink-0" />
-                        </div>
-                      </td>
+                        {/* Компания с truncate */}
+                        <td className="py-3.5 px-3 min-w-[200px]">
+                          <div className="font-bold text-slate-900 dark:text-white flex items-center">
+                            <span className="max-w-[180px] sm:max-w-[260px] md:max-w-[340px] truncate" title={sup.name}>
+                              {sup.name}
+                            </span>
+                            <ShieldCheck size={13} className="text-emerald-500 ml-1.5 shrink-0" />
+                          </div>
+                        </td>
 
-                      {/* Направление */}
-                      <td className="py-3.5 px-3 text-slate-500 dark:text-slate-400">
-                        {sup.category}
-                      </td>
+                        {/* Направление */}
+                        <td className="py-3.5 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                          {sup.category}
+                        </td>
 
-                      {/* Выиграно лотов */}
-                      <td className="py-3.5 px-3 text-center tabular-nums font-bold text-slate-800 dark:text-slate-200">
-                        {sup.winsCount}
-                      </td>
+                        {/* Выиграно лотов */}
+                        <td className="py-3.5 px-3 text-center tabular-nums font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                          {sup.winsCount}
+                        </td>
 
-                      {/* Сумма контрактов */}
-                      <td className="py-3.5 px-3 text-right font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                        {formatCurrency(sup.totalContracts)}
-                      </td>
+                        {/* Сумма контрактов */}
+                        <td className="py-3.5 px-3 text-right font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums whitespace-nowrap">
+                          {formatCurrency(sup.totalContracts)}
+                        </td>
 
-                      {/* Win Rate */}
-                      <td className="py-3.5 px-3 text-right tabular-nums">
-                        <span className="inline-block px-2 py-0.5 rounded-md font-semibold text-[11px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                          {sup.winRate}%
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        {/* Win Rate */}
+                        <td className="py-3.5 px-3 text-right tabular-nums whitespace-nowrap">
+                          <span className="inline-block px-2 py-0.5 rounded-md font-semibold text-[11px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                            {sup.winRate}%
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Таблица 2 (35%): Ключевые заказчики */}
@@ -1000,32 +1064,46 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
             <Building2 size={18} className="text-slate-400" />
           </div>
 
-          <div className="space-y-4">
-            {(data?.topClients || []).map((client) => (
-              <div
-                key={client.rank}
-                className={`p-3.5 rounded-xl border transition-all ${
-                  isDarkMode
-                    ? 'bg-[#0b0f17] border-slate-800 hover:border-slate-700'
-                    : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300'
-                }`}
-              >
-                <div className="font-semibold text-slate-900 dark:text-white text-xs mb-1.5 leading-snug">
-                  {client.name}
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>{client.procedures} {t('proceduresCount', 'процедур')}</span>
-                  <span className="font-bold text-slate-900 dark:text-slate-200 tabular-nums">
-                    {formatCurrency(client.budget)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 pt-1 border-t border-slate-200/40 dark:border-slate-800">
-                  <span>{t('averageCompetition', 'Конкуренция')}:</span>
-                  <span className="font-semibold">{client.avgCompetition} заявки / лот</span>
-                </div>
+          {(!data?.topClients || data.topClients.length === 0) ? (
+            <div className="py-14 px-4 flex flex-col items-center justify-center text-center">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-400 mb-3">
+                <Building2 size={24} />
               </div>
-            ))}
-          </div>
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                {t('noClientsData', 'Нет данных по заказчикам')}
+              </h3>
+              <p className="text-xs text-slate-400 mt-1 max-w-xs">
+                Список заказчиков появится при публикации процедур в системе.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {data.topClients.map((client) => (
+                <div
+                  key={client.rank}
+                  className={`p-3.5 rounded-xl border transition-all ${
+                    isDarkMode
+                      ? 'bg-[#0b0f17] border-slate-800 hover:border-slate-700'
+                      : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="font-semibold text-slate-900 dark:text-white text-xs mb-1.5 leading-snug">
+                    {client.name}
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                    <span>{client.procedures} {t('proceduresCount', 'процедур')}</span>
+                    <span className="font-bold text-slate-900 dark:text-slate-200 tabular-nums">
+                      {formatCurrency(client.budget)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 pt-1 border-t border-slate-200/40 dark:border-slate-800">
+                    <span>{t('averageCompetition', 'Конкуренция')}:</span>
+                    <span className="font-semibold">{client.avgCompetition} заявки / лот</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
       </div>
@@ -1034,7 +1112,7 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
   );
 }
 
-// Запасной калиброванный набор данных
+// Запасной калиброванный набор данных при сбое сети
 function getFallbackData(period = '30d', currency = 'TMT') {
   const currencyMultiplier = currency === 'USD' ? 0.285 : currency === 'EUR' ? 0.265 : 1;
   const factors = {
@@ -1045,9 +1123,8 @@ function getFallbackData(period = '30d', currency = 'TMT') {
     '1y': { factor: 11.2, delta: '+28.9%', timelinePoints: ['Окт', 'Ноя', 'Дек', 'Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен'] },
   };
   const meta = factors[period] || factors['30d'];
-  const baseVolume = 24850000 * meta.factor * currencyMultiplier;
-  const savings = Math.round(baseVolume * 0.087);
-  const totalVolume = Math.round(baseVolume);
+  const baseVolume = 0;
+  const totalVolume = Math.round(baseVolume * currencyMultiplier);
 
   return {
     meta: {
@@ -1057,60 +1134,31 @@ function getFallbackData(period = '30d', currency = 'TMT') {
     },
     kpi: {
       totalVolume,
-      savingsAmount: savings,
-      savingsPercent: '8.7',
-      totalProcedures: Math.round(48 * (meta.factor > 1 ? meta.factor * 0.35 : 1)),
-      successfulProcedures: Math.round(41 * (meta.factor > 1 ? meta.factor * 0.35 : 1)),
-      cancelledProcedures: Math.round(7 * (meta.factor > 1 ? meta.factor * 0.35 : 1)),
-      totalOffers: Math.round(164 * (meta.factor > 1 ? meta.factor * 0.35 : 1)),
-      competitionIndex: '3.4',
-      activeSuppliers: Math.round(86 * (meta.factor > 1 ? 1.3 : 1)),
-      newSuppliersPeriod: Math.round(12 * (meta.factor > 1 ? 1.5 : 1)),
+      savingsAmount: 0,
+      savingsPercent: '0.0',
+      totalProcedures: 0,
+      successfulProcedures: 0,
+      cancelledProcedures: 0,
+      totalOffers: 0,
+      competitionIndex: '0.0',
+      activeSuppliers: 0,
+      newSuppliersPeriod: 0,
     },
-    timeline: meta.timelinePoints.map((label, idx) => {
-      const published = Math.round((totalVolume / meta.timelinePoints.length) * (0.88 + Math.sin(idx) * 0.15));
-      const awarded = Math.round(published * 0.91);
-      return {
-        label,
-        published,
-        awarded,
-        savings: published - awarded,
-      };
-    }),
+    timeline: meta.timelinePoints.map((label) => ({
+      label,
+      published: 0,
+      awarded: 0,
+      savings: 0,
+    })),
     statusDistribution: [
-      { id: 'COMPLETED', label: 'Успешно завершены', count: 41, percent: 68, color: '#10B981' },
-      { id: 'IN_REVIEW', label: 'На рассмотрении', count: 10, percent: 16, color: '#F59E0B' },
-      { id: 'ACTIVE', label: 'Активный приём заявок', count: 6, percent: 10, color: '#0EA5E9' },
-      { id: 'CANCELLED', label: 'Не состоялись / Отменены', count: 4, percent: 6, color: '#94A3B8' },
+      { id: 'COMPLETED', label: 'Успешно завершены', count: 0, percent: 0, color: '#10B981' },
+      { id: 'IN_REVIEW', label: 'На рассмотрении', count: 0, percent: 0, color: '#F59E0B' },
+      { id: 'ACTIVE', label: 'Активный приём заявок', count: 0, percent: 0, color: '#0EA5E9' },
+      { id: 'CANCELLED', label: 'Не состоялись', count: 0, percent: 0, color: '#94A3B8' },
     ],
-    categories: [
-      { name: 'Фармацевтика и медикаменты', amount: Math.round(totalVolume * 0.42), percent: 42, tenders: 22 },
-      { name: 'Медицинское и диагностическое оборудование', amount: Math.round(totalVolume * 0.28), percent: 28, tenders: 14 },
-      { name: 'IT-инфраструктура и расходные материалы', amount: Math.round(totalVolume * 0.14), percent: 14, tenders: 7 },
-      { name: 'Капитальный ремонт и строительство ЛПУ', amount: Math.round(totalVolume * 0.10), percent: 10, tenders: 5 },
-      { name: 'Сервисное обслуживание и клинические услуги', amount: Math.round(totalVolume * 0.06), percent: 6, tenders: 3 },
-    ],
-    regions: [
-      { id: 'ashgabat', name: 'г. Ашхабад (Aşgabat)', amount: Math.round(totalVolume * 0.46), percent: 46, tenders: 21 },
-      { id: 'arkadag', name: 'г. Аркадаг (Arkadag)', amount: Math.round(totalVolume * 0.16), percent: 16, tenders: 8 },
-      { id: 'mary', name: 'Марыйский велаят', amount: Math.round(totalVolume * 0.11), percent: 11, tenders: 6 },
-      { id: 'lebap', name: 'Лебапский велаят', amount: Math.round(totalVolume * 0.10), percent: 10, tenders: 5 },
-      { id: 'balkan', name: 'Балканский велаят', amount: Math.round(totalVolume * 0.07), percent: 7, tenders: 4 },
-      { id: 'dashoguz', name: 'Дашогузский велаят', amount: Math.round(totalVolume * 0.06), percent: 6, tenders: 3 },
-      { id: 'ahal', name: 'Ахалский велаят', amount: Math.round(totalVolume * 0.04), percent: 4, tenders: 2 },
-    ],
-    topSuppliers: [
-      { rank: 1, name: 'Hojalyk Jemgyýeti «Derman Saglyk»', category: 'Фармацевтика и препараты', winsCount: 14, totalContracts: Math.round(totalVolume * 0.24), winRate: 78 },
-      { rank: 2, name: 'ÝGP «MedTehnika Üpjünçilik»', category: 'Диагностика и медтехника', winsCount: 9, totalContracts: Math.round(totalVolume * 0.18), winRate: 64 },
-      { rank: 3, name: 'HJ «Sanly Lukmançylyk Ulgamlary»', category: 'IT и медицинские базы', winsCount: 7, totalContracts: Math.round(totalVolume * 0.11), winRate: 70 },
-      { rank: 4, name: 'HK «Arassa Lukman Enjamlary»', category: 'Расходные материалы', winsCount: 6, totalContracts: Math.round(totalVolume * 0.08), winRate: 55 },
-      { rank: 5, name: 'HJ «Gurluşyk Med Inžiniring»', category: 'Ремонт и спецклининг ЛПУ', winsCount: 4, totalContracts: Math.round(totalVolume * 0.06), winRate: 50 },
-    ],
-    topClients: [
-      { rank: 1, name: 'Министерство здравоохранения и медицинской промышленности', procedures: 22, budget: Math.round(totalVolume * 0.52), avgCompetition: 3.8 },
-      { rank: 2, name: 'Международный центр кардиологии г. Ашхабад', procedures: 11, budget: Math.round(totalVolume * 0.21), avgCompetition: 3.2 },
-      { rank: 3, name: 'Многопрофильная больница г. Аркадаг', procedures: 8, budget: Math.round(totalVolume * 0.15), avgCompetition: 3.5 },
-      { rank: 4, name: 'Диагностический центр Марыйского велаята', procedures: 5, budget: Math.round(totalVolume * 0.08), avgCompetition: 2.9 },
-    ],
+    categories: [],
+    regions: [],
+    topSuppliers: [],
+    topClients: [],
   };
 }
