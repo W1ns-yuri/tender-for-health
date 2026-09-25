@@ -1141,6 +1141,8 @@ export const translations = {
     noClientsData: 'Buýrujylar boýunça maglumat ýok',
     lotsPlanShort: 'Lotlaryň möçberi (Meýilnama)',
     lotsFactShort: 'Utulan şertnamalar (Fakt)',
+    demoModeBtn: 'Demo görkezme',
+    realDbModeBtn: 'Hakyky maglumatlar',
 
   },
   RU: {
@@ -2286,6 +2288,8 @@ export const translations = {
     noClientsData: 'Нет данных по заказчикам',
     lotsPlanShort: 'Объявлено (План)',
     lotsFactShort: 'Разыграно (Факт)',
+    demoModeBtn: 'Демо-показ',
+    realDbModeBtn: 'Реальная БД',
 
   },
   EN: {
@@ -3429,6 +3433,8 @@ export const translations = {
     noClientsData: 'No client data',
     lotsPlanShort: 'Announced (Plan)',
     lotsFactShort: 'Awarded (Fact)',
+    demoModeBtn: 'Demo Showcase',
+    realDbModeBtn: 'Live Database',
 
   }
 };

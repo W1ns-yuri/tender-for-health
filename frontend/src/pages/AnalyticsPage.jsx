@@ -16,7 +16,8 @@ import {
   RefreshCw,
   Printer,
   FileSpreadsheet,
-  FileCode
+  FileCode,
+  Database
 } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
@@ -27,6 +28,11 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
   const { showAlert } = useAlert();
   const t = (key, fallback, params) => getTranslation(lang, key, fallback, params);
 
+  // Режим данных: 'demo' (демо-показ Bloomberg) или 'real' (реальная БД)
+  const [dataSource, setDataSource] = useState(() => {
+    return localStorage.getItem('tender_analytics_source') || 'demo';
+  });
+
   // Состояния фильтров
   const [period, setPeriod] = useState('30d');
   const [currency, setCurrency] = useState('TMT');
@@ -35,6 +41,19 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
   const [hoveredTimelineIdx, setHoveredTimelineIdx] = useState(null);
   const [hoveredDonutIdx, setHoveredDonutIdx] = useState(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
+
+  // Переключение источника данных (Демо vs Реальная БД)
+  const handleToggleDataSource = (mode) => {
+    setDataSource(mode);
+    localStorage.setItem('tender_analytics_source', mode);
+    if (mode === 'demo') {
+      setData(getDemoShowcaseData(period, currency));
+      showAlert(t('successTitle', 'Успешно'), 'Включен демонстрационный показ (Bloomberg)', 'info');
+    } else {
+      fetchAnalytics();
+      showAlert(t('successTitle', 'Успешно'), 'Включен режим реальных данных из базы', 'info');
+    }
+  };
 
   // Валютный символ
   const currencySymbol = useMemo(() => {
@@ -60,8 +79,13 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
   };
 
   useEffect(() => {
-    fetchAnalytics();
-  }, [period, currency]);
+    if (dataSource === 'demo') {
+      setData(getDemoShowcaseData(period, currency));
+      setLoading(false);
+    } else {
+      fetchAnalytics();
+    }
+  }, [period, currency, dataSource]);
 
   // Закрытие меню экспорта по клику вне
   useEffect(() => {
@@ -239,10 +263,17 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
                   <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                     {t('analyticsTitle', 'Аналитический центр платформы')}
                   </h1>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-ping" />
-                    LIVE
-                  </span>
+                  {dataSource === 'demo' ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 shadow-xs">
+                      <Sparkles size={11} className="mr-1 text-amber-500 animate-pulse" />
+                      DEMO SHOWCASE
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shadow-xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-ping" />
+                      LIVE DB ({data?.kpi?.totalProcedures || 0})
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {t('analyticsSubtitle', 'Сводные показатели торгов, финансовая эффективность и активность участников')}
@@ -251,9 +282,43 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
             </div>
           </div>
 
-          {/* Правый блок: Табы периодов + Валюта + Экспорт */}
+          {/* Правый блок: Переключатель режима данных + Табы периодов + Валюта + Экспорт */}
           <div className="flex flex-wrap items-center gap-3">
             
+            {/* Переключатель: Демо-показ vs Реальная БД */}
+            <div className={`inline-flex items-center p-1 rounded-xl border ${
+              isDarkMode ? 'bg-[#0b0f17] border-slate-800' : 'bg-slate-100/80 border-slate-200/60'
+            }`}>
+              <button
+                onClick={() => handleToggleDataSource('demo')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 ${
+                  dataSource === 'demo'
+                    ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
+                    : isDarkMode
+                    ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                }`}
+                title="Показать эталонные демонстрационные данные платформы (48 процедур, 24.8M TMT)"
+              >
+                <Sparkles size={12} />
+                <span>{t('demoModeBtn', 'Демо-показ')}</span>
+              </button>
+              <button
+                onClick={() => handleToggleDataSource('real')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 ${
+                  dataSource === 'real'
+                    ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
+                    : isDarkMode
+                    ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                }`}
+                title="Показать реальные данные из текущей базы данных проекта"
+              >
+                <Database size={12} />
+                <span>{t('realDbModeBtn', 'Реальная БД')}</span>
+              </button>
+            </div>
+
             {/* Табы периодов (Pills) */}
             <div className={`inline-flex items-center p-1 rounded-xl border ${
               isDarkMode ? 'bg-[#0b0f17] border-slate-800' : 'bg-slate-100/80 border-slate-200/60'
@@ -1160,5 +1225,87 @@ function getFallbackData(period = '30d', currency = 'TMT') {
     regions: [],
     topSuppliers: [],
     topClients: [],
+  };
+}
+
+// Эталонный демонстрационный набор данных (Bloomberg Showcase)
+function getDemoShowcaseData(period = '30d', currency = 'TMT') {
+  const currencyMultiplier = currency === 'USD' ? 0.285 : currency === 'EUR' ? 0.265 : 1;
+  const factors = {
+    '24h': { factor: 0.05, delta: '+3.1%', timelinePoints: ['04:00', '08:00', '12:00', '16:00', '20:00', '23:59'] },
+    '7d': { factor: 0.25, delta: '+8.4%', timelinePoints: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] },
+    '30d': { factor: 1.0, delta: '+14.2%', timelinePoints: ['1-5 сен', '6-10 сен', '11-15 сен', '16-20 сен', '21-25 сен', '26-30 сен'] },
+    '6m': { factor: 5.5, delta: '+21.6%', timelinePoints: ['Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен'] },
+    '1y': { factor: 11.2, delta: '+28.9%', timelinePoints: ['Окт', 'Ноя', 'Дек', 'Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен'] },
+  };
+  const meta = factors[period] || factors['30d'];
+  const baseVolume = 24850000 * meta.factor * currencyMultiplier;
+  const savings = Math.round(baseVolume * 0.087);
+  const totalVolume = Math.round(baseVolume);
+
+  return {
+    meta: {
+      period,
+      currency,
+      delta: meta.delta,
+      isDemo: true,
+    },
+    kpi: {
+      totalVolume,
+      savingsAmount: savings,
+      savingsPercent: '8.7',
+      totalProcedures: Math.round(48 * (meta.factor > 1 ? meta.factor * 0.35 : 1)),
+      successfulProcedures: Math.round(41 * (meta.factor > 1 ? meta.factor * 0.35 : 1)),
+      cancelledProcedures: Math.round(7 * (meta.factor > 1 ? meta.factor * 0.35 : 1)),
+      totalOffers: Math.round(164 * (meta.factor > 1 ? meta.factor * 0.35 : 1)),
+      competitionIndex: '3.4',
+      activeSuppliers: Math.round(86 * (meta.factor > 1 ? 1.3 : 1)),
+      newSuppliersPeriod: Math.round(12 * (meta.factor > 1 ? 1.5 : 1)),
+    },
+    timeline: meta.timelinePoints.map((label, idx) => {
+      const published = Math.round((totalVolume / meta.timelinePoints.length) * (0.88 + Math.sin(idx) * 0.15));
+      const awarded = Math.round(published * 0.91);
+      return {
+        label,
+        published,
+        awarded,
+        savings: published - awarded,
+      };
+    }),
+    statusDistribution: [
+      { id: 'COMPLETED', label: 'Успешно завершены', count: 41, percent: 68, color: '#10B981' },
+      { id: 'IN_REVIEW', label: 'На рассмотрении', count: 10, percent: 16, color: '#F59E0B' },
+      { id: 'ACTIVE', label: 'Активный приём заявок', count: 6, percent: 10, color: '#0EA5E9' },
+      { id: 'CANCELLED', label: 'Не состоялись', count: 4, percent: 6, color: '#94A3B8' },
+    ],
+    categories: [
+      { name: 'Фармацевтика и медикаменты', amount: Math.round(totalVolume * 0.42), percent: 42, tenders: 22 },
+      { name: 'Медицинское и диагностическое оборудование', amount: Math.round(totalVolume * 0.28), percent: 28, tenders: 14 },
+      { name: 'IT-инфраструктура и расходные материалы', amount: Math.round(totalVolume * 0.14), percent: 14, tenders: 7 },
+      { name: 'Капитальный ремонт и строительство ЛПУ', amount: Math.round(totalVolume * 0.10), percent: 10, tenders: 5 },
+      { name: 'Сервисное обслуживание и клинические услуги', amount: Math.round(totalVolume * 0.06), percent: 6, tenders: 3 },
+    ],
+    regions: [
+      { id: 'ashgabat', name: 'г. Ашхабад (Aşgabat)', amount: Math.round(totalVolume * 0.46), percent: 46, tenders: 21 },
+      { id: 'arkadag', name: 'г. Аркадаг (Arkadag)', amount: Math.round(totalVolume * 0.16), percent: 16, tenders: 8 },
+      { id: 'mary', name: 'Марыйский велаят', amount: Math.round(totalVolume * 0.11), percent: 11, tenders: 6 },
+      { id: 'lebap', name: 'Лебапский велаят', amount: Math.round(totalVolume * 0.10), percent: 10, tenders: 5 },
+      { id: 'balkan', name: 'Балканский велаят', amount: Math.round(totalVolume * 0.07), percent: 7, tenders: 4 },
+      { id: 'dashoguz', name: 'Дашогузский велаят', amount: Math.round(totalVolume * 0.06), percent: 6, tenders: 3 },
+      { id: 'ahal', name: 'Ахалский велаят', amount: Math.round(totalVolume * 0.04), percent: 4, tenders: 2 },
+    ],
+    topSuppliers: [
+      { rank: 1, name: 'Hojalyk Jemgyýeti «Derman Saglyk»', category: 'Фармацевтика и препараты', winsCount: 14, totalContracts: Math.round(totalVolume * 0.24), winRate: 78 },
+      { rank: 2, name: 'ÝGP «MedTehnika Üpjünçilik»', category: 'Диагностика и медтехника', winsCount: 9, totalContracts: Math.round(totalVolume * 0.18), winRate: 64 },
+      { rank: 3, name: 'HJ «Sanly Lukmançylyk Ulgamlary»', category: 'IT и медицинские базы', winsCount: 7, totalContracts: Math.round(totalVolume * 0.11), winRate: 70 },
+      { rank: 4, name: 'HK «Arassa Lukman Enjamlary»', category: 'Расходные материалы', winsCount: 6, totalContracts: Math.round(totalVolume * 0.08), winRate: 55 },
+      { rank: 5, name: 'HJ «Gurluşyk Med Inžiniring»', category: 'Ремонт и спецклининг ЛПУ', winsCount: 4, totalContracts: Math.round(totalVolume * 0.06), winRate: 50 },
+    ],
+    topClients: [
+      { rank: 1, name: 'Министерство здравоохранения и медицинской промышленности', procedures: 22, budget: Math.round(totalVolume * 0.52), avgCompetition: 3.8 },
+      { rank: 2, name: 'Международный центр кардиологии г. Ашхабад', procedures: 11, budget: Math.round(totalVolume * 0.21), avgCompetition: 3.2 },
+      { rank: 3, name: 'Многопрофильная больница г. Аркадаг', procedures: 8, budget: Math.round(totalVolume * 0.15), avgCompetition: 3.5 },
+      { rank: 4, name: 'Диагностический центр Марыйского велаята', procedures: 5, budget: Math.round(totalVolume * 0.08), avgCompetition: 2.9 },
+    ],
   };
 }
