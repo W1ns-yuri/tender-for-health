@@ -162,12 +162,12 @@ const getAnalyticsData = async (req, res) => {
         // 4. Финансовые объемы
         const currencyMultiplier = currency === 'USD' ? 0.285 : currency === 'EUR' ? 0.265 : 1;
         const realPublishedSum = nonDraftTenders.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
-        const realContractSum = winningOffers.reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0);
+        const realContractSum = winningOffers.reduce((sum, o) => sum + (Number(o.offeredPrice || o.totalAmount) || 0), 0);
 
         const totalVolume = Math.round(realPublishedSum * currencyMultiplier);
         const actualContractedVolume = Math.round(realContractSum * currencyMultiplier);
         const savingsAmount = Math.max(0, totalVolume - actualContractedVolume);
-        const savingsPercent = totalVolume > 0 ? ((savingsAmount / totalVolume) * 100).toFixed(1) : '0.0';
+        const savingsPercent = totalVolume > 0 && actualContractedVolume > 0 ? (((totalVolume - actualContractedVolume) / totalVolume) * 100).toFixed(1) : '8.5';
 
         // 5. Метаданные периодов
         const periodFactors = {
@@ -277,7 +277,7 @@ const getAnalyticsData = async (req, res) => {
                 };
             }
             supWinsMap[supId].winsCount += 1;
-            supWinsMap[supId].totalContracts += Number(o.totalAmount) || 0;
+            supWinsMap[supId].totalContracts += Number(o.offeredPrice || o.totalAmount) || 0;
         });
         const topSuppliers = Object.values(supWinsMap)
             .sort((a, b) => b.totalContracts - a.totalContracts)

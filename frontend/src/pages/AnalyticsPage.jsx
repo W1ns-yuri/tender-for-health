@@ -48,10 +48,8 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
     localStorage.setItem('tender_analytics_source', mode);
     if (mode === 'demo') {
       setData(getDemoShowcaseData(period, currency));
-      showAlert(t('successTitle', 'Успешно'), 'Включен демонстрационный показ (Bloomberg)', 'info');
     } else {
       fetchAnalytics();
-      showAlert(t('successTitle', 'Успешно'), 'Включен режим реальных данных из базы', 'info');
     }
   };
 
@@ -252,29 +250,16 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
       }`}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           
-          {/* Левый блок: Заголовок + Бейдж реального времени */}
+          {/* Левый блок: Заголовок */}
           <div>
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
                 <BarChart2 size={22} className="animate-pulse" />
               </div>
               <div>
-                <div className="flex items-center space-x-2.5">
-                  <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                    {t('analyticsTitle', 'Аналитический центр платформы')}
-                  </h1>
-                  {dataSource === 'demo' ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 shadow-xs">
-                      <Sparkles size={11} className="mr-1 text-amber-500 animate-pulse" />
-                      DEMO SHOWCASE
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shadow-xs">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-ping" />
-                      LIVE DB ({data?.kpi?.totalProcedures || 0})
-                    </span>
-                  )}
-                </div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  {t('analyticsTitle', 'Аналитический центр платформы')}
+                </h1>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {t('analyticsSubtitle', 'Сводные показатели торгов, финансовая эффективность и активность участников')}
                 </p>
@@ -283,41 +268,32 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
           </div>
 
           {/* Правый блок: Переключатель режима данных + Табы периодов + Валюта + Экспорт */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             
-            {/* Переключатель: Демо-показ vs Реальная БД */}
-            <div className={`inline-flex items-center p-1 rounded-xl border ${
-              isDarkMode ? 'bg-[#0b0f17] border-slate-800' : 'bg-slate-100/80 border-slate-200/60'
-            }`}>
-              <button
-                onClick={() => handleToggleDataSource('demo')}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 ${
-                  dataSource === 'demo'
-                    ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
-                    : isDarkMode
-                    ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
-                }`}
-                title="Показать эталонные демонстрационные данные платформы (48 процедур, 24.8M TMT)"
-              >
-                <Sparkles size={12} />
-                <span>{t('demoModeBtn', 'Демо-показ')}</span>
-              </button>
-              <button
-                onClick={() => handleToggleDataSource('real')}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 ${
-                  dataSource === 'real'
-                    ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
-                    : isDarkMode
-                    ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
-                }`}
-                title="Показать реальные данные из текущей базы данных проекта"
-              >
-                <Database size={12} />
-                <span>{t('realDbModeBtn', 'Реальная БД')}</span>
-              </button>
-            </div>
+            {/* Компактный переключатель: Демо / Реальная БД */}
+            <button
+              onClick={() => handleToggleDataSource(dataSource === 'demo' ? 'real' : 'demo')}
+              className={`inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all duration-150 ${
+                dataSource === 'real'
+                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-600/25'
+                  : isDarkMode
+                  ? 'bg-[#0b0f17] border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
+                  : 'bg-slate-100/90 border-slate-200/80 text-slate-700 hover:bg-slate-200/70'
+              }`}
+              title="Переключить между демонстрационным показом и реальной базой данных"
+            >
+              {dataSource === 'real' ? (
+                <>
+                  <Database size={13} className="text-white" />
+                  <span>{t('realDbModeBtn', 'Реальная БД')}</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={13} className="text-amber-500" />
+                  <span>{t('demoModeBtn', 'Демо-показ')}</span>
+                </>
+              )}
+            </button>
 
             {/* Табы периодов (Pills) */}
             <div className={`inline-flex items-center p-1 rounded-xl border ${
