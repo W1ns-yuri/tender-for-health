@@ -213,7 +213,6 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
 
     try {
       setSavingBase(true);
-      setErrorMsg('');
 
       const payload = {
         tenderNumber: formData.tenderNumber?.trim() || undefined,
