@@ -1,5 +1,5 @@
-import React from 'react';
-import { Shield, XCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import React, { useState } from 'react';
+import { Shield, XCircle, CheckCircle2, ArrowLeft, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function SupplierAdminPanel({
@@ -11,8 +11,25 @@ export default function SupplierAdminPanel({
   t = (k, f) => f
 }) {
   const navigate = useNavigate();
+  const [isDismissed, setIsDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(`dismissed_verified_banner_${supplier?.id}`) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleDismiss = () => {
+    setIsDismissed(true);
+    try {
+      localStorage.setItem(`dismissed_verified_banner_${supplier?.id}`, 'true');
+    } catch {
+      // ignore
+    }
+  };
 
   if (!isAdmin || !supplier) return null;
+  if (supplier.verificationStatus === 'VERIFIED' && isDismissed) return null;
 
   return supplier.verificationStatus !== 'VERIFIED' ? (
     <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
@@ -64,14 +81,24 @@ export default function SupplierAdminPanel({
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => navigate('/suppliers', { state: { activeTab: 'pending' } })}
-          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <ArrowLeft size={16} />
-          <span>{t('backToModerationList', 'Вернуться к заявкам')}</span>
-        </button>
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <button
+            type="button"
+            onClick={() => navigate('/suppliers')}
+            className="flex-1 sm:flex-initial px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <ArrowLeft size={16} />
+            <span>{t('backToSuppliersList', 'Назад к списку поставщиков')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleDismiss}
+            title={t('close', 'Закрыть')}
+            className="p-2 text-emerald-700/70 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-200 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/50 rounded-lg transition-colors cursor-pointer"
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
     </div>
   );

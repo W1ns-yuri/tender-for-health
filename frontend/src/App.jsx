@@ -53,8 +53,33 @@ export default function App() {
     }
   }, [isDarkMode]);
 
-  const pathParts = location.pathname.split('/').filter(Boolean);
-  const activeTab = pathParts.length > 0 ? pathParts[0] : 'dashboard';
+  // Интеллектуальное определение активной вкладки сайдбара по текущему URL
+  const getActiveTab = (pathname) => {
+    if (!pathname || pathname === '/') return 'dashboard';
+    if (pathname.startsWith('/create-tender')) return 'create-tender';
+    if (
+      pathname.startsWith('/tenders') ||
+      pathname.startsWith('/tender-details') ||
+      pathname.startsWith('/create-offer')
+    ) {
+      return 'tenders';
+    }
+    if (pathname.startsWith('/suppliers')) return 'suppliers';
+    if (pathname.startsWith('/offers') || pathname.startsWith('/my-offers')) return 'offers';
+    if (pathname.startsWith('/evaluation') || pathname.startsWith('/admin/evaluations')) return 'evaluation';
+    if (pathname.startsWith('/analytics')) return 'analytics';
+    if (pathname.startsWith('/settings')) return 'settings';
+    if (pathname.startsWith('/profile')) return 'profile';
+    if (pathname.startsWith('/umumy') || pathname.startsWith('/catalogs') || pathname.startsWith('/catalog')) return 'umumy';
+    if (pathname.startsWith('/haryt') || pathname.startsWith('/products')) return 'haryt';
+    if (pathname.startsWith('/administrasiya') || pathname.startsWith('/logs') || pathname.startsWith('/admin-logs')) return 'administrasiya';
+    if (pathname.startsWith('/dashboard')) return 'dashboard';
+
+    const pathParts = pathname.split('/').filter(Boolean);
+    return pathParts.length > 0 ? pathParts[0] : 'dashboard';
+  };
+
+  const activeTab = getActiveTab(location.pathname);
 
   const setActiveTab = (tab) => {
     navigate(`/${tab}`);
@@ -124,6 +149,8 @@ export default function App() {
   const handleNavigate = (tab, tenderId = null) => {
     if (tab === 'edit-tender' && tenderId) {
       navigate(`/tenders/${tenderId}/edit`);
+    } else if ((tab === 'tender-details' || tab === 'tenders') && tenderId) {
+      navigate(`/tenders/${tenderId}`);
     } else if (tenderId) {
       navigate(`/${tab}/${tenderId}`);
     } else {
@@ -204,6 +231,7 @@ export default function App() {
               <Route path="/tender-details/:id" element={<TenderDetails onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/create-offer/:id" element={<CreateOfferPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/offers" element={<MyOffers role={role} isDarkMode={isDarkMode} lang={lang} />} />
+              <Route path="/my-offers" element={<Navigate to="/offers" replace />} />
               <Route path="/offers/:id" element={<OfferDetailsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/evaluation" element={role === 'SUPPLIER' ? <SupplierWins role={role} isDarkMode={isDarkMode} lang={lang} /> : <Evaluation role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/evaluation/:id" element={role === 'SUPPLIER' ? <SupplierWins role={role} isDarkMode={isDarkMode} lang={lang} /> : <EvaluationDetailsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />

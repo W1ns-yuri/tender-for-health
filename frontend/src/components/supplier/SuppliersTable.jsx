@@ -14,6 +14,7 @@ import {
 } from '../ui';
 import { safeString, getRoleTheme } from '../../utils/themeUtils';
 import { getTranslation } from '../../utils/translations';
+import { parseCompanyName } from '../../utils/pluralize';
 
 export default function SuppliersTable({
   suppliers = [],
@@ -104,12 +105,21 @@ export default function SuppliersTable({
                 }
               />
             ) : (
-              suppliers.map((s, idx) => (
-                <TableRow key={s.id || idx}>
-                  {/* Название */}
-                  <TableCell className="font-semibold text-slate-900 dark:text-white">
-                    {safeString(s.name)}
-                  </TableCell>
+              suppliers.map((s, idx) => {
+                const parsed = parseCompanyName(s.name);
+                return (
+                  <TableRow key={s.id || idx}>
+                    {/* Название */}
+                    <TableCell className="font-semibold text-slate-900 dark:text-white">
+                      <div className="flex items-center gap-2">
+                        {parsed.opf && (
+                          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
+                            {parsed.opf}
+                          </span>
+                        )}
+                        <span className="truncate">{parsed.cleanName}</span>
+                      </div>
+                    </TableCell>
 
                   {/* Направления деятельности */}
                   <TableCell>
@@ -210,8 +220,9 @@ export default function SuppliersTable({
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
+              );
+            })
+          )}
           </TableBody>
         </Table>
       </TableContainer>

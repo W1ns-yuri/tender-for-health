@@ -14,6 +14,7 @@ import API from '../services/api';
 import { getTranslation } from '../utils/translations';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
+import { pluralize, cleanLotTitle } from '../utils/pluralize';
 
 export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
   const { id } = useParams();
@@ -165,7 +166,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
             </div>
             <div className="text-[11px] text-slate-500 font-medium flex items-center justify-end gap-1.5 whitespace-nowrap">
               <CheckCircle2 size={13} className={isAdmin ? "text-emerald-600" : "text-blue-600"} />
-              <span>{rawSpecs.length} {t('itemsInBidCount', 'позиций в заявке')}</span>
+              <span>{pluralize(rawSpecs.length, ['позиция', 'позиции', 'позиций'])} {t('inBidSuffix', 'в заявке')}</span>
             </div>
           </div>
         </div>
@@ -210,16 +211,29 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
             </h3>
 
             <div className="space-y-2 text-xs">
-              <div className="flex items-start justify-between gap-2">
-                <span className="text-slate-400 font-medium">{t('generalDeliveryTermLabel', 'Условие поставки (общее):')}</span>
-                <span className={`px-2.5 py-0.5 rounded-md font-bold border ${
-                  isAdmin
-                    ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                    : 'bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
-                }`}>
-                  {offer.deliveryTerm ? `${offer.deliveryTerm.shortName} — ${offer.deliveryTerm.name}` : (t('byLotsBadge', 'По лотам'))}
-                </span>
-              </div>
+              {offer.tender?.type === 'SERVICES' || offer.tender?.type === 'WORKS' || lotGroups.some(g => g.lot?.lotType === 'SERVICES' || g.lot?.lotType === 'WORKS' || (g.lot?.name && (g.lot.name.toLowerCase().includes('сервис') || g.lot.name.toLowerCase().includes('ремонт')))) ? (
+                <>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-slate-400 font-medium">{t('workAddressLabel', 'Адрес выполнения работ:')}</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200 text-right">{lotGroups[0]?.lot?.workAddress || lotGroups[0]?.lot?.deliveryAddress || t('ashgabatCity', 'г. Ашхабад')}</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-slate-400 font-medium">{t('slaReglamentLabel', 'Срок оказания услуг / Регламент SLA:')}</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200 text-right">{lotGroups[0]?.lot?.slaPeriod || lotGroups[0]?.lot?.workPeriod || t('standardSla', 'По регламенту SLA')}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-slate-400 font-medium">{t('generalDeliveryTermLabel', 'Условие поставки (общее):')}</span>
+                  <span className={`px-2.5 py-0.5 rounded-md font-bold border ${
+                    isAdmin
+                      ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                      : 'bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                  }`}>
+                    {offer.deliveryTerm ? `${offer.deliveryTerm.shortName} — ${offer.deliveryTerm.name}` : (t('byLotsBadge', 'По лотам'))}
+                  </span>
+                </div>
+              )}
 
               <div className="flex items-start justify-between gap-2">
                 <span className="text-slate-400 font-medium">{t('paymentTermsLabel', 'Условия оплаты:')}</span>
@@ -251,7 +265,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
               ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
               : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
           }`}>
-            {t('lotsAndPositionsCountStr', `Лотов: ${lotGroups.length || 1} | Позиций: ${rawSpecs.length}`, { lotsCount: lotGroups.length || 1, specsCount: rawSpecs.length })}
+            {t('lotsCountLabel', 'Лотов')}: {lotGroups.length || 1} | {t('positionsCountLabel', 'Позиций')}: {rawSpecs.length}
           </span>
         </div>
 
@@ -262,6 +276,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
             const lotDeliveryTerm = group.lot?.deliveryTerm?.shortName 
               ? `${group.lot.deliveryTerm.shortName} — ${group.lot.deliveryTerm.name}`
               : (offer.deliveryTerm ? `${offer.deliveryTerm.shortName} — ${offer.deliveryTerm.name}` : null);
+            const isLotServiceOrWork = group.lot?.lotType === 'SERVICES' || group.lot?.lotType === 'WORKS' || (group.lot?.name && (group.lot.name.toLowerCase().includes('сервис') || group.lot.name.toLowerCase().includes('ремонт') || group.lot.name.toLowerCase().includes('услуг')));
 
             return (
               <div key={group.lot.id || groupIdx} className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
@@ -271,12 +286,23 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                 }`}>
                   <div className="flex items-center gap-3">
                     <h4 className="font-extrabold text-base text-slate-800 dark:text-slate-100">
-                      {t('lotUpperLabel', 'Лот')} #{groupIdx + 1}: {group.lot.name}
+                      {t('lotUpperLabel', 'Лот')} #{groupIdx + 1}: {cleanLotTitle(group.lot.name, groupIdx)}
                     </h4>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-4">
-                    {lotDeliveryTerm && (
+                    {isLotServiceOrWork ? (
+                      <div className="flex flex-wrap items-center gap-3 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-400 font-medium">{t('workAddressLabel', 'Адрес работ:')}</span>
+                          <strong className="text-slate-700 dark:text-slate-300 font-semibold">{group.lot?.workAddress || group.lot?.deliveryAddress || t('ashgabatCity', 'г. Ашхабад')}</strong>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-400 font-medium">{t('slaReglamentLabel', 'Регламент SLA:')}</span>
+                          <strong className="text-slate-700 dark:text-slate-300 font-semibold">{group.lot?.slaPeriod || group.lot?.workPeriod || t('standardSla', 'По регламенту SLA')}</strong>
+                        </div>
+                      </div>
+                    ) : lotDeliveryTerm && (
                       <div className="flex items-center gap-1.5 text-xs">
                         <span className="text-slate-400 font-medium">{t('deliveryConditionWithColon', 'Условие поставки:')}</span>
                         <strong className={`px-2.5 py-0.5 rounded-md font-bold border ${
@@ -310,8 +336,8 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                         <th className="py-2.5 px-3 min-w-45">{t('specBrand', 'Производитель / Модель')}</th>
                         <th className="py-2.5 px-3 w-28 text-center">{t('specUnit', 'Ед. изм.')}</th>
                         <th className="py-2.5 px-3 w-28 text-center">{t('specQty', 'Количество')}</th>
-                        <th className="py-2.5 px-3 w-36 text-center">{t('unitPriceWithCurrency', `Цена за ед. (${currencyCode})`, { currencyCode })}</th>
-                        <th className="py-2.5 px-3 w-36 text-right">{t('totalSumWithCurrency', `Сумма (${currencyCode})`, { currencyCode })}</th>
+                        <th className="py-2.5 px-3 w-36 text-center">{t('unitPrice', 'Цена за ед.')} ({currencyCode})</th>
+                        <th className="py-2.5 px-3 w-36 text-right">{t('totalSum', 'Сумма')} ({currencyCode})</th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>

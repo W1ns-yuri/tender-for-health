@@ -42,8 +42,8 @@ export const getStatusBadge = (status, lang = 'RU', isDarkMode = false) => {
       );
     case 'TABSARYLDY':
       return (
-        <span className={`${baseClass} ${isDarkMode ? 'bg-blue-950/60 text-blue-300 border-blue-800/60' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
-          {getTranslation(lang, 'statusTabsyryldy', 'Tabşyryldy')}
+        <span className={`${baseClass} font-medium ${isDarkMode ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
+          {getTranslation(lang, 'statusTabsyryldy', 'Подано')}
         </span>
       );
     case 'KABUL_EDILDI':

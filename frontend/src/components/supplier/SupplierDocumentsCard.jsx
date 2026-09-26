@@ -100,7 +100,7 @@ export default function SupplierDocumentsCard({
           {t('companyDocumentsTitle', 'Документы компании')}
         </h3>
         <p className="text-xs text-slate-400">
-          {t('documentFormatsHelp', 'Поддерживаются форматы: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (до 15 МБ)')}
+          {t('documentFormatsHelp', 'Поддерживаемые форматы: PDF, JPG (до 10 МБ)')}
         </p>
       </div>
 

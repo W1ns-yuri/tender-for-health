@@ -644,7 +644,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                   <div>
                     <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
                       {regData.countryCode === 'TM'
-                        ? t('taxIdLabelTM', 'Код предприятия (ХОПО / ОКПО) / ИНН')
+                        ? t('taxIdLabelTM', 'STŞK (налоговый номер) / ÝŞÝDS')
                         : t('taxIdLabelForeign', 'Регистрационный номер / Tax ID / TIN')
                       }*
                     </label>
@@ -758,7 +758,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                       onChange={(e) => setRegData({ ...regData, termsAccepted: e.target.checked })}
                       className="mt-0.5 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                     />
-                    <label htmlFor="termsAccepted" className="ml-2 text-xs text-slate-500 leading-tight cursor-pointer select-none">
+                    <label htmlFor="termsAccepted" className="ml-2 text-xs text-slate-700 dark:text-slate-300 font-medium leading-tight cursor-pointer select-none hover:text-slate-900 transition-colors">
                       {t('termsAcceptedAgreementText', 'Я согласен с регламентом проведения электронных торгов и обработкой персональных данных.')}
                     </label>
                   </div>

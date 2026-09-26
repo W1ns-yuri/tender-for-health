@@ -6,6 +6,7 @@ import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { getStatusBadge } from '../utils/statusUtils';
 import { TableFilters } from '../components/ui';
+import { pluralize } from '../utils/pluralize';
 
 export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
@@ -171,14 +172,14 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
         </div>
 
         <div className={`p-4 rounded-xl border shadow-xs ${theme.cardBg} flex items-center gap-3.5`}>
-          <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
             <FileText size={20} />
           </div>
           <div>
             <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
               {t('submittedOffers', 'Подано предложений')}
             </div>
-            <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{totalOffersCount}</div>
+            <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{totalOffersCount}</div>
           </div>
         </div>
 
@@ -250,7 +251,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
       />
 
       {/* 4. Full-Width 100% Registry Table */}
-      <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
+      <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg} ${theme.tableCardBorderTop}`}>
         {loading ? (
           <div className="p-16 text-center text-slate-400">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-3 border-emerald-500 border-t-transparent mb-3" />
@@ -331,7 +332,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                       {/* Количество лотов */}
                       <td className="py-3 px-4 text-center">
                         <span className="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs">
-                          {lotsCount > 0 ? `${lotsCount} ${t('lotsAbbr', 'лот.')}` : `1 ${t('lotUpperLabel', 'лот')}`}
+                          {lotsCount > 0 ? pluralize(lotsCount, ['лот', 'лота', 'лотов']) : `1 ${t('lotUpperLabel', 'лот')}`}
                         </span>
                       </td>
 
@@ -345,7 +346,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                           }`}
                         >
                           <FileText size={12} />
-                          {offersCount} {t('offersSuffix', 'заявок')}
+                          {pluralize(offersCount, ['заявка', 'заявки', 'заявок'])}
                         </span>
                       </td>
 

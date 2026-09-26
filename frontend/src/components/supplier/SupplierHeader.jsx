@@ -17,7 +17,7 @@ export default function SupplierHeader({
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pb-6 border-b border-slate-100 dark:border-slate-800">
       <div className="relative group shrink-0">
-        <div className="h-20 w-20 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-white rounded-[1.25rem] flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0 font-black text-2xl tracking-wider select-none overflow-hidden">
+        <div className="h-20 w-20 bg-slate-800 dark:bg-slate-700 text-white rounded-[1.25rem] flex items-center justify-center shadow-md shadow-slate-900/10 shrink-0 font-black text-2xl tracking-wider select-none overflow-hidden border border-slate-700/50">
           {(formData?.logoUrl || supplier.logoUrl) ? (
             <img
               src={formData?.logoUrl || supplier.logoUrl}

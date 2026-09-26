@@ -81,7 +81,7 @@ export default function SupplierBasicInfoCard({
         {/* Код предприятия (ХОПО / ОКПО) для ТМ или регистрационный номер для иностранных компаний */}
         <div>
           <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1">
-            {isForeignCompany ? t('taxIdLabelForeign', 'Регистрационный номер / Tax ID') : t('okpoCodeLabel', 'Код предприятия (ХОПО / ОКПО)')}
+            {isForeignCompany ? t('taxIdLabelForeign', 'Регистрационный номер / Tax ID') : t('okpoCodeLabel', 'STŞK / ÝŞÝDS')}
           </label>
           <input
             type="text"

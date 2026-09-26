@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import API from '../services/api';
 import { getTranslation } from '../utils/translations';
+import { pluralize } from '../utils/pluralize';
 import { useAlert } from '../context/AlertContext';
 import { CustomSelect } from '../components/ui';
 
@@ -459,7 +460,7 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
             </div>
           </div>
           <div className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
-            {formatNumber(data?.kpi?.totalProcedures || 0)} <span className="text-sm font-normal text-slate-400">{t('tendersCount', 'тендеров')}</span>
+            {formatNumber(data?.kpi?.totalProcedures || 0)} <span className="text-sm font-normal text-slate-400">{pluralize(Number(data?.kpi?.totalProcedures || 0), ['тендер', 'тендера', 'тендеров']).replace(/^\d+\s*/, '')}</span>
           </div>
           <div className="flex items-center space-x-1.5 mt-2.5 text-[11px] text-slate-500 dark:text-slate-400">
             <span className="font-semibold text-emerald-600 dark:text-emerald-400">{data?.kpi?.successfulProcedures || 0} {t('completedShort', 'успешно')}</span>
@@ -479,7 +480,7 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
             </div>
           </div>
           <div className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
-            {formatNumber(data?.kpi?.totalOffers || 0)} <span className="text-sm font-normal text-slate-400">заявок</span>
+            {formatNumber(data?.kpi?.totalOffers || 0)} <span className="text-sm font-normal text-slate-400">{pluralize(Number(data?.kpi?.totalOffers || 0), ['заявка', 'заявки', 'заявок']).replace(/^\d+\s*/, '')}</span>
           </div>
           <div className="flex items-center mt-2.5 text-[11px] text-slate-500 dark:text-slate-400">
             <span className="font-medium text-slate-700 dark:text-slate-300">
@@ -499,7 +500,7 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
             </div>
           </div>
           <div className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
-            {formatNumber(data?.kpi?.activeSuppliers || 0)} <span className="text-sm font-normal text-slate-400">компаний</span>
+            {formatNumber(data?.kpi?.activeSuppliers || 0)} <span className="text-sm font-normal text-slate-400">{pluralize(Number(data?.kpi?.activeSuppliers || 0), ['компания', 'компании', 'компаний']).replace(/^\d+\s*/, '')}</span>
           </div>
           <div className="flex items-center mt-2.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
             <span>+{data?.kpi?.newSuppliersPeriod || 0} новых за период</span>

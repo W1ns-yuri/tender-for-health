@@ -11,6 +11,7 @@ import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { getStatusBadge } from '../utils/statusUtils';
 import { useAlert } from '../context/AlertContext';
+import { pluralize, cleanLotTitle } from '../utils/pluralize';
 
 export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' }) {
   const { id } = useParams();
@@ -212,7 +213,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
   }
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-32">
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-40">
       {/* 1. Top Navigation Bar with Back button & Breadcrumbs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3">
@@ -317,14 +318,14 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
               {t('lotsAndBidsTab', 'Лоты и заявки')}
             </p>
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              {lotsList.length} {t('lotsAbbr', 'лот.')} • {(tenderDetails.offers || []).length} {t('offersSuffix', 'заявок')}
+              {pluralize(lotsList.length, ['лот', 'лота', 'лотов'])} • {pluralize((tenderDetails.offers || []).length, ['заявка', 'заявки', 'заявок'])}
             </p>
           </div>
         </div>
       </div>
 
       {/* 3. 100% Full-Width Lots Work Area */}
-      <div className="space-y-8">
+      <div className="space-y-8 mb-16">
         {lotsList.length === 0 ? (
           <div className={`p-12 text-center rounded-2xl border ${theme.cardBg} text-slate-400`}>
             <AlertCircle size={40} className="mx-auto mb-2 opacity-30" />
@@ -400,7 +401,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                         {t('lotUpperLabel', 'ЛОТ')} #{lotIndex + 1}
                       </span>
                       <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
-                        {lot.name}
+                        {cleanLotTitle(lot.name, lotIndex)}
                       </h3>
                       {hasWinner && (
                         <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">

@@ -652,8 +652,12 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   const bgClass = isDarkMode ? 'text-slate-100' : 'text-slate-800';
   const cardBg = isDarkMode ? 'bg-slate-900 border-slate-800 shadow-none' : 'bg-white border-slate-200/60 shadow-xl shadow-slate-200/40';
   const inputBg = isDarkMode
-    ? 'bg-slate-800/80 border-slate-700/80 text-white placeholder-slate-500 focus:border-blue-500'
-    : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-blue-500 shadow-xs';
+    ? (isEditable
+        ? 'bg-slate-800/80 border-slate-700/80 text-white placeholder-slate-500 focus:border-blue-500'
+        : 'bg-slate-800/40 border-slate-700/50 text-slate-300 cursor-default select-text')
+    : (isEditable
+        ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-blue-500 shadow-xs'
+        : 'bg-slate-50 border-slate-200 text-slate-700 cursor-default select-text');
 
   if (loading) {
     return (

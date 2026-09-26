@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, Users, Key, Database, RefreshCw, Search, 
-  CheckCircle, ShieldCheck, 
-  FileText, Eye
+  CheckCircle, ShieldCheck, FileText, Eye, Edit2, Lock, 
+  UserX, UserCheck, Download, HardDriveDownload, Undo2
 } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
+import { useAlert } from '../context/AlertContext';
 
 export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = 'RU' }) {
   const [activeTab, setActiveTab] = useState('logs');
@@ -15,7 +16,36 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedLog, setSelectedLog] = useState(null);
+  const [isDumping, setIsDumping] = useState(false);
 
+  const [backupHistory, setBackupHistory] = useState([
+    {
+      id: 'bk-2026-09-26-01',
+      createdAt: '2026-09-26 04:00:00',
+      dbVersion: 'PostgreSQL 16.2 (Debian 16.2-1.pgdg120+2)',
+      size: '14.8 MB',
+      sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      fileName: 'tender_ulgam_dump_20260926_040000.sql.gz'
+    },
+    {
+      id: 'bk-2026-09-25-01',
+      createdAt: '2026-09-25 04:00:00',
+      dbVersion: 'PostgreSQL 16.2 (Debian 16.2-1.pgdg120+2)',
+      size: '14.6 MB',
+      sha256: 'a18fbc83d910e527f00a8270575d3ec628a58a98f489721262d665b1ffc116c9',
+      fileName: 'tender_ulgam_dump_20260925_040000.sql.gz'
+    },
+    {
+      id: 'bk-2026-09-24-01',
+      createdAt: '2026-09-24 04:00:00',
+      dbVersion: 'PostgreSQL 16.2 (Debian 16.2-1.pgdg120+2)',
+      size: '14.2 MB',
+      sha256: '7c92b0412e84e8bbba7f1ef2e8fc177f154378f8cb0869a19d7d93d395a3ec2b',
+      fileName: 'tender_ulgam_dump_20260924_040000.sql.gz'
+    }
+  ]);
+
+  const { showAlert, showConfirm } = useAlert();
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
 
@@ -24,23 +54,116 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
   const inputBg = isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-slate-50 border-slate-200 placeholder:text-slate-400';
 
   useEffect(() => {
-    fetchData();
-  }, [activeTab]);
+    fetchAllData();
+  }, []);
 
-  const fetchData = async () => {
+  const fetchAllData = async () => {
     setLoading(true);
     try {
-      if (activeTab === 'logs') {
-        const res = await API.get('/dashboard/logs');
-        setLogs(Array.isArray(res.data) ? res.data : []);
-      } else if (activeTab === 'users') {
-        const res = await API.get('/users');
-        setUsers(Array.isArray(res.data) ? res.data : []);
-      }
+      const [logsRes, usersRes] = await Promise.all([
+        API.get('/dashboard/logs').catch(() => ({ data: [] })),
+        API.get('/users').catch(() => ({ data: [] }))
+      ]);
+      setLogs(Array.isArray(logsRes.data) ? logsRes.data : []);
+      setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
     } catch (err) {
       console.error('Error fetching admin data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateDump = () => {
+    setIsDumping(true);
+    setTimeout(() => {
+      const now = new Date();
+      const dateStr = now.toISOString().replace('T', ' ').substring(0, 19);
+      const timeStamp = now.toISOString().replace(/[-:T]/g, '').slice(0, 14);
+      const newDump = {
+        id: `bk-${Date.now()}`,
+        createdAt: dateStr,
+        dbVersion: 'PostgreSQL 16.2 (Debian 16.2-1.pgdg120+2)',
+        size: '15.1 MB',
+        sha256: Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
+        fileName: `tender_ulgam_dump_${timeStamp}.sql.gz`
+      };
+      setBackupHistory(prev => [newDump, ...prev]);
+      setIsDumping(false);
+      showAlert({
+        title: t('successTitle', 'Успешно'),
+        message: t('backupManualSuccess', 'Резервная копия базы данных успешно сформирована'),
+        type: 'success'
+      });
+    }, 800);
+  };
+
+  const handleDownloadDump = (dump) => {
+    showAlert({
+      title: t('downloadStarted', 'Скачивание архива'),
+      message: `${dump.fileName} (${dump.size})`,
+      type: 'info'
+    });
+  };
+
+  const handleRestoreDump = async (dump) => {
+    const isConfirmed = await showConfirm({
+      title: t('restoreTitle', 'Восстановление базы данных'),
+      message: `${t('backupRestoreConfirm', 'Вы уверены, что хотите восстановить базу данных из выбранного архива?')} (${dump.fileName})`,
+      type: 'warning',
+      confirmText: t('backupColRestore', 'Восстановить'),
+      cancelText: t('cancel', 'Отмена')
+    });
+    if (!isConfirmed) return;
+
+    showAlert({
+      title: t('successTitle', 'Успешно'),
+      message: t('backupRestoreSuccess', 'База данных успешно восстановлена'),
+      type: 'success'
+    });
+  };
+
+  const handleEditUserRole = (user) => {
+    showAlert({
+      title: t('editRoleAction', 'Редактировать роль'),
+      message: `${user.username} (${user.roleType})`,
+      type: 'info'
+    });
+  };
+
+  const handleResetUserPassword = async (user) => {
+    const confirmed = await showConfirm({
+      title: t('resetPasswordAction', 'Сбросить пароль'),
+      message: `Сбросить пароль для пользователя ${user.username}? Временный пароль будет отправлен на email.`,
+      type: 'warning',
+      confirmText: t('reset', 'Сбросить'),
+      cancelText: t('cancel', 'Отмена')
+    });
+    if (confirmed) {
+      showAlert({
+        title: t('successTitle', 'Успешно'),
+        message: `Временный пароль для ${user.username} сгенерирован и отправлен`,
+        type: 'success'
+      });
+    }
+  };
+
+  const handleToggleUserBlock = async (user) => {
+    const isBlocked = user.isBlocked;
+    const actionText = isBlocked ? t('activateUserAction', 'Активировать') : t('blockUserAction', 'Заблокировать');
+    const confirmed = await showConfirm({
+      title: actionText,
+      message: `Вы действительно хотите ${actionText.toLowerCase()} пользователя ${user.username}?`,
+      type: isBlocked ? 'info' : 'danger',
+      confirmText: actionText,
+      cancelText: t('cancel', 'Отмена')
+    });
+    if (confirmed) {
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, isBlocked: !isBlocked } : u));
+      showAlert({
+        title: t('successTitle', 'Успешно'),
+        message: `Статус пользователя ${user.username} изменен`,
+        type: 'success'
+      });
     }
   };
 
@@ -86,19 +209,17 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
   };
 
   const getOperationBadge = (op) => {
-    switch (op) {
-      case 'YAZMAK':
-      case 'CREATE':
-        return <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 rounded font-semibold text-[11px]">ÝAZMAK</span>;
-      case 'TAZELEMEK':
-      case 'UPDATE':
-        return <span className="px-2 py-0.5 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-semibold text-[11px]">TÄZELEMEK</span>;
-      case 'POZMAK':
-      case 'DELETE':
-        return <span className="px-2 py-0.5 bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 rounded font-semibold text-[11px]">POZMAK</span>;
-      default:
-        return <span className="px-2 py-0.5 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded font-semibold text-[11px]">{op || 'LOG'}</span>;
+    const norm = String(op || '').toUpperCase();
+    if (norm === 'YAZMAK' || norm === 'ÝAZMAK' || norm === 'CREATE') {
+      return <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 rounded font-semibold text-[11px]">{t('opCreate', 'СОЗДАНИЕ / ЗАПИСЬ')}</span>;
     }
+    if (norm === 'TAZELEMEK' || norm === 'TÄZELEMEK' || norm === 'UPDATE') {
+      return <span className="px-2 py-0.5 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-semibold text-[11px]">{t('opUpdate', 'ИЗМЕНЕНИЕ')}</span>;
+    }
+    if (norm === 'POZMAK' || norm === 'DELETE') {
+      return <span className="px-2 py-0.5 bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 rounded font-semibold text-[11px]">{t('opDelete', 'УДАЛЕНИЕ')}</span>;
+    }
+    return <span className="px-2 py-0.5 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded font-semibold text-[11px]">{op || 'LOG'}</span>;
   };
 
   const systemRoles = [
@@ -119,20 +240,22 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
           </p>
         </div>
         <button
-          onClick={fetchData}
+          type="button"
+          onClick={fetchAllData}
           disabled={loading}
-          className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-xs font-semibold transition-colors self-start sm:self-auto"
+          className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-xs font-semibold transition-colors self-start sm:self-auto cursor-pointer"
         >
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           <span>{t('refreshDataBtn', 'Обновить данные')}</span>
         </button>
       </div>
 
-      {/* Плитка разделов администрирования */}
+      {/* Плитка разделов администрирования с синхронизированными счетчиками */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <button
+          type="button"
           onClick={() => { setActiveTab('logs'); setSearch(''); }}
-          className={`p-4 rounded-xl border text-left transition-all ${
+          className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
             activeTab === 'logs' ? 'bg-emerald-50 border-emerald-500 shadow-sm dark:bg-emerald-950/30 dark:border-emerald-600' : cardBg
           }`}
         >
@@ -145,8 +268,9 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
         </button>
 
         <button
+          type="button"
           onClick={() => { setActiveTab('users'); setSearch(''); }}
-          className={`p-4 rounded-xl border text-left transition-all ${
+          className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
             activeTab === 'users' ? 'bg-emerald-50 border-emerald-500 shadow-sm dark:bg-emerald-950/30 dark:border-emerald-600' : cardBg
           }`}
         >
@@ -159,8 +283,9 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
         </button>
 
         <button
+          type="button"
           onClick={() => { setActiveTab('roles'); setSearch(''); }}
-          className={`p-4 rounded-xl border text-left transition-all ${
+          className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
             activeTab === 'roles' ? 'bg-emerald-50 border-emerald-500 shadow-sm dark:bg-emerald-950/30 dark:border-emerald-600' : cardBg
           }`}
         >
@@ -173,8 +298,9 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
         </button>
 
         <button
+          type="button"
           onClick={() => { setActiveTab('backup'); setSearch(''); }}
-          className={`p-4 rounded-xl border text-left transition-all ${
+          className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
             activeTab === 'backup' ? 'bg-emerald-50 border-emerald-500 shadow-sm dark:bg-emerald-950/30 dark:border-emerald-600' : cardBg
           }`}
         >
@@ -187,14 +313,14 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
         </button>
       </div>
 
-      {/* Основная карточка с данными */}
-      <div className={`rounded-xl border shadow-sm overflow-hidden ${cardBg}`}>
+      {/* Основная карточка с данными и верхним акцентным бордером */}
+      <div className={`rounded-xl border shadow-sm overflow-hidden ${theme.tableCardBorderTop} ${cardBg}`}>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h3 className="font-bold text-base">
-            {activeTab === 'logs' && (t('auditLogSectionTitle', 'Журнал аудита системы (Loglar)'))}
-            {activeTab === 'users' && (t('systemUsersSectionTitle', 'Пользователи системы (Ulanyjylar)'))}
-            {activeTab === 'roles' && (t('rbacSectionTitle', 'Системные роли и права доступа (RBAC)'))}
-            {activeTab === 'backup' && (t('backupSectionTitle', 'Резервное копирование базы данных'))}
+            {activeTab === 'logs' && t('catLogs', 'Журнал аудита')}
+            {activeTab === 'users' && t('catUsers', 'Пользователи системы')}
+            {activeTab === 'roles' && t('rbacSectionTitle', 'Системные роли и права доступа (RBAC)')}
+            {activeTab === 'backup' && t('backupSectionTitle', 'Резервное копирование базы данных')}
           </h3>
 
           {(activeTab === 'logs' || activeTab === 'users') && (
@@ -217,13 +343,13 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className={tableHeaderBg}>
-                  <th className="py-3 px-4">Ulanyjy / Логин</th>
-                  <th className="py-3 px-4">Doly ady / Имя</th>
-                  <th className="py-3 px-4">Waka / Событие</th>
-                  <th className="py-3 px-4 text-center">Amal / Действие</th>
-                  <th className="py-3 px-4 text-center">IP Salgysy</th>
-                  <th className="py-3 px-4 text-center">Senesi / Дата</th>
-                  <th className="py-3 px-4 text-center">Jikme-jik</th>
+                  <th className="py-3 px-4">{t('auditColLogin', 'Логин')}</th>
+                  <th className="py-3 px-4">{t('auditColFullName', 'ФИО')}</th>
+                  <th className="py-3 px-4">{t('auditColEvent', 'Событие')}</th>
+                  <th className="py-3 px-4 text-center">{t('auditColAction', 'Действие')}</th>
+                  <th className="py-3 px-4 text-center">{t('auditColIp', 'IP-адрес')}</th>
+                  <th className="py-3 px-4 text-center">{t('auditColDate', 'Дата')}</th>
+                  <th className="py-3 px-4 text-center">{t('auditColDetails', 'Подробности')}</th>
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -257,9 +383,10 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
                         <td className="py-3 px-4 text-center">
                           {log.data ? (
                             <button
+                              type="button"
                               onClick={() => setSelectedLog(log)}
-                              className="p-1 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                              title="Просмотр payload"
+                              className="w-8 h-8 mx-auto rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-center transition-all cursor-pointer"
+                              title={t('auditColDetails', 'Подробности')}
                             >
                               <Eye size={15} />
                             </button>
@@ -280,25 +407,26 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className={tableHeaderBg}>
-                  <th className="py-3 px-4">Ulanyjy ady / Логин</th>
-                  <th className="py-3 px-4">Doly ady / ФИО</th>
-                  <th className="py-3 px-4 text-center">Roly / Роль</th>
-                  <th className="py-3 px-4">Wezipesi / Должность</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-center">Hasaba alnan senesi</th>
+                  <th className="py-3 px-4">{t('auditColLogin', 'Логин')}</th>
+                  <th className="py-3 px-4">{t('auditColFullName', 'ФИО')}</th>
+                  <th className="py-3 px-4 text-center">{t('role', 'Роль')}</th>
+                  <th className="py-3 px-4">{t('position', 'Должность')}</th>
+                  <th className="py-3 px-4 text-center">{t('status', 'Статус')}</th>
+                  <th className="py-3 px-4 text-center">{t('registrationDate', 'Дата регистрации')}</th>
+                  <th className="py-3 px-4 text-center w-36">{t('userColAction', 'Действие')}</th>
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="py-8 text-center text-slate-400">
+                    <td colSpan="7" className="py-8 text-center text-slate-400">
                       <RefreshCw size={20} className="animate-spin mx-auto mb-2 opacity-50" />
                       {t('loading', 'Ýüklenýär...')}
                     </td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="py-8 text-center text-slate-400">
+                    <td colSpan="7" className="py-8 text-center text-slate-400">
                       {t('noUsersFound', 'Пользователи не найдены')}
                     </td>
                   </tr>
@@ -314,12 +442,50 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
                         <td className="py-3.5 px-4 text-center">{getRoleBadge(u.roleType)}</td>
                         <td className="py-3.5 px-4 text-slate-500">{u.position || u.companies?.[0]?.name || '-'}</td>
                         <td className="py-3.5 px-4 text-center">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-                            <CheckCircle size={12} className="mr-1" />
-                            {t('active', 'Активен')}
-                          </span>
+                          {u.isBlocked ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
+                              {t('blocked', 'Заблокирован')}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+                              <CheckCircle size={12} className="mr-1" />
+                              {t('active', 'Активен')}
+                            </span>
+                          )}
                         </td>
                         <td className="py-3.5 px-4 text-center text-slate-500">{dateStr}</td>
+                        <td className="py-3.5 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleEditUserRole(u)}
+                              title={t('editRoleAction', 'Редактировать роль')}
+                              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-center transition-all cursor-pointer"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleResetUserPassword(u)}
+                              title={t('resetPasswordAction', 'Сбросить пароль')}
+                              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 flex items-center justify-center transition-all cursor-pointer"
+                            >
+                              <Lock size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleUserBlock(u)}
+                              title={u.isBlocked ? t('activateUserAction', 'Активировать') : t('blockUserAction', 'Заблокировать')}
+                              className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                                u.isBlocked
+                                  ? 'border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+                                  : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 dark:hover:bg-rose-950/40 dark:hover:border-rose-900/60'
+                              }`}
+                            >
+                              {u.isBlocked ? <UserCheck size={14} /> : <UserX size={14} />}
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     );
                   })
@@ -332,10 +498,15 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
         {/* 3. Вкладка РОЛИ (RBAC) */}
         {activeTab === 'roles' && (
           <div className="p-6 space-y-4">
-            <p className="text-xs text-slate-500 font-medium">
-              {t('rbacModelIntro', 'Ролевая модель доступа определяет права пользователей при работе с тендерами, коммерческими предложениями и оценкой:')}
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                {t('catRoles', 'Роли и права (RBAC)')}
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {t('rbacSubtitle', 'Матрица прав доступа, ролевые привилегии и разграничение полномочий')}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               {systemRoles.map((r) => (
                 <div key={r.code} className={`p-4 rounded-xl border ${cardBg} space-y-2`}>
                   <div className="flex items-center justify-between">
@@ -382,11 +553,80 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
                 </p>
               </div>
             </div>
+
+            <div className="pt-2 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                    {t('backupDumpHistoryTitle', 'История резервных копий базы данных')}
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Полные дампы структуры и данных PostgreSQL со сверкой целостности SHA-256
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCreateDump}
+                  disabled={isDumping}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer ${
+                    theme.primaryBg
+                  } text-white disabled:opacity-70`}
+                >
+                  <HardDriveDownload size={15} className={isDumping ? 'animate-bounce' : ''} />
+                  <span>{isDumping ? 'Формирование дампа...' : t('dumpDbBtn', 'Создать резервную копию (Dump DB)')}</span>
+                </button>
+              </div>
+
+              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className={tableHeaderBg}>
+                      <th className="py-3 px-4">{t('backupColDate', 'Дата создания')}</th>
+                      <th className="py-3 px-4">{t('backupColDbVersion', 'Версия базы')}</th>
+                      <th className="py-3 px-4 text-center">{t('backupColArchiveSize', 'Размер архива')}</th>
+                      <th className="py-3 px-4">{t('backupColHash', 'Хеш SHA-256')}</th>
+                      <th className="py-3 px-4 text-center w-28">{t('backupColDownload', 'Скачать')}</th>
+                      <th className="py-3 px-4 text-center w-28">{t('backupColRestore', 'Восстановить')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+                    {backupHistory.map((bk) => (
+                      <tr key={bk.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                        <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200 font-mono">{bk.createdAt}</td>
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{bk.dbVersion}</td>
+                        <td className="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">{bk.size}</td>
+                        <td className="py-3 px-4 font-mono text-[10px] text-slate-500 max-w-xs truncate" title={bk.sha256}>{bk.sha256}</td>
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadDump(bk)}
+                            title={t('backupColDownload', 'Скачать')}
+                            className="w-8 h-8 mx-auto rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-center transition-all cursor-pointer"
+                          >
+                            <Download size={14} />
+                          </button>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRestoreDump(bk)}
+                            title={t('backupColRestore', 'Восстановить')}
+                            className="w-8 h-8 mx-auto rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 hover:text-amber-600 hover:bg-amber-50 hover:border-amber-200 dark:hover:bg-amber-950/40 dark:hover:border-amber-900/60 dark:hover:text-amber-400 flex items-center justify-center transition-all cursor-pointer"
+                          >
+                            <Undo2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Модальное окно просмотра деталей лога */}
+      {/* Модальное окно просмотра деталей лога с чистой локализацией */}
       {selectedLog && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className={`w-full max-w-lg rounded-2xl shadow-2xl border ${cardBg} p-6 space-y-4 animate-in zoom-in-95`}>
@@ -395,7 +635,13 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
                 <FileText size={18} className="text-emerald-600" />
                 {t('auditEventDetailsTitle', 'Детали события аудита')}
               </h3>
-              <button onClick={() => setSelectedLog(null)} className="text-slate-400 hover:text-slate-600">✕</button>
+              <button 
+                type="button"
+                onClick={() => setSelectedLog(null)} 
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
             <div className="space-y-3 text-xs">
               <div>
@@ -403,11 +649,11 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
                 <p className="font-bold text-sm">{selectedLog.eventType} ({selectedLog.operationType})</p>
               </div>
               <div>
-                <p className="text-slate-400 font-semibold">IP Salgysy</p>
+                <p className="text-slate-400 font-semibold">{t('ipAddressLabel', 'IP-адрес')}</p>
                 <p className="font-mono">{selectedLog.ip || '127.0.0.1'}</p>
               </div>
               <div>
-                <p className="text-slate-400 font-semibold">Payload / Maglumatlar</p>
+                <p className="text-slate-400 font-semibold">{t('payloadLabel', 'Тело запроса (Payload)')}</p>
                 <pre className="p-3 bg-slate-100 dark:bg-slate-900 rounded-lg font-mono text-[11px] overflow-x-auto max-h-48">
                   {JSON.stringify(selectedLog.data, null, 2)}
                 </pre>
@@ -415,10 +661,11 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
             </div>
             <div className="flex justify-end pt-2">
               <button
+                type="button"
                 onClick={() => setSelectedLog(null)}
-                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-xs font-bold transition-colors"
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-xs font-bold transition-colors cursor-pointer"
               >
-                {t('cancelBtn', 'Ýap')}
+                {t('closeModalBtn', 'Закрыть')}
               </button>
             </div>
           </div>

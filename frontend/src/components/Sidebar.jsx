@@ -36,6 +36,16 @@ export default function Sidebar({
   const isAdmin = role === 'ADMIN';
   const t = (key, fallback) => getTranslation(lang, key, fallback);
 
+  // Надежная проверка активной вкладки с поддержкой дочерних путей
+  const isTabActive = (tabKey) => {
+    if (activeTab === tabKey) return true;
+    if (tabKey === 'tenders' && (activeTab === 'tender-details' || activeTab === 'create-offer')) return true;
+    if (tabKey === 'offers' && activeTab === 'my-offers') return true;
+    if (tabKey === 'suppliers' && activeTab === 'supplier-profile') return true;
+    if (tabKey === 'evaluation' && activeTab === 'evaluations') return true;
+    return false;
+  };
+
   return (
     <aside
       className={`${
@@ -47,7 +57,7 @@ export default function Sidebar({
         <div className={`p-5 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'} flex items-center justify-between`}>
           {!isCollapsed && (
             <div>
-              <h1 className="font-bold text-lg tracking-tight">Tender ulgamy</h1>
+              <h1 className="font-bold text-lg tracking-tight">Tender Ulgam</h1>
               <p className={`text-xs ${theme.subText} font-medium`}>{isAdmin ? t('adminStr', 'Admin') : t('supplierStr', 'Üpjün ediji')}</p>
             </div>
           )}
@@ -69,7 +79,7 @@ export default function Sidebar({
             <button
               onClick={() => setActiveTab('dashboard')}
               className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === 'dashboard'
+                isTabActive('dashboard')
                   ? theme.primaryBg + ' font-semibold shadow-sm'
                   : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
@@ -84,7 +94,7 @@ export default function Sidebar({
                 <button
                   onClick={() => setActiveTab('analytics')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'analytics'
+                    isTabActive('analytics')
                       ? theme.primaryBg + ' font-semibold shadow-sm'
                       : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
@@ -96,7 +106,7 @@ export default function Sidebar({
                 <button
                   onClick={() => setActiveTab('create-tender')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'create-tender'
+                    isTabActive('create-tender')
                       ? theme.primaryBg + ' font-semibold shadow-sm'
                       : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
@@ -108,7 +118,7 @@ export default function Sidebar({
                 <button
                   onClick={() => setActiveTab('tenders')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'tenders'
+                    isTabActive('tenders')
                       ? theme.primaryBg + ' font-semibold shadow-sm'
                       : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
@@ -120,7 +130,7 @@ export default function Sidebar({
                 <button
                   onClick={() => setActiveTab('offers')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'offers'
+                    isTabActive('offers')
                       ? theme.primaryBg + ' font-semibold shadow-sm'
                       : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
@@ -132,7 +142,7 @@ export default function Sidebar({
                 <button
                   onClick={() => setActiveTab('suppliers')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'suppliers'
+                    isTabActive('suppliers')
                       ? theme.primaryBg + ' font-semibold shadow-sm'
                       : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
@@ -144,7 +154,7 @@ export default function Sidebar({
                 <button
                   onClick={() => setActiveTab('evaluation')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'evaluation'
+                    isTabActive('evaluation')
                       ? theme.primaryBg + ' font-semibold shadow-sm'
                       : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
@@ -156,7 +166,7 @@ export default function Sidebar({
                 <button
                   onClick={() => setActiveTab('settings')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'settings'
+                    isTabActive('settings')
                       ? theme.primaryBg + ' font-semibold shadow-sm'
                       : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
@@ -171,7 +181,7 @@ export default function Sidebar({
                 <button
                   onClick={() => setActiveTab('tenders')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'tenders'
+                    isTabActive('tenders')
                       ? theme.primaryBg + ' font-semibold shadow-sm'
                       : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
@@ -183,7 +193,7 @@ export default function Sidebar({
                 <button
                   onClick={() => setActiveTab('offers')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'offers'
+                    isTabActive('offers')
                       ? theme.primaryBg + ' font-semibold shadow-sm'
                       : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
@@ -195,7 +205,7 @@ export default function Sidebar({
                 <button
                   onClick={() => setActiveTab('evaluation')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'evaluation'
+                    isTabActive('evaluation')
                       ? theme.primaryBg + ' font-semibold shadow-sm'
                       : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
@@ -204,11 +214,10 @@ export default function Sidebar({
                   {!isCollapsed && <span className="ml-3">{t('winners', 'Ýeňijilik')}</span>}
                 </button>
 
-
                 <button
                   onClick={() => setActiveTab('profile')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'profile'
+                    isTabActive('profile')
                       ? theme.primaryBg + ' font-semibold shadow-sm'
                       : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
@@ -220,7 +229,7 @@ export default function Sidebar({
                 <button
                   onClick={() => setActiveTab('settings')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'settings'
+                    isTabActive('settings')
                       ? theme.primaryBg + ' font-semibold shadow-sm'
                       : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
@@ -241,7 +250,7 @@ export default function Sidebar({
               <button
                 onClick={() => setActiveTab('umumy')}
                 className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'umumy'
+                  isTabActive('umumy')
                     ? theme.primaryBg + ' font-semibold shadow-sm'
                     : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
@@ -253,7 +262,7 @@ export default function Sidebar({
               <button
                 onClick={() => setActiveTab('haryt')}
                 className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'haryt'
+                  isTabActive('haryt')
                     ? theme.primaryBg + ' font-semibold shadow-sm'
                     : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
@@ -265,7 +274,7 @@ export default function Sidebar({
               <button
                 onClick={() => setActiveTab('administrasiya')}
                 className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'administrasiya'
+                  isTabActive('administrasiya')
                     ? theme.primaryBg + ' font-semibold shadow-sm'
                     : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}

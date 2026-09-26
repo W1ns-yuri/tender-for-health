@@ -3,7 +3,7 @@ import { useSearchParams, useLocation } from 'react-router-dom';
 import { 
   PlusCircle, Search, Edit2, ToggleRight, ToggleLeft, Trash2, Database, Package, Settings, 
   Hash, Globe, Truck, DollarSign, Layers, ShieldAlert, 
-  Users, FolderTree, ArrowLeft
+  Users, FolderTree, ArrowLeft, Tag, Factory, Pill, SlidersHorizontal
 } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
@@ -166,30 +166,59 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
     }
   };
 
+  const renderActionButtons = (item) => (
+    <div className="flex items-center justify-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => handleToggleActive(item)}
+        title={item.isActive ? t('deactivate', 'Деактивировать') : t('activate', 'Активировать')}
+        className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all cursor-pointer"
+      >
+        {item.isActive ? <ToggleRight size={18} className="text-emerald-600" /> : <ToggleLeft size={18} className="text-slate-400" />}
+      </button>
+      <button
+        type="button"
+        onClick={() => { setEditingItem(item); setIsModalOpen(true); }}
+        title={t('edit', 'Редактировать')}
+        className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-center transition-all cursor-pointer"
+      >
+        <Edit2 size={14} />
+      </button>
+      <button
+        type="button"
+        onClick={() => handleDelete(item.id)}
+        title={t('delete', 'Удалить')}
+        className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 dark:hover:bg-rose-950/40 dark:hover:border-rose-900/60 dark:hover:text-rose-400 flex items-center justify-center transition-all cursor-pointer"
+      >
+        <Trash2 size={14} />
+      </button>
+    </div>
+  );
+
   const sections = {
     umumy: [
-      { id: 'categories', title: t('catTenderCategories', 'Tender kategoriýalar'), subtitle: t('catTenderCategoriesSub', 'Tender kategoriýalar'), icon: <Layers size={24}/> },
-      { id: 'currencies', title: t('catCurrencies', 'Walýutalar'), subtitle: t('catCurrenciesSub', 'Walýutalar'), icon: <DollarSign size={24}/> },
-      { id: 'countries', title: t('catCountries', 'Döwletler'), subtitle: t('catCountriesSub', 'Döwletler'), icon: <Globe size={24}/> },
-      { id: 'clients', title: t('catClients', 'Sargyt edijiler'), subtitle: t('catClientsSub', 'Sargyt edijiler'), icon: <Users size={24}/> },
-      { id: 'delivery', title: t('catDelivery', 'Getiriliş şertleri'), subtitle: t('catDeliverySub', 'Getiriliş şertleri'), icon: <Truck size={24}/> }
+      { id: 'categories', title: t('catTenderCategories', 'Категории тендеров'), subtitle: t('catTenderCategoriesSub', 'Классификатор направлений закупок'), icon: <Layers size={24}/> },
+      { id: 'currencies', title: t('catCurrencies', 'Валюты'), subtitle: t('catCurrenciesSub', 'Используемые валюты и курсы'), icon: <DollarSign size={24}/> },
+      { id: 'countries', title: t('catCountries', 'Страны'), subtitle: t('catCountriesSub', 'Классификатор стран мира'), icon: <Globe size={24}/> },
+      { id: 'clients', title: t('catClients', 'Заказчики'), subtitle: t('catClientsSub', 'Организации и ведомства'), icon: <Users size={24}/> },
+      { id: 'delivery', title: t('catDelivery', 'Условия поставки'), subtitle: t('catDeliverySub', 'Базисы поставки Инкотермс'), icon: <Truck size={24}/> }
     ],
     haryt: [
-      { id: 'productsMNN', title: t('catProducts', 'Harytlar'), subtitle: t('catProductsSub', 'Harytlar'), icon: <Package size={24}/> },
-      { id: 'units', title: t('catUnits', 'Ölçeg birlik topary'), subtitle: t('catUnitsSub', 'Ölçeg birlik topary'), icon: <Hash size={24}/> },
-      { id: 'composition', title: t('catComposition', 'Haryt düzümi'), subtitle: t('catCompositionSub', 'Haryt düzümi'), icon: <FolderTree size={24}/> },
-      { id: 'brands', title: t('catBrands', 'Brendler'), subtitle: t('catBrandsSub', 'Brendler'), icon: <Database size={24}/> },
-      { id: 'manufacturers', title: t('catManufacturers', 'Öndürijiler'), subtitle: t('catManufacturersSub', 'Öndürijiler'), icon: <Database size={24}/> },
-      { id: 'generalProducts', title: t('catGeneralProducts', 'Umumy haryt'), subtitle: t('catGeneralProductsSub', 'Halkara patentsiz atlary'), icon: <Database size={24}/> },
-      { id: 'productCategories', title: t('catProductCategories', 'Haryt kategoriýalar'), subtitle: t('catProductCategoriesSub', 'Haryt kategoriýalar'), icon: <Layers size={24}/> },
-      { id: 'variations', title: t('catVariations', 'Wariasiýa topary'), subtitle: t('catVariationsSub', 'Wariasiýa görnüşleri'), icon: <Database size={24}/> }
+      { id: 'productsMNN', title: t('catProducts', 'Товары (МНН)'), subtitle: t('catProductsSub', 'Реестр зарегистрированных препаратов'), icon: <Package size={24}/> },
+      { id: 'units', title: t('catUnits', 'Единицы измерения'), subtitle: t('catUnitsSub', 'Классификатор единиц (шт, упак, флак)'), icon: <Hash size={24}/> },
+      { id: 'composition', title: t('catComposition', 'Состав товаров'), subtitle: t('catCompositionSub', 'Компоненты и действующие вещества'), icon: <FolderTree size={24}/> },
+      { id: 'brands', title: t('catBrands', 'Торговые марки / Бренды'), subtitle: t('catBrandsSub', 'Зарегистрированные бренды'), icon: <Tag size={24}/> },
+      { id: 'manufacturers', title: t('catManufacturers', 'Производители'), subtitle: t('catManufacturersSub', 'Фармацевтические заводы и фабрики'), icon: <Factory size={24}/> },
+      { id: 'generalProducts', title: t('catGeneralProducts', 'Общие товары (МНН)'), subtitle: t('catGeneralProductsSub', 'Международные непатентованные наименования'), icon: <Pill size={24}/> },
+      { id: 'productCategories', title: t('catProductCategories', 'Категории товаров'), subtitle: t('catProductCategoriesSub', 'Группировка номенклатурных позиций'), icon: <Layers size={24}/> },
+      { id: 'variations', title: t('catVariations', 'Вариации и формы'), subtitle: t('catVariationsSub', 'Формы выпуска, дозировки и фасовки'), icon: <SlidersHorizontal size={24}/> }
     ],
     administrasiya: [
-      { id: 'logs', title: t('catLogs', 'Loglar'), subtitle: t('catLogsSub', 'Loglar'), icon: <ShieldAlert size={24}/> },
-      { id: 'settings', title: t('catSettings', 'Ulgam sazlamalary'), subtitle: t('catSettingsSub', 'Ulgam sazlamalary'), icon: <Settings size={24}/> },
-      { id: 'roles', title: t('catRoles', 'Rollar'), subtitle: t('catRolesSub', 'Rollar'), icon: <Users size={24}/> },
-      { id: 'backup', title: t('catBackup', 'Backup'), subtitle: t('catBackupSub', 'Backup'), icon: <Database size={24}/> },
-      { id: 'users', title: t('catUsers', 'Ulanyjylar'), subtitle: t('catUsersSub', 'Ulanyjylar'), icon: <Users size={24}/> }
+      { id: 'logs', title: t('catLogs', 'Журнал аудита'), subtitle: t('catLogsSub', 'Логи всех событий'), icon: <ShieldAlert size={24}/> },
+      { id: 'settings', title: t('catSettings', 'Системные настройки'), subtitle: t('catSettingsSub', 'Параметры платформы'), icon: <Settings size={24}/> },
+      { id: 'roles', title: t('catRoles', 'Роли и права'), subtitle: t('catRolesSub', 'Модель RBAC'), icon: <Users size={24}/> },
+      { id: 'backup', title: t('catBackup', 'Backup'), subtitle: t('catBackupSub', 'Резервные копии'), icon: <Database size={24}/> },
+      { id: 'users', title: t('catUsers', 'Пользователи'), subtitle: t('catUsersSub', 'Учетные записи'), icon: <Users size={24}/> }
     ]
   };
 
@@ -228,11 +257,7 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
                 <td className="py-3 px-4 font-bold">{c.name}</td>
                 <td className="py-3 px-4 text-center font-mono">{c.code}</td>
                 <td className="py-3 px-4 text-center">
-                  <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
-                  </div>
+                  {renderActionButtons(c)}
                 </td>
               </tr>
             ))}
@@ -272,11 +297,7 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
                 <td className="py-3 px-4 text-center font-bold text-emerald-600">{c.symbol}</td>
                 <td className="py-3 px-4 text-center text-lg">{c.flag || '-'}</td>
                 <td className="py-3 px-4 text-center">
-                  <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
-                  </div>
+                  {renderActionButtons(c)}
                 </td>
               </tr>
             ))}
@@ -314,11 +335,7 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
                 <td className="py-3 px-4 text-center font-mono">{c.alpha2}</td>
                 <td className="py-3 px-4 text-center font-mono">{c.alpha3}</td>
                 <td className="py-3 px-4 text-center">
-                  <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
-                  </div>
+                  {renderActionButtons(c)}
                 </td>
               </tr>
             ))}
@@ -354,11 +371,7 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
                 <td className="py-3 px-4 font-bold">{c.name}</td>
                 <td className="py-3 px-4 text-center font-bold text-emerald-600">{c.shortName}</td>
                 <td className="py-3 px-4 text-center">
-                  <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
-                  </div>
+                  {renderActionButtons(c)}
                 </td>
               </tr>
             ))}
@@ -398,11 +411,7 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
                 <td className="py-3 px-4 text-center font-mono">{p.code || '-'}</td>
                 <td className="py-3 px-4 text-slate-500">{p.description || '-'}</td>
                 <td className="py-3 px-4 text-center">
-                  <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {p.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(p)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(p)} />}
-                    <button onClick={() => { setEditingItem(p); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
-                  </div>
+                  {renderActionButtons(p)}
                 </td>
               </tr>
             ))}
@@ -438,11 +447,7 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
                 <td className="py-3 px-4 font-bold">{u.name}</td>
                 <td className="py-3 px-4 text-center font-bold text-emerald-600">{u.shortName}</td>
                 <td className="py-3 px-4 text-center">
-                  <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {u.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(u)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(u)} />}
-                    <button onClick={() => { setEditingItem(u); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(u.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
-                  </div>
+                  {renderActionButtons(u)}
                 </td>
               </tr>
             ))}
@@ -478,11 +483,7 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
                 <td className="py-3 px-4 font-bold">{m.name}</td>
                 <td className="py-3 px-4 text-center font-mono">{m.code}</td>
                 <td className="py-3 px-4 text-center">
-                  <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {m.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(m)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(m)} />}
-                    <button onClick={() => { setEditingItem(m); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(m.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
-                  </div>
+                  {renderActionButtons(m)}
                 </td>
               </tr>
             ))}
@@ -516,11 +517,7 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
                 <td className="py-3 px-4 text-center text-slate-400">{i + 1}</td>
                 <td className="py-3 px-4 font-bold">{c.name}</td>
                 <td className="py-3 px-4 text-center">
-                  <div className="flex items-center justify-center gap-3 text-slate-400">
-                    {c.isActive ? <ToggleRight size={20} className="text-emerald-600 cursor-pointer" onClick={() => handleToggleActive(c)} /> : <ToggleLeft size={20} className="text-slate-400 cursor-pointer" onClick={() => handleToggleActive(c)} />}
-                    <button onClick={() => { setEditingItem(c); setIsModalOpen(true); }} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"><Trash2 size={16} /></button>
-                  </div>
+                  {renderActionButtons(c)}
                 </td>
               </tr>
             ))}
@@ -557,13 +554,13 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
               <div>
                 <h2 className="text-xl font-bold">
                   {activeSection === 'haryt' 
-                    ? t('sectionProducts', 'Haryt katalogy') 
-                    : t('sectionDirectories', 'Gollanmalar')}
+                    ? t('sectionProducts', 'Каталог товаров') 
+                    : t('sectionDirectories', 'Справочники')}
                 </h2>
                 <p className={`text-xs ${theme.subText} mt-0.5`}>
                   {activeSection === 'haryt' 
-                    ? t('catGeneralProductsSub', 'Halkara patentsiz atlary we haryt ugurlary') 
-                    : t('catalogsTitle', 'Ulgam gollanmalary we toparlar')}
+                    ? t('catProductCatalogSubtitle', 'Единый классификатор номенклатуры товаров, торговых марок и характеристик') 
+                    : t('catalogsTitle', 'Общесистемные справочники и классификаторы')}
                 </p>
               </div>
             </div>
@@ -640,7 +637,7 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
               </div>
             </div>
 
-            <div className={`rounded-xl border shadow-xs overflow-hidden ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+            <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.tableCardBorderTop} ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
               <div className="overflow-x-auto">
                 {renderTable()}
               </div>
@@ -648,17 +645,19 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
           </div>
         )}
       </div>
-      <CatalogFormModal
-        countries={countries}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveModal}
-        catalogId={activeCatalog}
-        editingItem={editingItem}
-        theme={theme}
-        t={t}
-        isDarkMode={isDarkMode}
-      />
+      {isModalOpen && (
+        <CatalogFormModal
+          countries={countries}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveModal}
+          catalogId={activeCatalog}
+          editingItem={editingItem}
+          theme={theme}
+          t={t}
+          isDarkMode={isDarkMode}
+        />
+      )}
     </div>
   );
 }

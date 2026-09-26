@@ -100,7 +100,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
       {/* Заголовок страницы */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">
-          {role === 'ADMIN' ? t('adminDashboardTitle', 'Tender Ulgamy / Admin Baş sahypa') : t('supplierDashboardTitle', 'Üpjün ediji / Baş sahypa')}
+          {role === 'ADMIN' ? t('adminDashboardTitle', 'Tender Ulgam / Admin Baş sahypa') : t('supplierDashboardTitle', 'Üpjün ediji / Baş sahypa')}
         </h2>
 
         {role === 'ADMIN' && (
@@ -126,7 +126,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                 {t('onboardingPendingTitle', 'Профиль ожидает заполнения')}
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5 max-w-2xl">
-                {t('onboardingPendingBanner', 'Добро пожаловать в Tender Ulgamy! Заполните реквизиты компании, банковские данные и прикрепите документы в профиле для прохождения верификации.')}
+                {t('onboardingPendingBanner', 'Добро пожаловать в Tender Ulgam! Заполните реквизиты компании, банковские данные и прикрепите документы в профиле для прохождения верификации.')}
               </p>
             </div>
           </div>
@@ -154,7 +154,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
           </div>
 
           <div className={`p-5 rounded-2xl border shadow-xs flex items-center space-x-4 ${theme.cardBg}`}>
-            <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <Send size={24} />
             </div>
             <div>

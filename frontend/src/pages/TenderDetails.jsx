@@ -5,6 +5,7 @@ import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
+import { cleanLotTitle } from '../utils/pluralize';
 
 export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' }) {
   const { id: paramId } = useParams();
@@ -248,7 +249,7 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                         }`}
                       >
                         <Bookmark size={14} className={isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'} />
-                        <span className="truncate max-w-44">{lItem.name || `Лот №${lItem.lotNumber || lIdx + 1}`}</span>
+                        <span className="truncate max-w-44">{cleanLotTitle(lItem.name || `Лот №${lItem.lotNumber || lIdx + 1}`, lItem.lotNumber || lIdx + 1)}</span>
                         <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-black ${
                           isActive
                             ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
@@ -266,7 +267,7 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                   <div className={`p-4 border-b flex flex-wrap items-center justify-between gap-3 ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-white'}`}>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-base">{t('lotUpperLabel', 'Лот')} #{lot.lotNumber || lotIdx + 1}: {lot.name}</h3>
+                        <h3 className="font-bold text-base">{t('lotUpperLabel', 'Лот')} #{lot.lotNumber || lotIdx + 1}: {cleanLotTitle(lot.name, lot.lotNumber || lotIdx + 1)}</h3>
                         <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
                           isWorks 
                             ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' 

@@ -1051,16 +1051,18 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
       </div>
 
       {/* Модальное окно быстрого добавления товара в каталог */}
-      <CatalogFormModal
-        isOpen={catalogModal.isOpen}
-        onClose={() => setCatalogModal({ isOpen: false, catalogId: 'productsMNN', editingItem: null, specIdx: null })}
-        onSave={handleSaveProductFromModal}
-        catalogId="productsMNN"
-        editingItem={catalogModal.editingItem}
-        theme={theme}
-        t={t}
-        isDarkMode={isDarkMode}
-      />
+      {catalogModal.isOpen && (
+        <CatalogFormModal
+          isOpen={catalogModal.isOpen}
+          onClose={() => setCatalogModal({ isOpen: false, catalogId: 'productsMNN', editingItem: null, specIdx: null })}
+          onSave={handleSaveProductFromModal}
+          catalogId="productsMNN"
+          editingItem={catalogModal.editingItem}
+          theme={theme}
+          t={t}
+          isDarkMode={isDarkMode}
+        />
+      )}
     </div>
   );
 }

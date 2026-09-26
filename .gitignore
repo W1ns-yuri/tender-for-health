@@ -10,4 +10,5 @@ dist-ssr/
 *.log
 .vscode/
 .idea/
+scratch/
 
