@@ -1013,7 +1013,7 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
                 <thead>
                   <tr className={`border-b ${isDarkMode ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-500'}`}>
                     <th className="py-3 px-3 font-semibold whitespace-nowrap">{t('rankColumn', '#')}</th>
-                    <th className="py-3 px-3 font-semibold min-w-[200px]">{t('companyName', 'Наименование компании')}</th>
+                    <th className="py-3 px-3 font-semibold min-w-50">{t('companyName', 'Наименование компании')}</th>
                     <th className="py-3 px-3 font-semibold">{t('directionField', 'Направление')}</th>
                     <th className="py-3 px-3 font-semibold text-center whitespace-nowrap">{t('lotsWonCount', 'Выиграно лотов')}</th>
                     <th className="py-3 px-3 font-semibold text-right whitespace-nowrap">{t('totalContractSum', 'Сумма контрактов')}</th>
@@ -1050,9 +1050,9 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
                         </td>
 
                         {/* Компания с truncate */}
-                        <td className="py-3.5 px-3 min-w-[200px]">
+                        <td className="py-3.5 px-3 min-w-50">
                           <div className="font-bold text-slate-900 dark:text-white flex items-center">
-                            <span className="max-w-[180px] sm:max-w-[260px] md:max-w-[340px] truncate" title={sup.name}>
+                            <span className="max-w-45 sm:max-w-65 md:max-w-85 truncate" title={sup.name}>
                               {sup.name}
                             </span>
                             <ShieldCheck size={13} className="text-emerald-500 ml-1.5 shrink-0" />

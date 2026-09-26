@@ -77,7 +77,7 @@ export default function SupplierLicenseCard({
             <FileCheck size={18} />
           </div>
           <div className="min-w-0">
-            <span className={`text-xs sm:text-sm font-semibold block leading-snug break-words ${
+            <span className={`text-xs sm:text-sm font-semibold block leading-snug wrap-break-word ${
               isLicensed
                 ? 'text-blue-950 dark:text-blue-200'
                 : 'text-slate-850 dark:text-slate-200'
