@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Eye, Edit2, Trash2 } from 'lucide-react';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
@@ -6,22 +6,24 @@ import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { useAlert } from '../context/AlertContext';
 import CustomDatePicker from '../components/CustomDatePicker';
-import { TableFilters } from '../components/ui';
+import { TableFilters, Tabs, Pagination } from '../components/ui';
 
 export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
   const [tenders, setTenders] = useState([]);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [activeStatusTab, setActiveStatusTab] = useState('ALL');
   const [typeFilter, setTypeFilter] = useState('');
   const [announcementDateFilter, setAnnouncementDateFilter] = useState('');
   const [deadlineFilter, setDeadlineFilter] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Пагинация (по умолчанию 10 строк на страницу, как в UI Kit)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
   const { showAlert, showConfirm } = useAlert();
-
-  const [loading, setLoading] = useState(false);
-
 
   const handleDelete = async (id) => {
     const isConfirmed = await showConfirm({
@@ -52,43 +54,103 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
     }
   };
 
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchTenders();
-    }, 400);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [statusFilter, typeFilter, search]);
-
-  const list = tenders.filter(item => {
-    if (announcementDateFilter) {
-      const itemDate = item.announcementDate ? item.announcementDate.slice(0, 10) : '';
-      if (itemDate !== announcementDateFilter) return false;
-    }
-    if (deadlineFilter) {
-      const itemDeadline = item.deadline ? item.deadline.slice(0, 10) : '';
-      if (itemDeadline !== deadlineFilter) return false;
-    }
-    return true;
-  });
-
   const fetchTenders = async () => {
     setLoading(true);
     try {
       const res = await API.get('/tenders', {
         params: { 
-          status: statusFilter || undefined, 
           type: typeFilter || undefined,
           search: search.trim() || undefined 
         }
       });
-      if (res.data && Array.isArray(res.data)) setTenders(res.data);
+      if (res.data && Array.isArray(res.data)) {
+        setTenders(res.data);
+      }
     } catch (e) {
       console.log('Error fetching tenders', e);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchTenders();
+    }, 400);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [typeFilter, search]);
+
+  // Сброс страницы на 1 при изменении фильтров поиска и дат
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, typeFilter, announcementDateFilter, deadlineFilter]);
+
+  // 1. Подсчет количества тендеров по статусам для бейджей на вкладках
+  const statusCounts = useMemo(() => {
+    const counts = {
+      ALL: tenders.length,
+      ACYK: 0,
+      BAHALANDYRYLDY: 0,
+      FINISHED: 0,
+      TASLAMA: 0
+    };
+    tenders.forEach(item => {
+      if (item.status === 'ACYK') counts.ACYK++;
+      else if (item.status === 'BAHALANDYRYLDY') counts.BAHALANDYRYLDY++;
+      else if (item.status === 'YENIJI_YGLAN_EDILDI' || item.status === 'YAPYK') counts.FINISHED++;
+      else if (item.status === 'TASLAMA') counts.TASLAMA++;
+    });
+    return counts;
+  }, [tenders]);
+
+  // 2. Вкладки статусов: открытые, на оценке, завершенные, черновики (для админа)
+  const statusTabs = [
+    { id: 'ALL', label: t('allTendersTab', 'Все закупки'), count: statusCounts.ALL },
+    { id: 'ACYK', label: t('openTendersTab', 'Открытые (Прием заявок)'), count: statusCounts.ACYK },
+    { id: 'BAHALANDYRYLDY', label: t('underEvaluationTab', 'На рассмотрении'), count: statusCounts.BAHALANDYRYLDY },
+    { id: 'FINISHED', label: t('statusFinished', 'Завершенные'), count: statusCounts.FINISHED },
+    ...(role === 'ADMIN' || role === 'PURCHASING_SPECIALIST' ? [{
+      id: 'TASLAMA',
+      label: t('draftTendersTab', 'Черновики / Проекты'),
+      count: statusCounts.TASLAMA
+    }] : [])
+  ];
+
+  const handleTabChange = (tabId) => {
+    setActiveStatusTab(tabId);
+    setCurrentPage(1);
+  };
+
+  // 3. Фильтрация данных по статусной вкладке и выбранным датам
+  const filteredList = useMemo(() => {
+    return tenders.filter(item => {
+      if (activeStatusTab === 'ACYK' && item.status !== 'ACYK') return false;
+      if (activeStatusTab === 'BAHALANDYRYLDY' && item.status !== 'BAHALANDYRYLDY') return false;
+      if (activeStatusTab === 'FINISHED' && item.status !== 'YENIJI_YGLAN_EDILDI' && item.status !== 'YAPYK') return false;
+      if (activeStatusTab === 'TASLAMA' && item.status !== 'TASLAMA') return false;
+
+      if (announcementDateFilter) {
+        const itemDate = item.announcementDate ? item.announcementDate.slice(0, 10) : '';
+        if (itemDate !== announcementDateFilter) return false;
+      }
+      if (deadlineFilter) {
+        const itemDeadline = item.deadline ? item.deadline.slice(0, 10) : '';
+        if (itemDeadline !== deadlineFilter) return false;
+      }
+      return true;
+    });
+  }, [tenders, activeStatusTab, announcementDateFilter, deadlineFilter]);
+
+  // 4. Пагинация: расчет страниц и среза отображаемых записей
+  const totalItems = filteredList.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedList = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * pageSize;
+    return filteredList.slice(startIndex, startIndex + pageSize);
+  }, [filteredList, safeCurrentPage, pageSize]);
 
   const renderTechSpecs = (item) => {
     if (typeof item.technicalSpecs === 'string') return item.technicalSpecs;
@@ -111,6 +173,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
 
   return (
     <div className="space-y-6">
+      {/* 1. Заголовок страницы */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -122,7 +185,16 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
         </div>
       </div>
 
-      {/* Панель фильтров */}
+      {/* 2. Статусные вкладки со счетчиками (Pills Tabs) */}
+      <Tabs
+        variant="pills"
+        role={role}
+        activeTab={activeStatusTab}
+        onChange={handleTabChange}
+        tabs={statusTabs}
+      />
+
+      {/* 3. Панель расширенных фильтров */}
       <TableFilters
         searchValue={search}
         onSearchChange={setSearch}
@@ -138,20 +210,6 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
               { id: 'HALKARA', name: t('typeGlobal', 'Международный') }
             ],
             width: 'min-w-[140px]'
-          },
-          {
-            id: 'status',
-            value: statusFilter,
-            onChange: setStatusFilter,
-            options: [
-              { id: '', name: t('allStatuses', 'Все статусы') },
-              { id: 'ACYK', name: t('statusAcyk', 'Открыт') },
-              { id: 'YAPYK', name: t('statusYapyk', 'Закрыт') },
-              { id: 'BAHALANDYRYLDY', name: t('statusBahalandyryldy', 'На рассмотрении') },
-              { id: 'YENIJI_YGLAN_EDILDI', name: t('winnerBadge', 'Победитель') },
-              { id: 'TASLAMA', name: t('statusDraft', 'Черновик') }
-            ],
-            width: 'min-w-[160px]'
           }
         ]}
         customControls={
@@ -180,13 +238,14 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
             </div>
           </div>
         }
-        hasActiveFilters={Boolean(search || typeFilter || statusFilter || announcementDateFilter || deadlineFilter)}
+        hasActiveFilters={Boolean(search || typeFilter || activeStatusTab !== 'ALL' || announcementDateFilter || deadlineFilter)}
         onReset={() => {
           setSearch('');
           setTypeFilter('');
-          setStatusFilter('');
+          setActiveStatusTab('ALL');
           setAnnouncementDateFilter('');
           setDeadlineFilter('');
+          setCurrentPage(1);
         }}
         role={role}
         isDarkMode={isDarkMode}
@@ -194,6 +253,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
         t={t}
       />
 
+      {/* 4. Таблица реестра тендеров с пагинацией */}
       <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
@@ -215,12 +275,12 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                 <tr>
                   <td colSpan="9" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
                 </tr>
-              ) : list.length === 0 ? (
+              ) : paginatedList.length === 0 ? (
                 <tr>
                   <td colSpan="9" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
                 </tr>
               ) : (
-                list.map((item, idx) => (
+                paginatedList.map((item, idx) => (
                   <tr key={item.id || idx} className={theme.tableRowHover}>
                     <td className="py-3.5 px-4 text-center font-semibold font-mono tabular-nums">{safeString(item.tenderNumber)}</td>
                     <td className="py-3.5 px-4 text-center font-medium">{safeString(item.title)}</td>
@@ -266,6 +326,22 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
             </tbody>
           </table>
         </div>
+
+        {/* 5. Панель пагинации из UI Kit */}
+        <Pagination
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          pageSizeOptions={[10, 25, 50, 100]}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+          role={role}
+          lang={lang}
+        />
       </div>
     </div>
   );
