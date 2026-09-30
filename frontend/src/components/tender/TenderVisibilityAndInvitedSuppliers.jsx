@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Globe, Lock, Search, Plus, X, Users, Check, Building2, Sparkles, AlertCircle } from 'lucide-react';
+import { Globe, Lock, Search, Plus, X, Users, Check, Building2, Sparkles, AlertCircle, Trash2 } from 'lucide-react';
 import API from '../../services/api';
+import {
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableHeaderCell,
+  TableBody,
+  TableCell,
+  TableEmptyState
+} from '../ui/Table';
 
 /**
  * Утилита для аккуратного форматирования названий компаний:
@@ -357,9 +367,9 @@ export default function TenderVisibilityAndInvitedSuppliers({
             )}
           </div>
 
-          {/* Список выбранных поставщиков */}
+          {/* Список выбранных поставщиков в виде стандартной таблицы UI Kit */}
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2.5">
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 {t('selectedParticipants', 'Выбранные участники')} ({invitedSupplierIds.length})
               </span>
@@ -367,78 +377,109 @@ export default function TenderVisibilityAndInvitedSuppliers({
                 <button
                   type="button"
                   onClick={() => onChangeInvitedSuppliers([])}
-                  className="text-[11px] text-rose-500 hover:underline cursor-pointer"
+                  className="text-[11px] text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 font-medium hover:underline cursor-pointer"
                 >
                   {t('clearAll', 'Очистить всех')}
                 </button>
               )}
             </div>
 
-            {invitedSupplierIds.length === 0 ? (
-              <div className="p-5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 text-center">
-                <Users size={22} className="mx-auto text-slate-400 dark:text-slate-500 mb-2" />
-                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                  {t('noSuppliersInvitedTitle', 'Список участников закрытого тендера пуст')}
-                </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
-                  {t('noSuppliersInvitedHint', 'Воспользуйтесь поиском выше для выбора поставщиков.')}
-                </p>
-                {categoryMatchedSuppliers.length > 0 && (
-                  <div className="mt-3">
-                    <button
-                      type="button"
-                      onClick={handleAddAllFromCategory}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold rounded-lg text-xs border border-emerald-200 dark:border-emerald-800 transition-colors cursor-pointer"
-                    >
-                      <Sparkles size={13} />
-                      <span>{t('addAllFromCategoryAction', 'Пригласить всех из категории')} ({categoryMatchedSuppliers.length})</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {selectedSuppliers.map(supplier => {
-                  const parsed = parseSupplierName(supplier.name);
-                  return (
-                    <div
-                      key={supplier.id}
-                      className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/90 flex items-center justify-between gap-2 shadow-2xs hover:border-slate-300 dark:hover:border-slate-600 transition-colors group"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
-                          <Building2 size={15} />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs flex items-center gap-1 truncate" title={supplier.name}>
-                            {parsed.opf && (
-                              <span className="px-1 py-0.2 rounded text-[9px] font-extrabold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-600 shrink-0">
-                                {parsed.opf}
-                              </span>
-                            )}
-                            <span className="font-bold text-slate-800 dark:text-slate-100 truncate">
-                              {parsed.name}
-                            </span>
-                          </div>
-                          <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono truncate mt-0.5">
-                            STŞK: {supplier.taxId || '—'}
-                          </div>
-                        </div>
-                      </div>
+            <TableContainer className="border border-slate-200 dark:border-slate-800 shadow-2xs">
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableHeaderCell align="center" className="w-12">
+                      №
+                    </TableHeaderCell>
+                    <TableHeaderCell className="min-w-52">
+                      {t('companyName', 'Наименование компании')}
+                    </TableHeaderCell>
+                    <TableHeaderCell className="w-36">
+                      {t('taxId', 'STŞK')}
+                    </TableHeaderCell>
+                    <TableHeaderCell className="min-w-44">
+                      {t('legalAddress', 'Город / Юр. адрес')}
+                    </TableHeaderCell>
+                    <TableHeaderCell align="center" className="w-20">
+                      {t('action', 'Действие')}
+                    </TableHeaderCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {invitedSupplierIds.length === 0 ? (
+                    <TableEmptyState
+                      colSpan={5}
+                      title={t('noSuppliersInvitedTitle', 'Список участников закрытого тендера пуст')}
+                      description={t('noSuppliersInvitedHint', 'Воспользуйтесь поиском выше для выбора поставщиков.')}
+                      icon={<Users size={24} />}
+                      action={categoryMatchedSuppliers.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleAddAllFromCategory}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold rounded-lg text-xs border border-emerald-200 dark:border-emerald-800 transition-colors cursor-pointer"
+                        >
+                          <Sparkles size={13} />
+                          <span>{t('addAllFromCategoryAction', 'Пригласить всех из категории')} ({categoryMatchedSuppliers.length})</span>
+                        </button>
+                      )}
+                    />
+                  ) : (
+                    selectedSuppliers.map((supplier, idx) => {
+                      const parsed = parseSupplierName(supplier.name);
+                      return (
+                        <TableRow key={supplier.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                          {/* № */}
+                          <TableCell align="center" className="font-mono text-xs font-bold text-slate-400">
+                            {idx + 1}
+                          </TableCell>
 
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveSupplier(supplier.id)}
-                        className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer shrink-0"
-                        title={t('removeSupplier', 'Удалить из списка')}
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                          {/* Наименование компании */}
+                          <TableCell>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0">
+                                <Building2 size={14} />
+                              </div>
+                              <div className="flex items-center gap-1.5 min-w-0 truncate">
+                                {parsed.opf && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-slate-100 dark:bg-slate-750 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700 shrink-0 uppercase tracking-wide">
+                                    {parsed.opf}
+                                  </span>
+                                )}
+                                <span className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate" title={supplier.name}>
+                                  {parsed.name}
+                                </span>
+                              </div>
+                            </div>
+                          </TableCell>
+
+                          {/* STŞK */}
+                          <TableCell className="font-mono text-xs text-slate-600 dark:text-slate-400">
+                            {supplier.taxId || '—'}
+                          </TableCell>
+
+                          {/* Город / Юр. адрес */}
+                          <TableCell className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-xs" title={supplier.legalAddress || supplier.address || ''}>
+                            {supplier.legalAddress || supplier.address || '—'}
+                          </TableCell>
+
+                          {/* Действие: Удалить */}
+                          <TableCell align="center">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSupplier(supplier.id)}
+                              className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer inline-flex items-center justify-center"
+                              title={t('removeSupplier', 'Удалить из списка')}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </div>
         </div>
       )}
