@@ -12,6 +12,7 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
   const navigate = useNavigate();
   const activeTenderId = tenderId || paramId;
   const [tender, setTender] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
   const [activeLotTab, setActiveLotTab] = useState(0);
   const [supplierProfile, setSupplierProfile] = useState(null);
   const theme = getRoleTheme(role, isDarkMode);
@@ -19,11 +20,16 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
 
   useEffect(() => {
     if (activeTenderId) {
+      setFetchError(null);
       API.get(`/tenders/${activeTenderId}`)
         .then((res) => {
           if (res.data) setTender(res.data);
         })
-        .catch((e) => console.log('Tender details error', e));
+        .catch((e) => {
+          console.log('Tender details error', e);
+          const msg = e.response?.data?.error || t('tenderFetchError', 'Ошибка загрузки данных тендера');
+          setFetchError(msg);
+        });
     }
     if (role === 'SUPPLIER') {
       API.get('/suppliers/profile')
@@ -74,6 +80,28 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
     const fileUrl = `http://localhost:5000/${normalized.startsWith('uploads/') ? normalized : `uploads/${normalized}`}`;
     window.open(fileUrl, '_blank');
   };
+
+  if (fetchError) {
+    return (
+      <div className={`p-8 rounded-2xl border shadow-sm ${theme.cardBg} flex flex-col items-center justify-center text-center my-8`}>
+        <div className="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4 shadow-sm border border-amber-200/80 dark:border-amber-800/60">
+          <Lock size={28} />
+        </div>
+        <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+          {t('closedTenderAccessDeniedTitle', 'Доступ к закрытому тендеру ограничен')}
+        </h3>
+        <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
+          {fetchError}
+        </p>
+        <button
+          onClick={() => navigate('/tenders')}
+          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+        >
+          {t('backToTendersList', 'Вернуться к списку тендеров')}
+        </button>
+      </div>
+    );
+  }
 
   if (!tender) {
     return <div className="text-center py-10 text-slate-500">{t('loading', 'Загрузка...')}</div>;
