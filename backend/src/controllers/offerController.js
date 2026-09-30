@@ -71,10 +71,21 @@ const createOffer = async (req, res) => {
             finalSupplierId = supplier.id;
         }
 
-        // Проверяем статус тендера
-        const tender = await prisma.tender.findUnique({ where: { id: tenderId } });
+        // Проверяем статус тендера и права доступа к закрытым процедурам
+        const tender = await prisma.tender.findUnique({
+            where: { id: tenderId },
+            include: { invitedSuppliers: true }
+        });
         if (!tender) {
             return res.status(404).json({ error: 'Тендер не найден' });
+        }
+
+        // Защита закрытого тендера (YAPYK): только приглашенные поставщики могут подавать заявки
+        if (tender.visibility === 'YAPYK' && req.user.roleType !== 'ADMIN') {
+            const isInvited = (tender.invitedSuppliers || []).some(inv => inv.supplierId === finalSupplierId);
+            if (!isInvited) {
+                return res.status(403).json({ error: 'Вы не приглашены к участию в этом закрытом тендере' });
+            }
         }
 
         if (tender.status !== 'ACYK') {

@@ -3,6 +3,7 @@ import { RefreshCw, Save, ArrowRight } from 'lucide-react';
 import API from '../../services/api';
 import CustomSelect from '../CustomSelect';
 import CustomDateInput from './CustomDateInput';
+import TenderVisibilityAndInvitedSuppliers from './TenderVisibilityAndInvitedSuppliers';
 
 export default function TenderGeneralParamsTab({
   activeTopTab,
@@ -212,6 +213,18 @@ export default function TenderGeneralParamsTab({
           />
         </div>
       </div>
+
+      {/* Выбор режима видимости (Открытый / Закрытый) и приглашение участников */}
+      <TenderVisibilityAndInvitedSuppliers
+        visibility={formData.visibility || 'ACYK'}
+        onChangeVisibility={(val) => handleFormChange('visibility', val)}
+        invitedSupplierIds={formData.invitedSupplierIds || []}
+        onChangeInvitedSuppliers={(ids) => handleFormChange('invitedSupplierIds', ids)}
+        tenderCategoryId={formData.categoryId}
+        isDarkMode={isDarkMode}
+        theme={theme}
+        t={t}
+      />
 
       {/* Кнопка сохранения общих данных */}
       <div className="pt-2 flex justify-end">

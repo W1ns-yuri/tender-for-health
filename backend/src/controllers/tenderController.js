@@ -176,6 +176,18 @@ const createTender = async (req, res) => {
                 }
             }
 
+            // 4. Приглашенные поставщики (для закрытых тендеров YAPYK)
+            const invitedSupplierIds = req.body.invitedSupplierIds;
+            if (req.body.visibility === 'YAPYK' && Array.isArray(invitedSupplierIds) && invitedSupplierIds.length > 0) {
+                const uniqueSupplierIds = [...new Set(invitedSupplierIds.filter(Boolean))];
+                await tx.tenderInvitedSupplier.createMany({
+                    data: uniqueSupplierIds.map(sId => ({
+                        tenderId: newTender.id,
+                        supplierId: sId,
+                    }))
+                });
+            }
+
             return await tx.tender.findUnique({
                 where: { id: newTender.id },
                 include: {
@@ -196,6 +208,13 @@ const createTender = async (req, res) => {
                             document: true
                         }
                     },
+                    invitedSuppliers: {
+                        include: {
+                            supplier: {
+                                select: { id: true, name: true, taxId: true, type: true, logoUrl: true }
+                            }
+                        }
+                    },
                     createdBy: {
                         select: { id: true, username: true, firstName: true, lastName: true, roleType: true },
                     },
@@ -214,7 +233,7 @@ const createTender = async (req, res) => {
 
 const getTenders = async (req, res) => {
     try {
-        const { tenderNumber, lotNumber, status, type, visibility, categoryId, search } = req.query;
+        const { tenderNumber, lotNumber, status, type, visibility, categoryId, search, onlyInvited } = req.query;
 
         const where = {};
         const numberQuery = tenderNumber || lotNumber;
@@ -234,8 +253,14 @@ const getTenders = async (req, res) => {
             }
         }
 
+        where.AND = where.AND || [];
+
+        // Неавторизованные пользователи видят ТОЛЬКО открытые (ACYK) тендеры
+        if (!req.user) {
+            where.AND.push({ visibility: 'ACYK' });
+        }
+
         if (search) {
-            where.AND = where.AND || [];
             where.AND.push({
                 OR: [
                     { tenderNumber: { contains: search, mode: 'insensitive' } },
@@ -245,30 +270,54 @@ const getTenders = async (req, res) => {
             });
         }
 
-        // Персонализация выдачи для аккредитованных поставщиков:
-        // Поставщик видит только те закупки, где категория тендера или хотя бы одного лота
-        // совпадает с его направлениями деятельности (либо общедоступные закупки без категории).
+        // Персонализация выдачи и контроль доступа для закрытых тендеров (YAPYK)
         if (req.user && req.user.roleType === 'SUPPLIER') {
             const supplier = await prisma.supplier.findFirst({
                 where: { userId: req.user.id },
                 include: { categories: true }
             });
 
-            if (supplier && supplier.categories && supplier.categories.length > 0) {
-                const catIds = supplier.categories.map(c => c.categoryId);
-                where.AND = where.AND || [];
-                where.AND.push({
-                    OR: [
-                        { categoryId: { in: catIds } },
-                        { lots: { some: { categoryId: { in: catIds } } } },
-                        {
-                            AND: [
-                                { categoryId: null },
-                                { lots: { none: { categoryId: { not: null } } } }
-                            ]
+            if (supplier) {
+                const catIds = (supplier.categories || []).map(c => c.categoryId);
+                const categoryFilter = catIds.length > 0 ? [
+                    { categoryId: { in: catIds } },
+                    { lots: { some: { categoryId: { in: catIds } } } },
+                    {
+                        AND: [
+                            { categoryId: null },
+                            { lots: { none: { categoryId: { not: null } } } }
+                        ]
+                    }
+                ] : [];
+
+                if (onlyInvited === 'true') {
+                    // Только персональные приглашения в закрытые тендеры
+                    where.AND.push({
+                        invitedSuppliers: {
+                            some: { supplierId: supplier.id }
                         }
-                    ]
-                });
+                    });
+                } else {
+                    // Поставщик видит:
+                    // 1) Открытые (ACYK) тендеры по своим направлениям
+                    // 2) ИЛИ закрытые (YAPYK), куда его персонально пригласили
+                    where.AND.push({
+                        OR: [
+                            {
+                                visibility: 'ACYK',
+                                ...(categoryFilter.length > 0 ? { OR: categoryFilter } : {})
+                            },
+                            {
+                                visibility: 'YAPYK',
+                                invitedSuppliers: {
+                                    some: { supplierId: supplier.id }
+                                }
+                            }
+                        ]
+                    });
+                }
+            } else {
+                where.AND.push({ visibility: 'ACYK' });
             }
         }
 
@@ -297,6 +346,17 @@ const getTenders = async (req, res) => {
                 },
                 category: true,
                 client: true,
+                invitedSuppliers: {
+                    select: {
+                        id: true,
+                        supplierId: true,
+                        isViewed: true,
+                        viewedAt: true,
+                        supplier: {
+                            select: { id: true, name: true, taxId: true, logoUrl: true }
+                        }
+                    }
+                },
                 _count: { select: { offers: true } },
             },
             orderBy: { createdAt: 'desc' },
@@ -315,7 +375,7 @@ const getTenderById = async (req, res) => {
         const { id } = req.params;
         const tenderBase = await prisma.tender.findUnique({
             where: { id },
-            select: { status: true }
+            select: { status: true, visibility: true }
         });
 
         if (!tenderBase) {
@@ -324,6 +384,44 @@ const getTenderById = async (req, res) => {
 
         if (tenderBase.status === 'TASLAMA' && (!req.user || req.user.roleType !== 'ADMIN')) {
             return res.status(403).json({ error: 'Черновик тендера доступен только администратору' });
+        }
+
+        // Проверка прав доступа для закрытого тендера (YAPYK)
+        if (tenderBase.visibility === 'YAPYK') {
+            if (!req.user) {
+                return res.status(401).json({ error: 'Для доступа к закрытому тендеру требуется авторизация' });
+            }
+            if (req.user.roleType === 'SUPPLIER') {
+                const supplier = await prisma.supplier.findFirst({
+                    where: { userId: req.user.id }
+                });
+                if (!supplier) {
+                    return res.status(403).json({ error: 'Профиль поставщика не найден' });
+                }
+
+                const supplierInvitation = await prisma.tenderInvitedSupplier.findUnique({
+                    where: {
+                        tenderId_supplierId: {
+                            tenderId: id,
+                            supplierId: supplier.id
+                        }
+                    }
+                });
+
+                if (!supplierInvitation) {
+                    return res.status(403).json({
+                        error: 'Доступ ограничен: данный тендер является закрытым и доступен только по персональному приглашению организатора'
+                    });
+                }
+
+                // Отмечаем, что приглашенный поставщик открыл и просмотрел тендер
+                if (!supplierInvitation.isViewed) {
+                    await prisma.tenderInvitedSupplier.update({
+                        where: { id: supplierInvitation.id },
+                        data: { isViewed: true, viewedAt: new Date() }
+                    }).catch(e => console.error('Failed to update invitation isViewed:', e));
+                }
+            }
         }
 
         // Защита коммерческой тайны и процедура "запечатанных конвертов":
@@ -393,6 +491,20 @@ const getTenderById = async (req, res) => {
                     select: { id: true, username: true, firstName: true, lastName: true },
                 },
                 offers: includeOffers,
+                invitedSuppliers: {
+                    include: {
+                        supplier: {
+                            select: {
+                                id: true,
+                                name: true,
+                                taxId: true,
+                                type: true,
+                                logoUrl: true,
+                                legalAddress: true,
+                            }
+                        }
+                    }
+                },
                 files: {
                     include: {
                         document: true
@@ -426,7 +538,8 @@ const updateTender = async (req, res) => {
             procurementType,
             status,
             type,
-            visibility
+            visibility,
+            invitedSupplierIds
         } = req.body;
 
         const existingTender = await prisma.tender.findUnique({ where: { id } });
@@ -450,12 +563,35 @@ const updateTender = async (req, res) => {
         if (deadline) updateData.deadline = new Date(deadline);
         if (announcementDate) updateData.announcementDate = new Date(announcementDate);
 
+        // Синхронизация приглашенных поставщиков для закрытых тендеров
+        if (invitedSupplierIds !== undefined && Array.isArray(invitedSupplierIds)) {
+            const uniqueSupplierIds = [...new Set(invitedSupplierIds.filter(Boolean))];
+            await prisma.$transaction(async (tx) => {
+                await tx.tenderInvitedSupplier.deleteMany({ where: { tenderId: id } });
+                if (uniqueSupplierIds.length > 0) {
+                    await tx.tenderInvitedSupplier.createMany({
+                        data: uniqueSupplierIds.map(sId => ({
+                            tenderId: id,
+                            supplierId: sId,
+                        }))
+                    });
+                }
+            });
+        }
+
         const updated = await prisma.tender.update({
             where: { id },
             data: updateData,
             include: {
                 category: true,
                 client: true,
+                invitedSuppliers: {
+                    include: {
+                        supplier: {
+                            select: { id: true, name: true, taxId: true, type: true, logoUrl: true }
+                        }
+                    }
+                },
                 createdBy: { select: { id: true, username: true, firstName: true, lastName: true } }
             }
         });

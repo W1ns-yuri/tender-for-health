@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Clock, Users, LayoutGrid, Trophy, Bookmark, Edit2, Paperclip, FileText } from 'lucide-react';
+import { Download, Clock, Users, LayoutGrid, Trophy, Bookmark, Edit2, Paperclip, FileText, Lock, Eye, CheckCircle2 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
@@ -85,7 +85,15 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
       <div className={`p-6 rounded-xl border shadow-xs ${theme.cardBg}`}>
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{safeString(data?.tenderNumber)}</h1>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{safeString(data?.tenderNumber)}</h1>
+              {data?.visibility === 'YAPYK' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 shadow-2xs">
+                  <Lock size={12} />
+                  <span>{t('closedTenderBadge', 'Закрытый тендер')}</span>
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{safeString(data?.title)}</p>
           </div>
           <div className="flex items-center gap-2.5">
@@ -468,6 +476,23 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
             </div>
           </div>
         )}
+
+        {/* Баннер закрытого тендера для приглашенного поставщика */}
+        {role === 'SUPPLIER' && data?.visibility === 'YAPYK' && (
+          <div className="mt-4 p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0 mt-0.5 shadow-xs">
+              <Lock size={16} />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-amber-950 dark:text-amber-200">
+                {t('invitedToClosedTenderTitle', 'Вы приглашены к участию в закрытой закупке')}
+              </h4>
+              <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90 mt-0.5 leading-relaxed">
+                {t('invitedToClosedTenderDesc', 'Данный тендер является закрытым и доступен только для выбранного круга поставщиков. Вы можете изучить документацию и подать коммерческое предложение.')}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 4. Таблица документов */}
@@ -515,6 +540,86 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
           </table>
         </div>
       </div>
+
+      {/* 5. Мониторинг приглашенных поставщиков (для Администратора при закрытом тендере) */}
+      {role === 'ADMIN' && data?.visibility === 'YAPYK' && (
+        <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg}`}>
+          <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+            <div className="flex items-center gap-2">
+              <Lock size={16} className="text-amber-500" />
+              <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
+                {t('invitedSuppliersMonitoring', 'Приглашенные поставщики')} ({data?.invitedSuppliers?.length || 0})
+              </h3>
+            </div>
+            <span className="text-xs text-amber-700 dark:text-amber-300 font-bold px-2.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800">
+              {t('closedTenderProtocol', 'Закрытая процедура (Ýapyk)')}
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className={theme.tableHeaderBg}>
+                  <th className="py-3 px-4 w-12 text-center">#</th>
+                  <th className="py-3 px-4 min-w-56">{t('supplier', 'Поставщик')}</th>
+                  <th className="py-3 px-4 text-center w-36">{t('taxIdShort', 'ИНН / STŞK')}</th>
+                  <th className="py-3 px-4 text-center w-36">{t('invitationDate', 'Дата приглашения')}</th>
+                  <th className="py-3 px-4 text-center w-40">{t('viewStatus', 'Статус просмотра')}</th>
+                  <th className="py-3 px-4 text-center w-40">{t('offerStatus', 'Подача КП')}</th>
+                </tr>
+              </thead>
+              <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+                {(!data?.invitedSuppliers || data.invitedSuppliers.length === 0) ? (
+                  <tr>
+                    <td colSpan="6" className="py-6 text-center text-slate-400">
+                      {t('noInvitedSuppliersFound', 'Список приглашенных поставщиков пуст')}
+                    </td>
+                  </tr>
+                ) : data.invitedSuppliers.map((inv, idx) => {
+                  const hasSubmitted = (data.offers || []).some(o => o.supplierId === inv.supplierId || o.supplier?.id === inv.supplierId);
+                  return (
+                    <tr key={inv.id || idx} className={theme.tableRowHover}>
+                      <td className="py-3.5 px-4 text-center font-bold text-slate-400">{idx + 1}</td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-100">
+                        {inv.supplier?.name || '—'}
+                      </td>
+                      <td className="py-3.5 px-4 text-center font-mono text-slate-500">
+                        {inv.supplier?.taxId || '—'}
+                      </td>
+                      <td className="py-3.5 px-4 text-center text-slate-500">
+                        {formatDate(inv.invitedAt || inv.createdAt)}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        {inv.isViewed ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                            <Eye size={12} />
+                            <span>{t('viewed', 'Ознакомился')}</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500">
+                            <Clock size={12} />
+                            <span>{t('awaitingView', 'Ожидает просмотра')}</span>
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        {hasSubmitted ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200">
+                            <CheckCircle2 size={12} />
+                            <span>{t('offerSubmitted', 'КП подано')}</span>
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-medium">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

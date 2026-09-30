@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Eye, Edit2, Trash2 } from 'lucide-react';
+import { Eye, Edit2, Trash2, Lock } from 'lucide-react';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
@@ -13,6 +13,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
   const [search, setSearch] = useState('');
   const [activeStatusTab, setActiveStatusTab] = useState('ALL');
   const [typeFilter, setTypeFilter] = useState('');
+  const [visibilityFilter, setVisibilityFilter] = useState('');
   const [announcementDateFilter, setAnnouncementDateFilter] = useState('');
   const [deadlineFilter, setDeadlineFilter] = useState('');
   const [loading, setLoading] = useState(false);
@@ -130,6 +131,8 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
       if (activeStatusTab === 'FINISHED' && item.status !== 'YENIJI_YGLAN_EDILDI' && item.status !== 'YAPYK') return false;
       if (activeStatusTab === 'TASLAMA' && item.status !== 'TASLAMA') return false;
 
+      if (visibilityFilter && item.visibility !== visibilityFilter) return false;
+
       if (announcementDateFilter) {
         const itemDate = item.announcementDate ? item.announcementDate.slice(0, 10) : '';
         if (itemDate !== announcementDateFilter) return false;
@@ -210,6 +213,17 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
               { id: 'HALKARA', name: t('typeGlobal', 'Международный') }
             ],
             width: 'min-w-[140px]'
+          },
+          {
+            id: 'visibility',
+            value: visibilityFilter,
+            onChange: setVisibilityFilter,
+            options: [
+              { id: '', name: t('allAccess', 'Все доступы') },
+              { id: 'ACYK', name: t('openTendersOnly', 'Открытые (Açyk)') },
+              { id: 'YAPYK', name: t('closedTendersOnly', 'Закрытые (Ýapyk)') }
+            ],
+            width: 'min-w-[155px]'
           }
         ]}
         customControls={
@@ -282,7 +296,17 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
               ) : (
                 paginatedList.map((item, idx) => (
                   <tr key={item.id || idx} className={theme.tableRowHover}>
-                    <td className="py-3.5 px-4 text-center font-semibold font-mono tabular-nums">{safeString(item.tenderNumber)}</td>
+                    <td className="py-3.5 px-4 text-center font-semibold font-mono tabular-nums">
+                      <div className="flex flex-col items-center gap-1">
+                        <span>{safeString(item.tenderNumber)}</span>
+                        {item.visibility === 'YAPYK' && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60">
+                            <Lock size={10} />
+                            <span>{t('closedBadge', 'Закрытый')}</span>
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="py-3.5 px-4 text-center font-medium">{safeString(item.title)}</td>
                     <td className={`py-3.5 px-4 text-center w-auto min-w-55 whitespace-normal text-wrap ${theme.subText}`}>{safeString(item.description)}</td>
                     <td className="py-3.5 px-4 text-center">{getTypeBadge(item.type, lang, isDarkMode)}</td>

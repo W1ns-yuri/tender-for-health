@@ -41,6 +41,7 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
     technicalSpecs: '',
     status: 'TASLAMA',
     visibility: 'ACYK',
+    invitedSupplierIds: [],
   });
 
   // Лоты тендера (Шаг 2 - Закладки)
@@ -117,6 +118,7 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
           technicalSpecs: tData.technicalSpecs || '',
           status: tData.status || 'TASLAMA',
           visibility: tData.visibility || 'ACYK',
+          invitedSupplierIds: (tData.invitedSuppliers || []).map(inv => inv.supplierId || inv.supplier?.id).filter(Boolean),
         });
 
         const loadedLots = (tData.lots || []).map(lot => ({
@@ -211,6 +213,16 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
       }
     }
 
+    // Валидация закрытого тендера: должен быть выбран хотя бы один приглашенный поставщик
+    if (formData.visibility === 'YAPYK' && (!formData.invitedSupplierIds || formData.invitedSupplierIds.length === 0)) {
+      showToast({
+        title: t('validationError', 'Ошибка валидации'),
+        message: t('noInvitedSuppliersError', 'Для закрытого тендера необходимо пригласить хотя бы одного поставщика'),
+        type: 'error',
+      });
+      return;
+    }
+
     try {
       setSavingBase(true);
 
@@ -222,6 +234,7 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
         type: formData.type,
         status: 'TASLAMA',
         visibility: formData.visibility,
+        invitedSupplierIds: formData.visibility === 'YAPYK' ? (formData.invitedSupplierIds || []) : [],
         categoryId: formData.categoryId || undefined,
         clientId: formData.clientId || undefined,
         procurementType: formData.procurementType || 'GOODS',
@@ -281,6 +294,16 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
       }
     }
 
+    // Валидация закрытого тендера: должен быть выбран хотя бы один приглашенный поставщик
+    if (formData.visibility === 'YAPYK' && (!formData.invitedSupplierIds || formData.invitedSupplierIds.length === 0)) {
+      showToast({
+        title: t('validationError', 'Ошибка валидации'),
+        message: t('noInvitedSuppliersError', 'Для закрытого тендера необходимо пригласить хотя бы одного поставщика'),
+        type: 'error',
+      });
+      return;
+    }
+
     try {
       setSavingBase(true);
       await API.put(`/tenders/${tenderId}`, {
@@ -291,6 +314,7 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
         type: formData.type,
         status: formData.status,
         visibility: formData.visibility,
+        invitedSupplierIds: formData.visibility === 'YAPYK' ? (formData.invitedSupplierIds || []) : [],
         categoryId: formData.categoryId || undefined,
         clientId: formData.clientId || undefined,
         procurementType: formData.procurementType || 'GOODS',

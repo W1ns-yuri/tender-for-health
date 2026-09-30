@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FileText, Send, Trophy, Eye, Plus, Edit2, Trash2, Users, ChevronRight } from 'lucide-react';
+import { FileText, Send, Trophy, Eye, Plus, Edit2, Trash2, Users, ChevronRight, Lock } from 'lucide-react';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
@@ -288,7 +288,17 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                 ) : (
                   paginatedTenders.map((item, idx) => (
                     <tr key={item.id || idx} className={`${theme.tableRowHover} transition-colors`}>
-                      <td className="py-3.5 px-4 text-center font-semibold font-mono tabular-nums">{safeString(item.tenderNumber)}</td>
+                      <td className="py-3.5 px-4 text-center font-semibold font-mono tabular-nums">
+                        <div className="flex flex-col items-center gap-1">
+                          <span>{safeString(item.tenderNumber)}</span>
+                          {item.visibility === 'YAPYK' && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60">
+                              <Lock size={10} />
+                              <span>{t('closedBadge', 'Закрытый')}</span>
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-3.5 px-4 text-center font-medium">{safeString(item.title)}</td>
                       <td className={`py-3.5 px-4 text-center w-auto min-w-55 whitespace-normal text-wrap ${theme.subText}`}>{safeString(item.description)}</td>
                       <td className="py-3.5 px-4 text-center">{getTypeBadge(item.type, lang, isDarkMode)}</td>

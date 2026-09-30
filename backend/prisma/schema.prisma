@@ -373,10 +373,11 @@ model Tender {
   createdBy   User   @relation("CreatedTenders", fields: [createdById], references: [id], onDelete: Cascade)
 
   // Новые спецификации ТЗ
-  specs  TenderSpecification[]
-  lots   TenderLot[]
-  files  TenderFile[]
-  offers Offer[]
+  specs            TenderSpecification[]
+  lots             TenderLot[]
+  files            TenderFile[]
+  offers           Offer[]
+  invitedSuppliers TenderInvitedSupplier[]
 
   // Старые связи для поддержки MVP
   items     TenderItem[]
@@ -509,10 +510,11 @@ model Supplier {
   bankCurrency        String?       @default("TMT") @map("bank_currency")
   logoUrl             String?       @map("logo_url")
 
-  offers Offer[]
-  files  SupplierFile[]
-  moderationLogs SupplierModerationLog[]
-  categories     SupplierCategory[]
+  offers            Offer[]
+  files             SupplierFile[]
+  moderationLogs    SupplierModerationLog[]
+  categories        SupplierCategory[]
+  tenderInvitations TenderInvitedSupplier[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -530,6 +532,25 @@ model SupplierCategory {
 
   @@unique([supplierId, categoryId])
   @@map("supplier_categories")
+}
+
+model TenderInvitedSupplier {
+  id         String   @id @default(uuid())
+  tenderId   String   @map("tender_id")
+  tender     Tender   @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  supplierId String   @map("supplier_id")
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  invitedAt  DateTime  @default(now()) @map("invited_at")
+  isViewed   Boolean   @default(false) @map("is_viewed")
+  viewedAt   DateTime? @map("viewed_at")
+  notes      String?
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([tenderId, supplierId])
+  @@map("tender_invited_suppliers")
 }
 
 model Offer {
