@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, Save, ArrowRight } from 'lucide-react';
+import { RefreshCw, Save, ArrowRight, AlertCircle } from 'lucide-react';
 import API from '../../services/api';
 import CustomSelect from '../CustomSelect';
 import CustomDateInput from './CustomDateInput';
@@ -226,30 +226,54 @@ export default function TenderGeneralParamsTab({
         t={t}
       />
 
-      {/* Кнопка сохранения общих данных */}
-      <div className="pt-2 flex justify-end">
-        {tenderId ? (
-          <button
-            type="button"
-            onClick={handleUpdateBaseTender}
-            disabled={savingBase}
-            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-          >
-            <Save size={15} />
-            <span>{savingBase ? t('saving', 'Сохранение...') : t('saveBaseInfo', 'Сохранить общие данные')}</span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={handleCreateBaseTender}
-            disabled={savingBase}
-            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-          >
-            <span>{savingBase ? t('saving', 'Создание...') : t('saveDraftAndProceed', 'Создать черновик и перейти к лотам →')}</span>
-            <ArrowRight size={16} />
-          </button>
-        )}
-      </div>
+      {/* Кнопка сохранения общих данных с контролем валидации закрытого тендера */}
+      {(() => {
+        const isClosedInvalid = (formData.visibility === 'YAPYK') && ((formData.invitedSupplierIds?.length || 0) < 2);
+        const isSubmitDisabled = savingBase || isClosedInvalid;
+        const currentCount = formData.invitedSupplierIds?.length || 0;
+
+        return (
+          <div className="pt-2 flex flex-col items-end gap-2">
+            {isClosedInvalid && (
+              <div className="text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-lg px-3 py-1.5 font-medium flex items-center gap-1.5">
+                <AlertCircle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                <span>
+                  {t('minTwoSuppliersWarningBtn', 'Для сохранения закрытого тендера пригласите минимум 2 участников')} ({currentCount} / 2)
+                </span>
+              </div>
+            )}
+            <div className="flex justify-end">
+              {tenderId ? (
+                <button
+                  type="button"
+                  onClick={handleUpdateBaseTender}
+                  disabled={isSubmitDisabled}
+                  className={`px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all ${
+                    isSubmitDisabled ? 'opacity-50 cursor-not-allowed' : 'active:scale-95 cursor-pointer'
+                  }`}
+                  title={isClosedInvalid ? t('minTwoSuppliersWarningBtn', 'Для сохранения закрытого тендера пригласите минимум 2 участников') : undefined}
+                >
+                  <Save size={15} />
+                  <span>{savingBase ? t('saving', 'Сохранение...') : t('saveBaseInfo', 'Сохранить общие данные')}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleCreateBaseTender}
+                  disabled={isSubmitDisabled}
+                  className={`px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all ${
+                    isSubmitDisabled ? 'opacity-50 cursor-not-allowed' : 'active:scale-95 cursor-pointer'
+                  }`}
+                  title={isClosedInvalid ? t('minTwoSuppliersWarningBtn', 'Для сохранения закрытого тендера пригласите минимум 2 участников') : undefined}
+                >
+                  <span>{savingBase ? t('saving', 'Создание...') : t('saveDraftAndProceed', 'Создать черновик и перейти к лотам →')}</span>
+                  <ArrowRight size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

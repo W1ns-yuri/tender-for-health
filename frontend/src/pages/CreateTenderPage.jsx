@@ -213,12 +213,12 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
       }
     }
 
-    // Валидация закрытого тендера: должен быть выбран хотя бы один приглашенный поставщик
-    if (formData.visibility === 'YAPYK' && (!formData.invitedSupplierIds || formData.invitedSupplierIds.length === 0)) {
+    // Валидация закрытого тендера: необходимо минимум 2 приглашенных поставщика для конкурентности
+    if (formData.visibility === 'YAPYK' && (!formData.invitedSupplierIds || formData.invitedSupplierIds.length < 2)) {
       showToast({
         title: t('validationError', 'Ошибка валидации'),
-        message: t('noInvitedSuppliersError', 'Для закрытого тендера необходимо пригласить хотя бы одного поставщика'),
-        type: 'error',
+        message: t('minTwoInvitedSuppliersError', 'Для закрытого тендера необходимо пригласить минимум 2 поставщиков для обеспечения конкурентности'),
+        type: 'warning',
       });
       return;
     }
@@ -294,12 +294,12 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
       }
     }
 
-    // Валидация закрытого тендера: должен быть выбран хотя бы один приглашенный поставщик
-    if (formData.visibility === 'YAPYK' && (!formData.invitedSupplierIds || formData.invitedSupplierIds.length === 0)) {
+    // Валидация закрытого тендера: необходимо минимум 2 приглашенных поставщика для конкурентности
+    if (formData.visibility === 'YAPYK' && (!formData.invitedSupplierIds || formData.invitedSupplierIds.length < 2)) {
       showToast({
         title: t('validationError', 'Ошибка валидации'),
-        message: t('noInvitedSuppliersError', 'Для закрытого тендера необходимо пригласить хотя бы одного поставщика'),
-        type: 'error',
+        message: t('minTwoInvitedSuppliersError', 'Для закрытого тендера необходимо пригласить минимум 2 поставщиков для обеспечения конкурентности'),
+        type: 'warning',
       });
       return;
     }
