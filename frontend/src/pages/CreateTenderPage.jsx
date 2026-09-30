@@ -830,7 +830,7 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
   }
 
   return (
-    <div className="space-y-6 pb-20 max-w-7xl mx-auto">
+    <div className="space-y-6 pb-20">
       {/* 🟢 ШАПКА ТЕНДЕРА: Номер, статус, действия */}
       <TenderHeader
         tenderId={tenderId}

@@ -213,7 +213,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
   }
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-40">
+    <div className="space-y-6 pb-40">
       {/* 1. Top Navigation Bar with Back button & Breadcrumbs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3">
@@ -234,7 +234,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                 {tenderDetails.tenderNumber}
               </span>
             </div>
-            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 mt-0.5">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-0.5">
               {t('evaluationDetailsHeading', 'Оценка предложений по закупке')}
             </h1>
           </div>

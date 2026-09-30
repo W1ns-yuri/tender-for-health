@@ -110,10 +110,16 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">{t('tendersListTitle', 'Tenderler')}</h2>
-        <span className={`text-xs font-medium ${theme.subText}`}>{t('allAvailableTenders', 'Полный список доступных тендеров')}</span>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            {t('tendersListTitle', 'Tenderler')}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {t('allAvailableTenders', 'Полный список доступных тендеров')}
+          </p>
+        </div>
       </div>
 
       {/* Панель фильтров */}

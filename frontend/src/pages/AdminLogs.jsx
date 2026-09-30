@@ -234,8 +234,10 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold">{t('adminAndAuditTitle', 'Администрирование и Аудит')}</h2>
-          <p className={`text-xs ${theme.subText} font-medium`}>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            {t('adminAndAuditTitle', 'Администрирование и Аудит')}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {t('adminAndAuditSubtitle', 'Безопасность системы, журнал действий и управление учетными записями')}
           </p>
         </div>

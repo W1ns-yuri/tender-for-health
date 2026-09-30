@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, CheckCircle2, FileText, Clock, Building2, Layers, AlertCircle, ArrowRight, Eye } from 'lucide-react';
+import { CheckCircle2, FileText, Clock, Building2, Layers, AlertCircle, ArrowRight, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
@@ -131,15 +131,14 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
   };
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6">
       {/* 1. Page Title & Overview */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5">
-            <Trophy size={26} className="text-emerald-600 dark:text-emerald-400" />
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             {t('evaluationHeaderSubtitle', 'Оценка заявок и определение победителей')}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {t('fullscreenRegistrySubtitle', 'Полноэкранный реестр закупочных процедур. Выберите тендер для перехода в специализированный рабочий стол сравнения лотов.')}
           </p>
         </div>

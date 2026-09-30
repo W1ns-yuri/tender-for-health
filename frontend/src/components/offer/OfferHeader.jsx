@@ -15,14 +15,19 @@ export default function OfferHeader({
   return (
     <div className="space-y-6">
       {/* 1. Верхняя навигация и заголовок */}
-      <div className="flex items-center justify-between pb-1">
-        <div className="flex items-center gap-3">
-          <h1 className={`text-2xl font-black tracking-tight ${theme?.primaryText || ''}`}>
-            {t('offerDetailsTitle', 'Подача коммерческого предложения')}
-          </h1>
-          <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-mono">
-            {tender?.tenderNumber}
-          </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              {t('offerDetailsTitle', 'Подача коммерческого предложения')}
+            </h1>
+            <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-mono">
+              {tender?.tenderNumber}
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {t('offerSubmissionSubtitle', 'Заполните спецификацию цен и прикрепите коммерческие документы')}
+          </p>
         </div>
       </div>
 

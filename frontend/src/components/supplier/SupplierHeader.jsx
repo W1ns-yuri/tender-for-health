@@ -50,7 +50,7 @@ export default function SupplierHeader({
       </div>
 
       <div className="min-w-0 flex-1">
-        <h1 className="text-2xl font-black tracking-tight truncate">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white truncate">
           {getCleanCompanyName(supplier.name)}
         </h1>
         <div className="flex flex-wrap items-center gap-2.5 mt-2">

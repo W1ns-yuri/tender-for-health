@@ -98,15 +98,22 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
   return (
     <div className="space-y-6">
       {/* Заголовок страницы */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">
-          {role === 'ADMIN' ? t('adminDashboardTitle', 'Tender Ulgam / Admin Baş sahypa') : t('supplierDashboardTitle', 'Üpjün ediji / Baş sahypa')}
-        </h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            {role === 'ADMIN' ? t('adminDashboardTitle', 'Tender Ulgam / Admin Baş sahypa') : t('supplierDashboardTitle', 'Üpjün ediji / Baş sahypa')}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {role === 'ADMIN' 
+              ? t('adminDashboardSubtitle', 'Сводная аналитика процедур, статус заявок и ключевые индикаторы') 
+              : t('supplierDashboardSubtitle', 'Обзор доступных закупок, статус поданных предложений и побед')}
+          </p>
+        </div>
 
         {role === 'ADMIN' && (
           <button
             onClick={onOpenCreateTender}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-sm shadow-emerald-500/20 active:scale-95 transition-all text-xs"
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-sm shadow-emerald-500/20 active:scale-95 transition-all text-xs cursor-pointer self-start sm:self-auto"
           >
             <Plus size={16} />
             <span>{t('createTenderBtn', 'Создать новый тендер')}</span>

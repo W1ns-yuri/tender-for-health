@@ -85,8 +85,8 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
       <div className={`p-6 rounded-xl border shadow-xs ${theme.cardBg}`}>
         <div className="flex justify-between items-start">
           <div>
-            <h1 className={`text-2xl font-bold tracking-tight ${theme.primaryText}`}>{safeString(data?.tenderNumber)}</h1>
-            <p className={`text-sm font-medium mt-1 ${theme.subText}`}>{safeString(data?.title)}</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{safeString(data?.tenderNumber)}</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{safeString(data?.title)}</p>
           </div>
           <div className="flex items-center gap-2.5">
             {role === 'ADMIN' && (

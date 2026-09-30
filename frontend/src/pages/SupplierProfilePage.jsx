@@ -681,7 +681,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   const regionLabel = TURKMEN_REGIONS.find(r => r.id === formData.region)?.defaultName || formData.region;
 
   return (
-    <div className={`max-w-5xl mx-auto space-y-6 ${bgClass}`}>
+    <div className={`space-y-6 ${bgClass}`}>
       {isAdmin && (
         <button 
           type="button" 

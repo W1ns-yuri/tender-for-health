@@ -109,13 +109,13 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
       {/* 1. Заголовок страницы и действия */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className={`text-xl font-bold ${theme.primaryText}`}>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             {isAdmin 
               ? (t('submittedOffers', 'Поданные предложения'))
               : t('myOffers', 'Tekliplerim')
             }
-          </h2>
-          <p className={`text-xs font-medium ${theme.subText}`}>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {isAdmin 
               ? (t('adminOffersPageTitle', 'Администратор / Поданные коммерческие предложения поставщиков'))
               : t('supplierMyOffers', 'Üpjün ediji / Tekliplerim')

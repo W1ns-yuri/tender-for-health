@@ -15,7 +15,8 @@ import {
   Lock, 
   Download, 
   Server,
-  KeyRound
+  KeyRound,
+  ChevronRight
 } from 'lucide-react';
 import { 
   Button, 
@@ -289,12 +290,12 @@ export default function SettingsPage({
   const userInitials = getAvatarInitials(user, role);
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-16 animate-in fade-in duration-200">
+    <div className="w-full space-y-6 pb-16 animate-in fade-in duration-200">
       {/* 1. Заголовок страницы в строгом стиле B2B GovTech */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               {t('settings', 'Настройки системы')}
             </h1>
             <Badge
@@ -305,7 +306,7 @@ export default function SettingsPage({
               {isSupplier ? t('supplierStr', 'Поставщик') : t('adminStr', 'Администратор')}
             </Badge>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {t('settingsSubtitle', 'Управление параметрами интерфейса, уведомлений и безопасности')}
           </p>
         </div>
@@ -330,32 +331,44 @@ export default function SettingsPage({
         </div>
       </div>
 
-      {/* 2. Сегментированная панель навигации (Executive Segmented Navigation) */}
-      <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 overflow-x-auto scrollbar-none">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`
-                px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap select-none
-                ${
-                  isActive
-                    ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-2xs border border-slate-200/60 dark:border-slate-700/60'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }
-              `}
-            >
-              <span className={isActive ? (isSupplier ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400') : 'text-slate-400'}>
-                {tab.icon}
-              </span>
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      {/* 2. Двухколоночный современный макет: вертикальное меню слева + карточки настроек справа */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Левая навигационная колонка */}
+        <div className="lg:col-span-3 space-y-3">
+          <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-2 shadow-2xs space-y-1">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`
+                    w-full px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer select-none text-left
+                    ${
+                      isActive
+                        ? isSupplier
+                          ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 shadow-2xs border border-blue-200/60 dark:border-blue-800/60'
+                          : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 shadow-2xs border border-emerald-200/60 dark:border-emerald-800/60'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 border border-transparent'
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className={isActive ? (isSupplier ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400') : 'text-slate-400'}>
+                      {tab.icon}
+                    </span>
+                    <span>{tab.label}</span>
+                  </div>
+                  {isActive && <ChevronRight size={14} className={isSupplier ? 'text-blue-600' : 'text-emerald-600'} />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Правая контентная колонка */}
+        <div className="lg:col-span-9 space-y-6">
 
       {/* 3.1. ВКЛАДКА: ВНЕШНИЙ ВИД И ЯЗЫК */}
       {activeTab === 'general' && (
@@ -896,6 +909,8 @@ export default function SettingsPage({
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

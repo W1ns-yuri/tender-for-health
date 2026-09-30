@@ -38,14 +38,16 @@ export default function SupplierWins({ role, isDarkMode, lang = 'RU' }) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className={`p-2.5 rounded-xl ${theme.lightBg} ${theme.primaryText}`}>
-          <Trophy size={24} />
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            {t('myWinsTitle', 'Мои победы')}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {t('myWinsSubtitle', 'Реестр выигранных закупочных процедур и заключенных контрактов')}
+          </p>
         </div>
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-          {t('myWinsTitle', 'Мои победы')}
-        </h2>
       </div>
 
       {wins.length === 0 ? (

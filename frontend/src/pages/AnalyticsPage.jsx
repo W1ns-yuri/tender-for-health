@@ -291,7 +291,7 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
               ) : (
                 <>
                   <Sparkles size={13} className="text-amber-500" />
-                  <span>{t('demoModeBtn', 'Демо-показ')}</span>
+                  <span>{t('demoModeBtn', 'Демо')}</span>
                 </>
               )}
             </button>
@@ -332,9 +332,9 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
                 value={currency}
                 onChange={(val) => setCurrency(val)}
                 options={[
-                  { value: 'TMT', label: 'TMT (манат)' },
-                  { value: 'USD', label: 'USD ($)' },
-                  { value: 'EUR', label: 'EUR (€)' },
+                  { value: 'TMT', label: 'TMT' },
+                  { value: 'USD', label: 'USD' },
+                  { value: 'EUR', label: 'EUR' },
                 ]}
                 isDarkMode={isDarkMode}
                 size="sm"

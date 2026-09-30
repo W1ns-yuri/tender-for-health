@@ -121,7 +121,7 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className={`text-2xl font-bold tracking-tight ${theme.primaryText}`}>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {offer.number || `OFFER-${offer.id.slice(0, 8)}`}
               </h1>
               {getStatusBadge(offer.status, lang, isDarkMode)}

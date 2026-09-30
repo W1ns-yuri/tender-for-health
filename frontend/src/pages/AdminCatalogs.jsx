@@ -552,12 +552,12 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
           <div className="space-y-4 animate-in fade-in duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                   {activeSection === 'haryt' 
                     ? t('sectionProducts', 'Каталог товаров') 
                     : t('sectionDirectories', 'Справочники')}
-                </h2>
-                <p className={`text-xs ${theme.subText} mt-0.5`}>
+                </h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {activeSection === 'haryt' 
                     ? t('catProductCatalogSubtitle', 'Единый классификатор номенклатуры товаров, торговых марок и характеристик') 
                     : t('catalogsTitle', 'Общесистемные справочники и классификаторы')}
@@ -608,9 +608,9 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
                   <ArrowLeft size={16} />
                   <span>{t('back', 'Назад')}</span>
                 </button>
-                <h2 className={`text-xl font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                   {currentCatalogItem?.title || activeCatalog}
-                </h2>
+                </h1>
               </div>
               
               <div className="flex flex-wrap items-center gap-3">
