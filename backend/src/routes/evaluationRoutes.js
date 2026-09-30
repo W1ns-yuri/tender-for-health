@@ -5,7 +5,8 @@ const {
     getEvaluationTenders,
     getTenderEvaluationDetails,
     awardLot,
-    completeEvaluation
+    completeEvaluation,
+    selectWinnerOffer
 } = require('../controllers/evaluationController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { checkRole } = require('../middleware/rbacMiddleware');
@@ -30,5 +31,8 @@ router.post('/award-item', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMI
 
 // 6. Завершение оценки тендера
 router.post('/complete/:tenderId', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN', 'CLIENT', 'PURCHASING_SPECIALIST']), completeEvaluation);
+
+// 7. Прямой выбор победителя тендера (общий)
+router.post('/select-winner', authMiddleware, checkRole(['COMMISSION_MEMBER', 'ADMIN', 'PURCHASING_SPECIALIST']), selectWinnerOffer);
 
 module.exports = router;
