@@ -126,7 +126,6 @@ export default function TenderVisibilityAndInvitedSuppliers({
   };
 
   const isClosed = visibility === 'YAPYK';
-  const hasMinSuppliers = invitedSupplierIds.length >= 2;
 
   return (
     <div className="space-y-4 pt-2">
@@ -235,22 +234,11 @@ export default function TenderVisibilityAndInvitedSuppliers({
                 <Users size={16} />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                    {t('invitedSuppliersTitle', 'Приглашенные поставщики')}
-                  </h4>
-                  {/* Индикатор соблюдения минимального пула участников (конкурентность) */}
-                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 transition-colors ${
-                    hasMinSuppliers
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-800'
-                      : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300/60 dark:border-amber-800'
-                  }`}>
-                    {hasMinSuppliers ? <Check size={11} strokeWidth={3} /> : <AlertCircle size={11} />}
-                    <span>{invitedSupplierIds.length} / 2 {t('minRequired', 'мин.')}</span>
-                  </span>
-                </div>
+                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                  {t('invitedSuppliersTitle', 'Приглашенные поставщики')}
+                </h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {t('invitedSuppliersSubtitle', 'Только выбранные компании смогут увидеть ТЗ и подать коммерческое предложение')}
+                  {t('invitedSuppliersSubtitle', 'Только выбранные компании смогут увидеть ТЗ и подать заявку')}
                 </p>
               </div>
             </div>
@@ -268,16 +256,6 @@ export default function TenderVisibilityAndInvitedSuppliers({
               </button>
             )}
           </div>
-
-          {/* Информационная подсказка о требовании конкурентности */}
-          {!hasMinSuppliers && (
-            <div className="p-2.5 rounded-xl border border-amber-200/70 dark:border-amber-900/50 bg-amber-50/60 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2">
-              <AlertCircle size={14} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <span className="text-[11px] leading-relaxed">
-                {t('minTwoSuppliersNotice', 'По закону о закупках для закрытого тендера необходимо пригласить не менее 2 поставщиков для обеспечения конкурентной среды.')} ({invitedSupplierIds.length} {t('outOf', 'из')} 2)
-              </span>
-            </div>
-          )}
 
           {/* Поле поиска поставщиков с автодополнением */}
           <div ref={searchContainerRef} className="relative">
@@ -403,10 +381,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                   {t('noSuppliersInvitedTitle', 'Список участников закрытого тендера пуст')}
                 </p>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
-                  {categoryMatchedSuppliers.length > 0
-                    ? t('noSuppliersWithCatHint', 'Воспользуйтесь поиском выше по названию или коду STŞK, либо пригласите поставщиков из категории тендера.')
-                    : t('noSuppliersNoCatHint', 'Найдите и добавьте минимум 2 поставщиков через строку поиска выше.')
-                  }
+                  {t('noSuppliersInvitedHint', 'Воспользуйтесь поиском выше для выбора поставщиков.')}
                 </p>
                 {categoryMatchedSuppliers.length > 0 && (
                   <div className="mt-3">
