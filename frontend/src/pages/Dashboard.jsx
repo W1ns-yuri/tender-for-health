@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FileText, Send, Trophy, Eye, Plus, Edit2, Trash2, Users, ChevronRight } from 'lucide-react';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
+import { Pagination } from '../components/ui';
 
 export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDarkMode, lang = 'RU' }) {
   const [tenders, setTenders] = useState([]);
@@ -12,8 +13,35 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
   const [supplierProfile, setSupplierProfile] = useState(null);
   const [loadingTenders, setLoadingTenders] = useState(true);
   const [loadingOffers, setLoadingOffers] = useState(true);
+
+  // Пагинация таблицы открытых тендеров (по умолчанию 10 строк на страницу)
+  const [tenderPage, setTenderPage] = useState(1);
+  const [tenderPageSize, setTenderPageSize] = useState(10);
+
+  // Пагинация таблицы поданных предложений (по умолчанию 10 строк на страницу)
+  const [offerPage, setOfferPage] = useState(1);
+  const [offerPageSize, setOfferPageSize] = useState(10);
+
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
+
+  // Расчет пагинации тендеров
+  const totalTenders = tenders.length;
+  const totalTenderPages = Math.max(1, Math.ceil(totalTenders / tenderPageSize));
+  const safeTenderPage = Math.min(tenderPage, totalTenderPages);
+  const paginatedTenders = useMemo(() => {
+    const startIndex = (safeTenderPage - 1) * tenderPageSize;
+    return tenders.slice(startIndex, startIndex + tenderPageSize);
+  }, [tenders, safeTenderPage, tenderPageSize]);
+
+  // Расчет пагинации предложений
+  const totalOffers = myOffers.length;
+  const totalOfferPages = Math.max(1, Math.ceil(totalOffers / offerPageSize));
+  const safeOfferPage = Math.min(offerPage, totalOfferPages);
+  const paginatedOffers = useMemo(() => {
+    const startIndex = (safeOfferPage - 1) * offerPageSize;
+    return myOffers.slice(startIndex, startIndex + offerPageSize);
+  }, [myOffers, safeOfferPage, offerPageSize]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -253,12 +281,12 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                   <tr>
                     <td colSpan="9" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
                   </tr>
-                ) : tenders.length === 0 ? (
+                ) : paginatedTenders.length === 0 ? (
                   <tr>
                     <td colSpan="9" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
                   </tr>
                 ) : (
-                  tenders.map((item, idx) => (
+                  paginatedTenders.map((item, idx) => (
                     <tr key={item.id || idx} className={`${theme.tableRowHover} transition-colors`}>
                       <td className="py-3.5 px-4 text-center font-semibold font-mono tabular-nums">{safeString(item.tenderNumber)}</td>
                       <td className="py-3.5 px-4 text-center font-medium">{safeString(item.title)}</td>
@@ -285,6 +313,22 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
               </tbody>
             </table>
           </div>
+
+          {/* Пагинация таблицы открытых тендеров */}
+          <Pagination
+            currentPage={safeTenderPage}
+            totalPages={totalTenderPages}
+            totalItems={totalTenders}
+            pageSize={tenderPageSize}
+            pageSizeOptions={[10, 25, 50, 100]}
+            onPageChange={setTenderPage}
+            onPageSizeChange={(newSize) => {
+              setTenderPageSize(newSize);
+              setTenderPage(1);
+            }}
+            role={role}
+            lang={lang}
+          />
         </div>
       </div>
 
@@ -318,12 +362,12 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                   <tr>
                     <td colSpan="9" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
                   </tr>
-                ) : myOffers.length === 0 ? (
+                ) : paginatedOffers.length === 0 ? (
                   <tr>
                     <td colSpan="9" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
                   </tr>
                 ) : (
-                  myOffers.map((item, idx) => (
+                  paginatedOffers.map((item, idx) => (
                     <tr key={item.id || idx} className={`${theme.tableRowHover} transition-colors`}>
                       <td className="py-3.5 px-4 text-left font-semibold">
                         <span className="font-mono tabular-nums">{safeString(item.tender?.tenderNumber || item.lot)}</span>
@@ -381,6 +425,22 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
               </tbody>
             </table>
           </div>
+
+          {/* Пагинация таблицы предложений */}
+          <Pagination
+            currentPage={safeOfferPage}
+            totalPages={totalOfferPages}
+            totalItems={totalOffers}
+            pageSize={offerPageSize}
+            pageSizeOptions={[10, 25, 50, 100]}
+            onPageChange={setOfferPage}
+            onPageSizeChange={(newSize) => {
+              setOfferPageSize(newSize);
+              setOfferPage(1);
+            }}
+            role={role}
+            lang={lang}
+          />
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Trash2, Eye, RefreshCw, AlertCircle } from 'lucide-react';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import API from '../services/api';
@@ -6,7 +6,7 @@ import { getTranslation } from '../utils/translations';
 import { useNavigate } from 'react-router-dom';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
-import { TableFilters } from '../components/ui';
+import { TableFilters, Pagination } from '../components/ui';
 
 export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
@@ -22,6 +22,10 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
   const [filterCurrency, setFilterCurrency] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Пагинация (по умолчанию 10 строк на страницу)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     fetchMyOffers();
@@ -70,29 +74,44 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
   };
 
   // Фильтрация списка предложений
-  const filteredOffers = offers.filter(item => {
-    if (filterCurrency) {
-      const curr = item.baseCurrency?.code || item.currency || '';
-      if (curr !== filterCurrency) return false;
-    }
-    if (filterStatus) {
-      if (item.status !== filterStatus) return false;
-    }
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase().trim();
-      const matchTender = (item.tender?.title || '').toLowerCase().includes(q);
-      const matchTenderNum = (item.tender?.tenderNumber || '').toLowerCase().includes(q);
-      const matchSupplier = (item.supplier?.name || '').toLowerCase().includes(q);
-      const matchClient = (item.tender?.client?.name || '').toLowerCase().includes(q);
-      const matchNumber = (item.number || item.code || '').toLowerCase().includes(q);
-      const matchComment = (item.comment || '').toLowerCase().includes(q);
-      if (!matchTender && !matchTenderNum && !matchSupplier && !matchClient && !matchNumber && !matchComment) return false;
-    }
-    return true;
-  });
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterCurrency, filterStatus]);
+
+  const filteredOffers = useMemo(() => {
+    return offers.filter(item => {
+      if (filterCurrency) {
+        const curr = item.baseCurrency?.code || item.currency || '';
+        if (curr !== filterCurrency) return false;
+      }
+      if (filterStatus) {
+        if (item.status !== filterStatus) return false;
+      }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchTender = (item.tender?.title || '').toLowerCase().includes(q);
+        const matchTenderNum = (item.tender?.tenderNumber || '').toLowerCase().includes(q);
+        const matchSupplier = (item.supplier?.name || '').toLowerCase().includes(q);
+        const matchClient = (item.tender?.client?.name || '').toLowerCase().includes(q);
+        const matchNumber = (item.number || item.code || '').toLowerCase().includes(q);
+        const matchComment = (item.comment || '').toLowerCase().includes(q);
+        if (!matchTender && !matchTenderNum && !matchSupplier && !matchClient && !matchNumber && !matchComment) return false;
+      }
+      return true;
+    });
+  }, [offers, filterCurrency, filterStatus, searchQuery]);
+
+  // Расчет пагинации
+  const totalItems = filteredOffers.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedOffers = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * pageSize;
+    return filteredOffers.slice(startIndex, startIndex + pageSize);
+  }, [filteredOffers, safeCurrentPage, pageSize]);
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-300 pb-12">
+    <div className="space-y-6 animate-in fade-in duration-300 pb-12">
       {/* Баннер приостановки, если профиль поставщика на повторной модерации */}
       {!isAdmin && offers.some(o => o.supplier?.verificationStatus === 'PENDING_REVIEW') && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start space-x-3 text-xs text-amber-800 animate-in fade-in">
@@ -214,14 +233,14 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
                 <tr>
                   <td colSpan={isAdmin ? "11" : "10"} className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
                 </tr>
-              ) : filteredOffers.length === 0 ? (
+              ) : paginatedOffers.length === 0 ? (
                 <tr>
                   <td colSpan={isAdmin ? "11" : "10"} className="py-8 text-center text-slate-500">
                     {offers.length === 0 ? (t('noOffersYet', 'Предложений пока не поступало')) : (t('nothingFoundForFilters', 'По заданным фильтрам ничего не найдено'))}
                   </td>
                 </tr>
               ) : (
-                filteredOffers.map((item, idx) => {
+                paginatedOffers.map((item, idx) => {
                   const supplierName = item.supplier?.name || item.supplier?.user?.username || '-';
                   const currency = item.baseCurrency?.code || item.currency || 'TMT';
                   const offerPrice = item.offeredPrice || 0;
@@ -314,6 +333,22 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
             </tbody>
           </table>
         </div>
+
+        {/* Панель пагинации */}
+        <Pagination
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          pageSizeOptions={[10, 25, 50, 100]}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+          role={role}
+          lang={lang}
+        />
       </div>
     </div>
   );
