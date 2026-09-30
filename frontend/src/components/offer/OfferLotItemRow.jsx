@@ -142,12 +142,7 @@ export default function OfferLotItemRow({
           )}
         </td>
 
-        {/* Колонка 3: Ед. изм. */}
-        <td className="py-3.5 px-3.5 text-center text-slate-600 dark:text-slate-400 font-bold text-xs">
-          {item.requestedUnit || item.unit || '-'}
-        </td>
-
-        {/* Колонка 4: Количество (СТРОГО ЗАФИКСИРОВАНО ПО ЗАКАЗЧИКУ) */}
+        {/* Колонка 3: Количество (СТРОГО ЗАФИКСИРОВАНО ПО ЗАКАЗЧИКУ) */}
         <td className="py-3.5 px-3.5 text-center">
           <div className="flex flex-col items-center">
             <span className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-black text-xs border border-slate-200 dark:border-slate-700 shadow-2xs">
@@ -157,6 +152,11 @@ export default function OfferLotItemRow({
               {t('fixedBadge', 'фиксировано')}
             </span>
           </div>
+        </td>
+
+        {/* Колонка 4: Ед. изм. */}
+        <td className="py-3.5 px-3.5 text-center text-slate-600 dark:text-slate-400 font-bold text-xs">
+          {item.requestedUnit || item.unit || '-'}
         </td>
 
         {/* Колонка 5: Цена за единицу */}

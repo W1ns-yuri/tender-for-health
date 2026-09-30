@@ -179,6 +179,7 @@ export const translations = {
 
     // Спецификации
     tenderSpecs: 'Tender spesifikasiýasy',
+    itemNumber: 'T/b',
     specProduct: 'Haryt',
     specUnit: 'Ölçeg birligi',
     specBrand: 'Öndüriji',
@@ -1393,6 +1394,7 @@ export const translations = {
 
     // Спецификации
     tenderSpecs: 'Спецификация тендера',
+    itemNumber: '№ п/п',
     specProduct: 'Товар',
     specUnit: 'Ед. изм.',
     specBrand: 'Производитель',
@@ -2607,6 +2609,7 @@ export const translations = {
 
     // Specs
     tenderSpecs: 'Tender Specification',
+    itemNumber: 'No.',
     specProduct: 'Product',
     specUnit: 'Unit',
     specBrand: 'Manufacturer',

@@ -49,13 +49,13 @@ export default function TenderLotItemsTable({
                   ? t('serviceName', 'Наименование услуги')
                   : t('product', 'Товар / МНН')} *
               </th>
+              <th className="py-2.5 px-3 w-24 text-center font-bold">
+                {activeLot.lotType === 'SERVICES' ? t('volumePeriod', 'Объем') : t('quantity', 'Кол-во')} *
+              </th>
               <th className="py-2.5 px-3 w-28 text-center font-bold">{t('unit', 'Ед. изм.')}</th>
               {activeLot.lotType === 'GOODS' && (
                 <th className="py-2.5 px-3 w-36 text-center font-bold">{t('manufacturer', 'Производитель')}</th>
               )}
-              <th className="py-2.5 px-3 w-24 text-center font-bold">
-                {activeLot.lotType === 'SERVICES' ? t('volumePeriod', 'Объем') : t('quantity', 'Кол-во')} *
-              </th>
               <th className="py-2.5 px-3 min-w-44 font-bold">{t('description', 'Описание / Требования')}</th>
               <th className="py-2.5 px-3 w-12 text-center font-bold"></th>
             </tr>
@@ -89,6 +89,17 @@ export default function TenderLotItemsTable({
                   </td>
 
                   <td className="py-2.5 px-3">
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="any"
+                      value={spec.mukdar || 1}
+                      onChange={(e) => handleSpecChange(sIdx, 'mukdar', e.target.value)}
+                      className={`w-full px-2 py-1 rounded-md text-xs text-center font-mono font-bold outline-none border ${theme.inputBg}`}
+                    />
+                  </td>
+
+                  <td className="py-2.5 px-3">
                     <CustomSelect
                       role={role}
                       size="sm"
@@ -116,17 +127,6 @@ export default function TenderLotItemsTable({
                       />
                     </td>
                   )}
-
-                  <td className="py-2.5 px-3">
-                    <input
-                      type="number"
-                      min="0.01"
-                      step="any"
-                      value={spec.mukdar || 1}
-                      onChange={(e) => handleSpecChange(sIdx, 'mukdar', e.target.value)}
-                      className={`w-full px-2 py-1 rounded-md text-xs text-center font-mono font-bold outline-none border ${theme.inputBg}`}
-                    />
-                  </td>
 
                   <td className="py-2.5 px-3">
                     <input

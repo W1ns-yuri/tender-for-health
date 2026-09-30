@@ -331,11 +331,11 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className={`font-semibold ${theme.tableHeaderBg}`}>
-                        <th className="py-2.5 px-3 w-12 text-center">H/K</th>
+                        <th className="py-2.5 px-3 w-12 text-center">{t('itemNumber', '№ п/п')}</th>
                         <th className="py-2.5 px-3 min-w-60">{t('offeredProductName', 'Наименование предложенного товара')}</th>
                         <th className="py-2.5 px-3 min-w-45">{t('specBrand', 'Производитель / Модель')}</th>
-                        <th className="py-2.5 px-3 w-28 text-center">{t('specUnit', 'Ед. изм.')}</th>
                         <th className="py-2.5 px-3 w-28 text-center">{t('specQty', 'Количество')}</th>
+                        <th className="py-2.5 px-3 w-28 text-center">{t('specUnit', 'Ед. изм.')}</th>
                         <th className="py-2.5 px-3 w-36 text-center">{t('unitPrice', 'Цена за ед.')} ({currencyCode})</th>
                         <th className="py-2.5 px-3 w-36 text-right">{t('totalSum', 'Сумма')} ({currencyCode})</th>
                       </tr>
@@ -365,11 +365,11 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                             <td className="py-3 px-3 text-slate-600 dark:text-slate-300 font-medium">
                               {mfr || '—'}
                             </td>
-                            <td className="py-3 px-3 text-center text-slate-600 dark:text-slate-400 font-bold">
-                              {unitStr}
-                            </td>
                             <td className="py-3 px-3 text-center font-black text-slate-800 dark:text-slate-100">
                               {itemQty}
+                            </td>
+                            <td className="py-3 px-3 text-center text-slate-600 dark:text-slate-400 font-bold">
+                              {unitStr}
                             </td>
                             <td className="py-3 px-3 text-center font-bold text-slate-700 dark:text-slate-300">
                               {itemPrice.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -393,11 +393,11 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className={`font-semibold ${theme.tableHeaderBg}`}>
-                    <th className="py-2.5 px-3 w-12 text-center">H/K</th>
+                    <th className="py-2.5 px-3 w-12 text-center">{t('itemNumber', '№ п/п')}</th>
                     <th className="py-2.5 px-3 min-w-60">{t('offeredProductName', 'Наименование предложенного товара')}</th>
                     <th className="py-2.5 px-3 min-w-45">{t('specBrand', 'Производитель / Модель')}</th>
-                    <th className="py-2.5 px-3 w-28 text-center">{t('specUnit', 'Ед. изм.')}</th>
                     <th className="py-2.5 px-3 w-28 text-center">{t('specQty', 'Количество')}</th>
+                    <th className="py-2.5 px-3 w-28 text-center">{t('specUnit', 'Ед. изм.')}</th>
                     <th className="py-2.5 px-3 w-36 text-center">{t('unitPriceWithCurrency', `Цена за ед. (${currencyCode})`, { currencyCode })}</th>
                     <th className="py-2.5 px-3 w-36 text-right">{t('totalSumWithCurrency', `Сумма (${currencyCode})`, { currencyCode })}</th>
                   </tr>
@@ -434,11 +434,11 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                           <td className="py-3 px-3 text-slate-600 dark:text-slate-300 font-medium">
                             {mfr || '—'}
                           </td>
-                          <td className="py-3 px-3 text-center text-slate-600 dark:text-slate-400 font-bold">
-                            {unitStr}
-                          </td>
                           <td className="py-3 px-3 text-center font-black text-slate-800 dark:text-slate-100">
                             {itemQty}
+                          </td>
+                          <td className="py-3 px-3 text-center text-slate-600 dark:text-slate-400 font-bold">
+                            {unitStr}
                           </td>
                           <td className="py-3 px-3 text-center font-bold text-slate-700 dark:text-slate-300">
                             {itemPrice.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -475,8 +475,8 @@ export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
                       <tr key={spec.id || index} className={`${theme.tableRowHover} transition-colors`}>
                         <td className="py-3 px-3 text-center font-bold text-slate-400 w-12">{index + 1}</td>
                         <td className="py-3 px-3 min-w-60 font-bold text-slate-800 dark:text-slate-100">{productName}</td>
-                        <td className="py-3 px-3 text-center font-bold text-slate-600 w-28">{spec.unit?.shortName || 'шт'}</td>
                         <td className="py-3 px-3 text-center font-black text-slate-800 w-28">{itemQty}</td>
+                        <td className="py-3 px-3 text-center font-bold text-slate-600 w-28">{spec.unit?.shortName || 'шт'}</td>
                         <td className="py-3 px-3 text-center font-bold text-slate-700 w-36">{itemPrice.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         <td className={`py-3 px-3 text-right font-black text-sm w-36 ${theme.primaryText}`}>{lineTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       </tr>

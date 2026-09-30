@@ -357,7 +357,7 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
                         <tr className={theme.tableHeaderBg}>
-                          <th className="py-3 px-4 w-16 text-center">H/K</th>
+                          <th className="py-3 px-4 w-16 text-center">{t('itemNumber', '№ п/п')}</th>
                           <th className="py-3 px-4 text-center min-w-48">
                             {isWorks 
                               ? (t('workStages', 'Этап / вид работ')) 
@@ -365,11 +365,11 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                               ? (t('serviceName', 'Наименование услуги')) 
                               : (t('product', 'Товар'))}
                           </th>
-                          <th className="py-3 px-4 text-center w-28">{t('unit', 'Ölçeg birligi')}</th>
-                          {isGoods && <th className="py-3 px-4 text-center w-36">{t('manufacturer', 'Öndüriji')}</th>}
                           <th className="py-3 px-4 text-center w-28">
                             {isServices ? (t('volumePeriod', 'Объем / Период')) : t('quantity', 'Mukdar')}
                           </th>
+                          <th className="py-3 px-4 text-center w-28">{t('unit', 'Ölçeg birligi')}</th>
+                          {isGoods && <th className="py-3 px-4 text-center w-36">{t('manufacturer', 'Öndüriji')}</th>}
                           <th className="py-3 px-4 text-center">
                             {isWorks 
                               ? (t('scopeOfWork', 'Состав и спецификация работ')) 
@@ -394,9 +394,9 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                           <tr key={idx} className={theme.tableRowHover}>
                             <td className="py-3.5 px-4 text-center font-semibold text-slate-400">{safeString(spec?.positionNumber || idx + 1)}</td>
                             <td className="py-3.5 px-4 text-center font-medium">{safeString(spec?.generalProduct?.name || spec?.name)}</td>
+                            <td className="py-3.5 px-4 text-center font-bold">{safeString(spec?.quantity)}</td>
                             <td className="py-3.5 px-4 text-center">{safeString(spec?.unit?.name || spec?.unit?.shortName)}</td>
                             {isGoods && <td className="py-3.5 px-4 text-center">{safeString(spec?.manufacturer?.name || '-')}</td>}
-                            <td className="py-3.5 px-4 text-center font-bold">{safeString(spec?.quantity)}</td>
                             <td className="py-3.5 px-4 text-center w-auto min-w-60 whitespace-normal text-wrap text-slate-500">
                               {safeString(spec?.description)}
                             </td>
@@ -418,11 +418,11 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className={theme.tableHeaderBg}>
-                    <th className="py-3 px-4 w-16 text-center">H/K</th>
+                    <th className="py-3 px-4 w-16 text-center">{t('itemNumber', '№ п/п')}</th>
                     <th className="py-3 px-4 text-center w-48">{t('product', 'Товар')}</th>
+                    <th className="py-3 px-4 text-center w-24">{t('quantity', 'Mukdar')}</th>
                     <th className="py-3 px-4 text-center w-28">{t('unit', 'Ölçeg birligi')}</th>
                     <th className="py-3 px-4 text-center w-36">{t('manufacturer', 'Öndüriji')}</th>
-                    <th className="py-3 px-4 text-center w-24">{t('quantity', 'Mukdar')}</th>
                     <th className="py-3 px-4 text-center">{t('description', 'Mazmuny')}</th>
                     {data?.status === 'YENIJI_YGLAN_EDILDI' && <th className="py-3 px-4 text-center w-36">{t('winnerBadge', 'Победитель')}</th>}
                   </tr>
@@ -445,9 +445,9 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                       <tr key={idx} className={theme.tableRowHover}>
                         <td className="py-3.5 px-4 text-center font-semibold text-slate-400">{safeString(spec?.positionNumber || idx + 1)}</td>
                         <td className="py-3.5 px-4 text-center font-medium">{safeString(spec?.generalProduct?.name || spec?.name)}</td>
+                        <td className="py-3.5 px-4 text-center font-bold">{safeString(spec?.quantity)}</td>
                         <td className="py-3.5 px-4 text-center">{safeString(spec?.unit?.name || spec?.unit?.shortName)}</td>
                         <td className="py-3.5 px-4 text-center">{safeString(spec?.manufacturer?.name || '-')}</td>
-                        <td className="py-3.5 px-4 text-center font-bold">{safeString(spec?.quantity)}</td>
                         <td className="py-3.5 px-4 text-center w-auto min-w-60 whitespace-normal text-wrap text-slate-500">
                           {safeString(spec?.description)}
                         </td>

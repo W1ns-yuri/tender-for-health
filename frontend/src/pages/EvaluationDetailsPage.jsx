@@ -628,8 +628,8 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                               <tr>
                                                 <th className="p-3 font-semibold w-10 text-center">#</th>
                                                 <th className="p-3 font-semibold">{t('productSubjectColumn', 'Товар / Предмет закупки')}</th>
-                                                <th className="p-3 font-semibold text-center w-24">{t('specUnit', 'Ед. изм.')}</th>
                                                 <th className="p-3 font-semibold text-center w-24">{t('qty', 'Кол-во')}</th>
+                                                <th className="p-3 font-semibold text-center w-24">{t('specUnit', 'Ед. изм.')}</th>
                                                 <th className="p-3 font-semibold text-right w-36">{t('unitPricePlain', 'Цена за ед.')}</th>
                                                 <th className="p-3 font-semibold text-right w-40">{t('totalAmount', 'Сумма')}</th>
                                                 <th className="p-3 font-semibold w-56">{t('specsManufacturerColumn', 'Характеристики / Производитель')}</th>
@@ -664,8 +664,8 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                                           </span>
                                                         </div>
                                                       </td>
-                                                      <td className="p-3 text-center text-slate-500 font-medium">{requestedUnit}</td>
                                                       <td className="p-3 text-center font-bold text-slate-700 dark:text-slate-300">{os.quantity}</td>
+                                                      <td className="p-3 text-center text-slate-500 font-medium">{requestedUnit}</td>
                                                       <td className="p-3 text-right text-slate-400">—</td>
                                                       <td className="p-3 text-right text-slate-400">—</td>
                                                       <td className="p-3 text-slate-500 italic text-[11px]">{requestedDesc || '—'}</td>
@@ -691,8 +691,8 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
                                                           </div>
                                                         </div>
                                                       </td>
-                                                      <td className="p-3 text-center font-medium text-slate-600 dark:text-slate-300">{offeredUnit}</td>
                                                       <td className="p-3 text-center font-bold text-emerald-700 dark:text-emerald-400">{os.quantity}</td>
+                                                      <td className="p-3 text-center font-medium text-slate-600 dark:text-slate-300">{offeredUnit}</td>
                                                       <td className="p-3 text-right font-mono font-medium text-slate-700 dark:text-slate-300">
                                                         {os.unitPrice.toLocaleString('ru-RU', { minimumFractionDigits: 2 })} {co.currencyCode}
                                                       </td>
