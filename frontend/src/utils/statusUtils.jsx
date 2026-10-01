@@ -1,9 +1,9 @@
 import React from 'react';
 import { getTranslation } from './translations';
 
-export const getStatusBadge = (status, lang = 'RU', isDarkMode = false) => {
+export const getStatusBadge = (status, lang = 'RU', isDarkMode = false, customClass = '') => {
   const normalized = String(status || '').toUpperCase();
-  const baseClass = "px-3 py-1 text-xs rounded-md whitespace-nowrap inline-flex items-center justify-center border font-semibold";
+  const baseClass = customClass || "px-3 py-1 text-xs rounded-md whitespace-nowrap inline-flex items-center justify-center border font-semibold";
 
   switch (normalized) {
     case 'TASLAMA':

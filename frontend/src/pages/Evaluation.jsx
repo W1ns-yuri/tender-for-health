@@ -164,52 +164,52 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
       </div>
 
       {/* 2. Top Metric Counters */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className={`p-4 rounded-xl border shadow-xs ${theme.cardBg} flex items-center gap-3.5`}>
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-            <Layers size={20} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className={`p-3 rounded-xl border shadow-xs ${theme.cardBg} flex items-center gap-3`}>
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+            <Layers size={18} />
           </div>
-          <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          <div className="min-w-0">
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider truncate" title={t('totalTendersMetric', 'Всего тендеров')}>
               {t('totalTendersMetric', 'Всего тендеров')}
             </div>
-            <div className="text-xl font-bold text-slate-800 dark:text-slate-100">{totalTendersCount}</div>
+            <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{totalTendersCount}</div>
           </div>
         </div>
 
-        <div className={`p-4 rounded-xl border shadow-xs ${theme.cardBg} flex items-center gap-3.5`}>
-          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
-            <Clock size={20} />
+        <div className={`p-3 rounded-xl border shadow-xs ${theme.cardBg} flex items-center gap-3`}>
+          <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+            <Clock size={18} />
           </div>
-          <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          <div className="min-w-0">
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider truncate" title={t('statusBahalandyryldy', 'На рассмотрении')}>
               {t('statusBahalandyryldy', 'На рассмотрении')}
             </div>
-            <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{inProgressCount}</div>
+            <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{inProgressCount}</div>
           </div>
         </div>
 
-        <div className={`p-4 rounded-xl border shadow-xs ${theme.cardBg} flex items-center gap-3.5`}>
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-            <FileText size={20} />
+        <div className={`p-3 rounded-xl border shadow-xs ${theme.cardBg} flex items-center gap-3`}>
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+            <FileText size={18} />
           </div>
-          <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          <div className="min-w-0">
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider truncate" title={t('submittedOffers', 'Подано предложений')}>
               {t('submittedOffers', 'Подано предложений')}
             </div>
-            <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{totalOffersCount}</div>
+            <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{totalOffersCount}</div>
           </div>
         </div>
 
-        <div className={`p-4 rounded-xl border shadow-xs ${theme.cardBg} flex items-center gap-3.5`}>
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-            <CheckCircle2 size={20} />
+        <div className={`p-3 rounded-xl border shadow-xs ${theme.cardBg} flex items-center gap-3`}>
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+            <CheckCircle2 size={18} />
           </div>
-          <div>
-            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          <div className="min-w-0">
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider truncate" title={t('resultsAnnouncedStatus', 'Итоги оглашены')}>
               {t('resultsAnnouncedStatus', 'Итоги оглашены')}
             </div>
-            <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{completedCount}</div>
+            <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{completedCount}</div>
           </div>
         </div>
       </div>
@@ -289,17 +289,23 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse min-w-[1150px]">
+            <table className="w-full table-fixed text-left text-xs border-collapse">
+              <colgroup>
+                <col className="w-[115px]" />
+                <col />
+                <col className="w-[85px]" />
+                <col className="w-[85px]" />
+                <col className="w-[130px]" />
+                <col className="w-[90px]" />
+              </colgroup>
               <thead>
                 <tr className={theme.tableHeaderBg}>
-                  <th className="py-3 px-4 font-semibold w-40 whitespace-nowrap">{t('tenderNumberTitle', 'Номер тендера')}</th>
-                  <th className="py-3 px-4 font-semibold min-w-[240px] max-w-[320px]">{t('procurementTitleColumn', 'Наименование закупки')}</th>
-                  <th className="py-3 px-4 font-semibold min-w-[190px] max-w-[240px]">{t('client', 'Заказчик')}</th>
-                  <th className="py-3 px-4 font-semibold text-center w-24 whitespace-nowrap">{t('lotsColumn', 'Лоты')}</th>
-                  <th className="py-3 px-4 font-semibold text-center w-32 whitespace-nowrap">{t('submittedOffers', 'Подано заявок')}</th>
-                  <th className="py-3 px-4 font-semibold w-36 whitespace-nowrap">{t('deadline', 'Крайний срок')}</th>
-                  <th className="py-3 px-4 font-semibold text-center w-36 whitespace-nowrap">{t('status', 'Статус')}</th>
-                  <th className="py-3 px-4 font-semibold text-right w-44 pr-6 whitespace-nowrap">{t('action', 'Действие')}</th>
+                  <th className="py-2.5 px-2.5 font-semibold whitespace-nowrap">{t('tenderNumberTitle', 'Номер')}</th>
+                  <th className="py-2.5 px-2.5 font-semibold">{t('procurementTitleColumn', 'Наименование закупки / Заказчик')}</th>
+                  <th className="py-2.5 px-2 font-semibold text-center whitespace-nowrap">{t('offersColumnShort', 'Заявки')}</th>
+                  <th className="py-2.5 px-2 font-semibold whitespace-nowrap">{t('deadlineShort', 'Срок')}</th>
+                  <th className="py-2.5 px-2 font-semibold text-center whitespace-nowrap">{t('status', 'Статус')}</th>
+                  <th className="py-2.5 px-2.5 font-semibold text-right pr-3 whitespace-nowrap">{t('action', 'Действие')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -313,14 +319,14 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                   return (
                     <tr key={tender.id} className={`${theme.tableRowHover} transition-colors group`}>
                       {/* Номер тендера */}
-                      <td className="py-3.5 px-4 font-mono font-bold text-xs text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                      <td className="py-2 px-2.5 font-mono font-bold text-xs text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                         <Link
                           to={offersCount === 0 ? `/tenders/${tender.id}` : `/evaluation/${tender.id}`}
                           className="hover:underline inline-flex items-center gap-1.5 whitespace-nowrap"
                         >
                           <span>{tender.tenderNumber}</span>
                           {tender.visibility === 'YAPYK' && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60">
+                            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60">
                               <Lock size={9} />
                               <span>ÝAPYK</span>
                             </span>
@@ -328,96 +334,90 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                         </Link>
                       </td>
 
-                      {/* Наименование закупки */}
-                      <td className="py-3.5 px-4 min-w-[240px] max-w-[320px]">
+                      {/* Наименование закупки + Заказчик */}
+                      <td className="py-2 px-2.5">
                         <div className="font-semibold text-slate-800 dark:text-slate-100 text-xs line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" title={tender.title}>
                           {tender.title}
                         </div>
-                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 flex-wrap">
+                          <div className="flex items-center gap-1 min-w-0 max-w-[200px]" title={tender.client?.name || ''}>
+                            <Building2 size={11} className="text-slate-400 shrink-0" />
+                            <span className="truncate">{tender.client?.name || '—'}</span>
+                          </div>
                           {tender.category?.name && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-medium whitespace-nowrap">
+                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-medium truncate max-w-[130px]">
                               {tender.category.name}
                             </span>
                           )}
-                          <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                          <span className="text-[9px] text-slate-400 whitespace-nowrap">
                             {tender.type === 'YERLI' ? (t('typeLocal', 'Местный')) : (t('typeGlobal', 'Международный'))}
                           </span>
                         </div>
                       </td>
 
-                      {/* Заказчик */}
-                      <td className="py-3.5 px-4 min-w-[190px] max-w-[240px] text-slate-600 dark:text-slate-300">
-                        <div className="flex items-center gap-1.5">
-                          <Building2 size={13} className="text-slate-400 shrink-0" />
-                          <span className="truncate font-medium block" title={tender.client?.name || ''}>{tender.client?.name || '—'}</span>
+                      {/* Заявки и Лоты */}
+                      <td className="py-2 px-2 text-center whitespace-nowrap">
+                        <div className="inline-flex flex-col items-center gap-0.5">
+                          <span
+                            className={`inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                              offersCount > 0
+                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60'
+                                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200/80 dark:border-slate-700/60'
+                            }`}
+                          >
+                            <FileText size={10} />
+                            <span>{pluralize(offersCount, ['заявка', 'заявки', 'заявок'])}</span>
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {lotsCount > 0 ? pluralize(lotsCount, ['лот', 'лота', 'лотов']) : `1 ${t('lotUpperLabel', 'лот')}`}
+                          </span>
                         </div>
                       </td>
 
-                      {/* Количество лотов */}
-                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                        <span className="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs">
-                          {lotsCount > 0 ? pluralize(lotsCount, ['лот', 'лота', 'лотов']) : `1 ${t('lotUpperLabel', 'лот')}`}
-                        </span>
-                      </td>
-
-                      {/* Подано предложений */}
-                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                            offersCount > 0
-                              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                              : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
-                          }`}
-                        >
-                          <FileText size={12} />
-                          {pluralize(offersCount, ['заявка', 'заявки', 'заявок'])}
-                        </span>
-                      </td>
-
                       {/* Крайний срок */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="font-semibold text-slate-700 dark:text-slate-200">
+                      <td className="py-2 px-2 whitespace-nowrap">
+                        <div className="font-semibold text-slate-700 dark:text-slate-200 text-xs">
                           {new Date(tender.deadline).toLocaleDateString('ru-RU')}
                         </div>
                         <div className="mt-0.5">{getDeadlineBadge(tender.deadline)}</div>
                       </td>
 
                       {/* Статус */}
-                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                      <td className="py-2 px-2 text-center whitespace-nowrap">
                         {isFailed ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                             {t('tenderFailedStatus', 'Не состоялся')}
                           </span>
                         ) : (
-                          getStatusBadge(tender.status, lang, isDarkMode)
+                          getStatusBadge(tender.status, lang, isDarkMode, 'px-2 py-0.5 text-[10px] rounded-md whitespace-nowrap inline-flex items-center justify-center border font-semibold')
                         )}
                       </td>
 
                       {/* Действие */}
-                      <td className="py-3.5 px-4 pr-6 text-right whitespace-nowrap">
+                      <td className="py-2 px-2.5 pr-3 text-right whitespace-nowrap">
                         {isCompleted ? (
                           <Link
                             to={`/evaluation/${tender.id}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors whitespace-nowrap"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors whitespace-nowrap"
                           >
-                            <FileText size={13} className="text-slate-400" />
-                            <span>{t('resultsProtocolBtn', 'Итоги / Протокол')}</span>
+                            <FileText size={11} className="text-slate-400" />
+                            <span>{t('protocolShortBtn', 'Протокол')}</span>
                           </Link>
                         ) : isFailed ? (
                           <Link
                             to={`/tenders/${tender.id}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors whitespace-nowrap"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors whitespace-nowrap"
                           >
-                            <Eye size={13} />
-                            <span>{t('viewDetails', 'Подробнее')}</span>
+                            <Eye size={11} />
+                            <span>{t('detailsShortBtn', 'Детали')}</span>
                           </Link>
                         ) : (
                           <Link
                             to={`/evaluation/${tender.id}`}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer whitespace-nowrap"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer whitespace-nowrap"
                           >
-                            <span>{t('evaluateBidsBtn', 'Оценить заявки')}</span>
-                            <ArrowRight size={13} />
+                            <span>{t('evaluateShortBtn', 'Оценить')}</span>
+                            <ArrowRight size={11} />
                           </Link>
                         )}
                       </td>

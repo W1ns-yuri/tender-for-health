@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -39,9 +39,23 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const autoCollapsedRef = useRef(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('tender_theme') === 'dark';
   });
+
+  // Автоматически сворачивать сайдбар при переходе в режим "Оценка заявок" для полноэкранного обзора
+  useEffect(() => {
+    if (location.pathname.startsWith('/evaluation')) {
+      if (!isCollapsed && !autoCollapsedRef.current) {
+        autoCollapsedRef.current = true;
+        setIsCollapsed(true);
+      }
+    } else if (autoCollapsedRef.current) {
+      autoCollapsedRef.current = false;
+      setIsCollapsed(false);
+    }
+  }, [location.pathname, isCollapsed]);
 
   useEffect(() => {
     if (isDarkMode) {
