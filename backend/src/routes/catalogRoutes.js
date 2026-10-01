@@ -26,7 +26,7 @@ router.delete('/categories/:id', authMiddleware, checkRole(['ADMIN', 'PURCHASING
 
 // Общие товары (МНН / Препараты)
 router.get('/products', getGeneralProducts);
-router.post('/products', authMiddleware, checkRole(['ADMIN', 'PURCHASING_SPECIALIST']), createGeneralProduct);
+router.post('/products', authMiddleware, checkRole(['ADMIN', 'PURCHASING_SPECIALIST', 'SUPPLIER']), createGeneralProduct);
 router.put('/products/:id', authMiddleware, checkRole(['ADMIN', 'PURCHASING_SPECIALIST']), updateGeneralProduct);
 router.delete('/products/:id', authMiddleware, checkRole(['ADMIN', 'PURCHASING_SPECIALIST']), deleteGeneralProduct);
 

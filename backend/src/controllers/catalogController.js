@@ -53,6 +53,7 @@ const createGeneralProduct = async (req, res) => {
                 type: type || 'HARYT',
                 description,
             },
+            include: { category: true }
         });
         res.status(201).json(product);
     } catch (error) {

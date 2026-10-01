@@ -13,7 +13,9 @@ export default function ProductSearchableSelect({
   isDarkMode,
   theme,
   lang = 'RU',
-  isDuplicate
+  isDuplicate,
+  disabled = false,
+  buttonLabel = null
 }) {
   const t = (key, fallback, params) => getTranslation(lang, key, fallback, params);
   const [isOpen, setIsOpen] = useState(false);
@@ -81,7 +83,7 @@ export default function ProductSearchableSelect({
   const handleOpenModalAndCloseDropdown = (initialName = '') => {
     setIsOpen(false);
     setSearch('');
-    onOpenCreateModal(initialName);
+    if (onOpenCreateModal) onOpenCreateModal(initialName);
   };
 
   const displaySelectedText = () => {
@@ -95,9 +97,10 @@ export default function ProductSearchableSelect({
 
   return (
     <div ref={wrapperRef} className="relative w-full">
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <div 
           onClick={() => {
+            if (disabled) return;
             const nextState = !isOpen;
             setIsOpen(nextState);
             if (nextState) {
@@ -106,7 +109,9 @@ export default function ProductSearchableSelect({
             }
           }}
           className={`flex-1 px-2.5 py-1.5 rounded-md text-xs cursor-pointer flex justify-between items-center transition-all duration-150 font-medium ${
-            isDuplicate
+            disabled
+              ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800'
+              : isDuplicate
               ? 'border border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 ring-1 ring-rose-500/30'
               : `${theme?.inputBg || ''} ${isOpen ? '!border-emerald-500 !ring-2 !ring-emerald-500/25 shadow-xs' : ''}`
           }`}
@@ -117,17 +122,25 @@ export default function ProductSearchableSelect({
           <ChevronDown size={14} className="opacity-50 shrink-0 ml-1" />
         </div>
 
-        <button
-          type="button"
-          onClick={() => handleOpenModalAndCloseDropdown(search || '')}
-          className="w-7 h-7 shrink-0 rounded-md border border-slate-200 dark:border-slate-700 bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
-          title={t('createNewCatalogProduct', 'Создать новый товар в справочнике')}
-        >
-          <Plus size={13} />
-        </button>
+        {onOpenCreateModal && (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => handleOpenModalAndCloseDropdown(search || '')}
+            className={`${
+              buttonLabel 
+                ? 'h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-emerald-50/80 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5 text-xs font-semibold shrink-0 cursor-pointer shadow-2xs transition-colors'
+                : 'w-7 h-7 shrink-0 rounded-md border border-slate-200 dark:border-slate-700 bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 flex items-center justify-center transition-colors shadow-2xs cursor-pointer'
+            } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+            title={t('createNewCatalogProduct', 'Создать новый товар в справочнике')}
+          >
+            <Plus size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+            {buttonLabel && <span className="hidden sm:inline">{buttonLabel}</span>}
+          </button>
+        )}
       </div>
 
-      {isOpen && createPortal(
+      {isOpen && !disabled && createPortal(
         <div
           ref={dropdownRef}
           style={{
@@ -146,7 +159,7 @@ export default function ProductSearchableSelect({
               type="text"
               autoFocus
               className={`w-full px-2.5 py-1.5 text-xs rounded-lg border outline-none ${theme?.inputBg || ''}`}
-              placeholder={t('searchProductPlaceholder', 'Поиск товара...')}
+              placeholder={t('searchProductPlaceholder', 'Поиск товара (МНН, название, код)...')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -182,14 +195,16 @@ export default function ProductSearchableSelect({
               </div>
             )}
 
-            {search.trim().length > 0 && !filteredProducts.some(p => p.name.toLowerCase() === search.trim().toLowerCase()) && (
+            {onOpenCreateModal && (
               <div
-                className="p-2.5 text-xs bg-emerald-50/80 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 cursor-pointer font-bold flex items-center gap-2 border-t border-emerald-200/50 dark:border-emerald-800/50 transition-colors"
+                className="p-2.5 text-xs bg-slate-50 hover:bg-emerald-50 dark:bg-slate-800/80 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 cursor-pointer font-bold flex items-center gap-2 border-t border-slate-200 dark:border-slate-700 transition-colors"
                 onClick={() => handleOpenModalAndCloseDropdown(search.trim())}
               >
                 <Plus size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <span className="truncate">
-                  {t('addToCatalogPrompt', `Добавить в справочник: "${search.trim()}"`, { query: search.trim() })}
+                  {search.trim()
+                    ? t('addToCatalogPrompt', `Добавить в справочник: "${search.trim()}"`, { query: search.trim() })
+                    : t('addNewProductToCatalog', 'Добавить новый товар в справочник')}
                 </span>
               </div>
             )}

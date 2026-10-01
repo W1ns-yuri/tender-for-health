@@ -13,6 +13,7 @@ import OfferLotsNavigation from '../components/offer/OfferLotsNavigation';
 import OfferLotCard from '../components/offer/OfferLotCard';
 import OfferDocumentsCard from '../components/offer/OfferDocumentsCard';
 import OfferStickyFooter from '../components/offer/OfferStickyFooter';
+import CatalogFormModal from '../components/CatalogFormModal';
 
 export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 'RU' }) {
   const { id } = useParams();
@@ -28,6 +29,17 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
   // Справочники с API
   const [currencies, setCurrencies] = useState([]);
   const [deliveryTerms, setDeliveryTermsList] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  // Модалка добавления товара в справочник
+  const [catalogModal, setCatalogModal] = useState({
+    isOpen: false,
+    lotId: null,
+    itemIdx: null,
+    field: null,
+    initialName: ''
+  });
 
   // Поля коммерческого предложения
   const [currency, setCurrency] = useState('');
@@ -58,8 +70,13 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
       API.get(`/tenders/${id}`),
       API.get('/catalogs/currencies').catch(() => ({ data: [] })),
       API.get('/catalogs/delivery-terms').catch(() => ({ data: [] })),
+      API.get('/catalogs/products').catch(() => ({ data: [] })),
+      API.get('/catalogs/categories').catch(() => ({ data: [] })),
       API.get('/auth/me').catch(() => ({ data: null }))
-    ]).then(([tenderRes, currRes, dtRes, meRes]) => {
+    ]).then(([tenderRes, currRes, dtRes, prodRes, catRes, meRes]) => {
+      setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
+      setCategories(Array.isArray(catRes.data) ? catRes.data : []);
+
       let suppCatIds = [];
       if (role === 'SUPPLIER' && meRes.data?.suppliers?.[0]) {
         const supp = meRes.data.suppliers[0];
@@ -98,13 +115,18 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
             tenderSpecId: spec.id,
             lotId: lot.id,
             positionNumber: spec.positionNumber || idx + 1,
-            requestedName: spec.generalProduct?.name || spec.name || '',
+            requestedName: spec.generalProduct?.tradeName 
+              ? `${spec.generalProduct.name} (${spec.generalProduct.tradeName})` 
+              : (spec.generalProduct?.name || spec.name || ''),
+            generalProductId: spec.generalProductId || null,
             requestedUnit: spec.unit?.name || spec.unit?.shortName || '',
             requestedQty: spec.quantity || 1,
             requestedBrand: spec.manufacturer?.name || '',
             requestedDesc: spec.description || '',
             // Поля предложения поставщика (предзаполнены запросом заказчика)
-            haryt: spec.generalProduct?.name || spec.name || '',
+            haryt: spec.generalProduct?.tradeName 
+              ? `${spec.generalProduct.name} (${spec.generalProduct.tradeName})` 
+              : (spec.generalProduct?.name || spec.name || ''),
             brand: spec.manufacturer?.name || '',
             unit: spec.unit?.name || spec.unit?.shortName || '',
             unitId: spec.unitId || null,
@@ -203,6 +225,56 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
       };
       return { ...prev, [lotId]: lotItems };
     });
+  };
+
+  const handleOpenCatalogModal = (lotId, itemIdx, field, initialName = '') => {
+    setCatalogModal({
+      isOpen: true,
+      lotId,
+      itemIdx,
+      field,
+      initialName
+    });
+  };
+
+  const handleSaveProductFromModal = async (savedData) => {
+    try {
+      const res = await API.post('/catalogs/products', {
+        name: savedData.name?.trim(),
+        tradeName: savedData.tradeName?.trim() || undefined,
+        code: savedData.code?.trim() || undefined,
+        description: savedData.description?.trim() || undefined,
+        categoryId: savedData.categoryId || undefined
+      });
+      if (res.data) {
+        const created = res.data;
+        setProducts(prev => [created, ...prev]);
+
+        const { lotId, itemIdx, field } = catalogModal;
+        if (lotId && itemIdx !== null) {
+          const displayName = created.tradeName ? `${created.name} (${created.tradeName})` : created.name;
+          handleSpecFieldChange(lotId, itemIdx, field || 'haryt', displayName);
+          handleSpecFieldChange(lotId, itemIdx, 'generalProductId', created.id);
+          if (created.description) {
+            handleSpecFieldChange(lotId, itemIdx, 'desc', created.description);
+          }
+        }
+
+        setCatalogModal({ isOpen: false, lotId: null, itemIdx: null, field: null, initialName: '' });
+        showAlert({
+          title: t('successTitle', 'Успешно'),
+          message: t('productAddedToCatalog', `Товар "${created.tradeName || created.name}" добавлен в справочник!`),
+          type: 'success'
+        });
+      }
+    } catch (err) {
+      console.error('Failed to create product in catalog', err);
+      showAlert({
+        title: t('errorTitle', 'Ошибка'),
+        message: err.response?.data?.error || t('errorSaving', 'Ошибка добавления товара в справочник'),
+        type: 'error'
+      });
+    }
   };
 
   const toggleLotSelection = (lotId) => {
@@ -306,6 +378,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
 
     const specsToSubmit = specsWithPrices.map(item => ({
       tenderSpecId: item.tenderSpecId,
+      generalProductId: item.generalProductId || null,
       name: item.isEquivalent ? (item.equivalentName?.trim() || item.requestedName) : (item.haryt?.trim() || item.requestedName),
       quantity: parseFloat(item.requestedQty) || 1, // Зафиксировано строго по заказчику!
       unitPrice: parseFloat(item.price) || 0,
@@ -425,6 +498,8 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
                 setLotDeliveryTerms={setLotDeliveryTerms}
                 calculateLotTotal={calculateLotTotal}
                 currencyCode={currencyCode}
+                products={products}
+                onOpenCatalogModal={handleOpenCatalogModal}
                 isDarkMode={isDarkMode}
                 theme={theme}
                 t={t}
@@ -472,6 +547,22 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
         navigate={navigate}
         t={t}
       />
+
+      {/* 6. Модальное окно быстрого добавления товара в каталог для поставщика */}
+      {catalogModal.isOpen && (
+        <CatalogFormModal
+          isOpen={catalogModal.isOpen}
+          onClose={() => setCatalogModal({ isOpen: false, lotId: null, itemIdx: null, field: null, initialName: '' })}
+          onSave={handleSaveProductFromModal}
+          catalogId="productsMNN"
+          editingItem={catalogModal.initialName ? { name: catalogModal.initialName } : null}
+          categories={categories}
+          existingProducts={products}
+          theme={theme}
+          t={t}
+          isDarkMode={isDarkMode}
+        />
+      )}
     </div>
   );
 }

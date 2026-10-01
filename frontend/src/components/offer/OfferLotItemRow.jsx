@@ -1,5 +1,6 @@
 import React from 'react';
-import { CornerDownRight, Info } from 'lucide-react';
+import { CornerDownRight, Info, Plus } from 'lucide-react';
+import ProductSearchableSelect from '../tender/ProductSearchableSelect';
 
 export default function OfferLotItemRow({
   item,
@@ -9,6 +10,9 @@ export default function OfferLotItemRow({
   isAllowed = true,
   isSelected = true,
   handleSpecFieldChange,
+  products = [],
+  onOpenCatalogModal,
+  isDarkMode = false,
   theme,
   t
 }) {
@@ -105,40 +109,55 @@ export default function OfferLotItemRow({
             )}
           </div>
 
-          {isEq ? (
-            <input
-              type="text"
-              required
+          {lotType === 'GOODS' ? (
+            <ProductSearchableSelect
+              products={products}
               disabled={!isAllowed || !isSelected}
-              value={item.equivalentName || ''}
-              onChange={(e) => handleSpecFieldChange(lotId, idx, 'equivalentName', e.target.value)}
+              value={isEq ? (item.equivalentName || '') : (item.haryt || item.requestedName || '')}
+              generalProductId={item.generalProductId}
+              onChange={(val, genId) => {
+                if (isEq) {
+                  handleSpecFieldChange(lotId, idx, 'equivalentName', val);
+                } else {
+                  handleSpecFieldChange(lotId, idx, 'haryt', val);
+                }
+                if (genId) {
+                  handleSpecFieldChange(lotId, idx, 'generalProductId', genId);
+                }
+              }}
+              onOpenCreateModal={(initialName) => {
+                const targetField = isEq ? 'equivalentName' : 'haryt';
+                onOpenCatalogModal && onOpenCatalogModal(lotId, idx, targetField, initialName || (isEq ? item.equivalentName : (item.haryt || item.requestedName)));
+              }}
               placeholder={
-                lotType === 'SERVICES'
-                  ? (t('serviceEquivalentPlaceholder', 'Предлагаемая услуга-аналог...'))
-                  : (t('productEquivalentPlaceholder', 'Торговое наименование аналога / модель...'))
+                isEq 
+                  ? t('selectAnalogFromCatalog', 'Выберите аналог (МНН / препарат) из каталога...') 
+                  : t('selectProductFromCatalog', 'Выберите МНН / препарат из каталога...')
               }
-              className={`w-full px-3 py-2 rounded-lg border text-xs font-bold ${
-                !isAllowed || !isSelected ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800' : 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-950/50 text-blue-900 dark:text-blue-100 placeholder:text-blue-400'
-              }`}
+              buttonLabel={t('addToCatalog', 'Добавить в справочник')}
+              isDarkMode={isDarkMode}
+              theme={theme}
+              role="SUPPLIER"
+              lang="RU"
             />
           ) : (
-            <input
-              type="text"
-              required
-              disabled={!isAllowed || !isSelected}
-              value={item.haryt || item.requestedName || ''}
-              onChange={(e) => handleSpecFieldChange(lotId, idx, 'haryt', e.target.value)}
-              placeholder={
-                lotType === 'WORKS'
-                  ? (t('workScopePlaceholder', 'Наименование / состав выполняемых работ...'))
-                  : lotType === 'SERVICES'
-                  ? (t('serviceNamePlaceholder', 'Наименование оказываемой услуги...'))
-                  : (t('productNamePlaceholder', 'Наименование товара...'))
-              }
-              className={`w-full px-3 py-2 rounded-lg border text-xs font-semibold ${theme?.inputBg || ''} ${
-                !isAllowed || !isSelected ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800' : ''
-              }`}
-            />
+            <div className="flex items-center gap-1.5">
+              <input
+                type="text"
+                required
+                disabled={!isAllowed || !isSelected}
+                value={isEq ? (item.equivalentName || '') : (item.haryt || item.requestedName || '')}
+                onChange={(e) => handleSpecFieldChange(lotId, idx, isEq ? 'equivalentName' : 'haryt', e.target.value)}
+                placeholder={
+                  lotType === 'WORKS'
+                    ? (t('workScopePlaceholder', 'Наименование / состав выполняемых работ...'))
+                    : (t('serviceNamePlaceholder', 'Наименование оказываемой услуги...'))
+                }
+                className={`w-full px-3 py-2 rounded-lg border text-xs font-semibold ${theme?.inputBg || ''} ${
+                  !isAllowed || !isSelected ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800' : ''
+                }`}
+              />
+            </div>
           )}
         </td>
 

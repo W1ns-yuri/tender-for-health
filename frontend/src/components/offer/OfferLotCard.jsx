@@ -30,6 +30,8 @@ export default function OfferLotCard({
   setLotDeliveryTerms,
   calculateLotTotal,
   currencyCode = 'TMT',
+  products = [],
+  onOpenCatalogModal,
   isDarkMode,
   theme,
   t
@@ -277,6 +279,9 @@ export default function OfferLotCard({
                     isAllowed={isAllowed}
                     isSelected={isSelected}
                     handleSpecFieldChange={handleSpecFieldChange}
+                    products={products}
+                    onOpenCatalogModal={onOpenCatalogModal}
+                    isDarkMode={isDarkMode}
                     theme={theme}
                     t={t}
                   />
