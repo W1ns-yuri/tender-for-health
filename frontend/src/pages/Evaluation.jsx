@@ -289,23 +289,23 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full table-fixed text-left text-xs border-collapse">
+            <table className="w-full table-fixed text-left text-sm border-collapse">
               <colgroup>
-                <col className="w-[115px]" />
+                <col className="w-[155px]" />
                 <col />
-                <col className="w-[85px]" />
-                <col className="w-[85px]" />
-                <col className="w-[130px]" />
-                <col className="w-[90px]" />
+                <col className="w-[110px]" />
+                <col className="w-[115px]" />
+                <col className="w-[155px]" />
+                <col className="w-[125px]" />
               </colgroup>
               <thead>
                 <tr className={theme.tableHeaderBg}>
-                  <th className="py-2.5 px-2.5 font-semibold whitespace-nowrap">{t('tenderNumberTitle', 'Номер')}</th>
-                  <th className="py-2.5 px-2.5 font-semibold">{t('procurementTitleColumn', 'Наименование закупки / Заказчик')}</th>
-                  <th className="py-2.5 px-2 font-semibold text-center whitespace-nowrap">{t('offersColumnShort', 'Заявки')}</th>
-                  <th className="py-2.5 px-2 font-semibold whitespace-nowrap">{t('deadlineShort', 'Срок')}</th>
-                  <th className="py-2.5 px-2 font-semibold text-center whitespace-nowrap">{t('status', 'Статус')}</th>
-                  <th className="py-2.5 px-2.5 font-semibold text-right pr-3 whitespace-nowrap">{t('action', 'Действие')}</th>
+                  <th className="py-3 px-3.5 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">{t('tenderNumberTitle', 'Номер')}</th>
+                  <th className="py-3 px-3.5 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider">{t('procurementTitleColumn', 'Наименование закупки / Заказчик')}</th>
+                  <th className="py-3 px-2 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center whitespace-nowrap">{t('offersColumnShort', 'Заявки')}</th>
+                  <th className="py-3 px-2 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">{t('deadlineShort', 'Срок')}</th>
+                  <th className="py-3 px-2 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center whitespace-nowrap">{t('status', 'Статус')}</th>
+                  <th className="py-3 pl-2 pr-4 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-right whitespace-nowrap">{t('action', 'Действие')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -318,106 +318,108 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
 
                   return (
                     <tr key={tender.id} className={`${theme.tableRowHover} transition-colors group`}>
-                      {/* Номер тендера */}
-                      <td className="py-2 px-2.5 font-mono font-bold text-xs text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
-                        <Link
-                          to={offersCount === 0 ? `/tenders/${tender.id}` : `/evaluation/${tender.id}`}
-                          className="hover:underline inline-flex items-center gap-1.5 whitespace-nowrap"
-                        >
-                          <span>{tender.tenderNumber}</span>
+                      {/* Номер тендера и статус закрытости */}
+                      <td className="py-3 px-3.5 align-middle">
+                        <div className="flex flex-col items-start gap-1">
+                          <Link
+                            to={offersCount === 0 ? `/tenders/${tender.id}` : `/evaluation/${tender.id}`}
+                            className="hover:underline font-mono font-bold text-xs sm:text-sm text-emerald-700 dark:text-emerald-400 whitespace-nowrap block"
+                          >
+                            {tender.tenderNumber}
+                          </Link>
                           {tender.visibility === 'YAPYK' && (
-                            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60">
-                              <Lock size={9} />
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60">
+                              <Lock size={10} />
                               <span>ÝAPYK</span>
                             </span>
                           )}
-                        </Link>
+                        </div>
                       </td>
 
                       {/* Наименование закупки + Заказчик */}
-                      <td className="py-2 px-2.5">
-                        <div className="font-semibold text-slate-800 dark:text-slate-100 text-xs line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" title={tender.title}>
+                      <td className="py-3 px-3.5 align-middle">
+                        <div className="font-semibold text-slate-800 dark:text-slate-100 text-sm line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" title={tender.title}>
                           {tender.title}
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 flex-wrap">
-                          <div className="flex items-center gap-1 min-w-0 max-w-[200px]" title={tender.client?.name || ''}>
-                            <Building2 size={11} className="text-slate-400 shrink-0" />
-                            <span className="truncate">{tender.client?.name || '—'}</span>
+                        <div className="flex items-center gap-2.5 mt-1 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+                          <div className="flex items-center gap-1.5 min-w-0 max-w-[240px]" title={tender.client?.name || ''}>
+                            <Building2 size={13} className="text-slate-400 shrink-0" />
+                            <span className="truncate font-medium">{tender.client?.name || '—'}</span>
                           </div>
                           {tender.category?.name && (
-                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-medium truncate max-w-[130px]">
+                            <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium truncate max-w-[160px]" title={tender.category.name}>
                               {tender.category.name}
                             </span>
                           )}
-                          <span className="text-[9px] text-slate-400 whitespace-nowrap">
+                          <span className="text-xs text-slate-400 whitespace-nowrap">
                             {tender.type === 'YERLI' ? (t('typeLocal', 'Местный')) : (t('typeGlobal', 'Международный'))}
                           </span>
                         </div>
                       </td>
 
                       {/* Заявки и Лоты */}
-                      <td className="py-2 px-2 text-center whitespace-nowrap">
+                      <td className="py-3 px-2 text-center align-middle whitespace-nowrap">
                         <div className="inline-flex flex-col items-center gap-0.5">
                           <span
-                            className={`inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
                               offersCount > 0
                                 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60'
                                 : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200/80 dark:border-slate-700/60'
                             }`}
                           >
-                            <FileText size={10} />
+                            <FileText size={11} />
                             <span>{pluralize(offersCount, ['заявка', 'заявки', 'заявок'])}</span>
                           </span>
-                          <span className="text-[10px] text-slate-400 font-medium">
+                          <span className="text-xs text-slate-400 font-medium">
                             {lotsCount > 0 ? pluralize(lotsCount, ['лот', 'лота', 'лотов']) : `1 ${t('lotUpperLabel', 'лот')}`}
                           </span>
                         </div>
                       </td>
 
                       {/* Крайний срок */}
-                      <td className="py-2 px-2 whitespace-nowrap">
-                        <div className="font-semibold text-slate-700 dark:text-slate-200 text-xs">
+                      <td className="py-3 px-2 align-middle whitespace-nowrap">
+                        <div className="font-semibold text-slate-700 dark:text-slate-200 text-sm">
                           {new Date(tender.deadline).toLocaleDateString('ru-RU')}
                         </div>
                         <div className="mt-0.5">{getDeadlineBadge(tender.deadline)}</div>
                       </td>
 
                       {/* Статус */}
-                      <td className="py-2 px-2 text-center whitespace-nowrap">
+                      <td className="py-3 px-2 text-center align-middle whitespace-nowrap">
                         {isFailed ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                             {t('tenderFailedStatus', 'Не состоялся')}
                           </span>
                         ) : (
-                          getStatusBadge(tender.status, lang, isDarkMode, 'px-2 py-0.5 text-[10px] rounded-md whitespace-nowrap inline-flex items-center justify-center border font-semibold')
+                          getStatusBadge(tender.status, lang, isDarkMode)
                         )}
                       </td>
 
                       {/* Действие */}
-                      <td className="py-2 px-2.5 pr-3 text-right whitespace-nowrap">
+                      <td className="py-3 pl-2 pr-4 text-right align-middle whitespace-nowrap">
                         {isCompleted ? (
                           <Link
                             to={`/evaluation/${tender.id}`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors whitespace-nowrap"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors whitespace-nowrap"
                           >
-                            <FileText size={11} className="text-slate-400" />
+                            <FileText size={13} className="text-slate-400" />
                             <span>{t('protocolShortBtn', 'Протокол')}</span>
                           </Link>
                         ) : isFailed ? (
                           <Link
                             to={`/tenders/${tender.id}`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors whitespace-nowrap"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors whitespace-nowrap"
                           >
-                            <Eye size={11} />
+                            <Eye size={13} />
                             <span>{t('detailsShortBtn', 'Детали')}</span>
                           </Link>
                         ) : (
                           <Link
                             to={`/evaluation/${tender.id}`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer whitespace-nowrap"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer whitespace-nowrap"
                           >
                             <span>{t('evaluateShortBtn', 'Оценить')}</span>
-                            <ArrowRight size={11} />
+                            <ArrowRight size={13} />
                           </Link>
                         )}
                       </td>
