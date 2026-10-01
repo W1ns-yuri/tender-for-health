@@ -6,7 +6,7 @@ import { getTranslation } from '../utils/translations';
 import { useNavigate } from 'react-router-dom';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
-import { TableFilters, Pagination } from '../components/ui';
+import { TableFilters, Pagination, TableSkeletonRows } from '../components/ui';
 
 export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
@@ -230,9 +230,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
             </thead>
             <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
               {loading ? (
-                <tr>
-                  <td colSpan={isAdmin ? "11" : "10"} className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
-                </tr>
+                <TableSkeletonRows rows={pageSize || 5} cols={isAdmin ? 11 : 10} />
               ) : paginatedOffers.length === 0 ? (
                 <tr>
                   <td colSpan={isAdmin ? "11" : "10"} className="py-8 text-center text-slate-500">
@@ -265,7 +263,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
 
                       {/* Заказчик */}
                       <td className="py-3 px-3 text-center">
-                        <span className="text-slate-800 dark:text-slate-200 font-medium hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors">
+                        <span className={`text-slate-800 dark:text-slate-200 font-medium ${isAdmin ? 'hover:text-emerald-600 dark:hover:text-emerald-400' : 'hover:text-blue-600 dark:hover:text-blue-400'} hover:underline transition-colors`}>
                           {safeString(item.tender?.client?.name || item.tender?.createdBy?.firstName || "-")}
                         </span>
                       </td>
@@ -348,6 +346,8 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
           }}
           role={role}
           lang={lang}
+          isDarkMode={isDarkMode}
+          theme={theme}
         />
       </div>
     </div>

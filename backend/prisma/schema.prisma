@@ -133,6 +133,7 @@ model User {
   tenders   Tender[]   @relation("CreatedTenders")
   logs      Log[]
   moderationLogs SupplierModerationLog[]
+  notifications  Notification[]
 
   // Поля безопасности из UserAuth (ERD)
   lastLogin         DateTime? @map("last_login")
@@ -177,6 +178,7 @@ model Category {
   name            String
   code            String?          @unique
   description     String?
+  type            String?          @default("GOODS") // GOODS | WORKS | SERVICES
   generalProducts GeneralProduct[]
   tenders         Tender[]
   lots            TenderLot[]
@@ -195,6 +197,7 @@ model GeneralProduct {
   tradeName   String?     @map("trade_name") // Торговое (патентованное) название
   code        String?
   type        ProductType @default(HARYT)
+  itemType    String?     @default("GOODS") @map("item_type") // GOODS | WORKS | SERVICES
   description String?
 
   tenderSpecs TenderSpecification[]
@@ -769,5 +772,20 @@ model SupplierModerationLog {
   createdAt      DateTime  @default(now()) @map("created_at")
 
   @@map("supplier_moderation_logs")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO") // 'supplier' | 'offer' | 'tender' | 'winner' | 'INFO' | 'WARNING'
+  link      String?  // Ссылка для перехода (e.g. /tenders/123, /suppliers, /evaluation/123)
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, isRead])
+  @@map("notifications")
 }
 

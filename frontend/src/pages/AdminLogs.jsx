@@ -8,12 +8,13 @@ import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { useAlert } from '../context/AlertContext';
+import { TableSkeletonRows } from '../components/ui';
 
 export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = 'RU' }) {
   const [activeTab, setActiveTab] = useState('logs');
   const [logs, setLogs] = useState([]);
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedLog, setSelectedLog] = useState(null);
   const [isDumping, setIsDumping] = useState(false);
@@ -356,12 +357,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
               </thead>
               <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
                 {loading ? (
-                  <tr>
-                    <td colSpan="7" className="py-8 text-center text-slate-400">
-                      <RefreshCw size={20} className="animate-spin mx-auto mb-2 opacity-50" />
-                      {t('loading', 'Ýüklenýär...')}
-                    </td>
-                  </tr>
+                  <TableSkeletonRows rows={8} cols={7} />
                 ) : filteredLogs.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="py-8 text-center text-slate-400">
@@ -420,12 +416,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
               </thead>
               <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
                 {loading ? (
-                  <tr>
-                    <td colSpan="7" className="py-8 text-center text-slate-400">
-                      <RefreshCw size={20} className="animate-spin mx-auto mb-2 opacity-50" />
-                      {t('loading', 'Ýüklenýär...')}
-                    </td>
-                  </tr>
+                  <TableSkeletonRows rows={8} cols={7} />
                 ) : filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="py-8 text-center text-slate-400">

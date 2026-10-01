@@ -5,7 +5,7 @@ import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { getStatusBadge } from '../utils/statusUtils';
-import { TableFilters, Pagination } from '../components/ui';
+import { TableFilters, Pagination, TableSkeletonRows } from '../components/ui';
 import { pluralize } from '../utils/pluralize';
 
 export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
@@ -270,46 +270,45 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
 
       {/* 4. Full-Width 100% Registry Table */}
       <div className={`rounded-xl border shadow-xs overflow-hidden ${theme.cardBg} ${theme.tableCardBorderTop}`}>
-        {loading ? (
-          <div className="p-16 text-center text-slate-400">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-3 border-emerald-500 border-t-transparent mb-3" />
-            <p className="text-sm font-medium">{t('loadingTendersRegistry', 'Загрузка реестра тендеров...')}</p>
-          </div>
-        ) : filteredTenders.length === 0 ? (
-          <div className="p-16 text-center text-slate-400">
-            <AlertCircle size={40} className="mx-auto mb-3 opacity-30 text-slate-400" />
-            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-              {searchQuery || selectedClient !== 'ALL' || selectedStatus !== 'ALL'
-                ? (t('noTendersFoundFilters', 'Ничего не найдено по заданным фильтрам'))
-                : (t('noTendersAwaitingEval', 'Нет тендеров, ожидающих оценки заявок'))}
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              {t('tryResettingSearch', 'Попробуйте сбросить параметры поиска')}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full table-fixed text-left text-sm border-collapse">
-              <colgroup>
-                <col className="w-[155px]" />
-                <col />
-                <col className="w-[110px]" />
-                <col className="w-[115px]" />
-                <col className="w-[155px]" />
-                <col className="w-[125px]" />
-              </colgroup>
-              <thead>
-                <tr className={theme.tableHeaderBg}>
-                  <th className="py-3 px-3.5 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">{t('tenderNumberTitle', 'Номер')}</th>
-                  <th className="py-3 px-3.5 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider">{t('procurementTitleColumn', 'Наименование закупки / Заказчик')}</th>
-                  <th className="py-3 px-2 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center whitespace-nowrap">{t('offersColumnShort', 'Заявки')}</th>
-                  <th className="py-3 px-2 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">{t('deadlineShort', 'Срок')}</th>
-                  <th className="py-3 px-2 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center whitespace-nowrap">{t('status', 'Статус')}</th>
-                  <th className="py-3 pl-2 pr-4 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-right whitespace-nowrap">{t('action', 'Действие')}</th>
+        <div className="overflow-x-auto">
+          <table className="w-full table-fixed text-left text-sm border-collapse">
+            <colgroup>
+              <col className="w-[155px]" />
+              <col />
+              <col className="w-[110px]" />
+              <col className="w-[115px]" />
+              <col className="w-[155px]" />
+              <col className="w-[125px]" />
+            </colgroup>
+            <thead>
+              <tr className={theme.tableHeaderBg}>
+                <th className="py-3 px-3.5 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">{t('tenderNumberTitle', 'Номер')}</th>
+                <th className="py-3 px-3.5 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider">{t('procurementTitleColumn', 'Наименование закупки / Заказчик')}</th>
+                <th className="py-3 px-2 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center whitespace-nowrap">{t('offersColumnShort', 'Заявки')}</th>
+                <th className="py-3 px-2 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">{t('deadlineShort', 'Срок')}</th>
+                <th className="py-3 px-2 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center whitespace-nowrap">{t('status', 'Статус')}</th>
+                <th className="py-3 pl-2 pr-4 font-semibold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-right whitespace-nowrap">{t('action', 'Действие')}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {loading ? (
+                <TableSkeletonRows rows={pageSize || 5} cols={6} />
+              ) : filteredTenders.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="p-16 text-center text-slate-400">
+                    <AlertCircle size={40} className="mx-auto mb-3 opacity-30 text-slate-400" />
+                    <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                      {searchQuery || selectedClient !== 'ALL' || selectedStatus !== 'ALL'
+                        ? (t('noTendersFoundFilters', 'Ничего не найдено по заданным фильтрам'))
+                        : (t('noTendersAwaitingEval', 'Нет тендеров, ожидающих оценки заявок'))}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {t('tryResettingSearch', 'Попробуйте сбросить параметры поиска')}
+                    </p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {paginatedTenders.map(tender => {
+              ) : (
+                paginatedTenders.map(tender => {
                   const offersCount = tender._count?.offers || 0;
                   const lotsCount = tender._count?.lots || 0;
                   const isExpired = new Date(tender.deadline) < new Date();
@@ -425,11 +424,11 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
         {/* 5. Панель пагинации из UI Kit */}
         <Pagination
@@ -445,6 +444,8 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
           }}
           role={role || 'ADMIN'}
           lang={lang}
+          isDarkMode={isDarkMode}
+          theme={theme}
         />
       </div>
     </div>

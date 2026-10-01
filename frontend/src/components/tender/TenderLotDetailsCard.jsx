@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Bookmark, Trash2 } from 'lucide-react';
 import CustomSelect from '../CustomSelect';
 
@@ -15,6 +15,12 @@ export default function TenderLotDetailsCard({
   theme,
   t = (k, f) => f
 }) {
+  const relevantCategories = useMemo(() => {
+    const targetType = activeLot?.lotType || 'GOODS';
+    const filtered = categories.filter(c => !c.type || c.type === targetType);
+    return filtered.length > 0 ? filtered : categories;
+  }, [categories, activeLot?.lotType]);
+
   if (!activeLot) return null;
 
   return (
@@ -70,7 +76,7 @@ export default function TenderLotDetailsCard({
 
         <div>
           <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
-            {t('lotTypeLabel', 'Тип лота')}
+            {t('lotTypeLabel', 'Тип лота')} *
           </label>
           <CustomSelect
             role={role}
@@ -89,13 +95,13 @@ export default function TenderLotDetailsCard({
 
         <div>
           <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
-            {t('lotCategory', 'Категория лота')}
+            {t('lotCategory', 'Категория лота')} *
           </label>
           <CustomSelect
             role={role}
             value={activeLot.categoryId || ''}
             onChange={(val) => handleActiveLotChange('categoryId', val)}
-            options={categories.map(c => ({ id: c.id, name: c.name }))}
+            options={relevantCategories.map(c => ({ id: c.id, name: c.name }))}
             placeholder={t('selectCategory', 'Категория лота...')}
             isDarkMode={isDarkMode}
             theme={theme}
@@ -104,57 +110,71 @@ export default function TenderLotDetailsCard({
         </div>
       </div>
 
-      {/* Ряд 2: Симметричная сетка параметров поставки (Incoterms, Получатель, Адрес) */}
+      {/* Ряд 2: Параметры поставки товаров */}
       {activeLot.lotType === 'GOODS' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
-              {t('deliveryTerm', 'Условие поставки (Incoterms)')}
-            </label>
-            <CustomSelect
-              role={role}
-              value={activeLot.deliveryTermId || ''}
-              onChange={(val) => handleActiveLotChange('deliveryTermId', val)}
-              options={deliveryTerms.map(dt => ({ id: dt.id, name: `${dt.shortName} — ${dt.name}` }))}
-              placeholder={t('selectDeliveryTerm', 'Выберите базис поставки...')}
-              isDarkMode={isDarkMode}
-              theme={theme}
-              t={t}
-            />
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
+                {t('deliveryTerm', 'Условие поставки (Incoterms)')} *
+              </label>
+              <CustomSelect
+                role={role}
+                value={activeLot.deliveryTermId || ''}
+                onChange={(val) => handleActiveLotChange('deliveryTermId', val)}
+                options={deliveryTerms.map(dt => ({ id: dt.id, name: `${dt.shortName} — ${dt.name}` }))}
+                placeholder={t('selectDeliveryTerm', 'Выберите базис поставки...')}
+                isDarkMode={isDarkMode}
+                theme={theme}
+                t={t}
+              />
+            </div>
+            <div>
+              <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
+                {t('endUser', 'Конечный получатель (Бенефициар)')} *
+              </label>
+              <input
+                type="text"
+                value={activeLot.endUser || ''}
+                onChange={(e) => handleActiveLotChange('endUser', e.target.value)}
+                className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
+                placeholder={t('endUserPlaceholder', 'Например: Госпиталь №1, Центр кардиологии')}
+              />
+            </div>
+            <div>
+              <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
+                {t('deliveryAddressLabel', 'Пункт назначения / Адрес поставки')} *
+              </label>
+              <input
+                type="text"
+                value={activeLot.deliveryAddress || ''}
+                onChange={(e) => handleActiveLotChange('deliveryAddress', e.target.value)}
+                className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
+                placeholder={t('deliveryAddressPlaceholder', 'г. Ашхабад, Склад №2')}
+              />
+            </div>
           </div>
-          <div>
-            <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
-              {t('endUser', 'Конечный получатель (Бенефициар)')}
+          <div className="flex items-center">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={Boolean(activeLot.licenseRequired)}
+                onChange={(e) => handleActiveLotChange('licenseRequired', e.target.checked)}
+                className="w-4 h-4 rounded accent-emerald-600 dark:accent-emerald-500 cursor-pointer"
+              />
+              <span>{t('licenseRequired', 'Требуется лицензия')}</span>
             </label>
-            <input
-              type="text"
-              value={activeLot.endUser || ''}
-              onChange={(e) => handleActiveLotChange('endUser', e.target.value)}
-              className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
-              placeholder={t('endUserPlaceholder', 'Например: Госпиталь №1, Центр кардиологии')}
-            />
-          </div>
-          <div>
-            <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
-              {t('deliveryAddressLabel', 'Пункт назначения / Адрес поставки')}
-            </label>
-            <input
-              type="text"
-              value={activeLot.deliveryAddress || ''}
-              onChange={(e) => handleActiveLotChange('deliveryAddress', e.target.value)}
-              className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
-              placeholder={t('deliveryAddressPlaceholder', 'г. Ашхабад, Склад №2')}
-            />
           </div>
         </div>
       )}
 
+      {/* Параметры услуг */}
       {activeLot.lotType === 'SERVICES' && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
-                {t('serviceFormat', 'Формат оказания услуг')}
+                {t('serviceFormat', 'Формат оказания услуг')} *
               </label>
               <CustomSelect
                 role={role}
@@ -172,7 +192,7 @@ export default function TenderLotDetailsCard({
             </div>
             <div>
               <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
-                {t('endUser', 'Конечный получатель (Бенефициар)')}
+                {t('endUser', 'Конечный получатель (Бенефициар)')} *
               </label>
               <input
                 type="text"
@@ -185,6 +205,18 @@ export default function TenderLotDetailsCard({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
+                {t('deliveryAddressLabel', 'Место оказания услуг')} *
+              </label>
+              <input
+                type="text"
+                value={activeLot.deliveryAddress || ''}
+                onChange={(e) => handleActiveLotChange('deliveryAddress', e.target.value)}
+                className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
+                placeholder="г. Ашхабад, Центр телемедицины"
+              />
+            </div>
             <div>
               <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
                 {t('slaPeriod', 'Требования к SLA / Реакции')}
@@ -197,28 +229,28 @@ export default function TenderLotDetailsCard({
                 placeholder="24/7, реакция до 2 часов"
               />
             </div>
-            <div>
-              <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
-                {t('deliveryAddressLabel', 'Место оказания услуг')}
-              </label>
+          </div>
+          <div className="flex items-center">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
               <input
-                type="text"
-                value={activeLot.deliveryAddress || ''}
-                onChange={(e) => handleActiveLotChange('deliveryAddress', e.target.value)}
-                className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
-                placeholder="г. Ашхабад, Центр телемедицины"
+                type="checkbox"
+                checked={Boolean(activeLot.licenseRequired)}
+                onChange={(e) => handleActiveLotChange('licenseRequired', e.target.checked)}
+                className="w-4 h-4 rounded accent-emerald-600 dark:accent-emerald-500 cursor-pointer"
               />
-            </div>
+              <span>{t('licenseRequired', 'Требуется лицензия')}</span>
+            </label>
           </div>
         </div>
       )}
 
+      {/* Параметры работ */}
       {activeLot.lotType === 'WORKS' && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
-                {t('termLabel', 'Срок выполнения работ')}
+                {t('termLabel', 'Срок выполнения работ')} *
               </label>
               <input
                 type="text"
@@ -230,7 +262,7 @@ export default function TenderLotDetailsCard({
             </div>
             <div>
               <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
-                {t('endUser', 'Конечный получатель (Бенефициар)')}
+                {t('endUser', 'Конечный получатель (Бенефициар)')} *
               </label>
               <input
                 type="text"
@@ -245,7 +277,7 @@ export default function TenderLotDetailsCard({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
-                {t('siteLabel', 'Объект выполнения работ / Адрес')}
+                {t('siteLabel', 'Объект выполнения работ / Адрес')} *
               </label>
               <input
                 type="text"
@@ -261,9 +293,9 @@ export default function TenderLotDetailsCard({
                   type="checkbox"
                   checked={Boolean(activeLot.licenseRequired)}
                   onChange={(e) => handleActiveLotChange('licenseRequired', e.target.checked)}
-                  className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                  className="w-4 h-4 rounded accent-emerald-600 dark:accent-emerald-500 cursor-pointer"
                 />
-                <span>{t('licenseRequired', 'Требуется строительная лицензия')}</span>
+                <span>{t('licenseRequired', 'Требуется лицензия')}</span>
               </label>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Eye, Edit2, Trash2, Lock } from 'lucide-react';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
@@ -6,17 +6,18 @@ import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { useAlert } from '../context/AlertContext';
 import CustomDatePicker from '../components/CustomDatePicker';
-import { TableFilters, Tabs, Pagination } from '../components/ui';
+import { TableFilters, Tabs, Pagination, TableSkeletonRows } from '../components/ui';
 
 export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
   const [tenders, setTenders] = useState([]);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeStatusTab, setActiveStatusTab] = useState('ALL');
   const [typeFilter, setTypeFilter] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState('');
   const [announcementDateFilter, setAnnouncementDateFilter] = useState('');
   const [deadlineFilter, setDeadlineFilter] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Пагинация (по умолчанию 10 строк на страницу, как в UI Kit)
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,6 +26,63 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
   const t = (key, fallback) => getTranslation(lang, key, fallback);
   const { showAlert, showConfirm } = useAlert();
+
+  // Дебаунс поискового запроса: обновляет debouncedSearch через 300мс после окончания ввода
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Загрузка данных с флагом отмены (предотвращает двойной рендер скелетона и дергание в React StrictMode)
+  useEffect(() => {
+    let isCancelled = false;
+    setLoading(true);
+
+    API.get('/tenders', {
+      params: { 
+        type: typeFilter || undefined,
+        search: debouncedSearch.trim() || undefined 
+      }
+    })
+      .then(res => {
+        if (!isCancelled && res.data && Array.isArray(res.data)) {
+          setTenders(res.data);
+        }
+      })
+      .catch(e => {
+        if (!isCancelled) console.log('Error fetching tenders', e);
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [typeFilter, debouncedSearch]);
+
+  const fetchTenders = async (showSkeleton = false) => {
+    if (showSkeleton) setLoading(true);
+    try {
+      const res = await API.get('/tenders', {
+        params: { 
+          type: typeFilter || undefined,
+          search: debouncedSearch.trim() || undefined 
+        }
+      });
+      if (res.data && Array.isArray(res.data)) {
+        setTenders(res.data);
+      }
+    } catch (e) {
+      console.log('Error fetching tenders', e);
+    } finally {
+      if (showSkeleton) setLoading(false);
+    }
+  };
 
   const handleDelete = async (id) => {
     const isConfirmed = await showConfirm({
@@ -39,7 +97,8 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
 
     try {
       await API.delete(`/tenders/${id}`);
-      fetchTenders();
+      setTenders(prev => prev.filter(t => t.id !== id));
+      fetchTenders(false);
       showAlert({
         title: t('successTitle', 'Успешно'),
         message: t('tenderDeletedSuccess', 'Тендер успешно удален'),
@@ -55,37 +114,10 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
     }
   };
 
-  const fetchTenders = async () => {
-    setLoading(true);
-    try {
-      const res = await API.get('/tenders', {
-        params: { 
-          type: typeFilter || undefined,
-          search: search.trim() || undefined 
-        }
-      });
-      if (res.data && Array.isArray(res.data)) {
-        setTenders(res.data);
-      }
-    } catch (e) {
-      console.log('Error fetching tenders', e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchTenders();
-    }, 400);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [typeFilter, search]);
-
   // Сброс страницы на 1 при изменении фильтров поиска и дат
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, typeFilter, announcementDateFilter, deadlineFilter]);
+  }, [debouncedSearch, typeFilter, announcementDateFilter, deadlineFilter]);
 
   // 1. Подсчет количества тендеров по статусам для бейджей на вкладках
   const statusCounts = useMemo(() => {
@@ -286,9 +318,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
             </thead>
             <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
               {loading ? (
-                <tr>
-                  <td colSpan="9" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
-                </tr>
+                <TableSkeletonRows rows={pageSize || 5} cols={9} />
               ) : paginatedList.length === 0 ? (
                 <tr>
                   <td colSpan="9" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
@@ -365,6 +395,8 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
           }}
           role={role}
           lang={lang}
+          isDarkMode={isDarkMode}
+          theme={theme}
         />
       </div>
     </div>

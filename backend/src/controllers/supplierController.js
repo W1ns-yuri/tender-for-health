@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { sendNotification, notifyAdmins } = require('./notificationController');
 
 // Обычный пользователь (Поставщик) обновляет свой профиль (Шаг 2 верификации)
 const updateProfile = async (req, res) => {
@@ -144,6 +145,16 @@ const updateProfile = async (req, res) => {
             });
         } catch (logErr) {
             console.error('Ошибка записи лога модерации:', logErr);
+        }
+
+        // Оповещаем администраторов о поступлении анкеты поставщика на модерацию
+        if (willSubmitForReview) {
+            notifyAdmins({
+                title: 'Новый поставщик ожидает модерации',
+                message: `«${cleanName}» направил документы и анкету компании на рассмотрение.`,
+                type: 'supplier',
+                link: `/suppliers/${supplier.id}`
+            }).catch(e => console.error('Error notifying admins:', e));
         }
 
         res.json(updatedSupplier);
@@ -422,6 +433,17 @@ const approveSupplier = async (req, res) => {
             console.error('Ошибка записи лога одобрения:', logErr);
         }
 
+        // Оповещаем поставщика об успешной верификации
+        if (updated?.userId) {
+            sendNotification({
+                userId: updated.userId,
+                title: 'Верификация компании подтверждена',
+                message: 'Администратор одобрил ваши уставные документы. Вам открыт полный доступ к подаче коммерческих предложений.',
+                type: 'supplier',
+                link: '/profile'
+            }).catch(e => console.error('Error notifying supplier of approval:', e));
+        }
+
         res.json(updated);
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при одобрении', details: error.message });
@@ -461,6 +483,17 @@ const rejectSupplier = async (req, res) => {
             });
         } catch (logErr) {
             console.error('Ошибка записи лога отклонения:', logErr);
+        }
+
+        // Оповещаем поставщика о замечаниях и причине отклонения
+        if (updated?.userId) {
+            sendNotification({
+                userId: updated.userId,
+                title: 'Заявка на верификацию отклонена',
+                message: `Причина: ${rejectionReason || 'Несоответствие регистрационных документов требованиям'}. Исправьте замечания в профиле и отправьте на повторную проверку.`,
+                type: 'warning',
+                link: '/profile'
+            }).catch(e => console.error('Error notifying supplier of rejection:', e));
         }
 
         res.json(updated);

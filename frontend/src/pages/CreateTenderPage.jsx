@@ -4,19 +4,21 @@ import { RefreshCw, Package, Plus, FileText, Paperclip } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
-import CatalogFormModal from '../components/CatalogFormModal';
 import { useAlert } from '../context/AlertContext';
+import { CatalogFormModal } from '../components/catalogs';
 
 // Subcomponents & Constants
-import { sanitizeInputText } from '../components/tender/tenderConstants';
-import TenderHeader from '../components/tender/TenderHeader';
-import TenderGeneralParamsTab from '../components/tender/TenderGeneralParamsTab';
-import TenderLotsTabBar from '../components/tender/TenderLotsTabBar';
-import TenderLotDetailsCard from '../components/tender/TenderLotDetailsCard';
-import TenderLotDocuments from '../components/tender/TenderLotDocuments';
-import TenderLotItemsTable from '../components/tender/TenderLotItemsTable';
-import TenderLotStickyFooter from '../components/tender/TenderLotStickyFooter';
-import TenderGeneralDocumentsTab from '../components/tender/TenderGeneralDocumentsTab';
+import {
+  TenderHeader,
+  TenderGeneralParamsTab,
+  TenderLotsTabBar,
+  TenderLotDetailsCard,
+  TenderLotDocuments,
+  TenderLotItemsTable,
+  TenderLotStickyFooter,
+  TenderGeneralDocumentsTab,
+  sanitizeInputText,
+} from '../components/tender';
 
 export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDarkMode, lang = 'RU', isEdit: _isEdit = false }) {
   const { id } = useParams();
@@ -412,7 +414,17 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
   const handleAddSpecRow = () => {
     if (!activeLot) return;
     setActiveLotDirty(true);
-    const defaultUnitId = units.length > 0 ? units[0].id : '';
+    let defaultUnitId = '';
+    if (activeLot.lotType === 'SERVICES') {
+      const srvUnit = units.find(u => (u.shortName || '').toLowerCase().includes('усл') || (u.name || '').toLowerCase().includes('услуг'));
+      defaultUnitId = srvUnit ? srvUnit.id : (units[0]?.id || '');
+    } else if (activeLot.lotType === 'WORKS') {
+      const wrkUnit = units.find(u => (u.shortName || '').toLowerCase().includes('этап') || (u.shortName || '').toLowerCase().includes('компл') || (u.shortName || '').toLowerCase().includes('шт'));
+      defaultUnitId = wrkUnit ? wrkUnit.id : (units[0]?.id || '');
+    } else {
+      const goodsUnit = units.find(u => (u.shortName || '').toLowerCase().includes('уп') || (u.shortName || '').toLowerCase().includes('шт'));
+      defaultUnitId = goodsUnit ? goodsUnit.id : (units[0]?.id || '');
+    }
     setLots(prev => {
       const nextLots = [...prev];
       const nextSpecs = [...(nextLots[activeLotIndex].specs || [])];
@@ -586,41 +598,61 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
     }
   };
 
-  // Прикрепление документа к конкретному активному лоту (POST /api/documents/upload)
+  // Прикрепление документа к конкретному активному лоту (поддержка Drag & Drop и множественного выбора)
   const handleLotFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !activeLot) return;
+    if (!activeLot) return;
+    
+    let rawFiles = [];
+    if (e?.target?.files) {
+      rawFiles = Array.from(e.target.files);
+    } else if (e?.dataTransfer?.files) {
+      rawFiles = Array.from(e.dataTransfer.files);
+    } else if (Array.isArray(e)) {
+      rawFiles = e;
+    } else if (e instanceof File) {
+      rawFiles = [e];
+    }
 
-    const data = new FormData();
-    data.append('file', file);
-    data.append('name', file.name);
-    data.append('lotId', activeLot.id);
-    if (tenderId) data.append('tenderId', tenderId);
+    if (rawFiles.length === 0) return;
 
     try {
-      const res = await API.post('/documents/upload', data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      const uploadedDoc = res.data;
+      const uploadedDocs = [];
+      for (const file of rawFiles) {
+        const data = new FormData();
+        data.append('file', file);
+        data.append('name', file.name);
+        data.append('lotId', activeLot.id);
+        if (tenderId) data.append('tenderId', tenderId);
+
+        const res = await API.post('/documents/upload', data, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        if (res.data) uploadedDocs.push(res.data);
+      }
 
       // Обновляем список файлов активного лота
       setLots(prev => {
         const nextLots = [...prev];
         const curLot = nextLots[activeLotIndex];
-        curLot.files = [...(curLot.files || []), { id: Date.now(), document: uploadedDoc }];
+        curLot.files = [
+          ...(curLot.files || []),
+          ...uploadedDocs.map(doc => ({ id: Date.now() + Math.random(), document: doc }))
+        ];
         return nextLots;
       });
 
       showAlert({
         title: t('successTitle', 'Успешно'),
-        message: t('fileUploaded', `Файл "${file.name}" прикреплен к лоту!`),
+        message: uploadedDocs.length === 1 
+          ? t('fileUploaded', `Файл "${rawFiles[0].name}" прикреплен к лоту!`)
+          : t('filesUploadedCount', `Прикреплено файлов к лоту: ${uploadedDocs.length}`),
         type: 'success'
       });
     } catch (err) {
-      console.error('Error uploading lot document', err);
-      showAlert({ message: err.response?.data?.error || t('fileUploadError', 'Ошибка загрузки файла'), type: 'error' });
+      console.error('Error uploading lot documents', err);
+      showAlert({ message: err.response?.data?.error || t('fileUploadError', 'Ошибка загрузки файлов'), type: 'error' });
     } finally {
-      e.target.value = '';
+      if (e?.target) e.target.value = '';
     }
   };
 
@@ -743,11 +775,13 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
     }
   };
 
-  // Модалка добавления товара в каталог
+  // Модалка добавления позиции (товара, работы или услуги) в каталог
   const handleOpenProductModal = (initialName = '', specIdx = null) => {
+    const lotType = activeLot?.lotType || 'GOODS';
+    const catalogId = lotType === 'WORKS' ? 'works' : lotType === 'SERVICES' ? 'services' : 'productsMNN';
     setCatalogModal({
       isOpen: true,
-      catalogId: 'productsMNN',
+      catalogId,
       editingItem: initialName ? { name: initialName } : null,
       specIdx
     });
@@ -755,12 +789,16 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
 
   const handleSaveProductFromModal = async (savedData) => {
     try {
+      const lotType = activeLot?.lotType || 'GOODS';
+      const itemType = savedData.itemType || lotType;
       const res = await API.post('/catalogs/products', {
         name: savedData.name?.trim(),
         tradeName: savedData.tradeName?.trim() || undefined,
         code: savedData.code?.trim() || undefined,
         description: savedData.description?.trim() || undefined,
-        categoryId: savedData.categoryId || activeLot?.categoryId || formData.categoryId || undefined
+        categoryId: savedData.categoryId || activeLot?.categoryId || formData.categoryId || undefined,
+        itemType,
+        type: itemType === 'GOODS' ? 'HARYT' : 'HYZMAT'
       });
       if (res.data) {
         const created = res.data;
@@ -773,7 +811,7 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
       }
     } catch (err) {
       console.error('Failed to create product in catalog', err);
-      showAlert({ message: err.response?.data?.error || t('errorSaving', 'Ошибка создания товара'), type: 'error' });
+      showAlert({ message: err.response?.data?.error || t('errorSaving', 'Ошибка создания позиции'), type: 'error' });
     }
   };
 
@@ -1075,13 +1113,13 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
         </div>
       </div>
 
-      {/* Модальное окно быстрого добавления товара в каталог */}
+      {/* Модальное окно быстрого добавления позиции (товара, работы, услуги) в каталог */}
       {catalogModal.isOpen && (
         <CatalogFormModal
           isOpen={catalogModal.isOpen}
           onClose={() => setCatalogModal({ isOpen: false, catalogId: 'productsMNN', editingItem: null, specIdx: null })}
           onSave={handleSaveProductFromModal}
-          catalogId="productsMNN"
+          catalogId={catalogModal.catalogId || 'productsMNN'}
           editingItem={catalogModal.editingItem}
           categories={categories}
           existingProducts={products}

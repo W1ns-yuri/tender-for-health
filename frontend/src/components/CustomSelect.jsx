@@ -183,7 +183,7 @@ export const CustomSelect = ({
             left: `${coords.left}px`,
             width: `${coords.width}px`,
             maxHeight: `${coords.maxHeight || 260}px`,
-            zIndex: 9999,
+            zIndex: 999999,
           }}
           className={`rounded-xl border shadow-2xl ${
             isDark 

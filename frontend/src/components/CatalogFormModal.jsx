@@ -10,6 +10,7 @@ export default function CatalogFormModal({
   onSave,
   catalogId,
   editingItem,
+  role = 'ADMIN',
   theme,
   t = (k, f) => f,
   isDarkMode,
@@ -25,7 +26,7 @@ export default function CatalogFormModal({
   // Подгрузка категорий и стран, если не переданы извне
   useEffect(() => {
     if (isOpen) {
-      if ((!categories || categories.length === 0) && (catalogId === 'productsMNN' || catalogId === 'generalProducts' || catalogId === 'categories')) {
+      if ((!categories || categories.length === 0) && (catalogId === 'productsMNN' || catalogId === 'generalProducts' || catalogId === 'categories' || catalogId === 'productCategories' || catalogId === 'works' || catalogId === 'services')) {
         API.get('/catalogs/categories')
           .then(res => {
             if (Array.isArray(res.data)) setInternalCategories(res.data);
@@ -64,8 +65,87 @@ export default function CatalogFormModal({
           title: t('addCategory', 'Добавить категорию'),
           editTitle: t('editCategory', 'Редактировать категорию'),
           fields: [
-            { name: 'name', label: t('colName', 'Название категории'), required: true },
-            { name: 'code', label: t('colCode', 'Код категории'), required: true }
+            { name: 'name', label: t('colName', 'Название категории'), required: true, placeholder: 'Например: Антибиотики, Монтажные работы, Сервис МРТ...' },
+            { 
+              name: 'type', 
+              label: t('categoryType', 'Тип категории (направление)'), 
+              required: true,
+              type: 'select',
+              options: [
+                { id: 'GOODS', name: t('typeGoods', 'Товары (Медикаменты и медизделия)') },
+                { id: 'WORKS', name: t('typeWorks', 'Работы (Монтаж, ремонт, наладка)') },
+                { id: 'SERVICES', name: t('typeServices', 'Услуги (ТО, поверка, утилизация)') }
+              ]
+            },
+            { name: 'code', label: t('colCode', 'Код категории'), required: false, placeholder: 'Например: MED-01, WRK-01, SRV-01' }
+          ]
+        };
+      case 'works':
+        return {
+          title: t('addWorkPosition', 'Добавить вид / этап работ'),
+          editTitle: t('editWorkPosition', 'Редактировать вид работ'),
+          fields: [
+            { 
+              name: 'name', 
+              label: t('workStageName', 'Наименование вида или этапа работ'), 
+              required: true,
+              placeholder: 'Например: Монтаж и разводка кислородопровода...'
+            },
+            { 
+              name: 'categoryId', 
+              label: t('workCategory', 'Категория работ'), 
+              required: false, 
+              type: 'select', 
+              placeholder: t('selectWorkCategory', 'Выберите категорию работ...'),
+              options: internalCategories.filter(c => (c.type === 'WORKS' || !c.type) && c.isActive !== false)
+            },
+            { 
+              name: 'code', 
+              label: t('workCode', 'Код / шифр работ (СНиП / проектный)'), 
+              required: false,
+              placeholder: 'Например: WRK-GAS-01'
+            },
+            { 
+              name: 'description', 
+              label: t('workDescription', 'Техническое задание / Требования к квалификации / Спецификация'), 
+              required: false, 
+              type: 'textarea',
+              placeholder: 'Опишите требования к допускам СРО, этапам сдачи, скрытым работам...'
+            }
+          ]
+        };
+      case 'services':
+        return {
+          title: t('addServicePosition', 'Добавить медицинскую услугу'),
+          editTitle: t('editServicePosition', 'Редактировать услугу'),
+          fields: [
+            { 
+              name: 'name', 
+              label: t('servicePositionName', 'Наименование услуги / регламента'), 
+              required: true,
+              placeholder: 'Например: Техническое обслуживание томографа МРТ...'
+            },
+            { 
+              name: 'categoryId', 
+              label: t('serviceCategory', 'Категория услуг'), 
+              required: false, 
+              type: 'select', 
+              placeholder: t('selectServiceCategory', 'Выберите категорию услуг...'),
+              options: internalCategories.filter(c => (c.type === 'SERVICES' || !c.type) && c.isActive !== false)
+            },
+            { 
+              name: 'code', 
+              label: t('serviceCode', 'Код услуги (Номенклатура МЗ / внутренний)'), 
+              required: false,
+              placeholder: 'Например: SRV-TO-MRT-01'
+            },
+            { 
+              name: 'description', 
+              label: t('serviceDescription', 'Регламент / Периодичность / SLA / Требования'), 
+              required: false, 
+              type: 'textarea',
+              placeholder: 'Периодичность выезда инженера, регламент работ по замене расходников...'
+            }
           ]
         };
       case 'currencies':
@@ -122,7 +202,7 @@ export default function CatalogFormModal({
               label: t('category', 'Категория товара'), 
               required: false, 
               type: 'select', 
-              options: internalCategories.filter(c => c.isActive !== false)
+              options: internalCategories.filter(c => (!c.type || c.type === 'GOODS') && c.isActive !== false)
             },
             { 
               name: 'code', 
@@ -201,7 +281,11 @@ export default function CatalogFormModal({
         const initial = {};
         if (config && config.fields) {
           config.fields.forEach(f => {
-            initial[f.name] = f.type === 'number' ? 0 : '';
+            if (f.name === 'type' && (catalogId === 'categories' || catalogId === 'productCategories')) {
+              initial[f.name] = 'GOODS';
+            } else {
+              initial[f.name] = f.type === 'number' ? 0 : '';
+            }
           });
         }
         setFormData(initial);
@@ -223,6 +307,19 @@ export default function CatalogFormModal({
           .split(',')
           .map(v => v.trim())
           .filter(Boolean);
+      }
+
+      if (catalogId === 'works') {
+        submissionData.itemType = 'WORKS';
+        submissionData.type = 'HYZMAT';
+      } else if (catalogId === 'services') {
+        submissionData.itemType = 'SERVICES';
+        submissionData.type = 'HYZMAT';
+      } else if (catalogId === 'productsMNN' || catalogId === 'generalProducts') {
+        submissionData.itemType = 'GOODS';
+        submissionData.type = 'HARYT';
+      } else if (catalogId === 'categories' || catalogId === 'productCategories') {
+        if (!submissionData.type) submissionData.type = 'GOODS';
       }
 
       await onSave(submissionData, editingItem?.id);
@@ -249,6 +346,10 @@ export default function CatalogFormModal({
             <p className="text-xs text-slate-400 mt-0.5">
               {catalogId === 'productsMNN' || catalogId === 'generalProducts' 
                 ? t('productModalSub', 'Введите данные препарата или выберите активное МНН из архива')
+                : catalogId === 'works'
+                ? t('worksModalSub', 'Введите наименование вида или этапа монтажных / строительных работ')
+                : catalogId === 'services'
+                ? t('servicesModalSub', 'Введите наименование, регламент и требования к сервисной услуге')
                 : t('fillCatalogRecordDetails', 'Заполните поля для сохранения записи в справочнике')}
             </p>
           </div>
@@ -281,6 +382,7 @@ export default function CatalogFormModal({
                   }}
                   existingProducts={existingProducts}
                   isDarkMode={isDarkMode}
+                  role={role}
                   theme={theme}
                   t={t}
                   required={field.required}
@@ -288,11 +390,12 @@ export default function CatalogFormModal({
                 />
               ) : field.type === 'select' ? (
                 <CustomSelect
-                  role="ADMIN"
+                  role={role}
                   value={formData[field.name] || ''}
                   onChange={(val) => setFormData(prev => ({ ...prev, [field.name]: val }))}
+                  placeholder={field.placeholder || t('selectPrompt', 'Выберите...')}
                   options={[
-                    { id: '', name: t('selectPrompt', 'Выберите...') },
+                    { id: '', name: field.placeholder || t('selectPrompt', 'Выберите...') },
                     ...(field.options || [])
                   ]}
                   searchable={(field.options || []).length > 5}
@@ -307,7 +410,11 @@ export default function CatalogFormModal({
                   required={field.required}
                   placeholder={field.placeholder || ''}
                   rows={3}
-                  className={`w-full p-2.5 text-xs border rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all ${inputBg}`}
+                  className={`w-full p-2.5 text-xs border rounded-lg outline-none transition-all ${
+                    role === 'SUPPLIER'
+                      ? 'focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500'
+                      : 'focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500'
+                  } ${inputBg}`}
                 />
               ) : (
                 <input
@@ -316,7 +423,11 @@ export default function CatalogFormModal({
                   onChange={(e) => setFormData({ ...formData, [field.name]: field.type === 'number' ? Number(e.target.value) : e.target.value })}
                   required={field.required}
                   placeholder={field.placeholder || ''}
-                  className={`w-full p-2.5 text-xs border rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all ${inputBg}`}
+                  className={`w-full p-2.5 text-xs border rounded-lg outline-none transition-all ${
+                    role === 'SUPPLIER'
+                      ? 'focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500'
+                      : 'focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500'
+                  } ${inputBg}`}
                 />
               )}
             </div>
@@ -334,7 +445,9 @@ export default function CatalogFormModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`px-5 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 ${theme?.primaryBg || 'bg-emerald-600 text-white hover:bg-emerald-700'} disabled:opacity-70 cursor-pointer shadow-xs`}
+              className={`px-5 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 ${
+                theme?.primaryBg || (role === 'SUPPLIER' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-emerald-600 text-white hover:bg-emerald-700')
+              } disabled:opacity-70 cursor-pointer shadow-xs`}
             >
               <Check size={16} />
               <span>{isSubmitting ? t('saving', 'Сохранение...') : t('save', 'Сохранить')}</span>

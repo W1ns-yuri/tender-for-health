@@ -59,4 +59,78 @@ export function SkeletonTable({ rows = 5, cols = 4, className = '' }) {
   );
 }
 
+/**
+ * Drop-in skeleton rows for any standard <tbody>
+ */
+export function TableSkeletonRows({ rows = 5, cols = 8, className = '' }) {
+  return Array.from({ length: rows }).map((_, rIdx) => (
+    <tr key={`skel-row-${rIdx}`} className={`animate-pulse ${className}`}>
+      {Array.from({ length: cols }).map((_, cIdx) => (
+        <td key={`skel-col-${cIdx}`} className="py-4 px-4 text-center">
+          <div
+            className={`h-4 bg-slate-200/90 dark:bg-slate-800 rounded-md mx-auto ${
+              cIdx === 0
+                ? 'w-12'
+                : cIdx === 1
+                ? 'w-36'
+                : cIdx === 2
+                ? 'w-44'
+                : cIdx === cols - 1
+                ? 'w-8 h-8 rounded-lg'
+                : 'w-20'
+            }`}
+          />
+        </td>
+      ))}
+    </tr>
+  ));
+}
+
+/**
+ * Full page skeleton for Tender Details view
+ */
+export function TenderDetailsSkeleton() {
+  return (
+    <div className="space-y-6 pb-12 animate-pulse">
+      {/* Main card skeleton */}
+      <div className="p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-xs space-y-5">
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
+            <div className="h-7 w-52 bg-slate-200 dark:bg-slate-800 rounded-md" />
+            <div className="h-4 w-80 bg-slate-200/70 dark:bg-slate-800/70 rounded-md" />
+          </div>
+          <div className="h-9 w-36 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+        </div>
+        <div className="flex gap-6 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="h-4 w-40 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="h-4 w-40 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="h-4 w-28 bg-slate-200 dark:bg-slate-800 rounded" />
+        </div>
+        <div className="space-y-2 pt-2">
+          <div className="h-4 w-full bg-slate-200/80 dark:bg-slate-800/80 rounded" />
+          <div className="h-4 w-3/4 bg-slate-200/70 dark:bg-slate-800/70 rounded" />
+        </div>
+      </div>
+
+      {/* Lot tabs skeleton */}
+      <div className="flex gap-2 -mb-px">
+        <div className="h-10 w-44 bg-slate-200 dark:bg-slate-800 rounded-t-xl" />
+        <div className="h-10 w-44 bg-slate-200/60 dark:bg-slate-800/60 rounded-t-xl" />
+      </div>
+
+      {/* Table skeleton */}
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] p-5">
+        <div className="space-y-4">
+          <div className="h-5 w-48 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-10 w-full bg-slate-100 dark:bg-slate-800/50 rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default Skeleton;

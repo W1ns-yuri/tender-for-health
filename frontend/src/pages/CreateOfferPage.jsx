@@ -6,14 +6,18 @@ import { getRoleTheme } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
 
 // Subcomponents & Constants
-import { ALLOWED_EXTS, MAX_FILE_SIZE_MB, formatFileSize } from '../components/offer/offerConstants';
-import OfferHeader from '../components/offer/OfferHeader';
-import OfferCommercialTermsCard from '../components/offer/OfferCommercialTermsCard';
-import OfferLotsNavigation from '../components/offer/OfferLotsNavigation';
-import OfferLotCard from '../components/offer/OfferLotCard';
-import OfferDocumentsCard from '../components/offer/OfferDocumentsCard';
-import OfferStickyFooter from '../components/offer/OfferStickyFooter';
-import CatalogFormModal from '../components/CatalogFormModal';
+import {
+  OfferHeader,
+  OfferCommercialTermsCard,
+  OfferLotsNavigation,
+  OfferLotCard,
+  OfferDocumentsCard,
+  OfferStickyFooter,
+  ALLOWED_EXTS,
+  MAX_FILE_SIZE_MB,
+  formatFileSize,
+} from '../components/offer';
+import { CatalogFormModal } from '../components/catalogs';
 
 export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 'RU' }) {
   const { id } = useParams();
@@ -558,6 +562,7 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
           editingItem={catalogModal.initialName ? { name: catalogModal.initialName } : null}
           categories={categories}
           existingProducts={products}
+          role="SUPPLIER"
           theme={theme}
           t={t}
           isDarkMode={isDarkMode}

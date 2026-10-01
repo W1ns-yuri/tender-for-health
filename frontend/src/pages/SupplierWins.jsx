@@ -30,9 +30,24 @@ export default function SupplierWins({ role, isDarkMode, lang = 'RU' }) {
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-slate-500 font-medium flex flex-col items-center justify-center space-y-3">
-        <div className="w-8 h-8 border-3 border-blue-900 border-t-transparent rounded-full animate-spin" />
-        <span>{t('loading', 'Загрузка данных...')}</span>
+      <div className="space-y-6 animate-pulse">
+        <div className="space-y-2">
+          <div className="h-7 w-48 bg-slate-200 dark:bg-slate-800 rounded-md" />
+          <div className="h-4 w-72 bg-slate-200/70 dark:bg-slate-800/70 rounded-md" />
+        </div>
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] overflow-hidden p-6 space-y-4">
+          <div className="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="space-y-2">
+              <div className="h-5 w-40 bg-slate-200 dark:bg-slate-800 rounded" />
+              <div className="h-6 w-64 bg-slate-200 dark:bg-slate-800 rounded" />
+            </div>
+          </div>
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-12 w-full bg-slate-100 dark:bg-slate-800/50 rounded-lg" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

@@ -6,6 +6,7 @@ import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { cleanLotTitle } from '../utils/pluralize';
+import { TenderDetailsSkeleton } from '../components/ui';
 
 export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' }) {
   const { id: paramId } = useParams();
@@ -95,7 +96,7 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
         </p>
         <button
           onClick={() => navigate('/tenders')}
-          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+          className={`px-5 py-2.5 ${theme.primaryBtn} rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer`}
         >
           {t('backToTendersList', 'Вернуться к списку тендеров')}
         </button>
@@ -104,7 +105,7 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
   }
 
   if (!tender) {
-    return <div className="text-center py-10 text-slate-500">{t('loading', 'Загрузка...')}</div>;
+    return <TenderDetailsSkeleton />;
   }
 
   return (
@@ -209,7 +210,13 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
             <span className={theme.subText}>{t('type', 'Görnüşi')}:</span> {getTypeBadge(data?.type, lang, isDarkMode)}
             <span className={`ml-3 ${theme.subText}`}>{t('status', 'Status')}:</span> {getStatusBadge(data?.status, lang, isDarkMode)}
             <span className={`ml-3 ${theme.subText}`}>{t('visibility', 'Açyklygy')}:</span>
-            <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
+            <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full border ${
+              data?.visibility === 'YAPYK'
+                ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-700/60'
+                : (role === 'SUPPLIER'
+                    ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800')
+            }`}>
               {data?.visibility === 'YAPYK' ? (t('visibilityPrivate', 'Закрытый')) : (t('openVisibility', 'Открытый'))}
             </span>
           </div>
@@ -280,15 +287,19 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                         onClick={() => setActiveLotTab(lIdx)}
                         className={`px-4 py-2.5 rounded-t-2xl font-black text-xs flex items-center gap-2 border-t-2 border-x transition-all cursor-pointer shrink-0 select-none ${
                           isActive
-                            ? 'bg-white dark:bg-[#111827] border-t-emerald-500 border-x-slate-200 dark:border-x-slate-800 border-b-transparent text-emerald-600 dark:text-emerald-400 shadow-xs'
+                            ? role === 'SUPPLIER'
+                              ? 'bg-white dark:bg-[#111827] border-t-blue-500 border-x-slate-200 dark:border-x-slate-800 border-b-transparent text-blue-600 dark:text-blue-400 shadow-xs'
+                              : 'bg-white dark:bg-[#111827] border-t-emerald-500 border-x-slate-200 dark:border-x-slate-800 border-b-transparent text-emerald-600 dark:text-emerald-400 shadow-xs'
                             : 'bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-800/40 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent'
                         }`}
                       >
-                        <Bookmark size={14} className={isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'} />
+                        <Bookmark size={14} className={isActive ? (role === 'SUPPLIER' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400') : 'text-slate-400'} />
                         <span className="truncate max-w-44">{cleanLotTitle(lItem.name || `Лот №${lItem.lotNumber || lIdx + 1}`, lItem.lotNumber || lIdx + 1)}</span>
                         <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-black ${
                           isActive
-                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                            ? role === 'SUPPLIER'
+                              ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                              : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
                             : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                         }`}>
                           {lItem.specs?.length || 0}
@@ -308,7 +319,9 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                           isWorks 
                             ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' 
                             : isServices 
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
+                            ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300' 
+                            : role === 'SUPPLIER'
+                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/40'
                             : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
                         }`}>
                           {isWorks ? (t('worksType', 'Работы')) : isServices ? (t('servicesType', 'Услуги')) : (t('catProducts', 'Товары'))}
@@ -321,7 +334,7 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                           <span>📁 {t('lotCategory', 'Категория')}: <strong className={isDarkMode ? 'text-slate-300' : 'text-slate-700'}>{lot.category.name}</strong></span>
                         )}
                         {lot.endUser && (
-                          <span>🏢 {t('endUser', 'Конечный получатель')}: <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">{lot.endUser}</strong></span>
+                          <span>🏢 {t('endUser', 'Конечный получатель')}: <strong className={`font-semibold ${role === 'SUPPLIER' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{lot.endUser}</strong></span>
                         )}
                       </div>
 
@@ -364,7 +377,7 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                   {lot.files && lot.files.length > 0 && (
                     <div className="px-4 py-2.5 bg-slate-50/70 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 mr-2">
-                        <Paperclip size={13} className="text-emerald-600" />
+                        <Paperclip size={13} className={role === 'SUPPLIER' ? 'text-blue-600' : 'text-emerald-600'} />
                         <span>{t('lotDocuments', 'Документация лота')}:</span>
                       </div>
                       {lot.files.map((fileObj, fIdx) => {
@@ -378,9 +391,13 @@ export default function TenderDetails({ tenderId, role, isDarkMode, lang = 'RU' 
                             href={fileUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shadow-2xs transition-colors"
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold shadow-2xs transition-colors ${
+                              role === 'SUPPLIER'
+                                ? 'text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40'
+                                : 'text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+                            }`}
                           >
-                            <FileText size={12} className="text-emerald-600" />
+                            <FileText size={12} className={role === 'SUPPLIER' ? 'text-blue-600' : 'text-emerald-600'} />
                             <span className="truncate max-w-40">{doc.fileName || doc.name}</span>
                           </a>
                         );

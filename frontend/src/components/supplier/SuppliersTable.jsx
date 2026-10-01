@@ -12,6 +12,7 @@ import {
   Badge,
   TableFilters,
   Pagination,
+  TableSkeletonRows,
 } from '../ui';
 import { safeString, getRoleTheme } from '../../utils/themeUtils';
 import { getTranslation } from '../../utils/translations';
@@ -103,14 +104,7 @@ export default function SuppliersTable({
 
           <TableBody>
             {loading ? (
-              <tr>
-                <td colSpan="8" className="py-12 text-center text-slate-500 dark:text-slate-400">
-                  <div className="inline-flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                    <span>{t('loading', 'Ýüklenýär...')}</span>
-                  </div>
-                </td>
-              </tr>
+              <TableSkeletonRows rows={pageSize || 5} cols={8} />
             ) : suppliers.length === 0 ? (
               <TableEmptyState
                 colSpan={8}
@@ -258,6 +252,8 @@ export default function SuppliersTable({
           setCurrentPage(1);
         }}
         role={role}
+        isDarkMode={isDarkMode}
+        theme={theme}
         lang={lang}
       />
     </div>

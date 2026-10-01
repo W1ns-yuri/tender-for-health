@@ -4,17 +4,17 @@ import API from '../services/api';
 import { getTranslation } from '../utils/translations';
 import { useAlert } from '../context/AlertContext';
 
-// UI Kit & Subcomponents
-import SupplierListHeader from '../components/supplier/SupplierListHeader';
-import SupplierTabsNav from '../components/supplier/SupplierTabsNav';
-import SuppliersTable from '../components/supplier/SuppliersTable';
-import SuppliersPendingTable from '../components/supplier/SuppliersPendingTable';
-import SuppliersArchiveTab from '../components/supplier/SuppliersArchiveTab';
-
-// Modals
-import AddSupplierModal from '../components/AddSupplierModal';
-import EditSupplierModal from '../components/EditSupplierModal';
-import RejectSupplierModal from '../components/RejectSupplierModal';
+// Subcomponents & Modals
+import {
+  SupplierListHeader,
+  SupplierTabsNav,
+  SuppliersTable,
+  SuppliersPendingTable,
+  SuppliersArchiveTab,
+  AddSupplierModal,
+  EditSupplierModal,
+  RejectSupplierModal,
+} from '../components/supplier';
 
 export default function SuppliersList({ role = 'ADMIN', isDarkMode = false, lang = 'RU' }) {
   const t = (key, fallback) => getTranslation(lang, key, fallback);

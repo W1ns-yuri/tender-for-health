@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { sendNotification } = require('./notificationController');
 
 /**
  * 1. Вскрытие предложений (Teklipleri açmak)
@@ -328,7 +329,14 @@ const completeEvaluation = async (req, res) => {
 
         const tender = await prisma.tender.findUnique({
             where: { id: tenderId },
-            include: { offers: { include: { specs: true } } }
+            include: { 
+                offers: { 
+                    include: { 
+                        specs: true,
+                        supplier: { select: { userId: true, name: true } }
+                    } 
+                } 
+            }
         });
 
         if (!tender) return res.status(404).json({ error: 'Тендер не найден' });
@@ -367,6 +375,30 @@ const completeEvaluation = async (req, res) => {
                 data: { status: 'YENIJI_YGLAN_EDILDI' }
             });
         });
+
+        // Оповещаем поставщиков о результатах оценки
+        for (const offer of tender.offers) {
+            const hasWonSomething = offer.specs.some(s => s.isAwarded);
+            if (offer.supplier?.userId) {
+                if (hasWonSomething) {
+                    sendNotification({
+                        userId: offer.supplier.userId,
+                        title: '🏆 Поздравляем с победой в тендере!',
+                        message: `Ваше предложение по тендеру №${tender.tenderNumber} признано победителем! Ознакомьтесь с протоколом.`,
+                        type: 'winner',
+                        link: '/evaluation'
+                    }).catch(e => console.error('Error notifying winner:', e));
+                } else {
+                    sendNotification({
+                        userId: offer.supplier.userId,
+                        title: 'Итоги оценки тендера',
+                        message: `Комиссия завершила оценку и подвела итоги по тендеру №${tender.tenderNumber}.`,
+                        type: 'tender',
+                        link: `/offers/${offer.id}`
+                    }).catch(e => console.error('Error notifying participant:', e));
+                }
+            }
+        }
 
         res.json({ message: 'Оценка завершена, результаты оглашены' });
     } catch (error) {

@@ -4,25 +4,29 @@ import { ArrowLeft } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
 import { getTranslation } from '../utils/translations';
 import API from '../services/api';
-import RejectSupplierModal from '../components/RejectSupplierModal';
-
 // Импорт модульных компонентов секций профиля поставщика
-import { TURKMEN_REGIONS } from '../components/supplier/supplierConstants';
-import { cleanAddressString, formatPhoneString, getCleanCompanyName, calculateReadiness } from '../components/supplier/supplierUtils';
-import SupplierCompanyCardModal from '../components/supplier/SupplierCompanyCardModal';
-import SupplierStatusBanner from '../components/supplier/SupplierStatusBanner';
-import SupplierHeader from '../components/supplier/SupplierHeader';
-import SupplierRepresentativeCard from '../components/supplier/SupplierRepresentativeCard';
-import SupplierBasicInfoCard from '../components/supplier/SupplierBasicInfoCard';
-import SupplierCategoriesCard from '../components/supplier/SupplierCategoriesCard';
-import SupplierAddressCard from '../components/supplier/SupplierAddressCard';
-import SupplierLicenseCard from '../components/supplier/SupplierLicenseCard';
-import SupplierBankCard from '../components/supplier/SupplierBankCard';
-import SupplierDirectorCard from '../components/supplier/SupplierDirectorCard';
-import SupplierDocumentsCard from '../components/supplier/SupplierDocumentsCard';
-import SupplierActionButtons from '../components/supplier/SupplierActionButtons';
-import SupplierAdminPanel from '../components/supplier/SupplierAdminPanel';
-import SupplierSidebar from '../components/supplier/SupplierSidebar';
+import {
+  TURKMEN_REGIONS,
+  cleanAddressString,
+  formatPhoneString,
+  getCleanCompanyName,
+  calculateReadiness,
+  SupplierCompanyCardModal,
+  SupplierStatusBanner,
+  SupplierHeader,
+  SupplierRepresentativeCard,
+  SupplierBasicInfoCard,
+  SupplierCategoriesCard,
+  SupplierAddressCard,
+  SupplierLicenseCard,
+  SupplierBankCard,
+  SupplierDirectorCard,
+  SupplierDocumentsCard,
+  SupplierActionButtons,
+  SupplierAdminPanel,
+  SupplierSidebar,
+  RejectSupplierModal,
+} from '../components/supplier';
 
 export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isOwner }) {
   const { id } = useParams();

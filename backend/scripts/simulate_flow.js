@@ -1,5 +1,6 @@
-require('dotenv').config();
-const prisma = require('./src/lib/prisma');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+const prisma = require('../src/lib/prisma');
 const bcrypt = require('bcryptjs');
 
 async function main() {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import CustomSelect from '../../components/CustomSelect';
 
 export default function Pagination({
   currentPage = 1,
@@ -17,6 +18,8 @@ export default function Pagination({
   itemsText,
   perPageText,
   className = '',
+  isDarkMode = false,
+  theme,
 }) {
   if (totalItems === 0) return null;
 
@@ -67,18 +70,21 @@ export default function Pagination({
       {/* 2. Controls: Page size selector + Page navigation buttons */}
       <div className="flex flex-wrap items-center gap-3">
         {onPageSizeChange && (
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-            <select
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 min-w-[110px]">
+            <CustomSelect
+              role={isSupplier ? 'SUPPLIER' : 'ADMIN'}
+              size="xs"
               value={pageSize}
-              onChange={(e) => onPageSizeChange(Number(e.target.value))}
-              className="py-1 px-2.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer shadow-2xs"
-            >
-              {pageSizeOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt} {finalPerPageText}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => onPageSizeChange(Number(val))}
+              options={pageSizeOptions.map((opt) => ({
+                id: opt,
+                name: `${opt} ${finalPerPageText}`
+              }))}
+              isDarkMode={isDarkMode}
+              theme={theme}
+              searchable={false}
+              className="w-auto"
+            />
           </div>
         )}
 

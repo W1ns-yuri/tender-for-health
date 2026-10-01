@@ -1,5 +1,5 @@
-require('dotenv').config();
-const prisma = require('./src/lib/prisma');
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
+const prisma = require('../src/lib/prisma');
 
 async function main() {
   console.log('Очистка базы данных...');

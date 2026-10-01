@@ -5,7 +5,13 @@ const prisma = require('../lib/prisma');
 // =============================
 const getCategories = async (req, res) => {
     try {
+        const { type } = req.query;
+        const where = {};
+        if (type && type !== 'ALL') {
+            where.type = type;
+        }
         const categories = await prisma.category.findMany({
+            where,
             orderBy: { name: 'asc' },
         });
         res.json(categories);
@@ -16,9 +22,14 @@ const getCategories = async (req, res) => {
 
 const createCategory = async (req, res) => {
     try {
-        const { name, code } = req.body;
+        const { name, code, type, description } = req.body;
         const category = await prisma.category.create({
-            data: { name, code },
+            data: { 
+                name, 
+                code: code || null, 
+                type: type || 'GOODS',
+                description 
+            },
         });
         res.status(201).json(category);
     } catch (error) {
@@ -27,23 +38,31 @@ const createCategory = async (req, res) => {
 };
 
 // =============================
-// 2. Общие товары (МНН / GeneralProduct)
+// 2. Общие товары / Услуги / Работы (GeneralProduct)
 // =============================
 const getGeneralProducts = async (req, res) => {
     try {
+        const { itemType, type } = req.query;
+        const filterType = itemType || (type && ['GOODS', 'WORKS', 'SERVICES'].includes(type) ? type : undefined);
+        const where = {};
+        if (filterType && filterType !== 'ALL') {
+            where.itemType = filterType;
+        }
+
         const products = await prisma.generalProduct.findMany({
+            where,
             include: { category: true },
             orderBy: { name: 'asc' },
         });
         res.json(products);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении справочника товаров МНН', details: error.message });
+        res.status(500).json({ error: 'Ошибка при получении справочника позиций', details: error.message });
     }
 };
 
 const createGeneralProduct = async (req, res) => {
     try {
-        const { name, tradeName, code, categoryId, type, description } = req.body;
+        const { name, tradeName, code, categoryId, type, itemType, description } = req.body;
         const product = await prisma.generalProduct.create({
             data: {
                 name,
@@ -51,13 +70,14 @@ const createGeneralProduct = async (req, res) => {
                 code,
                 categoryId: categoryId || null,
                 type: type || 'HARYT',
+                itemType: itemType || 'GOODS',
                 description,
             },
             include: { category: true }
         });
         res.status(201).json(product);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при добавлении товара в справочник МНН', details: error.message });
+        res.status(500).json({ error: 'Ошибка при добавлении записи в справочник', details: error.message });
     }
 };
 
@@ -369,6 +389,7 @@ const deleteClient = async (req, res) => {
 const getUniqueMNNs = async (req, res) => {
     try {
         const products = await prisma.generalProduct.findMany({
+            where: { itemType: 'GOODS' },
             include: { category: true },
             orderBy: { name: 'asc' },
         });

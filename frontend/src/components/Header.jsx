@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Search, Bell, Settings, ChevronLeft, ChevronRight, Globe, ChevronDown, User, 
   X, Loader2, Trophy, ShieldCheck, FileText, Clock, Building2, CheckCheck, 
-  ExternalLink, ArrowRight 
+  ExternalLink, ArrowRight, AlertCircle, Inbox, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
@@ -27,15 +27,124 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
   const searchContainerRef = useRef(null);
 
   // --- 2. ЦЕНТР УВЕДОМЛЕНИЙ ---
+  // --- 2. ЦЕНТР УВЕДОМЛЕНИЙ (ЖИВОЙ API) ---
   const [showNotifications, setShowNotifications] = useState(false);
   const notifContainerRef = useRef(null);
-  const [readNotifIds, setReadNotifIds] = useState(() => {
+  const [notificationsList, setNotificationsList] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifFilter, setNotifFilter] = useState('all');
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
+  const prevUnreadRef = useRef(null);
+
+  const playNotificationSound = () => {
     try {
-      return JSON.parse(localStorage.getItem(`read_notifs_${role}`) || '[]');
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.22);
     } catch {
-      return [];
+      // AudioContext could be suspended until gesture
     }
-  });
+  };
+
+  const formatTimeAgo = (dateStr) => {
+    if (!dateStr) return '';
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return t('justNow', 'Только что');
+    if (diffMins < 60) return `${diffMins} ${t('minsAgo', 'мин. назад')}`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} ${t('hoursAgo', 'ч. назад')}`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return t('yesterday', 'Вчера');
+    if (diffDays < 7) return `${diffDays} ${t('daysAgo', 'дн. назад')}`;
+    return new Date(dateStr).toLocaleDateString();
+  };
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await API.get('/notifications');
+      if (res.data) {
+        const nextList = res.data.notifications || [];
+        const nextUnread = res.data.unreadCount || 0;
+        
+        if (prevUnreadRef.current !== null && nextUnread > prevUnreadRef.current) {
+          playNotificationSound();
+        }
+        prevUnreadRef.current = nextUnread;
+
+        setNotificationsList(nextList);
+        setUnreadCount(nextUnread);
+      }
+    } catch (e) {
+      console.warn('Failed to load notifications from API:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    const timer = setInterval(fetchNotifications, 40000);
+    return () => clearInterval(timer);
+  }, [fetchNotifications]);
+
+  const markAllAsRead = async () => {
+    try {
+      await API.put('/notifications/read-all');
+      setNotificationsList(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+      prevUnreadRef.current = 0;
+    } catch (e) {
+      console.error('Error marking all as read:', e);
+    }
+  };
+
+  const deleteNotification = async (id, e) => {
+    if (e) e.stopPropagation();
+    try {
+      await API.delete(`/notifications/${id}`);
+      setNotificationsList(prev => {
+        const item = prev.find(n => n.id === id);
+        if (item && !item.isRead) {
+          setUnreadCount(c => {
+            const next = Math.max(0, c - 1);
+            prevUnreadRef.current = next;
+            return next;
+          });
+        }
+        return prev.filter(n => n.id !== id);
+      });
+    } catch (err) {
+      console.error('Error deleting notification:', err);
+    }
+  };
+
+  const handleNotificationClick = async (notif) => {
+    if (!notif.isRead) {
+      try {
+        await API.put(`/notifications/${notif.id}/read`);
+        setNotificationsList(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+        setUnreadCount(prev => {
+          const next = Math.max(0, prev - 1);
+          prevUnreadRef.current = next;
+          return next;
+        });
+      } catch (e) {
+        console.error('Error marking notification as read:', e);
+      }
+    }
+    setShowNotifications(false);
+    if (notif.link && notif.link.startsWith('/')) {
+      navigate(notif.link);
+    }
+  };
 
   const languages = [
     { code: 'TM', name: 'Türkmençe', flag: '🇹🇲' },
@@ -45,95 +154,6 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
 
   const currentLang = languages.find(l => l.code === (lang || 'TM')) || languages[0];
   const logoSrc = user?.logoUrl || user?.supplier?.logoUrl || (user?.companies?.[0] || user?.suppliers?.[0])?.logoUrl;
-
-  // Базовые системные уведомления для демо в зависимости от роли
-  const defaultNotifications = isAdmin ? [
-    {
-      id: 'adm-1',
-      title: 'Новый поставщик ожидает модерации',
-      description: '«HK BioReagent Standart» зарегистрировался и загрузил медицинскую лицензию',
-      time: '10 минут назад',
-      type: 'supplier',
-      path: '/suppliers',
-    },
-    {
-      id: 'adm-2',
-      title: 'Поступило коммерческое предложение',
-      description: 'Новая заявка по тендеру TND-2026-004 от «HK Arassa Lukman Enjamlary»',
-      time: '45 минут назад',
-      type: 'offer',
-      path: '/evaluation',
-    },
-    {
-      id: 'adm-3',
-      title: 'Прием заявок завершен',
-      description: 'Дедлайн тендера TND-2026-005 истек. Процедура готова к вскрытию конвертов',
-      time: '2 часа назад',
-      type: 'tender',
-      path: '/evaluation',
-    },
-    {
-      id: 'adm-4',
-      title: 'Утверждены результаты оценки',
-      description: 'Оглашен победитель «ÝGP MedTehnika Üpjünçilik» по закупке томографов',
-      time: 'Вчера',
-      type: 'winner',
-      path: '/evaluation',
-    },
-  ] : [
-    {
-      id: 'sup-1',
-      title: 'Поздравляем с победой в тендере!',
-      description: 'Ваше предложение признано победителем по тендеру TND-2026-001 (1,800,000 TMT)',
-      time: '15 минут назад',
-      type: 'winner',
-      path: '/my-wins',
-    },
-    {
-      id: 'sup-2',
-      title: 'Верификация компании подтверждена',
-      description: 'Администратор одобрил ваши уставные документы. Вам открыт полный доступ к подаче КП',
-      time: '1 час назад',
-      type: 'supplier',
-      path: '/profile',
-    },
-    {
-      id: 'sup-3',
-      title: 'Опубликован новый открытый тендер',
-      description: 'Минздрав объявил тендер TND-2026-006: Поставка антибактериальных средств',
-      time: '3 часа назад',
-      type: 'tender',
-      path: '/tenders',
-    },
-    {
-      id: 'sup-4',
-      title: 'Коммерческое предложение зарегистрировано',
-      description: 'Ваша заявка по лоту №1 успешно принята организатором закупки',
-      time: 'Вчера',
-      type: 'offer',
-      path: '/my-offers',
-    },
-  ];
-
-  const unreadCount = defaultNotifications.filter(n => !readNotifIds.includes(n.id)).length;
-
-  const markAllAsRead = () => {
-    const allIds = defaultNotifications.map(n => n.id);
-    setReadNotifIds(allIds);
-    localStorage.setItem(`read_notifs_${role}`, JSON.stringify(allIds));
-  };
-
-  const handleNotificationClick = (notif) => {
-    if (!readNotifIds.includes(notif.id)) {
-      const updated = [...readNotifIds, notif.id];
-      setReadNotifIds(updated);
-      localStorage.setItem(`read_notifs_${role}`, JSON.stringify(updated));
-    }
-    setShowNotifications(false);
-    if (notif.path.startsWith('/')) {
-      navigate(notif.path);
-    }
-  };
 
   // Дебаунс живого поиска при вводе запроса
   useEffect(() => {
@@ -426,7 +446,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
               
               {/* Шапка уведомлений */}
               <div className={`px-4 py-3 border-b flex items-center justify-between ${
-                isDarkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-100 bg-slate-50/70'
+                isDarkMode ? 'border-slate-800 bg-slate-900/70' : 'border-slate-100 bg-slate-50/80'
               }`}>
                 <div className="flex items-center space-x-2">
                   <h3 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">
@@ -449,56 +469,125 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
                 )}
               </div>
 
+              {/* Табы фильтрации: Все / Непрочитанные */}
+              <div className={`px-3 py-1.5 border-b flex items-center space-x-1 text-xs font-semibold ${
+                isDarkMode ? 'border-slate-800/80 bg-slate-900/40' : 'border-slate-100 bg-slate-50/50'
+              }`}>
+                <button
+                  type="button"
+                  onClick={() => setNotifFilter('all')}
+                  className={`px-2.5 py-1 rounded-lg transition-colors flex items-center space-x-1.5 ${
+                    notifFilter === 'all'
+                      ? isDarkMode ? 'bg-slate-800 text-white font-bold' : 'bg-white shadow-sm text-slate-900 font-bold'
+                      : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                  }`}
+                >
+                  <span>Все</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                    {notificationsList.length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNotifFilter('unread')}
+                  className={`px-2.5 py-1 rounded-lg transition-colors flex items-center space-x-1.5 ${
+                    notifFilter === 'unread'
+                      ? isDarkMode ? 'bg-slate-800 text-emerald-400 font-bold' : 'bg-white shadow-sm text-emerald-600 font-bold'
+                      : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                  }`}
+                >
+                  <span>Непрочитанные</span>
+                  {unreadCount > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
               {/* Список уведомлений */}
               <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
-                {defaultNotifications.map((notif) => {
-                  const isRead = readNotifIds.includes(notif.id);
-                  return (
-                    <div
-                      key={notif.id}
-                      onClick={() => handleNotificationClick(notif)}
-                      className={`p-3.5 cursor-pointer transition-colors flex items-start space-x-3 ${
-                        isRead 
-                          ? isDarkMode ? 'opacity-65 hover:bg-slate-800/40' : 'opacity-70 hover:bg-slate-50/70' 
-                          : isDarkMode ? 'bg-slate-850 hover:bg-slate-800 font-medium' : 'bg-emerald-50/20 hover:bg-emerald-50/40'
-                      }`}
-                    >
-                      {/* Иконка типа */}
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                        notif.type === 'winner' 
-                          ? 'bg-amber-500/10 text-amber-500' 
-                          : notif.type === 'supplier'
-                          ? 'bg-blue-500/10 text-blue-500'
-                          : notif.type === 'offer'
-                          ? 'bg-emerald-500/10 text-emerald-500'
-                          : 'bg-purple-500/10 text-purple-500'
-                      }`}>
-                        {notif.type === 'winner' ? <Trophy size={16} /> :
-                         notif.type === 'supplier' ? <ShieldCheck size={16} /> :
-                         notif.type === 'offer' ? <FileText size={16} /> :
-                         <Clock size={16} />}
-                      </div>
+                {(() => {
+                  const filteredList = notifFilter === 'unread' 
+                    ? notificationsList.filter(n => !n.isRead) 
+                    : notificationsList;
 
-                      {/* Текст уведомления */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-1">
-                          <p className={`text-xs ${isRead ? 'text-slate-800 dark:text-slate-200' : 'font-bold text-slate-900 dark:text-white'}`}>
-                            {notif.title}
-                          </p>
-                          {!isRead && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                          )}
-                        </div>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed line-clamp-2">
-                          {notif.description}
+                  if (filteredList.length === 0) {
+                    return (
+                      <div className="p-8 text-center text-slate-400 space-y-1">
+                        <Inbox size={28} className="mx-auto opacity-30 text-emerald-500 mb-2" />
+                        <p className="text-xs font-semibold">
+                          {notifFilter === 'unread' ? 'Нет непрочитанных уведомлений' : t('noNotificationsTitle', 'Нет новых уведомлений')}
                         </p>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 inline-block">
-                          {notif.time}
-                        </span>
+                        <p className="text-[11px] text-slate-400">
+                          {notifFilter === 'unread' ? 'Все уведомления прочитаны' : t('noNotificationsHint', 'Все важные события по закупкам и предложениям появятся здесь')}
+                        </p>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  }
+
+                  return filteredList.map((notif) => {
+                    const isRead = Boolean(notif.isRead);
+                    return (
+                      <div
+                        key={notif.id}
+                        onClick={() => handleNotificationClick(notif)}
+                        className={`group p-3.5 cursor-pointer transition-colors flex items-start space-x-3 ${
+                          isRead 
+                            ? isDarkMode ? 'opacity-70 hover:bg-slate-800/40' : 'opacity-75 hover:bg-slate-50/70' 
+                            : isDarkMode ? 'bg-slate-850 hover:bg-slate-800 font-medium' : 'bg-emerald-50/30 hover:bg-emerald-50/50'
+                        }`}
+                      >
+                        {/* Иконка типа */}
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                          notif.type === 'winner' 
+                            ? 'bg-amber-500/10 text-amber-500' 
+                            : notif.type === 'supplier'
+                            ? 'bg-blue-500/10 text-blue-500'
+                            : notif.type === 'offer'
+                            ? 'bg-emerald-500/10 text-emerald-500'
+                            : notif.type === 'warning'
+                            ? 'bg-rose-500/10 text-rose-500'
+                            : 'bg-purple-500/10 text-purple-500'
+                        }`}>
+                          {notif.type === 'winner' ? <Trophy size={16} /> :
+                           notif.type === 'supplier' ? <ShieldCheck size={16} /> :
+                           notif.type === 'offer' ? <FileText size={16} /> :
+                           notif.type === 'warning' ? <AlertCircle size={16} /> :
+                           <Clock size={16} />}
+                        </div>
+
+                        {/* Текст уведомления */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <p className={`text-xs ${isRead ? 'text-slate-800 dark:text-slate-200' : 'font-bold text-slate-900 dark:text-white'}`}>
+                              {notif.title}
+                            </p>
+                            <div className="flex items-center space-x-1 shrink-0">
+                              {!isRead && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              )}
+                              <button
+                                type="button"
+                                onClick={(e) => deleteNotification(notif.id, e)}
+                                className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
+                                title="Удалить"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed line-clamp-2">
+                            {notif.message || notif.description}
+                          </p>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 inline-block">
+                            {formatTimeAgo(notif.createdAt || notif.time)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
 
               {/* Подвал */}

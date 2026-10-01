@@ -40,7 +40,7 @@ export { default as ConfirmDialog } from './ConfirmDialog';
 export { default as Tabs } from './Tabs';
 export { default as Pagination } from './Pagination';
 export { default as SearchInput } from './SearchInput';
-export { Skeleton, SkeletonTable, default as SkeletonDefault } from './Skeleton';
+export { Skeleton, SkeletonTable, TableSkeletonRows, TenderDetailsSkeleton, default as SkeletonDefault } from './Skeleton';
 export { default as FileDropzone } from './FileDropzone';
 export { default as IconBox } from './IconBox';
 export { default as Toast } from './Toast';

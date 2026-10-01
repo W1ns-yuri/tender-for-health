@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { sendNotification } = require('./notificationController');
 
 // Генерация последовательного номера тендера вида TNDR-YYYY-MM-001
 const generateNextTenderNumber = async (txOrPrisma = prisma) => {
@@ -643,8 +644,58 @@ const publishTender = async (req, res) => {
                 },
                 client: true,
                 category: true,
+                invitedSuppliers: {
+                    include: {
+                        supplier: true
+                    }
+                }
             }
         });
+
+        // Оповещения при публикации тендера:
+        try {
+            if (updated.visibility === 'YAPYK' && updated.invitedSuppliers && updated.invitedSuppliers.length > 0) {
+                // Закрытый тендер: персональные приглашения для выбранных поставщиков
+                for (const inv of updated.invitedSuppliers) {
+                    if (inv.supplier?.userId) {
+                        sendNotification({
+                            userId: inv.supplier.userId,
+                            title: 'Персональное приглашение на участие в закрытом тендере',
+                            message: `Ваша организация приглашена к участию в закрытом тендере №${updated.tenderNumber}: «${updated.title}».`,
+                            type: 'tender',
+                            link: `/tenders/${updated.id}`
+                        }).catch(e => console.error('Error sending private tender invite:', e));
+                    }
+                }
+            } else if (updated.visibility === 'ACYK') {
+                // Открытый тендер: оповещаем верифицированных поставщиков (например, по релевантной категории)
+                const suppliers = await prisma.supplier.findMany({
+                    where: {
+                        verificationStatus: 'VERIFIED',
+                        isActive: true,
+                        ...(updated.categoryId ? {
+                            categories: {
+                                some: { categoryId: updated.categoryId }
+                            }
+                        } : {})
+                    },
+                    select: { userId: true }
+                });
+
+                const targetUserIds = suppliers.map(s => s.userId).filter(Boolean);
+                if (targetUserIds.length > 0) {
+                    sendNotification({
+                        userIds: targetUserIds,
+                        title: 'Опубликован новый открытый тендер',
+                        message: `Объявлен открытый тендер №${updated.tenderNumber}: «${updated.title}». Прием заявок открыт.`,
+                        type: 'tender',
+                        link: `/tenders/${updated.id}`
+                    }).catch(e => console.error('Error notifying suppliers about new open tender:', e));
+                }
+            }
+        } catch (notifErr) {
+            console.error('Ошибка отправки уведомлений при публикации тендера:', notifErr);
+        }
 
         res.json(updated);
     } catch (error) {

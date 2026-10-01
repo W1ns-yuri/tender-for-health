@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { sendNotification, notifyAdmins } = require('./notificationController');
 
 // 1. Создание профиля Поставщика (Supplier)
 const createSupplier = async (req, res) => {
@@ -240,6 +241,25 @@ const createOffer = async (req, res) => {
                 files: { include: { document: true } },
             },
         });
+
+        // 1) Оповещаем администраторов о новом КП
+        notifyAdmins({
+            title: 'Поступило коммерческое предложение',
+            message: `«${offer.supplier?.name || 'Поставщик'}» подал заявку по тендеру №${tender.tenderNumber || ''}.`,
+            type: 'offer',
+            link: `/evaluation/${tender.id}`
+        }).catch(e => console.error('Error notifying admins about new offer:', e));
+
+        // 2) Оповещаем поставщика об успешной регистрации заявки
+        if (req.user?.id) {
+            sendNotification({
+                userId: req.user.id,
+                title: 'Коммерческое предложение зарегистрировано',
+                message: `Ваша заявка по тендеру №${tender.tenderNumber || ''} успешно сохранена и принята к рассмотрению.`,
+                type: 'offer',
+                link: `/offers/${offer.id}`
+            }).catch(e => console.error('Error notifying supplier about offer receipt:', e));
+        }
 
         res.status(201).json(offer);
     } catch (error) {

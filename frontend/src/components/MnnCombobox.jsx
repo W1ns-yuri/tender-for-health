@@ -14,6 +14,7 @@ export default function MnnCombobox({
   onChange,
   existingProducts = [],
   isDarkMode = false,
+  role = 'ADMIN',
   theme,
   t,
   required = true,
@@ -142,6 +143,8 @@ export default function MnnCombobox({
     ? 'bg-slate-900 border-slate-700 shadow-slate-950/60 text-slate-200'
     : 'bg-white border-slate-200 shadow-xl text-slate-800';
 
+  const isSupplier = role === 'SUPPLIER';
+
   return (
     <div ref={containerRef} className="relative w-full">
       <div className="relative flex items-center">
@@ -153,7 +156,11 @@ export default function MnnCombobox({
           onFocus={() => setIsOpen(true)}
           required={required}
           placeholder={placeholder}
-          className={`w-full pl-3 pr-16 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all ${inputBg}`}
+          className={`w-full pl-3 pr-16 py-2 text-sm border rounded-lg outline-none transition-all ${
+            isSupplier
+              ? 'focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500'
+              : 'focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500'
+          } ${inputBg}`}
         />
 
         <div className="absolute right-1.5 flex items-center gap-1">
@@ -170,10 +177,12 @@ export default function MnnCombobox({
           <button
             type="button"
             onClick={() => setIsOpen(prev => !prev)}
-            className="p-1.5 rounded-md text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+            className={`p-1.5 rounded-md text-slate-400 transition-colors ${
+              isSupplier ? 'hover:text-blue-600 dark:hover:text-blue-400' : 'hover:text-emerald-600 dark:hover:text-emerald-400'
+            }`}
             title={t ? t('showAllMNN', 'Показать все МНН') : 'Показать все МНН'}
           >
-            <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180 text-emerald-600' : ''}`} />
+            <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? (isSupplier ? 'rotate-180 text-blue-600' : 'rotate-180 text-emerald-600') : ''}`} />
           </button>
         </div>
       </div>
@@ -184,10 +193,10 @@ export default function MnnCombobox({
           {/* Заголовок выпадающего списка */}
           <div className="sticky top-0 z-10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100/90 dark:bg-slate-800/90 backdrop-blur-xs border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between">
             <span className="flex items-center gap-1">
-              <Pill size={12} className="text-emerald-500" />
+              <Pill size={12} className={isSupplier ? 'text-blue-500' : 'text-emerald-500'} />
               <span>{t ? t('archiveMNN', 'Архив веществ (МНН)') : 'Архив веществ (МНН)'} ({mnnList.length})</span>
             </span>
-            {loading && <span className="text-[10px] text-emerald-500 animate-pulse">{t ? t('loading', 'Загрузка...') : 'Загрузка...'}</span>}
+            {loading && <span className={`text-[10px] animate-pulse ${isSupplier ? 'text-blue-500' : 'text-emerald-500'}`}>{t ? t('loading', 'Загрузка...') : 'Загрузка...'}</span>}
           </div>
 
           <div className="p-1 divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -200,7 +209,9 @@ export default function MnnCombobox({
                     onClick={() => handleSelectMnn(item)}
                     className={`p-2.5 rounded-lg cursor-pointer transition-colors text-xs flex flex-col gap-0.5 ${
                       isSelected 
-                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold' 
+                        ? (isSupplier
+                            ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300 font-semibold'
+                            : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold')
                         : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200'
                     }`}
                   >
@@ -208,11 +219,15 @@ export default function MnnCombobox({
                       <span className="font-bold text-sm leading-tight">{item.name}</span>
                       <div className="flex items-center gap-1.5 shrink-0">
                         {item.count > 0 && (
-                          <span className="px-1.5 py-0.5 text-[10px] font-mono rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                          <span className={`px-1.5 py-0.5 text-[10px] font-mono rounded border ${
+                            isSupplier
+                              ? 'bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                              : 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                          }`}>
                             {item.count} {item.count === 1 ? 'препарат' : 'препаратов'}
                           </span>
                         )}
-                        {isSelected && <Check size={14} className="text-emerald-600 shrink-0 ml-1" />}
+                        {isSelected && <Check size={14} className={`${isSupplier ? 'text-blue-600' : 'text-emerald-600'} shrink-0 ml-1`} />}
                       </div>
                     </div>
 
@@ -226,7 +241,7 @@ export default function MnnCombobox({
 
                     {/* Категория если есть */}
                     {item.categoryName && (
-                      <div className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 truncate">
+                      <div className={`text-[10px] truncate ${isSupplier ? 'text-blue-600/80 dark:text-blue-400/80' : 'text-emerald-600/80 dark:text-emerald-400/80'}`}>
                         {item.categoryName}
                       </div>
                     )}
@@ -246,9 +261,13 @@ export default function MnnCombobox({
                   onChange(inputValue.trim());
                   setIsOpen(false);
                 }}
-                className="p-2.5 mt-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 cursor-pointer text-xs font-semibold flex items-center gap-2 border border-dashed border-emerald-300 dark:border-emerald-700 transition-colors"
+                className={`p-2.5 mt-1 rounded-lg cursor-pointer text-xs font-semibold flex items-center gap-2 border border-dashed transition-colors ${
+                  isSupplier
+                    ? 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700'
+                    : 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
+                }`}
               >
-                <Plus size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <Plus size={14} className={`shrink-0 ${isSupplier ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`} />
                 <span className="truncate">
                   {t ? t('useNewMNN', `Использовать новое МНН: "${inputValue.trim()}"`) : `Использовать новое МНН: "${inputValue.trim()}"`}
                 </span>

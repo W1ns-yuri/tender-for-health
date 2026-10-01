@@ -4,7 +4,7 @@ import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
-import { Pagination } from '../components/ui';
+import { Pagination, TableSkeletonRows } from '../components/ui';
 
 export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDarkMode, lang = 'RU' }) {
   const [tenders, setTenders] = useState([]);
@@ -278,9 +278,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
               </thead>
               <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
                 {loadingTenders ? (
-                  <tr>
-                    <td colSpan="9" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
-                  </tr>
+                  <TableSkeletonRows rows={tenderPageSize || 5} cols={9} />
                 ) : paginatedTenders.length === 0 ? (
                   <tr>
                     <td colSpan="9" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
@@ -338,6 +336,8 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
             }}
             role={role}
             lang={lang}
+            isDarkMode={isDarkMode}
+            theme={theme}
           />
         </div>
       </div>
@@ -369,9 +369,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
               </thead>
               <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
                 {loadingOffers ? (
-                  <tr>
-                    <td colSpan="9" className="py-8 text-center text-slate-500">{t('loading', 'Загрузка...')}</td>
-                  </tr>
+                  <TableSkeletonRows rows={offerPageSize || 5} cols={9} />
                 ) : paginatedOffers.length === 0 ? (
                   <tr>
                     <td colSpan="9" className="py-8 text-center text-slate-500">{t('noData', 'Нет данных')}</td>
@@ -389,7 +387,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                       </td>
                       <td className="py-3.5 px-3 text-center">{getTypeBadge(item.tender?.type || item.type, lang, isDarkMode)}</td>
                       <td className="py-3.5 px-4 text-center">
-                        <span className="text-slate-800 dark:text-slate-200 font-medium hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors">
+                        <span className={`text-slate-800 dark:text-slate-200 font-medium ${role === 'SUPPLIER' ? 'hover:text-blue-600 dark:hover:text-blue-400' : 'hover:text-emerald-600 dark:hover:text-emerald-400'} hover:underline transition-colors`}>
                           {safeString(item.tender?.client?.name || item.tender?.createdBy?.firstName || "-")}
                         </span>
                       </td>
@@ -450,6 +448,8 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
             }}
             role={role}
             lang={lang}
+            isDarkMode={isDarkMode}
+            theme={theme}
           />
         </div>
       </div>

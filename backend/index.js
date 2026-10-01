@@ -22,6 +22,7 @@ const offerRoutes = require('./src/routes/offerRoutes');
 const evaluationRoutes = require('./src/routes/evaluationRoutes');
 const dashboardRoutes = require('./src/routes/dashboardRoutes');
 const supplierRoutes = require('./src/routes/supplierRoutes');
+const notificationRoutes = require('./src/routes/notificationRoutes');
 
 const auditLog = require('./src/middleware/auditMiddleware');
 
@@ -53,6 +54,7 @@ app.use('/api/offers', offerRoutes);
 app.use('/api/evaluation', evaluationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/suppliers', supplierRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Сервер тендерной системы (Tender System Backend) работает!' });
@@ -67,7 +69,11 @@ app.use((err, req, res, next) => {
     });
 });
 
+const { initTenderScheduler } = require('./src/services/tenderScheduler');
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Сервер тендерной системы успешно запущен на порту ${PORT}`);
+    // Запуск фонового планировщика дедлайнов тендеров
+    initTenderScheduler(60000);
 });

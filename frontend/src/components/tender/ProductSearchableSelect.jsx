@@ -5,6 +5,7 @@ import { getTranslation } from '../../utils/translations';
 
 export default function ProductSearchableSelect({
   products = [],
+  lotType = 'GOODS',
   value,
   generalProductId,
   onChange,
@@ -132,7 +133,13 @@ export default function ProductSearchableSelect({
                 ? 'h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-emerald-50/80 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5 text-xs font-semibold shrink-0 cursor-pointer shadow-2xs transition-colors'
                 : 'w-7 h-7 shrink-0 rounded-md border border-slate-200 dark:border-slate-700 bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 flex items-center justify-center transition-colors shadow-2xs cursor-pointer'
             } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
-            title={t('createNewCatalogProduct', 'Создать новый товар в справочнике')}
+            title={
+              lotType === 'WORKS'
+                ? t('createNewCatalogWork', 'Создать новый вид работ в справочнике')
+                : lotType === 'SERVICES'
+                ? t('createNewCatalogService', 'Создать новую услугу в справочнике')
+                : t('createNewCatalogProduct', 'Создать новый товар в справочнике')
+            }
           >
             <Plus size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
             {buttonLabel && <span className="hidden sm:inline">{buttonLabel}</span>}
@@ -154,15 +161,39 @@ export default function ProductSearchableSelect({
             isDarkMode ? 'bg-[#151c28] border-slate-700' : 'bg-white border-slate-200'
           }`}
         >
-          <div className="p-2 border-b border-slate-100 dark:border-slate-800">
+          <div className="p-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1.5">
             <input
               type="text"
               autoFocus
-              className={`w-full px-2.5 py-1.5 text-xs rounded-lg border outline-none ${theme?.inputBg || ''}`}
-              placeholder={t('searchProductPlaceholder', 'Поиск товара (МНН, название, код)...')}
+              className={`flex-1 min-w-0 px-2.5 py-1.5 text-xs rounded-lg border outline-none ${theme?.inputBg || ''}`}
+              placeholder={
+                lotType === 'WORKS'
+                  ? t('searchWorkPlaceholder', 'Поиск вида работ или этапа...')
+                  : lotType === 'SERVICES'
+                  ? t('searchServicePlaceholder', 'Поиск услуги или регламента...')
+                  : t('searchProductPlaceholder', 'Поиск товара (МНН, название, код)...')
+              }
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            {onOpenCreateModal && (
+              <button
+                type="button"
+                onClick={() => handleOpenModalAndCloseDropdown(search.trim())}
+                title={
+                  search.trim()
+                    ? t('addToCatalogPrompt', `Добавить в справочник: "${search.trim()}"`, { query: search.trim() })
+                    : lotType === 'WORKS'
+                    ? t('addNewWorkToCatalog', 'Добавить новый вид работ в справочник')
+                    : lotType === 'SERVICES'
+                    ? t('addNewServiceToCatalog', 'Добавить новую услугу в справочник')
+                    : t('addNewProductToCatalog', 'Добавить новый товар в справочник')
+                }
+                className="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 flex items-center justify-center shrink-0 cursor-pointer shadow-2xs transition-colors"
+              >
+                <Plus size={14} />
+              </button>
+            )}
           </div>
 
           <div className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 flex-1">
@@ -190,22 +221,24 @@ export default function ProductSearchableSelect({
                 </div>
               ))
             ) : (
-              <div className="p-3 text-center text-xs text-slate-400">
-                {t('productNotFoundInCatalog', 'Товар не найден в справочнике')}
-              </div>
-            )}
-
-            {onOpenCreateModal && (
-              <div
-                className="p-2.5 text-xs bg-slate-50 hover:bg-emerald-50 dark:bg-slate-800/80 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 cursor-pointer font-bold flex items-center gap-2 border-t border-slate-200 dark:border-slate-700 transition-colors"
-                onClick={() => handleOpenModalAndCloseDropdown(search.trim())}
-              >
-                <Plus size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span className="truncate">
-                  {search.trim()
-                    ? t('addToCatalogPrompt', `Добавить в справочник: "${search.trim()}"`, { query: search.trim() })
-                    : t('addNewProductToCatalog', 'Добавить новый товар в справочник')}
-                </span>
+              <div className="p-4 text-center text-xs text-slate-400 space-y-1">
+                <p>
+                  {lotType === 'WORKS'
+                    ? t('workNotFoundInCatalog', 'Вид работ не найден в справочнике')
+                    : lotType === 'SERVICES'
+                    ? t('serviceNotFoundInCatalog', 'Услуга не найдена в справочнике')
+                    : t('productNotFoundInCatalog', 'Товар не найден в справочнике')}
+                </p>
+                {onOpenCreateModal && (
+                  <button
+                    type="button"
+                    onClick={() => handleOpenModalAndCloseDropdown(search.trim())}
+                    className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer inline-flex items-center gap-1 mt-1 text-[11px]"
+                  >
+                    <Plus size={12} />
+                    <span>{t('createNowPrompt', 'Создать в справочнике')}</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
