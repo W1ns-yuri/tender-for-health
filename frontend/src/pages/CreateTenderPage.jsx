@@ -760,13 +760,14 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
         tradeName: savedData.tradeName?.trim() || undefined,
         code: savedData.code?.trim() || undefined,
         description: savedData.description?.trim() || undefined,
-        categoryId: activeLot?.categoryId || formData.categoryId || undefined
+        categoryId: savedData.categoryId || activeLot?.categoryId || formData.categoryId || undefined
       });
       if (res.data) {
         const created = res.data;
         setProducts(prev => [created, ...prev]);
         if (catalogModal.specIdx !== null) {
-          handleSpecChange(catalogModal.specIdx, 'productSelect', created.name, created.id);
+          const displayName = created.tradeName ? `${created.name} (${created.tradeName})` : created.name;
+          handleSpecChange(catalogModal.specIdx, 'productSelect', displayName, created.id);
         }
         setCatalogModal({ isOpen: false, catalogId: 'productsMNN', editingItem: null, specIdx: null });
       }
@@ -1082,6 +1083,8 @@ export default function CreateTenderPage({ onNavigate: _onNavigate, role, isDark
           onSave={handleSaveProductFromModal}
           catalogId="productsMNN"
           editingItem={catalogModal.editingItem}
+          categories={categories}
+          existingProducts={products}
           theme={theme}
           t={t}
           isDarkMode={isDarkMode}

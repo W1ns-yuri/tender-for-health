@@ -197,6 +197,7 @@ const createDeliveryTerm = async (req, res) => {
 const getManufacturers = async (req, res) => {
     try {
         const manufacturers = await prisma.manufacturer.findMany({
+            include: { country: true, brand: true },
             orderBy: { name: 'asc' },
         });
         res.json(manufacturers);
@@ -361,6 +362,187 @@ const deleteClient = async (req, res) => {
     }
 };
 
+// =============================
+// МНН (Международные непатентованные наименования)
+// =============================
+const getUniqueMNNs = async (req, res) => {
+    try {
+        const products = await prisma.generalProduct.findMany({
+            include: { category: true },
+            orderBy: { name: 'asc' },
+        });
+
+        const mnnMap = new Map();
+        for (const p of products) {
+            const trimmedName = (p.name || '').trim();
+            if (!trimmedName) continue;
+            const key = trimmedName.toLowerCase();
+            if (!mnnMap.has(key)) {
+                mnnMap.set(key, {
+                    id: p.id,
+                    name: trimmedName,
+                    count: 0,
+                    tradeNames: [],
+                    codes: [],
+                    categories: [],
+                    products: []
+                });
+            }
+            const entry = mnnMap.get(key);
+            entry.count += 1;
+            if (p.tradeName && !entry.tradeNames.includes(p.tradeName.trim())) {
+                entry.tradeNames.push(p.tradeName.trim());
+            }
+            if (p.code && !entry.codes.includes(p.code.trim())) {
+                entry.codes.push(p.code.trim());
+            }
+            if (p.category && !entry.categories.some(c => c.id === p.category.id)) {
+                entry.categories.push(p.category);
+            }
+            entry.products.push({
+                id: p.id,
+                tradeName: p.tradeName,
+                code: p.code,
+                categoryId: p.categoryId,
+                categoryName: p.category?.name,
+                description: p.description,
+                isActive: p.isActive
+            });
+        }
+
+        const mnnList = Array.from(mnnMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+        res.json(mnnList);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при получении списка МНН', details: error.message });
+    }
+};
+
+// =============================
+// Бренды (Brands)
+// =============================
+const getBrands = async (req, res) => {
+    try {
+        const brands = await prisma.brand.findMany({
+            include: { manufacturers: true },
+            orderBy: { name: 'asc' },
+        });
+        res.json(brands);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при получении брендов', details: error.message });
+    }
+};
+
+const createBrand = async (req, res) => {
+    try {
+        const { name, code } = req.body;
+        const brand = await prisma.brand.create({
+            data: { name, code: code || null },
+        });
+        res.status(201).json(brand);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при создании бренда', details: error.message });
+    }
+};
+
+const updateBrand = async (req, res) => {
+    try {
+        const brand = await prisma.brand.update({
+            where: { id: req.params.id },
+            data: req.body,
+        });
+        res.json(brand);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при обновлении бренда', details: error.message });
+    }
+};
+
+const deleteBrand = async (req, res) => {
+    try {
+        await prisma.brand.delete({ where: { id: req.params.id } });
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при удалении бренда', details: error.message });
+    }
+};
+
+// =============================
+// Вариации и формы (Variations)
+// =============================
+const getVariationGroups = async (req, res) => {
+    try {
+        const groups = await prisma.variationGroup.findMany({
+            include: { values: true },
+            orderBy: { name: 'asc' },
+        });
+        res.json(groups);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при получении вариаций', details: error.message });
+    }
+};
+
+const createVariationGroup = async (req, res) => {
+    try {
+        const { name, values } = req.body;
+        const group = await prisma.variationGroup.create({
+            data: {
+                name,
+                values: values && Array.isArray(values) && values.length > 0 ? {
+                    create: values.map(v => typeof v === 'string' ? { value: v } : { value: v.value })
+                } : undefined
+            },
+            include: { values: true }
+        });
+        res.status(201).json(group);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при создании группы вариаций', details: error.message });
+    }
+};
+
+const updateVariationGroup = async (req, res) => {
+    try {
+        const { name } = req.body;
+        const group = await prisma.variationGroup.update({
+            where: { id: req.params.id },
+            data: { name },
+            include: { values: true }
+        });
+        res.json(group);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при обновлении группы вариаций', details: error.message });
+    }
+};
+
+const deleteVariationGroup = async (req, res) => {
+    try {
+        await prisma.variationGroup.delete({ where: { id: req.params.id } });
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при удалении группы вариаций', details: error.message });
+    }
+};
+
+const addVariationValue = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { value } = req.body;
+        const val = await prisma.variationValue.create({
+            data: { groupId, value }
+        });
+        res.status(201).json(val);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка добавления значения вариации', details: error.message });
+    }
+};
+
+const deleteVariationValue = async (req, res) => {
+    try {
+        await prisma.variationValue.delete({ where: { id: req.params.id } });
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка удаления значения вариации', details: error.message });
+    }
+};
+
 module.exports = {
     getClients, createClient, updateClient, deleteClient,
     getCategories,
@@ -371,6 +553,7 @@ module.exports = {
     createGeneralProduct,
     updateGeneralProduct,
     deleteGeneralProduct,
+    getUniqueMNNs,
     getUnits,
     createUnit,
     updateUnit,
@@ -391,5 +574,15 @@ module.exports = {
     getManufacturers,
     createManufacturer,
     updateManufacturer,
-    deleteManufacturer
+    deleteManufacturer,
+    getBrands,
+    createBrand,
+    updateBrand,
+    deleteBrand,
+    getVariationGroups,
+    createVariationGroup,
+    updateVariationGroup,
+    deleteVariationGroup,
+    addVariationValue,
+    deleteVariationValue
 };

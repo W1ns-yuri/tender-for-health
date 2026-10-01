@@ -68,10 +68,12 @@ export default function ProductSearchableSelect({
     (p.code && p.code.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const selectedProduct = products.find(p => p.id === generalProductId) || products.find(p => p.name === value);
+  const selectedProduct = products.find(p => p.id === generalProductId) || 
+    products.find(p => p.name === value || (p.tradeName && `${p.name} (${p.tradeName})` === value));
 
   const handleSelect = (product) => {
-    onChange(product.name, product.id);
+    const displayName = product.tradeName ? `${product.name} (${product.tradeName})` : product.name;
+    onChange(displayName, product.id);
     setIsOpen(false);
     setSearch('');
   };
@@ -80,6 +82,15 @@ export default function ProductSearchableSelect({
     setIsOpen(false);
     setSearch('');
     onOpenCreateModal(initialName);
+  };
+
+  const displaySelectedText = () => {
+    if (selectedProduct) {
+      return selectedProduct.tradeName 
+        ? `${selectedProduct.name} (${selectedProduct.tradeName})` 
+        : selectedProduct.name;
+    }
+    return value || placeholder;
   };
 
   return (
@@ -101,7 +112,7 @@ export default function ProductSearchableSelect({
           }`}
         >
           <span className={`truncate ${!value && !selectedProduct ? 'opacity-50' : 'text-slate-800 dark:text-slate-100 font-semibold'}`}>
-            {selectedProduct ? selectedProduct.name : (value || placeholder)}
+            {displaySelectedText()}
           </span>
           <ChevronDown size={14} className="opacity-50 shrink-0 ml-1" />
         </div>
@@ -151,7 +162,17 @@ export default function ProductSearchableSelect({
                   }`}
                   onClick={() => handleSelect(p)}
                 >
-                  <span className="truncate">{p.name}</span>
+                  <div className="flex flex-col min-w-0 pr-2">
+                    <span className="font-semibold text-xs leading-tight truncate">{p.name}</span>
+                    {p.tradeName && (
+                      <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium truncate">
+                        {p.tradeName}
+                      </span>
+                    )}
+                    {p.category?.name && (
+                      <span className="text-[10px] text-slate-400 truncate">{p.category.name}</span>
+                    )}
+                  </div>
                   {p.code && <span className="text-[10px] text-slate-400 font-mono shrink-0">{p.code}</span>}
                 </div>
               ))
