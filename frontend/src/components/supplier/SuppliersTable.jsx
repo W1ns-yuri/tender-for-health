@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Eye, Edit2, Trash2, Building } from 'lucide-react';
 import {
   TableContainer,
@@ -11,6 +11,7 @@ import {
   TableEmptyState,
   Badge,
   TableFilters,
+  Pagination,
 } from '../ui';
 import { safeString, getRoleTheme } from '../../utils/themeUtils';
 import { getTranslation } from '../../utils/translations';
@@ -33,6 +34,23 @@ export default function SuppliersTable({
 }) {
   const t = (key, fallback) => getTranslation(lang, key, fallback);
   const theme = getRoleTheme(role, isDarkMode);
+
+  // Пагинация (по 10 строк на страницу, как в UI Kit)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, categoryFilter]);
+
+  const totalItems = suppliers.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedSuppliers = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * pageSize;
+    return suppliers.slice(startIndex, startIndex + pageSize);
+  }, [suppliers, safeCurrentPage, pageSize]);
 
   const categoryOptions = [
     { id: 'ALL', name: `🏢 ${t('allCategories', 'Все направления деятельности')}` },
@@ -69,7 +87,7 @@ export default function SuppliersTable({
 
       {/* 2. Таблица со списком поставщиков */}
       <TableContainer>
-        <Table>
+        <Table className="min-w-[980px]">
           <TableHead>
             <TableRow>
               <TableHeaderCell>{t('supplierName', 'Kompaniýanyň ady')}</TableHeaderCell>
@@ -105,7 +123,7 @@ export default function SuppliersTable({
                 }
               />
             ) : (
-              suppliers.map((s, idx) => {
+              paginatedSuppliers.map((s, idx) => {
                 const parsed = parseCompanyName(s.name);
                 return (
                   <TableRow key={s.id || idx}>
@@ -226,6 +244,22 @@ export default function SuppliersTable({
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* 3. Панель пагинации из UI Kit */}
+      <Pagination
+        currentPage={safeCurrentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        pageSizeOptions={[10, 25, 50, 100]}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={(newSize) => {
+          setPageSize(newSize);
+          setCurrentPage(1);
+        }}
+        role={role}
+        lang={lang}
+      />
     </div>
   );
 }

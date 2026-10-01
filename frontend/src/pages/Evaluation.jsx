@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { CheckCircle2, FileText, Clock, Building2, Layers, AlertCircle, ArrowRight, Eye } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { CheckCircle2, FileText, Clock, Building2, Layers, AlertCircle, ArrowRight, Eye, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { getStatusBadge } from '../utils/statusUtils';
-import { TableFilters } from '../components/ui';
+import { TableFilters, Pagination } from '../components/ui';
 import { pluralize } from '../utils/pluralize';
 
 export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
@@ -18,6 +18,15 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
   const [selectedClient, setSelectedClient] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [sortBy, setSortBy] = useState('DEADLINE_ASC'); // 'DEADLINE_ASC' | 'DEADLINE_DESC' | 'NEWEST' | 'OFFERS_DESC'
+
+  // Пагинация (по умолчанию 10 строк на страницу, как в UI Kit)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Сброс страницы при смене любых фильтров или поиска
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedClient, selectedStatus, sortBy]);
 
   useEffect(() => {
     fetchTenders();
@@ -88,6 +97,16 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
       // NEWEST
       return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     });
+
+  // Пагинация: расчет страниц и среза отображаемых записей
+  const totalItems = filteredTenders.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedTenders = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * pageSize;
+    return filteredTenders.slice(startIndex, startIndex + pageSize);
+  }, [filteredTenders, safeCurrentPage, pageSize]);
 
   // Summary statistics
   const totalTendersCount = publishedTenders.length;
@@ -270,21 +289,21 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-xs border-collapse min-w-[1150px]">
               <thead>
                 <tr className={theme.tableHeaderBg}>
-                  <th className="py-3 px-4 font-semibold w-40">{t('tenderNumberTitle', 'Номер тендера')}</th>
-                  <th className="py-3 px-4 font-semibold">{t('procurementTitleColumn', 'Наименование закупки')}</th>
-                  <th className="py-3 px-4 font-semibold w-52">{t('client', 'Заказчик')}</th>
-                  <th className="py-3 px-4 font-semibold text-center w-28">{t('lotsColumn', 'Лоты')}</th>
-                  <th className="py-3 px-4 font-semibold text-center w-36">{t('submittedOffers', 'Подано заявок')}</th>
-                  <th className="py-3 px-4 font-semibold w-40">{t('deadline', 'Крайний срок')}</th>
-                  <th className="py-3 px-4 font-semibold text-center w-36">{t('status', 'Статус')}</th>
-                  <th className="py-3 px-4 font-semibold text-right w-44">{t('action', 'Действие')}</th>
+                  <th className="py-3 px-4 font-semibold w-40 whitespace-nowrap">{t('tenderNumberTitle', 'Номер тендера')}</th>
+                  <th className="py-3 px-4 font-semibold min-w-[240px] max-w-[320px]">{t('procurementTitleColumn', 'Наименование закупки')}</th>
+                  <th className="py-3 px-4 font-semibold min-w-[190px] max-w-[240px]">{t('client', 'Заказчик')}</th>
+                  <th className="py-3 px-4 font-semibold text-center w-24 whitespace-nowrap">{t('lotsColumn', 'Лоты')}</th>
+                  <th className="py-3 px-4 font-semibold text-center w-32 whitespace-nowrap">{t('submittedOffers', 'Подано заявок')}</th>
+                  <th className="py-3 px-4 font-semibold w-36 whitespace-nowrap">{t('deadline', 'Крайний срок')}</th>
+                  <th className="py-3 px-4 font-semibold text-center w-36 whitespace-nowrap">{t('status', 'Статус')}</th>
+                  <th className="py-3 px-4 font-semibold text-right w-44 pr-6 whitespace-nowrap">{t('action', 'Действие')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredTenders.map(tender => {
+                {paginatedTenders.map(tender => {
                   const offersCount = tender._count?.offers || 0;
                   const lotsCount = tender._count?.lots || 0;
                   const isExpired = new Date(tender.deadline) < new Date();
@@ -294,49 +313,55 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                   return (
                     <tr key={tender.id} className={`${theme.tableRowHover} transition-colors group`}>
                       {/* Номер тендера */}
-                      <td className="py-3 px-4 font-mono font-bold text-xs text-emerald-700 dark:text-emerald-400">
+                      <td className="py-3.5 px-4 font-mono font-bold text-xs text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                         <Link
                           to={offersCount === 0 ? `/tenders/${tender.id}` : `/evaluation/${tender.id}`}
-                          className="hover:underline flex items-center gap-1.5"
+                          className="hover:underline inline-flex items-center gap-1.5 whitespace-nowrap"
                         >
-                          {tender.tenderNumber}
+                          <span>{tender.tenderNumber}</span>
+                          {tender.visibility === 'YAPYK' && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60">
+                              <Lock size={9} />
+                              <span>ÝAPYK</span>
+                            </span>
+                          )}
                         </Link>
                       </td>
 
                       {/* Наименование закупки */}
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-slate-800 dark:text-slate-100 text-xs line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                      <td className="py-3.5 px-4 min-w-[240px] max-w-[320px]">
+                        <div className="font-semibold text-slate-800 dark:text-slate-100 text-xs line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" title={tender.title}>
                           {tender.title}
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                           {tender.category?.name && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-medium">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-medium whitespace-nowrap">
                               {tender.category.name}
                             </span>
                           )}
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-slate-400 whitespace-nowrap">
                             {tender.type === 'YERLI' ? (t('typeLocal', 'Местный')) : (t('typeGlobal', 'Международный'))}
                           </span>
                         </div>
                       </td>
 
                       {/* Заказчик */}
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
+                      <td className="py-3.5 px-4 min-w-[190px] max-w-[240px] text-slate-600 dark:text-slate-300">
                         <div className="flex items-center gap-1.5">
                           <Building2 size={13} className="text-slate-400 shrink-0" />
-                          <span className="truncate font-medium">{tender.client?.name || '—'}</span>
+                          <span className="truncate font-medium block" title={tender.client?.name || ''}>{tender.client?.name || '—'}</span>
                         </div>
                       </td>
 
                       {/* Количество лотов */}
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <span className="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs">
                           {lotsCount > 0 ? pluralize(lotsCount, ['лот', 'лота', 'лотов']) : `1 ${t('lotUpperLabel', 'лот')}`}
                         </span>
                       </td>
 
                       {/* Подано предложений */}
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
                             offersCount > 0
@@ -350,7 +375,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                       </td>
 
                       {/* Крайний срок */}
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="font-semibold text-slate-700 dark:text-slate-200">
                           {new Date(tender.deadline).toLocaleDateString('ru-RU')}
                         </div>
@@ -358,7 +383,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                       </td>
 
                       {/* Статус */}
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         {isFailed ? (
                           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                             {t('tenderFailedStatus', 'Не состоялся')}
@@ -369,11 +394,11 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                       </td>
 
                       {/* Действие */}
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-4 pr-6 text-right whitespace-nowrap">
                         {isCompleted ? (
                           <Link
                             to={`/evaluation/${tender.id}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors whitespace-nowrap"
                           >
                             <FileText size={13} className="text-slate-400" />
                             <span>{t('resultsProtocolBtn', 'Итоги / Протокол')}</span>
@@ -381,7 +406,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                         ) : isFailed ? (
                           <Link
                             to={`/tenders/${tender.id}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-colors whitespace-nowrap"
                           >
                             <Eye size={13} />
                             <span>{t('viewDetails', 'Подробнее')}</span>
@@ -389,7 +414,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                         ) : (
                           <Link
                             to={`/evaluation/${tender.id}`}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer whitespace-nowrap"
                           >
                             <span>{t('evaluateBidsBtn', 'Оценить заявки')}</span>
                             <ArrowRight size={13} />
@@ -404,15 +429,21 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
           </div>
         )}
 
-        {/* Footer info bar */}
-        <div className="p-3.5 bg-slate-50/70 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
-          <div>
-            {t('displayedTendersCount', 'Отображено тендеров')}: <strong className="text-slate-700 dark:text-slate-200">{filteredTenders.length}</strong> {t('fromWord', 'из')} {totalTendersCount}
-          </div>
-          <div className="text-[11px] text-slate-400">
-            {t('openEvaluationPrompt', 'Нажмите на кнопку «Оценить заявки» для перехода на полноэкранный рабочий стол')}
-          </div>
-        </div>
+        {/* 5. Панель пагинации из UI Kit */}
+        <Pagination
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          pageSizeOptions={[10, 25, 50, 100]}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+          role={role || 'ADMIN'}
+          lang={lang}
+        />
       </div>
     </div>
   );
