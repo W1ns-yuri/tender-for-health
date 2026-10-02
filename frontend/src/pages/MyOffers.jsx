@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Trash2, Eye, RefreshCw, AlertCircle } from 'lucide-react';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import API from '../services/api';
@@ -27,11 +27,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  useEffect(() => {
-    fetchMyOffers();
-  }, [role]);
-
-  const fetchMyOffers = async () => {
+  const fetchMyOffers = useCallback(async () => {
     setLoading(true);
     try {
       const endpoint = isAdmin ? '/offers' : '/offers/my';
@@ -42,7 +38,11 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAdmin]);
+
+  useEffect(() => {
+    fetchMyOffers();
+  }, [fetchMyOffers]);
 
   const handleDeleteOffer = async (offerId) => {
     const isConfirmed = await showConfirm({
@@ -212,20 +212,20 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
       {/* 3. Таблица коммерческих предложений */}
       <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse table-fixed min-w-[1100px]">
             <thead className={theme.tableHeaderBg}>
               <tr className="border-b border-slate-200 dark:border-slate-800">
-                <th className="py-3.5 px-3 w-36 text-center">{t('tenderOrName', 'Тендер / Наименование')}</th>
-                <th className="py-3.5 px-3 text-center">{t('type', 'Görnüşi')}</th>
-                {isAdmin && <th className="py-3.5 px-3 text-left">{t('supplierStr', 'Поставщик')}</th>}
-                <th className="py-3.5 px-3 text-center">{t('client', 'Заказчик')}</th>
-                <th className="py-3.5 px-3 text-center">{t('currency', 'Walýuta')}</th>
-                <th className="py-3.5 px-3 text-center">{t('code', 'Номер заявки')}</th>
-                <th className="py-3.5 px-3 text-center">{t('status', 'Status')}</th>
-                <th className="py-3.5 px-3 text-center">{t('paymentTerms', 'Условия оплаты')}</th>
-                <th className="py-3.5 px-3 text-center">{t('totalAmount', 'Сумма')}</th>
-                <th className="py-3.5 px-3 text-center">{t('uploadDate', 'Дата подачи')}</th>
-                <th className="py-3.5 px-3 text-center w-20">{t('action', 'Действие')}</th>
+                <th className="py-3.5 px-3 w-40 text-center">{t('tenderOrName', 'Тендер / Наименование')}</th>
+                <th className="py-3.5 px-3 w-28 text-center">{t('type', 'Görnüşi')}</th>
+                {isAdmin && <th className="py-3.5 px-3 w-36 text-left">{t('supplierStr', 'Поставщик')}</th>}
+                <th className="py-3.5 px-3 w-36 text-center">{t('client', 'Заказчик')}</th>
+                <th className="py-3.5 px-3 w-24 text-center">{t('currency', 'Walýuta')}</th>
+                <th className="py-3.5 px-3 w-32 text-center">{t('code', 'Номер заявки')}</th>
+                <th className="py-3.5 px-3 w-32 text-center">{t('status', 'Status')}</th>
+                <th className="py-3.5 px-3 w-32 text-center">{t('paymentTerms', 'Условия оплаты')}</th>
+                <th className="py-3.5 px-3 w-28 text-center">{t('totalAmount', 'Сумма')}</th>
+                <th className="py-3.5 px-3 w-28 text-center">{t('uploadDate', 'Дата подачи')}</th>
+                <th className="py-3.5 px-3 w-24 text-center">{t('action', 'Действие')}</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>

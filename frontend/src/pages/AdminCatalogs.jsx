@@ -181,6 +181,22 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
         dataToSave.itemType = 'GOODS';
         dataToSave.type = 'HARYT';
       }
+
+      // Удаляем вложенные реляционные объекты и системные поля
+      delete dataToSave.category;
+      delete dataToSave.country;
+      delete dataToSave.brand;
+      delete dataToSave.tenderSpecs;
+      delete dataToSave.offerSpecs;
+      delete dataToSave.manufacturers;
+      delete dataToSave.generalProducts;
+      delete dataToSave.tenders;
+      delete dataToSave.lots;
+      delete dataToSave.supplierCategories;
+      delete dataToSave.createdAt;
+      delete dataToSave.updatedAt;
+      if (dataToSave.id) delete dataToSave.id;
+
       if (itemId) {
         await API.put(`/catalogs/${endpoint}/${itemId}`, dataToSave);
       } else {
@@ -278,7 +294,7 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
     if (loading) {
       return (
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse table-fixed">
             <thead>
               <tr className={tableHeaderClass}>
                 <th className="py-3 px-4 w-14 text-center">#</th>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, Check, Search } from 'lucide-react';
+import { ChevronDown, Check, Search, X } from 'lucide-react';
 
 /**
  * Universal CustomSelect component with Portal rendering (won't get clipped by overflow-hidden).
@@ -11,6 +11,7 @@ import { ChevronDown, Check, Search } from 'lucide-react';
  * - Array of objects ({ id, name }, { value, label }, etc.) or plain strings
  * - Children `<option>` auto-extraction for drop-in replacement
  * - Dropdown auto-positioning (flips up if near bottom)
+ * - Clearable selection reset with X icon and Not Selected option
  */
 export const CustomSelect = ({
   options = [],
@@ -21,6 +22,7 @@ export const CustomSelect = ({
   theme,
   role = 'ADMIN', // 'ADMIN' | 'SUPPLIER'
   searchable = false,
+  clearable = true,
   t,
   size = 'md', // 'md' | 'sm' | 'xs'
   className = '',
@@ -161,17 +163,33 @@ export const CustomSelect = ({
           }
           setIsOpen(next);
         }}
-        className={`w-full cursor-pointer flex justify-between items-center transition-all duration-150 rounded-lg ${sizePadding} ${triggerInputStyle} ${
+        className={`w-full cursor-pointer flex justify-between items-center transition-all duration-150 rounded-xl ${size === 'md' ? 'h-10 min-h-[40px]' : ''} ${sizePadding} ${triggerInputStyle} ${
           isOpen ? activeFocusStyle : ''
         } ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800/50' : ''}`}
       >
-        <span className={`truncate mr-1.5 ${!selectedOption || selectedOption.id === '' ? 'opacity-50 text-slate-400' : 'font-medium'}`}>
-          {selectedOption && selectedOption.id !== '' ? selectedOption.name : (placeholder || '—')}
+        <span className={`truncate mr-1.5 ${!selectedOption ? 'opacity-50 text-slate-400' : 'font-medium'}`}>
+          {selectedOption ? selectedOption.name : (placeholder || (t ? t('selectPrompt', 'Выберите...') : '—'))}
         </span>
-        <ChevronDown 
-          size={size === 'xs' ? 12 : 14} 
-          className={`opacity-50 shrink-0 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} 
-        />
+
+        <div className="flex items-center gap-1 shrink-0 ml-1">
+          {clearable && value && !disabled && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSelect('');
+              }}
+              className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
+              title={t ? t('clearSelection', 'Сбросить выбор') : 'Сбросить выбор'}
+            >
+              <X size={12} />
+            </button>
+          )}
+          <ChevronDown 
+            size={size === 'xs' ? 12 : 14} 
+            className={`opacity-50 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} 
+          />
+        </div>
       </div>
 
       {isOpen && coords.width > 0 && createPortal(
@@ -207,6 +225,15 @@ export const CustomSelect = ({
             </div>
           )}
           <div className="overflow-y-auto overscroll-contain flex-1 divide-y divide-slate-100 dark:divide-slate-800/60 select-none">
+            {clearable && value && (
+              <div
+                className="px-3 py-2 text-xs cursor-pointer flex items-center justify-between text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 italic border-b border-dashed border-slate-200 dark:border-slate-800"
+                onClick={() => handleSelect('')}
+              >
+                <span>— {t ? t('notSelected', 'Не выбрано (сбросить)') : 'Не выбрано (сбросить)'} —</span>
+                <X size={12} className="opacity-60" />
+              </div>
+            )}
             {filteredOptions.length > 0 ? (
               filteredOptions.map(opt => {
                 const isSelected = String(value) === String(opt.id);

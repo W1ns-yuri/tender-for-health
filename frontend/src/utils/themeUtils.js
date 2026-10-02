@@ -107,3 +107,21 @@ export const getCurrencyLabel = (currencyObjOrCode) => {
   }
   return code;
 };
+
+/**
+ * Корректное преобразование локальных/серверных путей к загруженным файлам и логотипам
+ */
+export const resolveFileUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('blob:') || url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // Нормализуем слеши и извлекаем чистое имя файла из /uploads/ или абсолютного пути
+  const normalized = url.replace(/\\/g, '/');
+  const filename = normalized.includes('/uploads/') 
+    ? normalized.split('/uploads/').pop() 
+    : normalized.split('/').pop();
+    
+  const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+  return `${baseUrl}/uploads/${filename}`;
+};

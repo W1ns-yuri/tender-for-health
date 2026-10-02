@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Search, Bell, Settings, ChevronLeft, ChevronRight, Globe, ChevronDown, User, 
   X, Loader2, Trophy, ShieldCheck, FileText, Clock, Building2, CheckCheck, 
-  ExternalLink, ArrowRight, AlertCircle, Inbox, Trash2
+  ArrowRight, AlertCircle, Inbox, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
-import { getRoleTheme, getAvatarInitials } from '../utils/themeUtils';
+import { getRoleTheme, getAvatarInitials, resolveFileUrl } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 
 export default function Header({ user, role, isDarkMode, lang, setLang, onNavigate }) {
@@ -33,7 +33,6 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
   const [notificationsList, setNotificationsList] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifFilter, setNotifFilter] = useState('all');
-  const [loadingNotifs, setLoadingNotifs] = useState(false);
   const prevUnreadRef = useRef(null);
 
   const playNotificationSound = () => {
@@ -192,6 +191,9 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
     return () => clearTimeout(timer);
   }, [searchQuery, isAdmin]);
 
+  const profileContainerRef = useRef(null);
+  const langContainerRef = useRef(null);
+
   // Закрытие выпадающих списков при клике вне контейнеров
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -200,6 +202,12 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
       }
       if (notifContainerRef.current && !notifContainerRef.current.contains(e.target)) {
         setShowNotifications(false);
+      }
+      if (profileContainerRef.current && !profileContainerRef.current.contains(e.target)) {
+        setShowProfileMenu(false);
+      }
+      if (langContainerRef.current && !langContainerRef.current.contains(e.target)) {
+        setShowLangMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -384,7 +392,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
       <div className="flex items-center space-x-3">
         
         {/* Выбор языка */}
-        <div className="relative">
+        <div className="relative" ref={langContainerRef}>
           <button
             onClick={() => setShowLangMenu(!showLangMenu)}
             className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold ${
@@ -615,7 +623,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
         <div className={`h-6 w-px ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
 
         {/* 🟢 Профиль */}
-        <div className="relative">
+        <div className="relative" ref={profileContainerRef}>
           <div
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className={`flex items-center space-x-1 cursor-pointer p-1 rounded-full transition-colors ${
@@ -624,7 +632,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
           >
             {logoSrc && !imgError ? (
               <img
-                src={logoSrc}
+                src={resolveFileUrl(logoSrc)}
                 alt="Logo"
                 onError={() => setImgError(true)}
                 className="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-xs"

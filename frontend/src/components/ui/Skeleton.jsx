@@ -66,18 +66,10 @@ export function TableSkeletonRows({ rows = 5, cols = 8, className = '' }) {
   return Array.from({ length: rows }).map((_, rIdx) => (
     <tr key={`skel-row-${rIdx}`} className={`animate-pulse ${className}`}>
       {Array.from({ length: cols }).map((_, cIdx) => (
-        <td key={`skel-col-${cIdx}`} className="py-4 px-4 text-center">
+        <td key={`skel-col-${cIdx}`} className="py-3.5 px-4 text-center">
           <div
             className={`h-4 bg-slate-200/90 dark:bg-slate-800 rounded-md mx-auto ${
-              cIdx === 0
-                ? 'w-12'
-                : cIdx === 1
-                ? 'w-36'
-                : cIdx === 2
-                ? 'w-44'
-                : cIdx === cols - 1
-                ? 'w-8 h-8 rounded-lg'
-                : 'w-20'
+              cIdx === cols - 1 ? 'w-8 h-8 rounded-lg' : 'w-4/5 max-w-[140px]'
             }`}
           />
         </td>

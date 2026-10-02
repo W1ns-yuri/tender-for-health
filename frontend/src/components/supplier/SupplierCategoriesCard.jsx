@@ -5,15 +5,23 @@ export default function SupplierCategoriesCard({
   selectedCategoryIds = [],
   setSelectedCategoryIds,
   isEditable,
+  isCategoriesModified = false,
   supplier,
   t = (k, f) => f
 }) {
   return (
     <div className="sm:col-span-2">
       <div className="flex items-center justify-between mb-1.5 ml-1">
-        <label className="block text-xs font-bold text-slate-500">
-          {t('supplierCategories', 'Категории деятельности')} {isEditable && <span className="text-rose-500">*</span>}
-        </label>
+        <div className="flex items-center gap-2">
+          <label className="block text-xs font-bold text-slate-500">
+            {t('supplierCategories', 'Категории деятельности')} {isEditable && <span className="text-rose-500">*</span>}
+          </label>
+          {isCategoriesModified && (
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800 uppercase tracking-wider">
+              {t('moderationFieldChangedBadge', 'Изменено')}
+            </span>
+          )}
+        </div>
         <span className="text-xs font-bold text-blue-600">
           {selectedCategoryIds.length} {t('categoriesSelected', 'выбрано')}
         </span>

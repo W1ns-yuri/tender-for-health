@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, User, AlertCircle, Globe, Building2, Eye, EyeOff, ChevronRight, Mail, Phone, FileText, CheckCircle2 } from 'lucide-react';
+import { Lock, User, AlertCircle, Globe, Building2, Eye, EyeOff, ChevronRight, ChevronLeft, Mail, Phone, FileText, CheckCircle2 } from 'lucide-react';
 import { getTranslation } from '../utils/translations';
 import API from '../services/api';
 import CustomSelect from '../components/CustomSelect';
@@ -44,6 +44,25 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
     if (v.length > 0) return `${v.slice(0, 3)} ${v.slice(3)}`;
     return v;
   };
+
+  const TENDER_ILLUSTRATIONS = [
+    { id: 'variant-6', src: '/assets/tender-variant-6.jpg', title: 'Геометрический стиль: Тендерная документация и заявки', tag: 'Вариант 1 (В стиле оригинала)' },
+    { id: 'variant-2', src: '/assets/tender-variant-2.jpg', title: 'Панель торгов: Сравнение ценовых предложений и рейтинг', tag: 'Вариант 2 (Аукцион и лоты)' },
+    { id: 'variant-1', src: '/assets/tender-variant-1.jpg', title: 'Электронный контракт: Цифровая подпись и верификация', tag: 'Вариант 3 (ЭЦП и контракт)' },
+    { id: 'variant-3', src: '/assets/tender-variant-3.jpg', title: 'Медицинские закупки: Поставки медикаментов и логистика', tag: 'Вариант 4 (Фармацевтика)' },
+    { id: 'variant-4', src: '/assets/tender-variant-4.jpg', title: 'Деловое партнерство: Утверждение победителя тендера', tag: 'Вариант 5 (Партнерство)' },
+    { id: 'variant-5', src: '/assets/tender-variant-5.jpg', title: '3D Экосистема: Электронная платформа торгов', tag: 'Вариант 6 (3D Экосистема)' },
+    { id: 'original', src: '/assets/login-page-ullustration.jpg', title: 'Исходная иллюстрация (Абстрактная)', tag: 'Оригинал' },
+  ];
+
+  const [activeIllustrationIndex, setActiveIllustrationIndex] = useState(() => {
+    try {
+      const saved = localStorage.getItem('tender_active_illustration_idx');
+      return saved !== null ? Number(saved) : 0;
+    } catch {
+      return 0;
+    }
+  });
 
   const [isRegister, setIsRegister] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -270,14 +289,66 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
         <div className="absolute top-0 left-0 w-full h-full bg-linear-to-br from-blue-100/40 to-transparent pointer-events-none" />
 
         <div className="relative z-10 w-full max-w-[500px] mx-auto flex flex-col items-center animate-in fade-in zoom-in-95 duration-700 mt-8">
-          {/* Оформление картинки под постер */}
-          <div className="w-full bg-white p-2 rounded-[2rem] shadow-xl shadow-slate-200/60 border border-white mb-10 relative overflow-hidden flex items-center justify-center">
-            <div className="absolute inset-0 bg-gradient-to-tr from-orange-100/20 to-emerald-100/20 rounded-[1.8rem] pointer-events-none z-10"></div>
-            <img
-              src="/assets/login-page-ullustration.jpg"
-              alt="Platform Collaboration"
-              className="w-full h-auto object-cover rounded-[1.5rem] mix-blend-multiply relative z-0"
-            />
+          {/* Оформление картинки под постер с интерактивным переключателем вариантов */}
+          <div className="w-full bg-white p-3 rounded-[2rem] shadow-xl shadow-slate-200/60 border border-white mb-8 relative overflow-hidden flex flex-col items-center justify-center group">
+            <div className="w-full relative overflow-hidden rounded-[1.5rem] bg-slate-50">
+              <img
+                src={TENDER_ILLUSTRATIONS[activeIllustrationIndex]?.src || '/assets/tender-variant-6.jpg'}
+                alt={TENDER_ILLUSTRATIONS[activeIllustrationIndex]?.title || 'Tender Platform Illustration'}
+                className="w-full h-auto object-cover rounded-[1.5rem] relative z-0 transition-all duration-300"
+              />
+              
+              {/* Стрелочки переключения вариантов прямо на иллюстрации */}
+              <button
+                type="button"
+                onClick={() => {
+                  const newIdx = (activeIllustrationIndex - 1 + TENDER_ILLUSTRATIONS.length) % TENDER_ILLUSTRATIONS.length;
+                  setActiveIllustrationIndex(newIdx);
+                  try { localStorage.setItem('tender_active_illustration_idx', String(newIdx)); } catch {}
+                }}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 p-2 bg-white/90 hover:bg-white text-slate-700 hover:text-blue-600 rounded-full shadow-md backdrop-blur-xs transition-all opacity-80 group-hover:opacity-100 hover:scale-105 cursor-pointer z-20"
+                title="Предыдущий вариант"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const newIdx = (activeIllustrationIndex + 1) % TENDER_ILLUSTRATIONS.length;
+                  setActiveIllustrationIndex(newIdx);
+                  try { localStorage.setItem('tender_active_illustration_idx', String(newIdx)); } catch {}
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 bg-white/90 hover:bg-white text-slate-700 hover:text-blue-600 rounded-full shadow-md backdrop-blur-xs transition-all opacity-80 group-hover:opacity-100 hover:scale-105 cursor-pointer z-20"
+                title="Следующий вариант"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+
+            {/* Компактный бейдж-переключатель вариантов */}
+            <div className="w-full pt-2.5 pb-0.5 px-2 flex items-center justify-between text-xs">
+              <span className="font-bold text-slate-700 text-[11px] truncate max-w-[280px]">
+                {TENDER_ILLUSTRATIONS[activeIllustrationIndex]?.tag}
+              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {TENDER_ILLUSTRATIONS.map((ill, i) => (
+                  <button
+                    key={ill.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveIllustrationIndex(i);
+                      try { localStorage.setItem('tender_active_illustration_idx', String(i)); } catch {}
+                    }}
+                    title={ill.title}
+                    className={`h-2 rounded-full transition-all cursor-pointer ${
+                      activeIllustrationIndex === i
+                        ? 'w-6 bg-blue-600'
+                        : 'w-2 bg-slate-300 hover:bg-slate-400'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="text-center space-y-4">

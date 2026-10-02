@@ -181,11 +181,11 @@
     * `ProductsCatalogTable.jsx`, `WorksCatalogTable.jsx`, `ServicesCatalogTable.jsx`, `MnnArchiveCatalogTable.jsx`;
     * `UnitsCatalogTable.jsx`, `ManufacturersCatalogTable.jsx`, `BrandsCatalogTable.jsx`, `VariationsCatalogTable.jsx`, `ClientsCatalogTable.jsx`.
     * Сам родительский компонент сокращен до роли элегантного оркестратора состояний и маршрутизации.
+  * ✅ **[AnalyticsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/AnalyticsPage.jsx)** (ранее 1289 строк): декомпозирован на 10 модульных компонентов в `src/components/analytics/` (страница ~170 строк).
+  * ✅ **[CreateTenderPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/CreateTenderPage.jsx)** (ранее 1134 строк): декомпозирован до 176 строк с выделением хука `useCreateTenderState` и субкомпонентов табов.
+  * ✅ **[EvaluationDetailsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/EvaluationDetailsPage.jsx)** (ранее 789 строк): декомпозирован до 142 строк с выделением хука `useEvaluationDetails` и 6 субкомпонентов в `src/components/evaluation/`.
 * **Осталось в очереди декомпозиции:**
-  * [AnalyticsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/AnalyticsPage.jsx) (~1290 строк) — совмещает чарты, таблицы категорий, сводку и демо-генератор.
-  * [CreateTenderPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/CreateTenderPage.jsx) (~1130 строк) — основные параметры, валидация лотов, Drag & Drop и модалки.
   * [CreateOfferPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/CreateOfferPage.jsx) (~795 строк) — форма подачи КП, спецификации лотов и валютные курсы.
-  * [EvaluationDetailsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/EvaluationDetailsPage.jsx) (~800 строк) — матрица предложений, протокол, голосование и диалоги.
 
 ---
 
@@ -256,9 +256,9 @@
 | **2** | **Крон-воркер** | Фоновый планировщик дедлайнов (`tenderScheduler.js`): автоперевод в `YAPYK` и оповещение | ✅ Готово | 🔥 Высокий |
 | **3** | **Рефакторинг** | Декомпозиция монолита [AdminCatalogs.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/AdminCatalogs.jsx) на 15 модульных компонентов | ✅ Готово | 🔥 Высокий |
 | **4** | **Рефакторинг** | Декомпозиция [AnalyticsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/AnalyticsPage.jsx) на 10 модульных компонентов в `src/components/analytics/` | ✅ Готово | 🔥 Высокий |
-| **4.1** | **Рефакторинг** | Декомпозиция [CreateTenderPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/CreateTenderPage.jsx) (~1130 строк) на единую модульную архитектуру | В очереди | ⚡ Средний |
-| **4.2** | **Рефакторинг** | Декомпозиция [EvaluationDetailsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/EvaluationDetailsPage.jsx) (~1070 строк) и [SettingsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/SettingsPage.jsx) (~1010 строк) | В очереди | ⚡ Средний |
-| **4.3** | **Рефакторинг** | Декомпозиция [LoginPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/LoginPage.jsx) (~930 строк) и [TenderDetails.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/TenderDetails.jsx) (~890 строк) | В очереди | ⚡ Средний |
+| **4.1** | **Рефакторинг** | Декомпозиция [CreateTenderPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/CreateTenderPage.jsx) (сокращен с 1 134 до 176 строк, хук `useCreateTenderState`) | ✅ Готово | ⚡ Средний |
+| **4.2** | **Рефакторинг** | Декомпозиция [EvaluationDetailsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/EvaluationDetailsPage.jsx) (сокращен с 789 до 142 строк, хук `useEvaluationDetails`) | ✅ Готово | ⚡ Средний |
+| **4.3** | **Рефакторинг** | Декомпозиция [SettingsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/SettingsPage.jsx) (~1010 строк) и [LoginPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/LoginPage.jsx) (~930 строк) | В очереди | ⚡ Средний |
 | **5** | **Безопасность** | Ревизия всего кода: RBAC, санитизация данных, скрытие деталей внутренних ошибок | В очереди | ⚡ Средний |
 | **6** | **Сотрудники / RBAC** | Модуль управления администраторами и сотрудниками (`/admin/users`) | В очереди | ⚡ Средний |
 | **7** | **Аудит-лог** | Полный аудит действий («Кто, где, когда, куда и зачем») с фиксацией IP и Diff изменений | В очереди | ⚡ Средний |

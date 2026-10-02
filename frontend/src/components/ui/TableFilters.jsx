@@ -67,6 +67,7 @@ export default function TableFilters({
                 value={f.value}
                 onChange={f.onChange}
                 options={f.options || []}
+                placeholder={f.placeholder}
                 searchable={Boolean(f.searchable)}
                 isDarkMode={isDarkMode}
                 theme={theme}

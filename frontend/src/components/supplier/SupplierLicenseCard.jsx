@@ -5,6 +5,7 @@ export default function SupplierLicenseCard({
   formData,
   setFormData,
   isEditable,
+  isLicenseModified = false,
   inputBg,
   t = (k, f) => f
 }) {
@@ -33,9 +34,16 @@ export default function SupplierLicenseCard({
             <Award size={20} />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
-              {t('medicalLicenseBlockTitle', 'Лицензии и сертификаты Минздрава')}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                {t('medicalLicenseBlockTitle', 'Лицензии и сертификаты Минздрава')}
+              </h3>
+              {isLicenseModified && (
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800 uppercase tracking-wider">
+                  {t('moderationFieldChangedBadge', 'Изменено')}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {t('medicalLicenseSubtitle', 'Обязательно для поставщиков медикаментов, мед. оборудования и изделий мед. назначения')}
             </p>

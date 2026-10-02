@@ -14,6 +14,7 @@ import {
 } from '../ui';
 import { safeString } from '../../utils/themeUtils';
 import { getTranslation } from '../../utils/translations';
+import { parseSupplierChanges } from './supplierUtils';
 
 export default function SuppliersPendingTable({
   pendingSuppliers = [],
@@ -47,7 +48,11 @@ export default function SuppliersPendingTable({
               description={t('allCompaniesReviewedNotice', 'Все компании проверены и имеют актуальный статус.')}
             />
           ) : (
-            pendingSuppliers.map((s, idx) => (
+            pendingSuppliers.map((s, idx) => {
+              const parsedNotes = parseSupplierChanges(s.notes);
+              const hasChanges = Boolean(parsedNotes && parsedNotes.changes && parsedNotes.changes.length > 0);
+
+              return (
               <TableRow key={s.id || idx}>
                 {/* 1. Название компании и категории */}
                 <TableCell>
@@ -70,6 +75,29 @@ export default function SuppliersPendingTable({
                       </span>
                     )}
                   </div>
+                  {hasChanges ? (
+                    <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                      <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                        {t('moderationFieldChangedBadge', 'Изменено')}:
+                      </span>
+                      {parsedNotes.changes.map((c, cIdx) => (
+                        <span
+                          key={c.field || cIdx}
+                          className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+                        >
+                          {t(c.key, c.label)}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    s.verificationStatus === 'PENDING_REVIEW' && (
+                      <div className="flex items-center gap-1 mt-1.5">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800">
+                          {t('initialSubmissionNotice', 'Первичная анкета')}
+                        </span>
+                      </div>
+                    )
+                  )}
                 </TableCell>
 
                 {/* 2. Тип / ИНН */}
@@ -143,7 +171,8 @@ export default function SuppliersPendingTable({
                   </div>
                 </TableCell>
               </TableRow>
-            ))
+            );
+          })
           )}
         </TableBody>
       </Table>

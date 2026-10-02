@@ -1,4 +1,8 @@
+const path = require('path');
+const fs = require('fs');
 const prisma = require('../lib/prisma');
+
+const uploadDir = path.join(__dirname, '../../uploads');
 
 // Загрузка документа и привязка его к Тендеру, Поставщику или Предложению
 const uploadDocument = async (req, res) => {
@@ -8,14 +12,15 @@ const uploadDocument = async (req, res) => {
         }
 
         const { name, description, documentTypeId, tenderId, lotId, supplierId, offerId } = req.body;
+        const publicPath = `/uploads/${req.file.filename}`;
 
-        // Создаем запись базового документа
+        // Создаем запись базового документа с веб-доступным путем
         const document = await prisma.document.create({
             data: {
                 name: name || Buffer.from(req.file.originalname, 'latin1').toString('utf8'),
                 description: description || null,
-                fileName: Buffer.from(req.file.originalname, 'latin1').toString('utf8'),
-                filePath: (req.file.path || '').replace(/\\/g, '/'),
+                fileName: req.file.filename,
+                filePath: publicPath,
                 fileType: req.file.mimetype,
                 fileSize: req.file.size || null,
                 documentTypeId: documentTypeId || null,
@@ -47,7 +52,7 @@ const uploadDocument = async (req, res) => {
             });
         }
 
-        res.status(201).json(document);
+        res.status(201).json({ ...document, url: publicPath });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при сохранении документа', details: error.message });
     }
@@ -80,8 +85,6 @@ const getDocuments = async (req, res) => {
         res.status(500).json({ error: 'Ошибка при получении документов', details: error.message });
     }
 };
-
-const fs = require('fs');
 
 const deleteDocument = async (req, res) => {
     try {
@@ -127,11 +130,16 @@ const deleteDocument = async (req, res) => {
             prisma.document.delete({ where: { id } })
         ]);
 
-        // Физическое удаление файла с сервера для предотвращения утечки диска
-        if (filePath && fs.existsSync(filePath)) {
-            fs.unlink(filePath, (err) => {
-                if (err) console.error('Ошибка удаления физического файла:', err.message);
-            });
+        // Физическое удаление файла с сервера для предотвращения утечки диска (с защитой от directory traversal)
+        if (filePath) {
+            const diskPath = path.isAbsolute(filePath) && fs.existsSync(filePath)
+                ? filePath
+                : path.join(uploadDir, path.basename(filePath));
+            if (fs.existsSync(diskPath)) {
+                fs.unlink(diskPath, (err) => {
+                    if (err) console.error('Ошибка удаления физического файла:', err.message);
+                });
+            }
         }
 
         res.json({ success: true, message: 'Документ успешно удален' });

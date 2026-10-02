@@ -254,15 +254,6 @@ export default function SupplierSidebar({
                   </p>
                 </div>
               </div>
-
-              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
-                <p className="text-xs font-bold text-emerald-800">
-                  {t('profileVerified100', '🟢 Профиль активен на 100%')}
-                </p>
-                <p className="text-[11px] text-emerald-600 mt-0.5">
-                  {t('profileVerified100Sub', 'Вы можете подавать ценовые предложения')}
-                </p>
-              </div>
             </div>
           )
         )}

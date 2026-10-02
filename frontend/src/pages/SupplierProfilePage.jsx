@@ -11,6 +11,7 @@ import {
   formatPhoneString,
   getCleanCompanyName,
   calculateReadiness,
+  parseSupplierChanges,
   SupplierCompanyCardModal,
   SupplierStatusBanner,
   SupplierHeader,
@@ -363,10 +364,10 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
     const file = e.target.files?.[0];
     if (!file || !supplier?.id) return;
     const ext = file.name.split('.').pop()?.toLowerCase();
-    if (!['png', 'jpg', 'jpeg'].includes(ext)) {
+    if (!['png', 'jpg', 'jpeg', 'webp'].includes(ext)) {
       showAlert({
         title: t('validationError', 'Ошибка валидации'),
-        message: t('onlyImagesAllowed', 'Для логотипа поддерживаются только изображения JPG и PNG'),
+        message: t('onlyImagesAllowed', 'Для логотипа поддерживаются только изображения JPG, PNG и WEBP'),
         type: 'warning'
       });
       return;
@@ -389,10 +390,9 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       if (res.data) {
-        const logoPath = res.data.filePath 
-          ? (res.data.filePath.startsWith('http') ? res.data.filePath : `http://localhost:5000/${res.data.filePath.replace(/\\/g, '/')}`) 
-          : (res.data.url || '');
+        const logoPath = res.data.url || res.data.filePath || '';
         setFormData(prev => ({ ...prev, logoUrl: logoPath }));
+        setSupplier(prev => ({ ...prev, logoUrl: logoPath }));
         showAlert({
           title: t('success', 'Успешно'),
           message: t('logoUploadedSuccess', 'Логотип успешно загружен'),
@@ -652,6 +652,10 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
   const isEditable = effectiveIsOwner && (isVerified ? isEditing : supplier?.verificationStatus !== 'PENDING_REVIEW');
   const isSubmitDisabled = !isEditable || !hasDocuments || !isCategoriesSelected || saving || isLicenseExpired || (supplier?.verificationStatus === 'REJECTED' && !hasChanges);
 
+  // Изменения, отправленные поставщиком на проверку администратором
+  const moderationChanges = parseSupplierChanges(supplier?.notes);
+  const changedFieldKeys = moderationChanges?.changes?.map(c => c.field) || [];
+
   // Стили темы
   const bgClass = isDarkMode ? 'text-slate-100' : 'text-slate-800';
   const cardBg = isDarkMode ? 'bg-slate-900 border-slate-800 shadow-none' : 'bg-white border-slate-200/60 shadow-xl shadow-slate-200/40';
@@ -701,6 +705,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
       <SupplierStatusBanner
         supplier={supplier}
         effectiveIsOwner={effectiveIsOwner}
+        isAdmin={isAdmin}
         isBannerDismissed={isBannerDismissed}
         onDismissBanner={handleDismissBanner}
         isEditing={isEditing}
@@ -717,6 +722,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
             formData={formData}
             isEditable={isEditable}
             isForeignCompany={isForeignCompany}
+            isLogoModified={changedFieldKeys.includes('logoUrl')}
             onLogoUpload={handleLogoUpload}
             t={t}
           />
@@ -748,6 +754,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                   selectedCategoryIds={selectedCategoryIds}
                   setSelectedCategoryIds={setSelectedCategoryIds}
                   isEditable={isEditable}
+                  isCategoriesModified={changedFieldKeys.includes('categories')}
                   supplier={supplier}
                   t={t}
                 />
@@ -761,6 +768,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                 setPhoneDigits={setPhoneDigits}
                 isEditable={isEditable}
                 isForeignCompany={isForeignCompany}
+                isAddressModified={changedFieldKeys.includes('address')}
                 supplier={supplier}
                 inputBg={inputBg}
                 isDarkMode={isDarkMode}
@@ -772,6 +780,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                 formData={formData}
                 setFormData={setFormData}
                 isEditable={isEditable}
+                isLicenseModified={changedFieldKeys.includes('license')}
                 inputBg={inputBg}
                 t={t}
               />
@@ -785,6 +794,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                 isEditable={isEditable}
                 isCustomBank={isCustomBank}
                 setIsCustomBank={setIsCustomBank}
+                isBankModified={changedFieldKeys.includes('bank')}
                 role={role}
                 isDarkMode={isDarkMode}
                 inputBg={inputBg}
@@ -797,6 +807,7 @@ export default function SupplierProfilePage({ role, lang = 'RU', isDarkMode, isO
                 setFormData={setFormData}
                 isEditable={isEditable}
                 isForeignCompany={isForeignCompany}
+                isDirectorModified={changedFieldKeys.includes('director')}
                 passportError={passportError}
                 setPassportError={setPassportError}
                 personalCodeError={personalCodeError}

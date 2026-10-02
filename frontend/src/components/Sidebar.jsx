@@ -211,7 +211,7 @@ export default function Sidebar({
                   }`}
                 >
                   <Trophy size={19} />
-                  {!isCollapsed && <span className="ml-3">{t('winners', 'Ýeňijilik')}</span>}
+                  {!isCollapsed && <span className="ml-3">{t('myWins', 'Meniň ýeňişlerim')}</span>}
                 </button>
 
                 <button

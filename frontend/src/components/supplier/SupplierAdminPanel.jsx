@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Shield, XCircle, CheckCircle2, ArrowLeft, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { parseSupplierChanges } from './supplierUtils';
 
 export default function SupplierAdminPanel({
   supplier,
@@ -31,6 +32,9 @@ export default function SupplierAdminPanel({
   if (!isAdmin || !supplier) return null;
   if (supplier.verificationStatus === 'VERIFIED' && isDismissed) return null;
 
+  const parsedNotes = parseSupplierChanges(supplier.notes);
+  const hasChanges = Boolean(parsedNotes && parsedNotes.changes && parsedNotes.changes.length > 0);
+
   return supplier.verificationStatus !== 'VERIFIED' ? (
     <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
       <div className="p-5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -42,6 +46,21 @@ export default function SupplierAdminPanel({
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {t('adminReviewDossierSubtitle', 'Проверка данных и прикрепленных документов компании')}
           </p>
+          {hasChanges && (
+            <div className="flex items-center gap-1.5 flex-wrap mt-2">
+              <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                {t('modifiedFieldsLabel', 'Изменено:')}
+              </span>
+              {parsedNotes.changes.map((c, i) => (
+                <span
+                  key={c.field || i}
+                  className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800"
+                >
+                  {t(c.key, c.label)}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <button

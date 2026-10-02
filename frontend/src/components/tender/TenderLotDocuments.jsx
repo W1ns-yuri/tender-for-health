@@ -30,6 +30,11 @@ export default function TenderLotDocuments({
     setIsDragging(false);
   };
 
+  const handleFileInputChange = (e) => {
+    handleLotFileUpload(e);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -67,7 +72,7 @@ export default function TenderLotDocuments({
           type="file"
           multiple
           className="hidden"
-          onChange={handleLotFileUpload}
+          onChange={handleFileInputChange}
         />
       </div>
 

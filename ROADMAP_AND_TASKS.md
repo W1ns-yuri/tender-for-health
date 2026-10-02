@@ -257,19 +257,11 @@ model TenderInvitation {
 ### 📌 Текущий прогресс декомпозиции:
 - ✅ **AdminCatalogs.jsx**: декомпозирован из 1 312 строк в **15 изолированных компонентов** в `src/components/catalogs/` (страница сокращена до ~450 строк).
 - ✅ **AnalyticsPage.jsx**: декомпозирован из 1 289 строк в **10 изолированных компонентов** в `src/components/analytics/` (страница сокращена до ~170 строк).
+- ✅ **CreateTenderPage.jsx**: декомпозирован из 1 134 строк в **176 строк**. Вынесены хук `useCreateTenderState.js`, навигация `TenderTopNavigationTabs.jsx` и менеджер лотов `TenderLotsManagerTab.jsx` с полной синхронизацией 3 языков (RU/TM/EN).
+- ✅ **EvaluationDetailsPage.jsx**: декомпозирован из 789 строк в **142 строки** (сокращение на 82%). Вынесены хук `useEvaluationDetails.js`, утилиты `evaluationUtils.js` и 6 субкомпонентов в `src/components/evaluation/` (`EvaluationDetailsHeader`, `EvaluationOverviewCard`, `EvaluationLotCard`, `EvaluationLotComparativeTable`, `EvaluationLotSpecBreakdown`, `EvaluationBottomActionBar`).
 
 ### 📋 Очередь файлов на декомпозицию до уровня Senior:
-1. **`CreateTenderPage.jsx` (~1 130 строк)**:
-   - Конструктор тендера: интеграция всех табов (`TenderGeneralParamsTab`, `TenderGeneralDocumentsTab`, `TenderLotsTabBar`, `TenderLotDetailsCard`, `TenderLotItemsTable`, `TenderLotDocuments`, `TenderVisibilityAndInvitedSuppliers`) под единую чистую оркестрацию состояния.
-   - Сокращение файла страницы до ~180 строк.
-2. **`EvaluationDetailsPage.jsx` (~1 070 строк)**:
-   - Разделение на компоненты в папку `src/components/evaluation/`:
-     - `EvaluationHeader.jsx` — шапка процедуры и статус.
-     - `EvaluationLotsAccordion.jsx` — раскрывающийся список лотов и спецификаций.
-     - `EvaluationOffersComparisonTable.jsx` — сравнительная таблица ценовых предложений участников.
-     - `EvaluationCommissionScoringModal.jsx` — окно проставления оценок членами комиссии.
-     - `EvaluationProtocolSignModal.jsx` — окно формирования и утверждения итогового протокола.
-3. **`SettingsPage.jsx` (~1 010 строк)**:
+1. **`SettingsPage.jsx` (~1 010 строк)**:
    - Разделение на компоненты в папку `src/components/settings/`:
      - `SettingsProfileTab.jsx` — реквизиты организации и контакты.
      - `SettingsSecurityTab.jsx` — смена пароля и журнал сессий.

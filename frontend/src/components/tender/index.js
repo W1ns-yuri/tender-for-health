@@ -8,5 +8,8 @@ export { default as TenderLotDocuments } from './TenderLotDocuments';
 export { default as TenderLotItemsTable } from './TenderLotItemsTable';
 export { default as TenderLotStickyFooter } from './TenderLotStickyFooter';
 export { default as TenderLotsTabBar } from './TenderLotsTabBar';
+export { default as TenderLotsManagerTab } from './TenderLotsManagerTab';
+export { default as TenderTopNavigationTabs } from './TenderTopNavigationTabs';
 export { default as TenderVisibilityAndInvitedSuppliers } from './TenderVisibilityAndInvitedSuppliers';
+export { default as useCreateTenderState } from './useCreateTenderState';
 export * from './tenderConstants';

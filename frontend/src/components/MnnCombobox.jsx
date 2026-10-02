@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { ChevronDown, X, Check, Plus, Pill, Search } from 'lucide-react';
+import { ChevronDown, X, Check, Plus, Pill } from 'lucide-react';
 import API from '../services/api';
 
 /**
@@ -15,7 +15,6 @@ export default function MnnCombobox({
   existingProducts = [],
   isDarkMode = false,
   role = 'ADMIN',
-  theme,
   t,
   required = true,
   placeholder = 'Выберите МНН из архива или введите новое...'

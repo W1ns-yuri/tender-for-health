@@ -241,7 +241,7 @@ export default function OfferLotItemRow({
             <div className="flex items-center gap-2 text-[11px] text-blue-700 dark:text-blue-300 font-medium">
               <Info size={13} className="shrink-0 text-blue-600" />
               <span>
-                {t('analogOfferedNotice', 'Предложен эквивалент / аналог. Заявка будет проверена экспертной комиссией на соответствие техническим и качественным характеристикам.')}
+                {t('analogOfferedNotice', 'Предложен эквивалент / аналог. Заявка будет проверена организатором закупки на соответствие техническим и качественным характеристикам.')}
               </span>
             </div>
           </td>

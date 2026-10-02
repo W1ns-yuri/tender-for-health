@@ -23,16 +23,18 @@ const getCategories = async (req, res) => {
 const createCategory = async (req, res) => {
     try {
         const { name, code, type, description } = req.body;
+        const cleanCode = (code && typeof code === 'string' && code.trim()) ? code.trim() : null;
         const category = await prisma.category.create({
             data: { 
-                name, 
-                code: code || null, 
+                name: (name || '').trim(), 
+                code: cleanCode, 
                 type: type || 'GOODS',
-                description 
+                description: description || null
             },
         });
         res.status(201).json(category);
     } catch (error) {
+        console.error('createCategory error:', error);
         res.status(500).json({ error: 'Ошибка при создании категории', details: error.message });
     }
 };
@@ -63,20 +65,25 @@ const getGeneralProducts = async (req, res) => {
 const createGeneralProduct = async (req, res) => {
     try {
         const { name, tradeName, code, categoryId, type, itemType, description } = req.body;
+        const cleanCode = (code && typeof code === 'string' && code.trim()) ? code.trim() : null;
+        const cleanCatId = (categoryId && typeof categoryId === 'string' && categoryId.trim()) ? categoryId.trim() : null;
+        const cleanTrade = (tradeName && typeof tradeName === 'string' && tradeName.trim()) ? tradeName.trim() : null;
+
         const product = await prisma.generalProduct.create({
             data: {
-                name,
-                tradeName,
-                code,
-                categoryId: categoryId || null,
-                type: type || 'HARYT',
+                name: (name || '').trim(),
+                tradeName: cleanTrade,
+                code: cleanCode,
+                categoryId: cleanCatId,
+                type: (type === 'HYZMAT' || itemType === 'WORKS' || itemType === 'SERVICES') ? 'HYZMAT' : 'HARYT',
                 itemType: itemType || 'GOODS',
-                description,
+                description: description || null,
             },
             include: { category: true }
         });
         res.status(201).json(product);
     } catch (error) {
+        console.error('createGeneralProduct error:', error);
         res.status(500).json({ error: 'Ошибка при добавлении записи в справочник', details: error.message });
     }
 };
@@ -230,104 +237,213 @@ const getManufacturers = async (req, res) => {
 const createManufacturer = async (req, res) => {
     try {
         const { name, code, countryId } = req.body;
+        const cleanCode = (code && typeof code === 'string' && code.trim()) ? code.trim() : null;
+        const cleanCountryId = (countryId && typeof countryId === 'string' && countryId.trim()) ? countryId.trim() : null;
         const manufacturer = await prisma.manufacturer.create({
-            data: { name, code, countryId: countryId || null },
+            data: { 
+                name: (name || '').trim(), 
+                code: cleanCode, 
+                countryId: cleanCountryId 
+            },
         });
         res.status(201).json(manufacturer);
     } catch (error) {
+        console.error('createManufacturer error:', error);
         res.status(500).json({ error: 'Ошибка при создании производителя', details: error.message });
     }
 };
 
 const updateCategory = async (req, res) => {
     try {
-        const category = await prisma.category.update({ where: { id: req.params.id }, data: req.body });
+        const { name, code, type, description, isActive } = req.body;
+        const data = {};
+        if (name !== undefined) data.name = (name || '').trim();
+        if (code !== undefined) data.code = (code && typeof code === 'string' && code.trim()) ? code.trim() : null;
+        if (type !== undefined) data.type = type;
+        if (description !== undefined) data.description = description || null;
+        if (isActive !== undefined) data.isActive = Boolean(isActive);
+
+        const category = await prisma.category.update({ where: { id: req.params.id }, data });
         res.json(category);
-    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+    } catch (error) { 
+        console.error('updateCategory error:', error);
+        res.status(500).json({ error: 'Ошибка обновления категории', details: error.message }); 
+    }
 };
 const deleteCategory = async (req, res) => {
     try {
         await prisma.category.delete({ where: { id: req.params.id } });
         res.status(204).send();
-    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+    } catch (error) { 
+        console.error('deleteCategory error:', error);
+        res.status(500).json({ error: 'Ошибка удаления категории', details: error.message }); 
+    }
 };
 
 const updateGeneralProduct = async (req, res) => {
     try {
-        const product = await prisma.generalProduct.update({ where: { id: req.params.id }, data: req.body });
+        const { name, tradeName, code, categoryId, type, itemType, description, isActive } = req.body;
+        const data = {};
+        if (name !== undefined) data.name = (name || '').trim();
+        if (tradeName !== undefined) data.tradeName = (tradeName && typeof tradeName === 'string' && tradeName.trim()) ? tradeName.trim() : null;
+        if (code !== undefined) data.code = (code && typeof code === 'string' && code.trim()) ? code.trim() : null;
+        if (categoryId !== undefined) data.categoryId = (categoryId && typeof categoryId === 'string' && categoryId.trim()) ? categoryId.trim() : null;
+        if (type !== undefined) data.type = (type === 'HYZMAT' || itemType === 'WORKS' || itemType === 'SERVICES') ? 'HYZMAT' : 'HARYT';
+        if (itemType !== undefined) data.itemType = itemType;
+        if (description !== undefined) data.description = description || null;
+        if (isActive !== undefined) data.isActive = Boolean(isActive);
+
+        const product = await prisma.generalProduct.update({ 
+            where: { id: req.params.id }, 
+            data,
+            include: { category: true }
+        });
         res.json(product);
-    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+    } catch (error) { 
+        console.error('updateGeneralProduct error:', error);
+        res.status(500).json({ error: 'Ошибка обновления позиции', details: error.message }); 
+    }
 };
 const deleteGeneralProduct = async (req, res) => {
     try {
         await prisma.generalProduct.delete({ where: { id: req.params.id } });
         res.status(204).send();
-    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+    } catch (error) { 
+        console.error('deleteGeneralProduct error:', error);
+        res.status(500).json({ error: 'Ошибка удаления позиции', details: error.message }); 
+    }
 };
 
 const updateUnit = async (req, res) => {
     try {
-        const unit = await prisma.unit.update({ where: { id: req.params.id }, data: req.body });
+        const { name, shortName, order, isActive } = req.body;
+        const data = {};
+        if (name !== undefined) data.name = (name || '').trim();
+        if (shortName !== undefined) data.shortName = (shortName || '').trim();
+        if (order !== undefined) data.order = parseInt(order, 10) || 0;
+        if (isActive !== undefined) data.isActive = Boolean(isActive);
+
+        const unit = await prisma.unit.update({ where: { id: req.params.id }, data });
         res.json(unit);
-    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+    } catch (error) { 
+        console.error('updateUnit error:', error);
+        res.status(500).json({ error: 'Ошибка обновления единицы измерения', details: error.message }); 
+    }
 };
 const deleteUnit = async (req, res) => {
     try {
         await prisma.unit.delete({ where: { id: req.params.id } });
         res.status(204).send();
-    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+    } catch (error) { 
+        console.error('deleteUnit error:', error);
+        res.status(500).json({ error: 'Ошибка удаления единицы измерения', details: error.message }); 
+    }
 };
 
 const updateCurrency = async (req, res) => {
     try {
-        const currency = await prisma.currency.update({ where: { id: req.params.id }, data: req.body });
+        const { name, code, flag, symbol, order, isActive } = req.body;
+        const data = {};
+        if (name !== undefined) data.name = (name || '').trim();
+        if (code !== undefined) data.code = (code || '').trim().toUpperCase();
+        if (flag !== undefined) data.flag = flag || null;
+        if (symbol !== undefined) data.symbol = symbol || null;
+        if (order !== undefined) data.order = parseInt(order, 10) || 0;
+        if (isActive !== undefined) data.isActive = Boolean(isActive);
+
+        const currency = await prisma.currency.update({ where: { id: req.params.id }, data });
         res.json(currency);
-    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+    } catch (error) { 
+        console.error('updateCurrency error:', error);
+        res.status(500).json({ error: 'Ошибка обновления валюты', details: error.message }); 
+    }
 };
 const deleteCurrency = async (req, res) => {
     try {
         await prisma.currency.delete({ where: { id: req.params.id } });
         res.status(204).send();
-    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+    } catch (error) { 
+        console.error('deleteCurrency error:', error);
+        res.status(500).json({ error: 'Ошибка удаления валюты', details: error.message }); 
+    }
 };
 
 const updateCountry = async (req, res) => {
     try {
-        const country = await prisma.country.update({ where: { id: req.params.id }, data: req.body });
+        const { name, alpha2, alpha3, order, isActive } = req.body;
+        const data = {};
+        if (name !== undefined) data.name = (name || '').trim();
+        if (alpha2 !== undefined) data.alpha2 = (alpha2 || '').trim().toUpperCase();
+        if (alpha3 !== undefined) data.alpha3 = (alpha3 || '').trim().toUpperCase();
+        if (order !== undefined) data.order = parseInt(order, 10) || 0;
+        if (isActive !== undefined) data.isActive = Boolean(isActive);
+
+        const country = await prisma.country.update({ where: { id: req.params.id }, data });
         res.json(country);
-    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+    } catch (error) { 
+        console.error('updateCountry error:', error);
+        res.status(500).json({ error: 'Ошибка обновления страны', details: error.message }); 
+    }
 };
 const deleteCountry = async (req, res) => {
     try {
         await prisma.country.delete({ where: { id: req.params.id } });
         res.status(204).send();
-    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+    } catch (error) { 
+        console.error('deleteCountry error:', error);
+        res.status(500).json({ error: 'Ошибка удаления страны', details: error.message }); 
+    }
 };
 
 const updateDeliveryTerm = async (req, res) => {
     try {
-        const term = await prisma.deliveryTerm.update({ where: { id: req.params.id }, data: req.body });
+        const { name, shortName, isActive } = req.body;
+        const data = {};
+        if (name !== undefined) data.name = (name || '').trim();
+        if (shortName !== undefined) data.shortName = (shortName || '').trim().toUpperCase();
+        if (isActive !== undefined) data.isActive = Boolean(isActive);
+
+        const term = await prisma.deliveryTerm.update({ where: { id: req.params.id }, data });
         res.json(term);
-    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+    } catch (error) { 
+        console.error('updateDeliveryTerm error:', error);
+        res.status(500).json({ error: 'Ошибка обновления условия поставки', details: error.message }); 
+    }
 };
 const deleteDeliveryTerm = async (req, res) => {
     try {
         await prisma.deliveryTerm.delete({ where: { id: req.params.id } });
         res.status(204).send();
-    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+    } catch (error) { 
+        console.error('deleteDeliveryTerm error:', error);
+        res.status(500).json({ error: 'Ошибка удаления условия поставки', details: error.message }); 
+    }
 };
 
 const updateManufacturer = async (req, res) => {
     try {
-        const m = await prisma.manufacturer.update({ where: { id: req.params.id }, data: req.body });
+        const { name, code, countryId, isActive } = req.body;
+        const data = {};
+        if (name !== undefined) data.name = (name || '').trim();
+        if (code !== undefined) data.code = (code && typeof code === 'string' && code.trim()) ? code.trim() : null;
+        if (countryId !== undefined) data.countryId = (countryId && typeof countryId === 'string' && countryId.trim()) ? countryId.trim() : null;
+        if (isActive !== undefined) data.isActive = Boolean(isActive);
+
+        const m = await prisma.manufacturer.update({ where: { id: req.params.id }, data });
         res.json(m);
-    } catch (error) { res.status(500).json({ error: 'Ошибка обновления' }); }
+    } catch (error) { 
+        console.error('updateManufacturer error:', error);
+        res.status(500).json({ error: 'Ошибка обновления производителя', details: error.message }); 
+    }
 };
 const deleteManufacturer = async (req, res) => {
     try {
         await prisma.manufacturer.delete({ where: { id: req.params.id } });
         res.status(204).send();
-    } catch (error) { res.status(500).json({ error: 'Ошибка удаления' }); }
+    } catch (error) { 
+        console.error('deleteManufacturer error:', error);
+        res.status(500).json({ error: 'Ошибка удаления производителя', details: error.message }); 
+    }
 };
 
 
@@ -457,23 +573,35 @@ const getBrands = async (req, res) => {
 const createBrand = async (req, res) => {
     try {
         const { name, code } = req.body;
+        const cleanCode = (code && typeof code === 'string' && code.trim()) ? code.trim() : null;
         const brand = await prisma.brand.create({
-            data: { name, code: code || null },
+            data: { 
+                name: (name || '').trim(), 
+                code: cleanCode 
+            },
         });
         res.status(201).json(brand);
     } catch (error) {
+        console.error('createBrand error:', error);
         res.status(500).json({ error: 'Ошибка при создании бренда', details: error.message });
     }
 };
 
 const updateBrand = async (req, res) => {
     try {
+        const { name, code, isActive } = req.body;
+        const data = {};
+        if (name !== undefined) data.name = (name || '').trim();
+        if (code !== undefined) data.code = (code && typeof code === 'string' && code.trim()) ? code.trim() : null;
+        if (isActive !== undefined) data.isActive = Boolean(isActive);
+
         const brand = await prisma.brand.update({
             where: { id: req.params.id },
-            data: req.body,
+            data,
         });
         res.json(brand);
     } catch (error) {
+        console.error('updateBrand error:', error);
         res.status(500).json({ error: 'Ошибка при обновлении бренда', details: error.message });
     }
 };
@@ -483,6 +611,7 @@ const deleteBrand = async (req, res) => {
         await prisma.brand.delete({ where: { id: req.params.id } });
         res.status(204).send();
     } catch (error) {
+        console.error('deleteBrand error:', error);
         res.status(500).json({ error: 'Ошибка при удалении бренда', details: error.message });
     }
 };

@@ -33,12 +33,12 @@ export default function CatalogCardGrid({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr">
         {items.map((item) => (
           <div
             key={item.id}
             onClick={() => onSelectCatalog(item.id)}
-            className={`p-5 rounded-2xl border flex items-center space-x-4 cursor-pointer transition-all duration-150 ${
+            className={`p-4 sm:p-5 rounded-2xl border flex items-center space-x-4 cursor-pointer transition-all duration-150 h-full min-h-[104px] ${
               isDarkMode
                 ? 'bg-slate-800/90 border-slate-700/80 hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-950/30'
                 : 'bg-white border-slate-200 hover:border-emerald-400 hover:shadow-md'
@@ -51,15 +51,19 @@ export default function CatalogCardGrid({
             >
               {item.icon}
             </div>
-            <div className="overflow-hidden">
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <h4
                 className={`font-bold text-sm truncate ${
                   isDarkMode ? 'text-slate-100' : 'text-slate-800'
                 }`}
+                title={item.title}
               >
                 {item.title}
               </h4>
-              <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-2 mt-0.5 leading-snug">
+              <p
+                className="text-xs text-slate-400 dark:text-slate-500 line-clamp-2 mt-1 leading-snug h-[2rem]"
+                title={item.subtitle}
+              >
                 {item.subtitle}
               </p>
             </div>

@@ -295,8 +295,8 @@ export default function CustomDatePicker({
             toggleOpen();
           }
         }}
-        className={`group w-full cursor-pointer flex justify-between items-center transition-all duration-150 rounded-lg text-xs select-none border ${
-          size === 'sm' ? 'px-2.5 py-1.5' : 'px-3 py-2'
+        className={`group w-full cursor-pointer flex justify-between items-center transition-all duration-150 rounded-xl text-xs select-none border ${
+          size === 'sm' ? 'px-2.5 py-1.5' : 'h-10 min-h-[40px] px-3.5 py-2'
         } ${
           isDarkMode 
             ? 'bg-[#1f2937] text-slate-100 placeholder:text-slate-500 border-slate-700' 

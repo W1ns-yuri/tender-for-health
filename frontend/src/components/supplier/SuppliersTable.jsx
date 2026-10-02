@@ -88,17 +88,17 @@ export default function SuppliersTable({
 
       {/* 2. Таблица со списком поставщиков */}
       <TableContainer>
-        <Table className="min-w-[980px]">
+        <Table className="min-w-[1000px] table-fixed">
           <TableHead>
             <TableRow>
-              <TableHeaderCell>{t('supplierName', 'Kompaniýanyň ady')}</TableHeaderCell>
-              <TableHeaderCell>{t('activityDirections', 'Направления')}</TableHeaderCell>
-              <TableHeaderCell>{t('country', 'Ýurt')}</TableHeaderCell>
-              <TableHeaderCell>{t('regNo', 'Ýazgy belgisi')}</TableHeaderCell>
-              <TableHeaderCell>{t('taxId', 'ИНН (STŞK)')}</TableHeaderCell>
-              <TableHeaderCell>{t('license', 'Ygtyýarnama')}</TableHeaderCell>
-              <TableHeaderCell align="center">{t('status', 'Ýagdaýy')}</TableHeaderCell>
-              <TableHeaderCell align="right">{t('action', 'Amal')}</TableHeaderCell>
+              <TableHeaderCell className="w-56">{t('supplierName', 'Kompaniýanyň ady')}</TableHeaderCell>
+              <TableHeaderCell className="w-48">{t('activityDirections', 'Направления')}</TableHeaderCell>
+              <TableHeaderCell className="w-32">{t('country', 'Ýurt')}</TableHeaderCell>
+              <TableHeaderCell className="w-32">{t('regNo', 'Ýazgy belgisi')}</TableHeaderCell>
+              <TableHeaderCell className="w-32">{t('taxId', 'ИНН (STŞK)')}</TableHeaderCell>
+              <TableHeaderCell className="w-36">{t('license', 'Ygtyýarnama')}</TableHeaderCell>
+              <TableHeaderCell className="w-32" align="center">{t('status', 'Ýagdaýy')}</TableHeaderCell>
+              <TableHeaderCell className="w-24" align="right">{t('action', 'Amal')}</TableHeaderCell>
             </TableRow>
           </TableHead>
 

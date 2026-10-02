@@ -262,18 +262,18 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
 
         <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-xs border-collapse table-fixed min-w-[1080px]">
               <thead className={theme.tableHeaderBg}>
                 <tr className="border-b border-slate-200 dark:border-slate-800">
                   <th className="py-3.5 px-4 w-28 text-center">{t('lotNo', 'Lot №')}</th>
                   <th className="py-3.5 px-4 w-48 text-center">{t('title', 'Ady')}</th>
-                  <th className="py-3.5 px-4 text-center">{t('description', 'Mazmuny')}</th>
-                  <th className="py-3.5 px-4 text-center">{t('type', 'Görnüşi')}</th>
-                  <th className="py-3.5 px-4 text-center">{t('status', 'Status')}</th>
-                  <th className="py-3.5 px-4 text-center">{t('announcementDate', 'Yglan edilen senesi')}</th>
-                  <th className="py-3.5 px-4 text-center">{t('deadline', 'Soňky möhleti')}</th>
-                  <th className="py-3.5 px-4 text-center">{t('technicalSpecs', 'Tehniki şartler')}</th>
-                  <th className="py-3.5 px-4 text-center">{t('action', 'Amal')}</th>
+                  <th className="py-3.5 px-4 w-56 text-center">{t('description', 'Mazmuny')}</th>
+                  <th className="py-3.5 px-4 w-28 text-center">{t('type', 'Görnüşi')}</th>
+                  <th className="py-3.5 px-4 w-36 text-center">{t('status', 'Status')}</th>
+                  <th className="py-3.5 px-4 w-32 text-center">{t('announcementDate', 'Yglan edilen senesi')}</th>
+                  <th className="py-3.5 px-4 w-32 text-center">{t('deadline', 'Soňky möhleti')}</th>
+                  <th className="py-3.5 px-4 w-52 text-center">{t('technicalSpecs', 'Tehniki şartler')}</th>
+                  <th className="py-3.5 px-4 w-28 text-center">{t('action', 'Amal')}</th>
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -297,13 +297,19 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                           )}
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 text-center font-medium">{safeString(item.title)}</td>
-                      <td className={`py-3.5 px-4 text-center w-auto min-w-55 whitespace-normal text-wrap ${theme.subText}`}>{safeString(item.description)}</td>
+                      <td className="py-3.5 px-4 text-center font-medium">
+                        <div className="truncate" title={safeString(item.title)}>{safeString(item.title)}</div>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <div className={`line-clamp-2 ${theme.subText}`} title={safeString(item.description)}>{safeString(item.description)}</div>
+                      </td>
                       <td className="py-3.5 px-4 text-center">{getTypeBadge(item.type, lang, isDarkMode)}</td>
                       <td className="py-3.5 px-4 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
                       <td className={`py-3.5 px-4 text-center tabular-nums ${theme.subText}`}>{formatDate(item.announcementDate || item.date)}</td>
                       <td className={`py-3.5 px-4 text-center tabular-nums ${theme.subText}`}>{formatDate(item.deadline)}</td>
-                      <td className={`py-3.5 px-4 text-center w-auto min-w-45 whitespace-normal text-wrap ${theme.subText}`}>{renderTechSpecs(item)}</td>
+                      <td className="py-3.5 px-4 text-center">
+                        <div className={`line-clamp-2 ${theme.subText}`} title={renderTechSpecs(item)}>{renderTechSpecs(item)}</div>
+                      </td>
                       <td className="py-3.5 px-4 text-center">
                         <div className="flex items-center justify-center">
                           <button
@@ -353,18 +359,18 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
 
         <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-xs border-collapse table-fixed min-w-[1080px]">
               <thead className={theme.tableHeaderBg}>
                 <tr className="border-b border-slate-200 dark:border-slate-800">
-                  <th className="py-3 px-4 text-left">{t('tenderOrName', 'Тендер / Наименование')}</th>
-                  <th className="py-3 px-3 text-center">{t('type', 'Görnüşi')}</th>
-                  <th className="py-3 px-4 text-center">{t('client', 'Заказчик')}</th>
-                  <th className="py-3 px-3 text-center">{t('currency', 'Walýuta')}</th>
-                  <th className="py-3 px-4 text-center">{t('code', 'Belgisi')}</th>
-                  <th className="py-3 px-3 text-center">{t('status', 'Status')}</th>
-                  <th className="py-3 px-4 text-center">{t('paymentTerms', 'Töleg şertleri')}</th>
-                  <th className="py-3 px-3 text-center">{t('offerDate', 'Дата подачи заявки')}</th>
-                  <th className="py-3 px-4 text-center">{t('action', 'Amal')}</th>
+                  <th className="py-3 px-4 w-44 text-left">{t('tenderOrName', 'Тендер / Наименование')}</th>
+                  <th className="py-3 px-3 w-28 text-center">{t('type', 'Görnüşi')}</th>
+                  <th className="py-3 px-4 w-36 text-center">{t('client', 'Заказчик')}</th>
+                  <th className="py-3 px-3 w-24 text-center">{t('currency', 'Walýuta')}</th>
+                  <th className="py-3 px-4 w-32 text-center">{t('code', 'Belgisi')}</th>
+                  <th className="py-3 px-3 w-32 text-center">{t('status', 'Status')}</th>
+                  <th className="py-3 px-4 w-36 text-center">{t('paymentTerms', 'Töleg şertleri')}</th>
+                  <th className="py-3 px-3 w-32 text-center">{t('offerDate', 'Дата подачи заявки')}</th>
+                  <th className="py-3 px-4 w-24 text-center">{t('action', 'Amal')}</th>
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>

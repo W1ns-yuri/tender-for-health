@@ -21,25 +21,41 @@ const storage = multer.diskStorage({
     },
 });
 
-// Фильтр типов файлов (разрешаем PDF, JPG, PNG, а также документы Word и Excel для спецификаций)
+// Фильтр типов файлов (разрешаем безопасные форматы: PDF, JPG, PNG, WEBP, Word и Excel; строгий запрет SVG/HTML/скриптов для предотвращения XSS)
+const DANGEROUS_EXTENSIONS = ['.svg', '.html', '.htm', '.js', '.mjs', '.php', '.phtml', '.exe', '.sh', '.bat', '.cmd'];
+
+const ALLOWED_MIME_TYPES = [
+    'application/pdf',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/octet-stream',
+];
+
+const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.doc', '.docx', '.xls', '.xlsx'];
+
 const fileFilter = (req, file, cb) => {
-    const allowedMimeTypes = [
-        'application/pdf',
-        'image/jpeg',
-        'image/png',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/octet-stream', // некоторые клиенты отправляют xlsx как octet-stream
-    ];
-    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx'];
+    // 1. Проверка на Null-байты и опасные символы в имени
+    if (file.originalname.includes('\0') || file.originalname.includes('..')) {
+        return cb(new Error('Недопустимое имя файла (обнаружены спецсимволы)'), false);
+    }
+
     const ext = path.extname(file.originalname).toLowerCase();
 
-    if (allowedExtensions.includes(ext)) {
+    // 2. Строгая блокировка исполняемых и векторных файлов (SVG несет XSS-векторы)
+    if (DANGEROUS_EXTENSIONS.includes(ext)) {
+        return cb(new Error('Данный тип файла заблокирован политикой безопасности платформы (SVG, HTML и исполняемые файлы запрещены)'), false);
+    }
+
+    // 3. Проверка соответствия разрешенным расширениям и типам
+    if (ALLOWED_EXTENSIONS.includes(ext) && ALLOWED_MIME_TYPES.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error('Недопустимый формат файла. Разрешены PDF, JPG, PNG, Word (.doc, .docx) и Excel (.xls, .xlsx)'), false);
+        cb(new Error('Недопустимый формат файла. Разрешены PDF, JPG, PNG, WEBP, Word (.doc, .docx) и Excel (.xls, .xlsx)'), false);
     }
 };
 

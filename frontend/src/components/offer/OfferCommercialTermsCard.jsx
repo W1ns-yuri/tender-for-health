@@ -31,6 +31,7 @@ export default function OfferCommercialTermsCard({
             role="SUPPLIER"
             options={currencies.map(c => ({ id: c.id, name: getCurrencyLabel(c) }))}
             value={currency}
+            placeholder={t('selectCurrency', 'Выберите валюту...')}
             onChange={(val) => setCurrency(val)}
             isDarkMode={isDarkMode}
             theme={theme}

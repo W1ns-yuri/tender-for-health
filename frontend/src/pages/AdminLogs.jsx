@@ -197,12 +197,6 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
     switch (roleType) {
       case 'ADMIN':
         return <span className="px-2.5 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 rounded-full font-bold text-xs">ADMIN</span>;
-      case 'CLIENT':
-        return <span className="px-2.5 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-full font-bold text-xs">{t('client', 'ЗАКАЗЧИК')}</span>;
-      case 'PURCHASING_SPECIALIST':
-        return <span className="px-2.5 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 rounded-full font-bold text-xs">{t('roleSpecialist', 'СПЕЦИАЛИСТ')}</span>;
-      case 'COMMISSION_MEMBER':
-        return <span className="px-2.5 py-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 rounded-full font-bold text-xs">{t('roleCommission', 'КОМИССИЯ')}</span>;
       case 'SUPPLIER':
       default:
         return <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-full font-bold text-xs">{t('supplierStr', 'ПОСТАВЩИК')}</span>;
@@ -224,11 +218,8 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
   };
 
   const systemRoles = [
-    { code: 'ADMIN', name: t('systemAdminRole', 'Администратор системы'), desc: t('adminRoleDescription', 'Полный доступ ко всем справочникам, пользователям, логам аудита и настройкам') },
-    { code: 'CLIENT', name: t('customerRoleTitle', 'Заказчик (Минздрав / Больницы)'), desc: t('customerRoleDescription', 'Создание тендеров, утверждение условий, публикация и открытие предложений') },
-    { code: 'PURCHASING_SPECIALIST', name: t('procurementSpecialistTitle', 'Специалист по закупкам'), desc: t('procurementSpecialistDescription', 'Подготовка спецификаций, проверка требований и координация тендеров') },
-    { code: 'COMMISSION_MEMBER', name: t('commissionMemberTitle', 'Член тендерной комиссии'), desc: t('commissionMemberDescription', 'Оценка коммерческих предложений, ранжирование и выбор победителя') },
-    { code: 'SUPPLIER', name: t('supplierRoleTitle', 'Поставщик (Участник торгов)'), desc: t('supplierRoleDescription', 'Просмотр открытых тендеров, подача и отслеживание коммерческих предложений') }
+    { code: 'ADMIN', name: t('systemAdminRole', 'Администратор системы'), desc: t('adminRoleDescription', 'Полный доступ ко всей платформе: создание, заполнение и публикация тендеров, оценка заявок, выбор победителей, верификация поставщиков и управление системой') },
+    { code: 'SUPPLIER', name: t('supplierRoleTitle', 'Поставщик (Участник торгов)'), desc: t('supplierRoleDescription', 'Просмотр открытых тендеров, формирование и подача коммерческих предложений по лотам, управление профилем компании') }
   ];
 
   return (

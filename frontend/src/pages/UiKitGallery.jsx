@@ -219,7 +219,7 @@ export default function UiKitGallery({
   // Sample data for Pattern B: Dashboard / Tender Lots table
   const sampleLotsData = [
     { id: 'LOT-101', title: 'Parasetamol 500mg (10,000 gutusy)', budget: '45,000 TMT', bidsCount: 4, deadline: '2 günüň içinde', status: 'emerald', statusLabel: currentLang === 'RU' ? 'Прием заявок' : 'Teklip kabul edilýär' },
-    { id: 'LOT-102', title: 'Sanly Rentgen enjamy X-Ray Ultra', budget: '620,000 TMT', bidsCount: 2, deadline: '5 günüň içinde', status: 'blue', statusLabel: currentLang === 'RU' ? 'Оценка комиссией' : 'Bahalandyrma' },
+    { id: 'LOT-102', title: 'Sanly Rentgen enjamy X-Ray Ultra', budget: '620,000 TMT', bidsCount: 2, deadline: '5 günüň içinde', status: 'blue', statusLabel: currentLang === 'RU' ? 'Оценка заявок' : 'Bahalandyrma' },
     { id: 'LOT-103', title: 'Steril lukmançylyk ellikleri (50,000 jübüt)', budget: '40,000 TMT', bidsCount: 6, deadline: 'Tamamlandy', status: 'slate', statusLabel: currentLang === 'RU' ? 'Завершен' : 'Tamamlanan' },
   ];
 

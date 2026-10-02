@@ -164,3 +164,18 @@ export const calculateReadiness = (formData, documents, selectedCategoryIds, sup
 
   return { steps, percent, isApproved, isPendingReview, isDetailsFilled, isDocsUploaded, isCategoriesSelected };
 };
+
+// Парсинг истории изменений профиля, отправленных на модерацию
+export const parseSupplierChanges = (notes) => {
+  if (!notes) return null;
+  try {
+    const data = typeof notes === 'string' ? JSON.parse(notes) : notes;
+    if (data && Array.isArray(data.changes) && data.changes.length > 0) {
+      return data;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+

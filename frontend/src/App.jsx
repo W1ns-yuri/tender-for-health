@@ -44,9 +44,14 @@ export default function App() {
     return localStorage.getItem('tender_theme') === 'dark';
   });
 
-  // Автоматически сворачивать сайдбар при переходе в режим "Оценка заявок" для полноэкранного обзора
+  // Автоматически сворачивать сайдбар ТОЛЬКО для администратора при детальной оценке заявок тендера
   useEffect(() => {
-    if (location.pathname.startsWith('/evaluation')) {
+    const isAdminReviewingBids = role === 'ADMIN' && (
+      location.pathname.startsWith('/evaluation/') || 
+      location.pathname.startsWith('/admin/evaluations/')
+    );
+
+    if (isAdminReviewingBids) {
       if (!isCollapsed && !autoCollapsedRef.current) {
         autoCollapsedRef.current = true;
         setIsCollapsed(true);
@@ -55,7 +60,7 @@ export default function App() {
       autoCollapsedRef.current = false;
       setIsCollapsed(false);
     }
-  }, [location.pathname, isCollapsed]);
+  }, [location.pathname, isCollapsed, role]);
 
   useEffect(() => {
     if (isDarkMode) {

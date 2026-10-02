@@ -322,6 +322,14 @@ export default function CatalogFormModal({
         if (!submissionData.type) submissionData.type = 'GOODS';
       }
 
+      delete submissionData.category;
+      delete submissionData.country;
+      delete submissionData.brand;
+      delete submissionData.tenderSpecs;
+      delete submissionData.offerSpecs;
+      delete submissionData.createdAt;
+      delete submissionData.updatedAt;
+
       await onSave(submissionData, editingItem?.id);
     } catch (error) {
       console.error(error);

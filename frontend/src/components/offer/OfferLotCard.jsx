@@ -150,6 +150,7 @@ export default function OfferLotCard({
                     className="min-w-36"
                     options={deliveryTerms.map(dt => ({ id: dt.id, name: `${dt.shortName} — ${dt.name}` }))}
                     value={lotDeliveryTerms[lot.id] || ''}
+                    placeholder={t('selectDeliveryTerm', 'Выберите базис поставки...')}
                     onChange={(val) => setLotDeliveryTerms(prev => ({ ...prev, [lot.id]: val }))}
                     searchable={deliveryTerms.length > 5}
                     isDarkMode={isDarkMode}

@@ -11,6 +11,7 @@ export default function SupplierBankCard({
   isEditable,
   isCustomBank,
   setIsCustomBank,
+  isBankModified = false,
   role,
   isDarkMode,
   inputBg,
@@ -63,6 +64,11 @@ export default function SupplierBankCard({
         <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
           <CreditCard size={18} className="text-blue-600" />
           {t('bankDetails', 'Банковские реквизиты')}
+          {isBankModified && (
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800 uppercase tracking-wider">
+              {t('moderationFieldChangedBadge', 'Изменено')}
+            </span>
+          )}
         </h3>
 
         {/* Переключатель вкладок реквизитов */}

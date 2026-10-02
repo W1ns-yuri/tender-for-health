@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Eye, Edit2, Trash2, Lock } from 'lucide-react';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
@@ -143,7 +143,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
     { id: 'ACYK', label: t('openTendersTab', 'Открытые (Прием заявок)'), count: statusCounts.ACYK },
     { id: 'BAHALANDYRYLDY', label: t('underEvaluationTab', 'На рассмотрении'), count: statusCounts.BAHALANDYRYLDY },
     { id: 'FINISHED', label: t('statusFinished', 'Завершенные'), count: statusCounts.FINISHED },
-    ...(role === 'ADMIN' || role === 'PURCHASING_SPECIALIST' ? [{
+    ...(role === 'ADMIN' ? [{
       id: 'TASLAMA',
       label: t('draftTendersTab', 'Черновики / Проекты'),
       count: statusCounts.TASLAMA
@@ -175,7 +175,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
       }
       return true;
     });
-  }, [tenders, activeStatusTab, announcementDateFilter, deadlineFilter]);
+  }, [tenders, activeStatusTab, visibilityFilter, announcementDateFilter, deadlineFilter]);
 
   // 4. Пагинация: расчет страниц и среза отображаемых записей
   const totalItems = filteredList.length;
@@ -302,18 +302,18 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
       {/* 4. Таблица реестра тендеров с пагинацией */}
       <div className={`bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden ${theme.tableCardBorderTop}`}>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse table-fixed min-w-[1080px]">
             <thead className={theme.tableHeaderBg}>
               <tr className="border-b border-slate-200 dark:border-slate-800">
                 <th className="py-3.5 px-4 w-28 text-center">{t('lotNo', 'Lot №')}</th>
                 <th className="py-3.5 px-4 w-48 text-center">{t('title', 'Ady')}</th>
-                <th className="py-3.5 px-4 text-center">{t('description', 'Mazmuny')}</th>
-                <th className="py-3.5 px-4 text-center">{t('type', 'Görnüşi')}</th>
-                <th className="py-3.5 px-4 text-center">{t('status', 'Status')}</th>
-                <th className="py-3.5 px-4 text-center">{t('announcementDate', 'Yglan edilen senesi')}</th>
-                <th className="py-3.5 px-4 text-center">{t('deadline', 'Soňky möhleti')}</th>
-                <th className="py-3.5 px-4 text-center">{t('technicalSpecs', 'Tehniki şartler')}</th>
-                <th className="py-3.5 px-4 text-center">{t('action', 'Amal')}</th>
+                <th className="py-3.5 px-4 w-56 text-center">{t('description', 'Mazmuny')}</th>
+                <th className="py-3.5 px-4 w-28 text-center">{t('type', 'Görnüşi')}</th>
+                <th className="py-3.5 px-4 w-36 text-center">{t('status', 'Status')}</th>
+                <th className="py-3.5 px-4 w-32 text-center">{t('announcementDate', 'Yglan edilen senesi')}</th>
+                <th className="py-3.5 px-4 w-32 text-center">{t('deadline', 'Soňky möhleti')}</th>
+                <th className="py-3.5 px-4 w-52 text-center">{t('technicalSpecs', 'Tehniki şartler')}</th>
+                <th className="py-3.5 px-4 w-28 text-center">{t('action', 'Amal')}</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
@@ -337,13 +337,19 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                         )}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-center font-medium">{safeString(item.title)}</td>
-                    <td className={`py-3.5 px-4 text-center w-auto min-w-55 whitespace-normal text-wrap ${theme.subText}`}>{safeString(item.description)}</td>
+                    <td className="py-3.5 px-4 text-center font-medium">
+                      <div className="truncate" title={safeString(item.title)}>{safeString(item.title)}</div>
+                    </td>
+                    <td className="py-3.5 px-4 text-center">
+                      <div className={`line-clamp-2 ${theme.subText}`} title={safeString(item.description)}>{safeString(item.description)}</div>
+                    </td>
                     <td className="py-3.5 px-4 text-center">{getTypeBadge(item.type, lang, isDarkMode)}</td>
                     <td className="py-3.5 px-4 text-center">{getStatusBadge(item.status, lang, isDarkMode)}</td>
                     <td className={`py-3.5 px-4 text-center tabular-nums ${theme.subText}`}>{formatDate(item.announcementDate || item.date)}</td>
                     <td className={`py-3.5 px-4 text-center tabular-nums ${theme.subText}`}>{formatDate(item.deadline)}</td>
-                    <td className={`py-3.5 px-4 text-center w-auto min-w-45 whitespace-normal text-wrap ${theme.subText}`}>{renderTechSpecs(item)}</td>
+                    <td className="py-3.5 px-4 text-center">
+                      <div className={`line-clamp-2 ${theme.subText}`} title={renderTechSpecs(item)}>{renderTechSpecs(item)}</div>
+                    </td>
                     <td className="py-3.5 px-4 text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         <button
@@ -354,7 +360,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                           <Eye size={16} />
                         </button>
                         
-                        {(role === 'ADMIN' || role === 'PURCHASING_SPECIALIST') && (
+                        {role === 'ADMIN' && (
                           <>
                             <button
                               onClick={() => onNavigate('edit-tender', item.id)}

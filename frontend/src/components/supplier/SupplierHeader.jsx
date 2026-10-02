@@ -1,27 +1,42 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Camera, Globe, Lock } from 'lucide-react';
 import { getCleanCompanyName, getBrandInitials, getCompanyTypeBadge } from './supplierUtils';
+import { resolveFileUrl } from '../../utils/themeUtils';
 
 export default function SupplierHeader({
   supplier,
   formData,
   isEditable,
   isForeignCompany,
+  isLogoModified = false,
   onLogoUpload,
   t = (k, f) => f
 }) {
   const logoInputRef = useRef(null);
+  const [imgError, setImgError] = useState(false);
+
+  const rawLogo = formData?.logoUrl || supplier?.logoUrl;
+
+  useEffect(() => {
+    setImgError(false);
+  }, [rawLogo]);
 
   if (!supplier) return null;
 
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pb-6 border-b border-slate-100 dark:border-slate-800">
       <div className="relative group shrink-0">
-        <div className="h-20 w-20 bg-slate-800 dark:bg-slate-700 text-white rounded-[1.25rem] flex items-center justify-center shadow-md shadow-slate-900/10 shrink-0 font-black text-2xl tracking-wider select-none overflow-hidden border border-slate-700/50">
-          {(formData?.logoUrl || supplier.logoUrl) ? (
+        {isLogoModified && (
+          <span className="absolute -top-2 -left-2 px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-black rounded-md shadow-sm uppercase tracking-wider z-10">
+            {t('moderationFieldChangedBadge', 'Изменено')}
+          </span>
+        )}
+        <div className={`h-20 w-20 bg-slate-800 dark:bg-slate-700 text-white rounded-[1.25rem] flex items-center justify-center shadow-md shadow-slate-900/10 shrink-0 font-black text-2xl tracking-wider select-none overflow-hidden border ${isLogoModified ? 'border-2 border-amber-500 ring-4 ring-amber-500/20' : 'border-slate-700/50'}`}>
+          {rawLogo && !imgError ? (
             <img
-              src={formData?.logoUrl || supplier.logoUrl}
+              src={resolveFileUrl(rawLogo)}
               alt={supplier.name}
+              onError={() => setImgError(true)}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -33,7 +48,7 @@ export default function SupplierHeader({
             <input
               ref={logoInputRef}
               type="file"
-              accept="image/png,image/jpeg,image/jpg"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
               className="hidden"
               onChange={onLogoUpload}
             />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Globe, Lock, Search, Plus, X, Users, Check, Building2, Sparkles, AlertCircle, Trash2 } from 'lucide-react';
+import { Globe, Lock, Search, Plus, X, Users, Check, Building2, Sparkles, Trash2 } from 'lucide-react';
 import API from '../../services/api';
 import {
   TableContainer,
@@ -86,18 +86,42 @@ export default function TenderVisibilityAndInvitedSuppliers({
     };
   }, []);
 
-  // Фильтрация поставщиков для выпадающего поиска
-  const filteredSuppliers = useMemo(() => {
+  // Фильтрация поставщиков для выпадающего поиска с разделением по категориям закупки
+  const { matchedSuppliers, unmatchedSuppliers } = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return [];
-    return allSuppliers.filter(s => {
+    if (!q) return { matchedSuppliers: [], unmatchedSuppliers: [] };
+
+    const searchResults = allSuppliers.filter(s => {
       const name = (s.name || '').toLowerCase();
       const taxId = (s.taxId || '').toLowerCase();
       const address = (s.legalAddress || s.address || '').toLowerCase();
       const userPhone = (s.user?.phone || '').toLowerCase();
-      return name.includes(q) || taxId.includes(q) || address.includes(q) || userPhone.includes(q);
-    }).slice(0, 8);
-  }, [allSuppliers, searchQuery]);
+      const catNames = (s.categories || []).map(c => (c.category?.name || '').toLowerCase()).join(' ');
+      return name.includes(q) || taxId.includes(q) || address.includes(q) || userPhone.includes(q) || catNames.includes(q);
+    });
+
+    if (!tenderCategoryId) {
+      return { matchedSuppliers: searchResults.slice(0, 10), unmatchedSuppliers: [] };
+    }
+
+    const matched = [];
+    const unmatched = [];
+    searchResults.forEach(s => {
+      const hasCat = (s.categories || []).some(c => c.categoryId === tenderCategoryId || c.category?.id === tenderCategoryId);
+      if (hasCat) {
+        matched.push(s);
+      } else {
+        unmatched.push(s);
+      }
+    });
+
+    return {
+      matchedSuppliers: matched.slice(0, 8),
+      unmatchedSuppliers: unmatched.slice(0, 8)
+    };
+  }, [allSuppliers, searchQuery, tenderCategoryId]);
+
+  const totalFilteredCount = matchedSuppliers.length + unmatchedSuppliers.length;
 
   // Список уже выбранных объектов-поставщиков
   const selectedSuppliers = useMemo(() => {
@@ -299,20 +323,22 @@ export default function TenderVisibilityAndInvitedSuppliers({
 
             {/* Выпадающий список результатов поиска */}
             {isDropdownOpen && searchQuery.trim() && (
-              <div className="absolute z-30 left-0 right-0 mt-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden max-h-64 overflow-y-auto">
+              <div className="absolute z-30 left-0 right-0 mt-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden max-h-72 overflow-y-auto">
                 {loadingSuppliers ? (
                   <div className="p-4 text-center text-xs text-slate-400">
                     {t('loading', 'Загрузка поставщиков...')}
                   </div>
-                ) : filteredSuppliers.length === 0 ? (
+                ) : totalFilteredCount === 0 ? (
                   <div className="p-4 text-center text-xs text-slate-400">
                     {t('noSuppliersFound', 'По вашему запросу поставщиков не найдено')}
                   </div>
                 ) : (
                   <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {filteredSuppliers.map(supplier => {
+                    {/* 1. Поставщики, подходящие по категории */}
+                    {matchedSuppliers.map(supplier => {
                       const isAlreadyAdded = invitedSupplierIds.includes(supplier.id);
                       const parsed = parseSupplierName(supplier.name);
+                      const cats = supplier.categories || [];
                       return (
                         <div
                           key={supplier.id}
@@ -322,15 +348,15 @@ export default function TenderVisibilityAndInvitedSuppliers({
                           className={`p-3 flex items-center justify-between gap-3 text-xs transition-colors ${
                             isAlreadyAdded 
                               ? 'opacity-50 bg-slate-50 dark:bg-slate-800/40 cursor-not-allowed' 
-                              : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer'
+                              : 'hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 cursor-pointer bg-white dark:bg-slate-900'
                           }`}
                         >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-600 dark:text-slate-300 shrink-0">
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold shrink-0 border border-emerald-200/60 dark:border-emerald-800/50">
                               <Building2 size={16} />
                             </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5 truncate">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 {parsed.opf && (
                                   <span className="px-1 py-0.2 rounded text-[9px] font-extrabold bg-slate-100 dark:bg-slate-750 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700 shrink-0">
                                     {parsed.opf}
@@ -339,11 +365,28 @@ export default function TenderVisibilityAndInvitedSuppliers({
                                 <span className="font-bold text-slate-800 dark:text-slate-100 truncate">
                                   {parsed.name}
                                 </span>
+                                {tenderCategoryId && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 shrink-0 flex items-center gap-1">
+                                    <Sparkles size={10} /> {t('categoryMatchBadge', 'Подходит по категории')}
+                                  </span>
+                                )}
                               </div>
                               <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2 mt-0.5">
                                 <span>STŞK: {supplier.taxId || '—'}</span>
                                 {supplier.legalAddress && <span className="font-sans truncate">· {supplier.legalAddress}</span>}
                               </div>
+                              {cats.length > 0 && (
+                                <div className="flex items-center gap-1 mt-1 flex-wrap">
+                                  {cats.slice(0, 3).map((c, cIdx) => (
+                                    <span key={c.categoryId || c.id || cIdx} className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                      {c.category?.name || c.name}
+                                    </span>
+                                  ))}
+                                  {cats.length > 3 && (
+                                    <span className="text-[9px] text-slate-400 font-mono">+{cats.length - 3}</span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
 
@@ -354,6 +397,80 @@ export default function TenderVisibilityAndInvitedSuppliers({
                               </span>
                             ) : (
                               <span className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[11px] flex items-center gap-1 transition-colors">
+                                <Plus size={13} /> {t('inviteAction', 'Пригласить')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Разделитель между подходящими и другими поставщиками */}
+                    {matchedSuppliers.length > 0 && unmatchedSuppliers.length > 0 && (
+                      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100/90 dark:bg-slate-800/80 border-y border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                        <span>{t('otherSuppliersOutOfCategory', 'Другие поставщики (вне выбранной категории)')}</span>
+                        <span className="font-mono text-[9px] lowercase font-normal">{unmatchedSuppliers.length}</span>
+                      </div>
+                    )}
+
+                    {/* 2. Поставщики вне выбранной категории (более приглушенные) */}
+                    {unmatchedSuppliers.map(supplier => {
+                      const isAlreadyAdded = invitedSupplierIds.includes(supplier.id);
+                      const parsed = parseSupplierName(supplier.name);
+                      const cats = supplier.categories || [];
+                      return (
+                        <div
+                          key={supplier.id}
+                          onClick={() => {
+                            if (!isAlreadyAdded) handleAddSupplier(supplier.id);
+                          }}
+                          className={`p-3 flex items-center justify-between gap-3 text-xs transition-colors ${
+                            isAlreadyAdded 
+                              ? 'opacity-40 bg-slate-50 dark:bg-slate-800/40 cursor-not-allowed' 
+                              : 'opacity-85 hover:opacity-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 cursor-pointer bg-slate-50/40 dark:bg-slate-900/60'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center font-bold shrink-0">
+                              <Building2 size={16} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {parsed.opf && (
+                                  <span className="px-1 py-0.2 rounded text-[9px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200/70 dark:border-slate-700 shrink-0">
+                                    {parsed.opf}
+                                  </span>
+                                )}
+                                <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                                  {parsed.name}
+                                </span>
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2 mt-0.5">
+                                <span>STŞK: {supplier.taxId || '—'}</span>
+                                {supplier.legalAddress && <span className="font-sans truncate">· {supplier.legalAddress}</span>}
+                              </div>
+                              {cats.length > 0 && (
+                                <div className="flex items-center gap-1 mt-1 flex-wrap">
+                                  {cats.slice(0, 3).map((c, cIdx) => (
+                                    <span key={c.categoryId || c.id || cIdx} className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-200/70 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                                      {c.category?.name || c.name}
+                                    </span>
+                                  ))}
+                                  {cats.length > 3 && (
+                                    <span className="text-[9px] text-slate-400 font-mono">+{cats.length - 3}</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="shrink-0">
+                            {isAlreadyAdded ? (
+                              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                <Check size={13} /> {t('invitedBadge', 'Приглашен')}
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold rounded-lg text-[11px] flex items-center gap-1 transition-colors">
                                 <Plus size={13} /> {t('inviteAction', 'Пригласить')}
                               </span>
                             )}
@@ -391,13 +508,16 @@ export default function TenderVisibilityAndInvitedSuppliers({
                     <TableHeaderCell align="center" className="w-12">
                       №
                     </TableHeaderCell>
-                    <TableHeaderCell className="min-w-52">
+                    <TableHeaderCell className="min-w-48">
                       {t('companyName', 'Наименование компании')}
                     </TableHeaderCell>
-                    <TableHeaderCell className="w-36">
+                    <TableHeaderCell className="w-32">
                       {t('taxId', 'STŞK')}
                     </TableHeaderCell>
                     <TableHeaderCell className="min-w-44">
+                      {t('categories', 'Категории')}
+                    </TableHeaderCell>
+                    <TableHeaderCell className="min-w-40">
                       {t('legalAddress', 'Город / Юр. адрес')}
                     </TableHeaderCell>
                     <TableHeaderCell align="center" className="w-20">
@@ -408,7 +528,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                 <TableBody>
                   {invitedSupplierIds.length === 0 ? (
                     <TableEmptyState
-                      colSpan={5}
+                      colSpan={6}
                       title={t('noSuppliersInvitedTitle', 'Список участников закрытого тендера пуст')}
                       description={t('noSuppliersInvitedHint', 'Воспользуйтесь поиском выше для выбора поставщиков.')}
                       icon={<Users size={24} />}
@@ -426,6 +546,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                   ) : (
                     selectedSuppliers.map((supplier, idx) => {
                       const parsed = parseSupplierName(supplier.name);
+                      const cats = supplier.categories || [];
                       return (
                         <TableRow key={supplier.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
                           {/* № */}
@@ -455,6 +576,43 @@ export default function TenderVisibilityAndInvitedSuppliers({
                           {/* STŞK */}
                           <TableCell className="font-mono text-xs text-slate-600 dark:text-slate-400">
                             {supplier.taxId || '—'}
+                          </TableCell>
+
+                          {/* Категории участника */}
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1 max-w-[240px]">
+                              {cats.length === 0 ? (
+                                <span className="text-[11px] text-slate-400 italic">—</span>
+                              ) : (
+                                <>
+                                  {cats.slice(0, 2).map((sc, scIdx) => {
+                                    const catName = sc.category?.name || sc.name;
+                                    const isMatch = tenderCategoryId && (sc.categoryId === tenderCategoryId || sc.category?.id === tenderCategoryId);
+                                    return (
+                                      <span
+                                        key={sc.categoryId || sc.id || scIdx}
+                                        className={`px-1.5 py-0.5 rounded text-[10px] font-semibold truncate max-w-[130px] ${
+                                          isMatch
+                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                                        }`}
+                                        title={catName}
+                                      >
+                                        {catName}
+                                      </span>
+                                    );
+                                  })}
+                                  {cats.length > 2 && (
+                                    <span 
+                                      className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
+                                      title={cats.slice(2).map(sc => sc.category?.name || sc.name).join(', ')}
+                                    >
+                                      +{cats.length - 2}
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </TableCell>
 
                           {/* Город / Юр. адрес */}

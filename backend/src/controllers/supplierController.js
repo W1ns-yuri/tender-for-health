@@ -1,6 +1,139 @@
 const prisma = require('../lib/prisma');
 const { sendNotification, notifyAdmins } = require('./notificationController');
 
+// Вспомогательная функция определения измененных секций профиля поставщика для модератора
+const detectProfileChanges = (supplier, body, cleanName, combinedPassport) => {
+    const changes = [];
+
+    // 1. Логотип компании
+    if (body.logoUrl !== undefined && body.logoUrl !== (supplier.logoUrl || null)) {
+        changes.push({
+            field: 'logoUrl',
+            key: 'changedFieldLogo',
+            label: 'Логотип компании',
+            labelTm: 'Kompaniýanyň logotipi',
+            labelEn: 'Company Logo',
+            description: body.logoUrl ? 'Загружено новое изображение логотипа компании' : 'Логотип удален'
+        });
+    }
+
+    // 2. Банковские реквизиты
+    const bankFields = ['bankName', 'bankAccount', 'bankMfo', 'bankCorrAccount', 'bankSwift', 'bankIban', 'bankCurrency'];
+    const bankChanged = bankFields.some(f => body[f] !== undefined && body[f] !== (supplier[f] || ''));
+    if (bankChanged) {
+        changes.push({
+            field: 'bank',
+            key: 'changedFieldBank',
+            label: 'Банковские реквизиты',
+            labelTm: 'Bank maglumatlary',
+            labelEn: 'Bank Details',
+            description: 'Обновлены расчетные счета, реквизиты или банк'
+        });
+    }
+
+    // 3. Медицинская лицензия Минздрава
+    const licenseChanged = (
+        (body.isMedicalLicensed !== undefined && Boolean(body.isMedicalLicensed) !== Boolean(supplier.isMedicalLicensed)) ||
+        (body.licenseNumber !== undefined && body.licenseNumber !== (supplier.licenseNumber || '')) ||
+        (body.licenseIssuedBy !== undefined && body.licenseIssuedBy !== (supplier.licenseIssuedBy || '')) ||
+        (body.licenseExpiryDate !== undefined && String(body.licenseExpiryDate || '').slice(0, 10) !== String(supplier.licenseExpiryDate || '').slice(0, 10))
+    );
+    if (licenseChanged) {
+        changes.push({
+            field: 'license',
+            key: 'changedFieldLicense',
+            label: 'Медицинская лицензия',
+            labelTm: 'Lukmançylyk ygtyýarnamasy',
+            labelEn: 'Medical License',
+            description: 'Обновлены номер, орган выдачи или срок действия лицензии'
+        });
+    }
+
+    // 4. Юридический и фактический адрес, велаят
+    const addressChanged = (
+        (body.address !== undefined && body.address !== (supplier.address || '')) ||
+        (body.legalAddress !== undefined && body.legalAddress !== (supplier.legalAddress || '')) ||
+        (body.region !== undefined && body.region !== (supplier.region || ''))
+    );
+    if (addressChanged) {
+        changes.push({
+            field: 'address',
+            key: 'changedFieldAddress',
+            label: 'Адрес и регион',
+            labelTm: 'Salgy we sebit',
+            labelEn: 'Address & Region',
+            description: 'Изменен фактический/юридический адрес или регион'
+        });
+    }
+
+    // 5. Данные руководителя, паспортные данные, личный код, ОКПО, ИНН
+    const directorChanged = (
+        (body.directorName !== undefined && body.directorName !== (supplier.directorName || '')) ||
+        (body.directorPersonalCode !== undefined && body.directorPersonalCode !== (supplier.directorPersonalCode || '')) ||
+        (body.passportSeries !== undefined && body.passportSeries !== (supplier.passportSeries || '')) ||
+        (body.passportIssuedBy !== undefined && body.passportIssuedBy !== (supplier.passportIssuedBy || '')) ||
+        (body.okpoCode !== undefined && body.okpoCode !== (supplier.okpoCode || '')) ||
+        (body.taxId !== undefined && body.taxId !== (supplier.taxId || '')) ||
+        (combinedPassport && combinedPassport !== (supplier.passportInfo || ''))
+    );
+    if (directorChanged) {
+        changes.push({
+            field: 'director',
+            key: 'changedFieldDirector',
+            label: 'Данные руководителя / Паспорт',
+            labelTm: 'Ýolbaşçy / Pasport maglumatlary',
+            labelEn: 'Director / Passport Data',
+            description: 'Изменены ФИО руководителя, паспортные данные, личный код или ИНН/ОКПО'
+        });
+    }
+
+    // 6. Сферы / категории деятельности
+    if (body.categoryIds !== undefined && Array.isArray(body.categoryIds)) {
+        const oldCatIds = (supplier.categories || []).map(c => String(c.categoryId)).sort();
+        const newCatIds = body.categoryIds.map(String).sort();
+        if (JSON.stringify(oldCatIds) !== JSON.stringify(newCatIds)) {
+            changes.push({
+                field: 'categories',
+                key: 'changedFieldCategories',
+                label: 'Сферы деятельности',
+                labelTm: 'Iş ugurlary',
+                labelEn: 'Business Categories',
+                description: `Обновлен перечень категорий (выбрано: ${newCatIds.length})`
+            });
+        }
+    }
+
+    // 7. Наименование компании и организационная форма
+    if ((cleanName && cleanName !== supplier.name) || (body.type && body.type !== supplier.type)) {
+        changes.push({
+            field: 'name',
+            key: 'changedFieldName',
+            label: 'Наименование / Форма компании',
+            labelTm: 'Kompaniýanyň ady / Görnüşi',
+            labelEn: 'Company Name / Legal Form',
+            description: `Изменено наименование или форма: «${cleanName || supplier.name}»`
+        });
+    }
+
+    // 8. Контактная информация (телефон, email)
+    const contactsChanged = (
+        (body.phone !== undefined && body.phone !== (supplier.phone || '')) ||
+        (body.email !== undefined && body.email !== (supplier.email || ''))
+    );
+    if (contactsChanged) {
+        changes.push({
+            field: 'contacts',
+            key: 'changedFieldContacts',
+            label: 'Контактные данные',
+            labelTm: 'Habarlaşmak maglumatlary',
+            labelEn: 'Contact Info',
+            description: 'Обновлен контактный номер телефона или email компании'
+        });
+    }
+
+    return changes;
+};
+
 // Обычный пользователь (Поставщик) обновляет свой профиль (Шаг 2 верификации)
 const updateProfile = async (req, res) => {
     try {
@@ -14,9 +147,13 @@ const updateProfile = async (req, res) => {
             email, phone, categoryIds, logoUrl, countryId, submitForReview 
         } = req.body;
 
-        // Ищем поставщика
+        // Ищем поставщика с его текущими категориями для точного вычисления изменений
         const supplier = await prisma.supplier.findFirst({
-            where: { userId }
+            where: { userId },
+            include: {
+                categories: true,
+                files: { include: { document: true } }
+            }
         });
 
         if (!supplier) {
@@ -49,6 +186,38 @@ const updateProfile = async (req, res) => {
         const previousStatus = supplier.verificationStatus;
         const newStatus = willSubmitForReview ? 'PENDING_REVIEW' : supplier.verificationStatus;
 
+        // Вычисляем конкретный список изменений (diff)
+        const changedFields = detectProfileChanges(supplier, req.body, cleanName, combinedPassport);
+
+        // Формируем структурированные данные изменений для модератора
+        let moderationNotes = supplier.notes;
+        if (willSubmitForReview) {
+            if (changedFields.length > 0) {
+                moderationNotes = JSON.stringify({
+                    type: 'PROFILE_CHANGES',
+                    submittedAt: new Date().toISOString(),
+                    previousStatus,
+                    changes: changedFields,
+                    summary: changedFields.map(c => c.label).join(', ')
+                });
+            } else if (previousStatus === 'PENDING') {
+                moderationNotes = JSON.stringify({
+                    type: 'INITIAL_SUBMISSION',
+                    submittedAt: new Date().toISOString(),
+                    previousStatus,
+                    changes: [{
+                        field: 'initial',
+                        key: 'initialSubmissionNotice',
+                        label: 'Первичная анкета',
+                        labelTm: 'Ilkinji anketany bermek',
+                        labelEn: 'Initial Application',
+                        description: 'Первичная подача полного пакета данных на верификацию'
+                    }],
+                    summary: 'Первичная анкета'
+                });
+            }
+        }
+
         // Обновляем Supplier и его категории в транзакции
         const updatedSupplier = await prisma.$transaction(async (tx) => {
             await tx.supplier.update({
@@ -80,6 +249,7 @@ const updateProfile = async (req, res) => {
                     email,
                     phone, // Сохраняем рабочий телефон в профиле компании
                     verificationStatus: newStatus,
+                    notes: moderationNotes,
                     ...(directorName !== undefined ? { directorName } : {}),
                     ...(logoUrl !== undefined ? { logoUrl } : {}),
                 },
@@ -112,17 +282,23 @@ const updateProfile = async (req, res) => {
             });
         });
 
-        if (willSubmitForReview && previousStatus !== 'PENDING_REVIEW') {
+        // Записываем событие в историю модерации (SupplierModerationLog)
+        if (willSubmitForReview) {
             try {
+                const logAction = previousStatus === 'VERIFIED' ? 'PROFILE_UPDATED' : (previousStatus === 'REJECTED' ? 'RESUBMITTED' : 'SUBMITTED');
+                const logReason = changedFields.length > 0 
+                    ? `Изменения: ${changedFields.map(c => c.label).join(', ')}`
+                    : (previousStatus === 'REJECTED' 
+                        ? 'Повторная подача профиля на проверку после исправления замечаний' 
+                        : 'Подача профиля на верификацию');
+
                 await prisma.supplierModerationLog.create({
                     data: {
                         supplierId: supplier.id,
-                        action: previousStatus === 'REJECTED' ? 'RESUBMITTED' : 'SUBMITTED',
+                        action: logAction,
                         previousStatus,
                         newStatus: 'PENDING_REVIEW',
-                        reason: previousStatus === 'REJECTED' 
-                            ? 'Повторная подача профиля на проверку после исправления замечаний' 
-                            : 'Подача профиля на верификацию'
+                        reason: logReason
                     }
                 });
             } catch (logErr) {
@@ -130,28 +306,12 @@ const updateProfile = async (req, res) => {
             }
         }
 
-        // Записываем событие в архив / лог модерации
-        try {
-            await prisma.supplierModerationLog.create({
-                data: {
-                    supplierId: supplier.id,
-                    action: previousStatus === 'REJECTED' ? 'RESUBMITTED' : 'SUBMITTED',
-                    previousStatus,
-                    newStatus: 'PENDING_REVIEW',
-                    reason: previousStatus === 'REJECTED' 
-                        ? 'Повторная подача профиля на проверку после исправления замечаний' 
-                        : 'Подача профиля на верификацию'
-                }
-            });
-        } catch (logErr) {
-            console.error('Ошибка записи лога модерации:', logErr);
-        }
-
-        // Оповещаем администраторов о поступлении анкеты поставщика на модерацию
+        // Оповещаем администраторов о поступлении анкеты поставщика на модерацию с конкретным списком изменений
         if (willSubmitForReview) {
+            const changeSummary = changedFields.length > 0 ? ` (изменено: ${changedFields.map(c => c.label).join(', ')})` : '';
             notifyAdmins({
-                title: 'Новый поставщик ожидает модерации',
-                message: `«${cleanName}» направил документы и анкету компании на рассмотрение.`,
+                title: previousStatus === 'VERIFIED' ? 'Изменение реквизитов поставщика' : 'Анкета поставщика ожидает модерации',
+                message: `«${cleanName}» направил профиль компании на рассмотрение${changeSummary}.`,
                 type: 'supplier',
                 link: `/suppliers/${supplier.id}`
             }).catch(e => console.error('Error notifying admins:', e));
@@ -409,7 +569,8 @@ const approveSupplier = async (req, res) => {
                 where: { id },
                 data: {
                     verificationStatus: 'VERIFIED',
-                    rejectionReason: null
+                    rejectionReason: null,
+                    notes: null
                 },
                 include: {
                     categories: { include: { category: true } }

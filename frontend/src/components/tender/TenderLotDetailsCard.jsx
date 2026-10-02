@@ -252,13 +252,58 @@ export default function TenderLotDetailsCard({
               <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
                 {t('termLabel', 'Срок выполнения работ')} *
               </label>
-              <input
-                type="text"
-                value={activeLot.workPeriod || ''}
-                onChange={(e) => handleActiveLotChange('workPeriod', e.target.value)}
-                className={`w-full px-3.5 py-2 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
-                placeholder="60 календарных дней"
-              />
+              {(() => {
+                const raw = String(activeLot.workPeriod || '').trim();
+                const match = raw.match(/^(\d+)\s*(.*)$/);
+                const val = match ? match[1] : raw.replace(/\D/g, '');
+                const rawUnit = match && match[2] ? match[2].trim() : '';
+                const unit = rawUnit || 'календарных дней';
+
+                const handleValueChange = (newVal) => {
+                  const cleaned = newVal.replace(/\D/g, '');
+                  if (!cleaned) {
+                    handleActiveLotChange('workPeriod', '');
+                  } else {
+                    handleActiveLotChange('workPeriod', `${cleaned} ${unit}`);
+                  }
+                };
+
+                const handleUnitChange = (newUnit) => {
+                  if (val) {
+                    handleActiveLotChange('workPeriod', `${val} ${newUnit}`);
+                  }
+                };
+
+                return (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={val}
+                      onChange={(e) => handleValueChange(e.target.value)}
+                      className={`w-28 px-3.5 py-2 rounded-xl text-xs font-mono font-bold outline-none border ${theme?.inputBg || ''}`}
+                      placeholder="60"
+                    />
+                    <div className="flex-1">
+                      <CustomSelect
+                        role={role}
+                        value={unit}
+                        onChange={handleUnitChange}
+                        options={[
+                          { id: 'календарных дней', name: t('daysCalendar', 'календарных дней') },
+                          { id: 'рабочих дней', name: t('daysWork', 'рабочих дней') },
+                          { id: 'недель', name: t('weeks', 'недель') },
+                          { id: 'месяцев', name: t('months', 'месяцев') }
+                        ]}
+                        isDarkMode={isDarkMode}
+                        theme={theme}
+                        t={t}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
             <div>
               <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>

@@ -87,8 +87,12 @@ export default function TenderLotItemsTable({
                   ? t('serviceName', 'Наименование услуги')
                   : t('product', 'Товар / МНН')} *
               </th>
-              <th className="py-2.5 px-2 w-20 text-center font-bold whitespace-nowrap">
-                {t('quantity', 'Количество')} *
+              <th className="py-2.5 px-2 w-24 text-center font-bold whitespace-nowrap">
+                {activeLot.lotType === 'WORKS' 
+                  ? t('worksVolume', 'Объем работ') 
+                  : activeLot.lotType === 'SERVICES' 
+                  ? t('servicesVolume', 'Объем услуг') 
+                  : t('quantity', 'Количество')} *
               </th>
               <th className="py-2.5 px-2 w-24 text-center font-bold whitespace-nowrap">
                 {t('unit', 'Ед. изм.')} *
