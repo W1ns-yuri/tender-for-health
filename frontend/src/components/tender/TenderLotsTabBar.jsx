@@ -12,7 +12,7 @@ export default function TenderLotsTabBar({
   t = (k, f) => f
 }) {
   return (
-    <div className="flex items-end gap-1.5 -mb-[1px] relative z-10 overflow-x-auto scrollbar-thin">
+    <div className="flex items-end gap-1.5 -mb-px relative z-10 overflow-x-auto scrollbar-thin">
       {lots.map((lot, idx) => {
         const isActive = activeLotIndex === idx;
         const specsCount = (lot.specs || []).length;

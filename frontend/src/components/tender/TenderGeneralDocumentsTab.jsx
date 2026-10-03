@@ -245,7 +245,7 @@ export default function TenderGeneralDocumentsTab({
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
                   <th className="py-3 px-2 w-9 text-center font-bold">#</th>
-                  <th className="py-3 px-3 min-w-[220px] font-bold">
+                  <th className="py-3 px-3 min-w-55 font-bold">
                     {t('documentName', 'Название документа')}
                   </th>
                   <th className="py-3 px-3 w-56 font-bold">

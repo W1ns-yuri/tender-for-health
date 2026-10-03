@@ -175,7 +175,7 @@ export default function TenderLotDocuments({
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
                   <th className="py-2.5 px-2 w-9 text-center font-bold">#</th>
-                  <th className="py-2.5 px-3 min-w-[200px] font-bold">
+                  <th className="py-2.5 px-3 min-w-50 font-bold">
                     {t('documentName', 'Название документа')}
                   </th>
                   <th className="py-2.5 px-3 w-48 font-bold">

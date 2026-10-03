@@ -580,7 +580,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
 
                           {/* Категории участника */}
                           <TableCell>
-                            <div className="flex flex-wrap gap-1 max-w-[240px]">
+                            <div className="flex flex-wrap gap-1 max-w-60">
                               {cats.length === 0 ? (
                                 <span className="text-[11px] text-slate-400 italic">—</span>
                               ) : (
@@ -591,7 +591,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                                     return (
                                       <span
                                         key={sc.categoryId || sc.id || scIdx}
-                                        className={`px-1.5 py-0.5 rounded text-[10px] font-semibold truncate max-w-[130px] ${
+                                        className={`px-1.5 py-0.5 rounded text-[10px] font-semibold truncate max-w-32.5 ${
                                           isMatch
                                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
                                             : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'

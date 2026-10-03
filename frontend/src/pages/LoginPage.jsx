@@ -279,7 +279,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
       <div className="hidden lg:flex lg:w-1/2 relative bg-blue-50/50 flex-col items-center justify-center p-12 overflow-hidden">
         {/* Логотип в верхнем левом углу */}
         <div className="absolute top-8 left-8 sm:top-8 sm:left-12 flex items-center gap-3 select-none z-50">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black flex items-center justify-center text-xl shadow-lg shadow-blue-600/30">
+          <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-600 to-indigo-600 text-white font-black flex items-center justify-center text-xl shadow-lg shadow-blue-600/30">
             TU
           </div>
           <span className="font-extrabold text-slate-800 text-xl tracking-tight">Tender Ulgam</span>
@@ -288,14 +288,14 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
         {/* Декоративные элементы фона */}
         <div className="absolute top-0 left-0 w-full h-full bg-linear-to-br from-blue-100/40 to-transparent pointer-events-none" />
 
-        <div className="relative z-10 w-full max-w-[500px] mx-auto flex flex-col items-center animate-in fade-in zoom-in-95 duration-700 mt-8">
+        <div className="relative z-10 w-full max-w-125 mx-auto flex flex-col items-center animate-in fade-in zoom-in-95 duration-700 mt-8">
           {/* Оформление картинки под постер с интерактивным переключателем вариантов */}
-          <div className="w-full bg-white p-3 rounded-[2rem] shadow-xl shadow-slate-200/60 border border-white mb-8 relative overflow-hidden flex flex-col items-center justify-center group">
-            <div className="w-full relative overflow-hidden rounded-[1.5rem] bg-slate-50">
+          <div className="w-full bg-white p-3 rounded-4xl shadow-xl shadow-slate-200/60 border border-white mb-8 relative overflow-hidden flex flex-col items-center justify-center group">
+            <div className="w-full relative overflow-hidden rounded-3xl bg-slate-50">
               <img
                 src={TENDER_ILLUSTRATIONS[activeIllustrationIndex]?.src || '/assets/tender-variant-6.jpg'}
                 alt={TENDER_ILLUSTRATIONS[activeIllustrationIndex]?.title || 'Tender Platform Illustration'}
-                className="w-full h-auto object-cover rounded-[1.5rem] relative z-0 transition-all duration-300"
+                className="w-full h-auto object-cover rounded-3xl relative z-0 transition-all duration-300"
               />
               
               {/* Стрелочки переключения вариантов прямо на иллюстрации */}
@@ -327,7 +327,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
 
             {/* Компактный бейдж-переключатель вариантов */}
             <div className="w-full pt-2.5 pb-0.5 px-2 flex items-center justify-between text-xs">
-              <span className="font-bold text-slate-700 text-[11px] truncate max-w-[280px]">
+              <span className="font-bold text-slate-700 text-[11px] truncate max-w-70">
                 {TENDER_ILLUSTRATIONS[activeIllustrationIndex]?.tag}
               </span>
               <div className="flex items-center gap-1.5 shrink-0">
@@ -354,7 +354,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
           <div className="text-center space-y-4">
             <h2 className="text-3xl xl:text-4xl font-black text-slate-800 tracking-tight leading-tight">
               {t('loginHeadline1', 'Упростите взаимодействие')}<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-emerald-500">
                 {t('loginHeadline2', 'в сфере закупок')}
               </span>
             </h2>
@@ -399,12 +399,12 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
           )}
         </div>
 
-        <div className="w-full max-w-[500px] p-8 sm:p-12 border border-slate-200/60 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 bg-white animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="w-full max-w-125 p-8 sm:p-12 border border-slate-200/60 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 bg-white animate-in fade-in slide-in-from-bottom-4 duration-500">
 
           {/* Header Формы */}
           <div className="mb-10 text-center">
             {/* Мини-логотип TU */}
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/30 mx-auto">
+            <div className="w-14 h-14 bg-linear-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/30 mx-auto">
               <span className="text-white font-black text-2xl">TU</span>
             </div>
             <h1 className="text-3xl font-black text-slate-800 mb-4 tracking-tight">
@@ -480,7 +480,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-black shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] disabled:opacity-70 mt-8 text-[15px]"
+                className="w-full py-4 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-black shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] disabled:opacity-70 mt-8 text-[15px]"
               >
                 <span>{loading ? t('loggingIn', 'Вход...') : t('loginBtn', 'Войти в систему')}</span>
               </button>
@@ -653,7 +653,7 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
                         }
                         className={`w-full ${
                           regData.countryCode !== 'OTHER' 
-                            ? (selectedCountryObj.prefix.length > 3 ? 'pl-[5.5rem]' : 'pl-[4.5rem]') 
+                            ? (selectedCountryObj.prefix.length > 3 ? 'pl-22' : 'pl-18') 
                             : 'pl-11'
                         } pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium`}
                       />

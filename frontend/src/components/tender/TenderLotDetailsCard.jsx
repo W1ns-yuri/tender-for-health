@@ -57,7 +57,7 @@ export default function TenderLotDetailsCard({
             min="1"
             value={activeLot.lotNumber || ''}
             onChange={(e) => handleActiveLotChange('lotNumber', e.target.value)}
-            className={`w-full h-10 min-h-[40px] px-3 rounded-xl text-xs font-mono font-bold outline-none border ${theme?.inputBg || ''}`}
+            className={`w-full h-10 min-h-10 px-3 rounded-xl text-xs font-mono font-bold outline-none border ${theme?.inputBg || ''}`}
           />
         </div>
 
@@ -69,7 +69,7 @@ export default function TenderLotDetailsCard({
             type="text"
             value={activeLot.name || ''}
             onChange={(e) => handleActiveLotChange('name', e.target.value)}
-            className={`w-full h-10 min-h-[40px] px-3.5 rounded-xl text-xs font-bold outline-none border ${theme?.inputBg || ''}`}
+            className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs font-bold outline-none border ${theme?.inputBg || ''}`}
             placeholder="Например: Поставка антибиотиков"
           />
         </div>
@@ -139,7 +139,7 @@ export default function TenderLotDetailsCard({
               type="text"
               value={activeLot.endUser || ''}
               onChange={(e) => handleActiveLotChange('endUser', e.target.value)}
-              className={`w-full h-10 min-h-[40px] px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
+              className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
               placeholder={t('endUserPlaceholder', 'Например: Госпиталь №1')}
             />
           </div>
@@ -152,13 +152,13 @@ export default function TenderLotDetailsCard({
               type="text"
               value={activeLot.deliveryAddress || ''}
               onChange={(e) => handleActiveLotChange('deliveryAddress', e.target.value)}
-              className={`w-full h-10 min-h-[40px] px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
+              className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
               placeholder={t('deliveryAddressPlaceholder', 'г. Ашхабад, Склад №2')}
             />
           </div>
 
           <div className="md:col-span-2 flex flex-col justify-end">
-            <label className="flex items-center justify-center gap-2 h-10 min-h-[40px] px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800 cursor-pointer select-none transition-all w-full">
+            <label className="flex items-center justify-center gap-2 h-10 min-h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800 cursor-pointer select-none transition-all w-full">
               <input
                 type="checkbox"
                 checked={Boolean(activeLot.licenseRequired)}
@@ -203,7 +203,7 @@ export default function TenderLotDetailsCard({
                 type="text"
                 value={activeLot.endUser || ''}
                 onChange={(e) => handleActiveLotChange('endUser', e.target.value)}
-                className={`w-full h-10 min-h-[40px] px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
+                className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
                 placeholder={t('endUserPlaceholder', 'Например: Госпиталь №1')}
               />
             </div>
@@ -218,7 +218,7 @@ export default function TenderLotDetailsCard({
                 type="text"
                 value={activeLot.deliveryAddress || ''}
                 onChange={(e) => handleActiveLotChange('deliveryAddress', e.target.value)}
-                className={`w-full h-10 min-h-[40px] px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
+                className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
                 placeholder="г. Ашхабад, Центр телемедицины"
               />
             </div>
@@ -230,12 +230,12 @@ export default function TenderLotDetailsCard({
                 type="text"
                 value={activeLot.slaPeriod || ''}
                 onChange={(e) => handleActiveLotChange('slaPeriod', e.target.value)}
-                className={`w-full h-10 min-h-[40px] px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
+                className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
                 placeholder="24/7, реакция до 2 часов"
               />
             </div>
             <div className="md:col-span-3 flex flex-col justify-end">
-              <label className="flex items-center justify-center gap-2 h-10 min-h-[40px] px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800 cursor-pointer select-none transition-all w-full">
+              <label className="flex items-center justify-center gap-2 h-10 min-h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800 cursor-pointer select-none transition-all w-full">
                 <input
                   type="checkbox"
                   checked={Boolean(activeLot.licenseRequired)}
@@ -282,14 +282,14 @@ export default function TenderLotDetailsCard({
                 };
 
                 return (
-                  <div className="flex items-center gap-2 max-w-[280px]">
+                  <div className="flex items-center gap-2 max-w-70">
                     <input
                       type="number"
                       min="1"
                       step="1"
                       value={val}
                       onChange={(e) => handleValueChange(e.target.value)}
-                      className={`w-24 h-10 min-h-[40px] px-3 rounded-xl text-xs font-mono font-bold outline-none border ${theme?.inputBg || ''}`}
+                      className={`w-24 h-10 min-h-10 px-3 rounded-xl text-xs font-mono font-bold outline-none border ${theme?.inputBg || ''}`}
                       placeholder="60"
                     />
                     <div className="w-44 shrink-0">
@@ -320,7 +320,7 @@ export default function TenderLotDetailsCard({
                 type="text"
                 value={activeLot.endUser || ''}
                 onChange={(e) => handleActiveLotChange('endUser', e.target.value)}
-                className={`w-full h-10 min-h-[40px] px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
+                className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
                 placeholder={t('endUserPlaceholder', 'Например: Госпиталь №1')}
               />
             </div>
@@ -335,12 +335,12 @@ export default function TenderLotDetailsCard({
                 type="text"
                 value={activeLot.workAddress || ''}
                 onChange={(e) => handleActiveLotChange('workAddress', e.target.value)}
-                className={`w-full h-10 min-h-[40px] px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
+                className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
                 placeholder="г. Ашхабад, ул. Здоровья 14"
               />
             </div>
             <div className="md:col-span-3 flex flex-col justify-end">
-              <label className="flex items-center justify-center gap-2 h-10 min-h-[40px] px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800 cursor-pointer select-none transition-all w-full">
+              <label className="flex items-center justify-center gap-2 h-10 min-h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800 cursor-pointer select-none transition-all w-full">
                 <input
                   type="checkbox"
                   checked={Boolean(activeLot.licenseRequired)}

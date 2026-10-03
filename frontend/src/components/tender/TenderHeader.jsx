@@ -96,7 +96,7 @@ export default function TenderHeader({
             {/* Полоска прогресс-бара */}
             <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-300 ease-out"
+                className="h-full bg-linear-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-300 ease-out"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>

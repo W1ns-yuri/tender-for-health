@@ -80,7 +80,7 @@ export default function TenderLotItemsTable({
           <thead>
             <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
               <th className="py-2.5 px-2 w-9 text-center font-bold">#</th>
-              <th className="py-2.5 px-3 min-w-[200px] font-bold">
+              <th className="py-2.5 px-3 min-w-50 font-bold">
                 {activeLot.lotType === 'WORKS' 
                   ? t('workStages', 'Этап / вид работ')
                   : activeLot.lotType === 'SERVICES'
@@ -98,11 +98,11 @@ export default function TenderLotItemsTable({
                 {t('unit', 'Ед. изм.')} *
               </th>
               {activeLot.lotType === 'GOODS' && (
-                <th className="py-2.5 px-2 w-48 min-w-[190px] max-w-[190px] text-center font-bold whitespace-nowrap">
+                <th className="py-2.5 px-2 w-48 min-w-47.5 max-w-47.5 text-center font-bold whitespace-nowrap">
                   {t('manufacturer', 'Производитель')}
                 </th>
               )}
-              <th className="py-2.5 px-3 min-w-[220px] font-bold">
+              <th className="py-2.5 px-3 min-w-55 font-bold">
                 {t('description', 'Описание / Требования')}
               </th>
               <th className="py-2.5 px-2 w-9 text-center font-bold"></th>
@@ -188,7 +188,7 @@ export default function TenderLotItemsTable({
                   </td>
 
                   {activeLot.lotType === 'GOODS' && (
-                    <td className="py-2.5 px-2 w-48 min-w-[190px] max-w-[190px]">
+                    <td className="py-2.5 px-2 w-48 min-w-47.5 max-w-47.5">
                       <CustomSelect
                         role={role}
                         size="sm"

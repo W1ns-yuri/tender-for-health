@@ -165,7 +165,7 @@ export const CustomSelect = ({
           }
           setIsOpen(next);
         }}
-        className={`w-full cursor-pointer flex justify-between items-center transition-all duration-150 rounded-xl ${size === 'md' ? 'h-10 min-h-[40px]' : ''} ${sizePadding} ${triggerInputStyle} ${
+        className={`w-full cursor-pointer flex justify-between items-center transition-all duration-150 rounded-xl ${size === 'md' ? 'h-10 min-h-10' : ''} ${sizePadding} ${triggerInputStyle} ${
           isOpen ? activeFocusStyle : ''
         } ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800/50' : ''}`}
       >

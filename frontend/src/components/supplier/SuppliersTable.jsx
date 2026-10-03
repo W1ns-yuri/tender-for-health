@@ -88,7 +88,7 @@ export default function SuppliersTable({
 
       {/* 2. Таблица со списком поставщиков */}
       <TableContainer>
-        <Table className="min-w-[1000px] table-fixed">
+        <Table className="min-w-250 table-fixed">
           <TableHead>
             <TableRow>
               <TableHeaderCell className="w-56">{t('supplierName', 'Kompaniýanyň ady')}</TableHeaderCell>
