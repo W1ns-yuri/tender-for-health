@@ -119,14 +119,22 @@ export default function SuppliersTable({
             ) : (
               paginatedSuppliers.map((s, idx) => {
                 const parsed = parseCompanyName(s.name);
+                const opf = parsed.opf || (
+                  s.type === 'BUSINESS_SOCIETY' ? 'HJ' :
+                  s.type === 'PRIVATE_ENTERPRISE' || s.type === 'BUSINESS_COMPANY' ? 'HK' :
+                  s.type === 'ENTREPRENEUR' ? 'ИП' :
+                  s.type === 'DAÝHAN_HOJALYGY' ? 'DH' :
+                  s.type === 'FOREIGN_ENTITY' ? 'Foreign' : null
+                );
+
                 return (
                   <TableRow key={s.id || idx}>
                     {/* Название */}
                     <TableCell className="font-semibold text-slate-900 dark:text-white">
                       <div className="flex items-center gap-2">
-                        {parsed.opf && (
+                        {opf && (
                           <span className="px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
-                            {parsed.opf}
+                            {opf}
                           </span>
                         )}
                         <span className="truncate">{parsed.cleanName}</span>

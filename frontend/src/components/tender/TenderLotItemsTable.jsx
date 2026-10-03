@@ -98,7 +98,7 @@ export default function TenderLotItemsTable({
                 {t('unit', 'Ед. изм.')} *
               </th>
               {activeLot.lotType === 'GOODS' && (
-                <th className="py-2.5 px-2 w-32 text-center font-bold whitespace-nowrap">
+                <th className="py-2.5 px-2 w-48 min-w-[190px] max-w-[190px] text-center font-bold whitespace-nowrap">
                   {t('manufacturer', 'Производитель')}
                 </th>
               )}
@@ -116,7 +116,33 @@ export default function TenderLotItemsTable({
                 </td>
               </tr>
             ) : (
-              activeLot.specs.map((spec, sIdx) => (
+              activeLot.specs.map((spec, sIdx) => {
+                const specHaryt = (spec.haryt || spec.name || '').toLowerCase();
+                const isPharmaContext =
+                  activeLot?.categoryId === 'bb58fb0e-37ae-48f5-bb77-65e2372bad02' ||
+                  /таблет|раствор|ампул|шприц|капсул|мазь|вакцин|syringe|med|pharma|лекарств/i.test(specHaryt);
+                const isItContext =
+                  activeLot?.categoryId === '3b689cff-8649-4f68-a7b1-2ebe678250ff' ||
+                  activeLot?.categoryId === '5dbc63a7-c035-45a4-b383-a6aa18c8e28c' ||
+                  /компьютер|ноутбук|сервер|dell|hp|it|принтер|монитор/i.test(specHaryt);
+
+                const sortedManufacturers = [...manufacturers].sort((a, b) => {
+                  const aName = (a.name || '').toLowerCase();
+                  const bName = (b.name || '').toLowerCase();
+                  const aIsIt = aName.includes('dell') || aName.includes('hp');
+                  const bIsIt = bName.includes('dell') || bName.includes('hp');
+
+                  if (isPharmaContext) {
+                    if (!aIsIt && bIsIt) return -1;
+                    if (aIsIt && !bIsIt) return 1;
+                  } else if (isItContext) {
+                    if (aIsIt && !bIsIt) return -1;
+                    if (!aIsIt && bIsIt) return 1;
+                  }
+                  return aName.localeCompare(bName);
+                });
+
+                return (
                 <tr key={spec.id || sIdx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
                   <td className="py-2.5 px-2 text-center font-mono font-bold text-slate-400">
                     {sIdx + 1}
@@ -162,14 +188,15 @@ export default function TenderLotItemsTable({
                   </td>
 
                   {activeLot.lotType === 'GOODS' && (
-                    <td className="py-2.5 px-2">
+                    <td className="py-2.5 px-2 w-48 min-w-[190px] max-w-[190px]">
                       <CustomSelect
                         role={role}
                         size="sm"
+                        searchable={true}
                         value={spec.brand || ''}
                         onChange={(val) => handleSpecChange(sIdx, 'brand', val)}
-                        options={manufacturers.map(m => ({ id: m.id, name: m.name }))}
-                        placeholder={t('selectBrand', 'Бренд...')}
+                        options={sortedManufacturers.map(m => ({ id: m.id, name: m.name }))}
+                        placeholder={t('selectBrand', 'Производитель...')}
                         isDarkMode={isDarkMode}
                         theme={theme}
                         t={t}
@@ -198,7 +225,8 @@ export default function TenderLotItemsTable({
                     </button>
                   </td>
                 </tr>
-              ))
+              );
+            })
             )}
           </tbody>
         </table>

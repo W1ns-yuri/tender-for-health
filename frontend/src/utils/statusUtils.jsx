@@ -36,8 +36,9 @@ export const getStatusBadge = (status, lang = 'RU', isDarkMode = false, customCl
     case 'YENIJI_YGLAN_EDILDI':
     case 'YENIJI':
       return (
-        <span className={`${baseClass} ${isDarkMode ? 'bg-purple-950/60 text-purple-300 border-purple-800/60' : 'bg-purple-50 text-purple-700 border-purple-200'}`}>
-          {getTranslation(lang, 'statusYeniji', 'Ýeňiji yglan edildi')}
+        <span className={`px-2.5 py-1 text-xs rounded-md inline-flex flex-col items-center justify-center text-center leading-tight border font-semibold ${isDarkMode ? 'bg-purple-950/60 text-purple-300 border-purple-800/60' : 'bg-purple-50 text-purple-700 border-purple-200'}`}>
+          <span>{lang === 'RU' ? 'Объявлен' : lang === 'EN' ? 'Winner' : 'Ýeňiji'}</span>
+          <span>{lang === 'RU' ? 'победитель' : lang === 'EN' ? 'announced' : 'yglan edildi'}</span>
         </span>
       );
     case 'TABSARYLDY':

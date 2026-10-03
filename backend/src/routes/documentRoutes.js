@@ -1,5 +1,5 @@
 const express = require('express');
-const { uploadDocument, getDocuments, deleteDocument } = require('../controllers/documentController');
+const { uploadDocument, getDocuments, deleteDocument, updateDocument } = require('../controllers/documentController');
 const authMiddleware = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
@@ -17,6 +17,9 @@ router.post('/upload', authMiddleware, (req, res, next) => {
         next();
     });
 }, uploadDocument);
+
+// Обновить метаданные документа (название, категорию/тип, признак обязательности)
+router.put('/:id', authMiddleware, updateDocument);
 
 // Удалить документ по id
 router.delete('/:id', authMiddleware, deleteDocument);

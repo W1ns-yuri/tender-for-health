@@ -587,7 +587,7 @@ export default function useCreateTenderState({
   }, [activeLotIndex, lots, showConfirm, showAlert, t, tenderId]);
 
   // Прикрепление документа к конкретному активному лоту
-  const handleLotFileUpload = useCallback(async (e) => {
+  const handleLotFileUpload = useCallback(async (e, meta = {}) => {
     if (!activeLot) return;
     
     let rawFiles = [];
@@ -610,6 +610,11 @@ export default function useCreateTenderState({
         data.append('file', file);
         data.append('name', file.name);
         data.append('lotId', activeLot.id);
+        const metaPayload = {
+          docType: meta.docType || 'TECH_SPEC',
+          isRequired: meta.isRequired !== undefined ? meta.isRequired : true
+        };
+        data.append('description', JSON.stringify(metaPayload));
 
         const res = await API.post('/documents/upload', data, {
           headers: { 'Content-Type': 'multipart/form-data' }
@@ -644,6 +649,33 @@ export default function useCreateTenderState({
       if (e?.target) e.target.value = '';
     }
   }, [activeLot, activeLotIndex, showAlert, t]);
+
+  // Быстрое обновление метаданных документа лота (категория/тип, обязательность)
+  const handleLotFileUpdate = useCallback(async (docId, updatedMeta) => {
+    if (!docId) return;
+    try {
+      const res = await API.put(`/documents/${docId}`, {
+        ...(updatedMeta.name && { name: updatedMeta.name }),
+        description: JSON.stringify(updatedMeta)
+      });
+      setLots(prev => {
+        const nextLots = [...prev];
+        const curLot = { ...nextLots[activeLotIndex] };
+        curLot.files = (curLot.files || []).map(f => {
+          const dId = f.documentId || f.document?.id || f.id;
+          if (dId === docId) {
+            const doc = f.document ? { ...f.document, ...res.data } : res.data;
+            return { ...f, document: doc };
+          }
+          return f;
+        });
+        nextLots[activeLotIndex] = curLot;
+        return nextLots;
+      });
+    } catch (err) {
+      console.error('Error updating lot file', err);
+    }
+  }, [activeLotIndex]);
 
   // Удаление документа из лота
   const handleLotFileDelete = useCallback(async (docId) => {
@@ -736,6 +768,27 @@ export default function useCreateTenderState({
       showAlert({ message: err.response?.data?.error || t('errorSaving', 'Ошибка удаления файла'), type: 'error' });
     }
   }, [showAlert, t]);
+
+  // Быстрое обновление метаданных общего документа (категория/тип, обязательность)
+  const handleTenderFileUpdate = useCallback(async (docId, updatedMeta) => {
+    if (!docId) return;
+    try {
+      const res = await API.put(`/documents/${docId}`, {
+        ...(updatedMeta.name && { name: updatedMeta.name }),
+        description: JSON.stringify(updatedMeta)
+      });
+      setTenderFiles(prev => prev.map(f => {
+        const dId = f.documentId || f.document?.id || f.id;
+        if (dId === docId) {
+          const doc = f.document ? { ...f.document, ...res.data } : res.data;
+          return { ...f, document: doc };
+        }
+        return f;
+      }));
+    } catch (err) {
+      console.error('Error updating tender file', err);
+    }
+  }, []);
 
   // ФИНАЛЬНАЯ ПУБЛИКАЦИЯ ТЕНДЕРА (POST /api/tenders/:id/publish)
   const handlePublishTender = useCallback(async () => {
@@ -937,8 +990,10 @@ export default function useCreateTenderState({
     handleSaveActiveLot,
     handleDeleteActiveLot,
     handleLotFileUpload,
+    handleLotFileUpdate,
     handleLotFileDelete,
     handleTenderFileUpload,
+    handleTenderFileUpdate,
     handleTenderFileDelete,
     handlePublishTender,
     handleOpenProductModal,

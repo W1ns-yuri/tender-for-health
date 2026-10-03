@@ -122,6 +122,7 @@ export default function CreateTenderPage({
             handleAddNewLotTab={state.handleAddNewLotTab}
             handleActiveLotChange={state.handleActiveLotChange}
             handleLotFileUpload={state.handleLotFileUpload}
+            handleLotFileUpdate={state.handleLotFileUpdate}
             handleLotFileDelete={state.handleLotFileDelete}
             products={state.products}
             units={state.units}
@@ -147,6 +148,7 @@ export default function CreateTenderPage({
               tenderId={state.tenderId}
               tenderFiles={state.tenderFiles}
               handleTenderFileUpload={state.handleTenderFileUpload}
+              handleTenderFileUpdate={state.handleTenderFileUpdate}
               handleTenderFileDelete={state.handleTenderFileDelete}
               theme={theme}
               t={t}

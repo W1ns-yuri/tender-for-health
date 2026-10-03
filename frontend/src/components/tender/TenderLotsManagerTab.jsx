@@ -25,6 +25,7 @@ export default function TenderLotsManagerTab({
   handleAddNewLotTab,
   handleActiveLotChange,
   handleLotFileUpload,
+  handleLotFileUpdate,
   handleLotFileDelete,
   products = [],
   units = [],
@@ -101,6 +102,7 @@ export default function TenderLotsManagerTab({
             <TenderLotDocuments
               activeLot={activeLot}
               handleLotFileUpload={handleLotFileUpload}
+              handleLotFileUpdate={handleLotFileUpdate}
               handleLotFileDelete={handleLotFileDelete}
               t={t}
             />

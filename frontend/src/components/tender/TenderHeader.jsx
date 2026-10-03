@@ -157,8 +157,8 @@ export default function TenderHeader({
                     <span>{publishing ? t('publishing', 'Публикация...') : t('publishTenderBtn', 'Опубликовать')}</span>
                   </button>
                   {!canPublish && publishDisabledReason && (
-                    <div className="absolute right-0 top-full mt-2 hidden group-hover:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-[11px] font-medium shadow-xl z-50 whitespace-nowrap animate-in fade-in">
-                      <AlertCircle size={13} className="text-amber-400 shrink-0" />
+                    <div className="absolute right-0 top-full mt-2 hidden group-hover:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 text-xs font-semibold shadow-xl z-50 whitespace-nowrap animate-in fade-in">
+                      <AlertCircle size={14} className="text-amber-500 shrink-0" />
                       <span>{publishDisabledReason}</span>
                     </div>
                   )}

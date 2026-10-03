@@ -62,14 +62,16 @@ export const CustomSelect = ({
     return { id: opt, name: String(opt) };
   });
 
+  const isSearchEnabled = Boolean(searchable || normalizedOptions.length > 5);
+
   const updateCoords = () => {
     if (wrapperRef.current) {
       const rect = wrapperRef.current.getBoundingClientRect();
-      const dropdownHeight = Math.min(260, Math.max(70, normalizedOptions.length * 36 + (searchable ? 46 : 0)));
+      const dropdownHeight = Math.min(280, Math.max(80, normalizedOptions.length * 36 + (isSearchEnabled ? 48 : 0)));
       const spaceBelow = window.innerHeight - rect.bottom;
       const openUpwards = spaceBelow < 210 && rect.top > 210;
 
-      const minW = size === 'sm' || size === 'xs' ? Math.max(rect.width, 140) : Math.max(rect.width, 180);
+      const minW = Math.max(rect.width, 220);
       let left = rect.left;
       if (left + minW > window.innerWidth - 10) {
         left = window.innerWidth - minW - 10;
@@ -209,7 +211,7 @@ export const CustomSelect = ({
               : 'border-slate-200 bg-white shadow-slate-400/40 text-slate-800'
           } flex flex-col overflow-hidden animate-in fade-in-50 zoom-in-95 duration-100`}
         >
-          {searchable && (
+          {isSearchEnabled && (
             <div className={`p-2 border-b flex items-center gap-1.5 ${isDark ? 'border-slate-800 bg-slate-800/60' : 'border-slate-100 bg-slate-50/70'}`}>
               <Search size={13} className="text-slate-400 shrink-0 ml-1" />
               <input

@@ -148,4 +148,30 @@ const deleteDocument = async (req, res) => {
     }
 };
 
-module.exports = { uploadDocument, getDocuments, deleteDocument };
+// Обновление метаданных документа (название, категория/тип, признак обязательности в описании)
+const updateDocument = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, documentTypeId } = req.body;
+
+        const doc = await prisma.document.findUnique({ where: { id } });
+        if (!doc) {
+            return res.status(404).json({ error: 'Документ не найден' });
+        }
+
+        const updated = await prisma.document.update({
+            where: { id },
+            data: {
+                ...(name !== undefined && { name: String(name).trim() }),
+                ...(description !== undefined && { description: typeof description === 'object' ? JSON.stringify(description) : String(description) }),
+                ...(documentTypeId !== undefined && { documentTypeId: documentTypeId || null }),
+            }
+        });
+
+        res.json(updated);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при обновлении документа', details: error.message });
+    }
+};
+
+module.exports = { uploadDocument, getDocuments, deleteDocument, updateDocument };
