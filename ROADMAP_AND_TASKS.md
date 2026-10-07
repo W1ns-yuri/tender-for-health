@@ -261,18 +261,12 @@ model TenderInvitation {
 - ✅ **EvaluationDetailsPage.jsx**: декомпозирован из 789 строк в **142 строки** (сокращение на 82%). Вынесены хук `useEvaluationDetails.js`, утилиты `evaluationUtils.js` и 6 субкомпонентов в `src/components/evaluation/` (`EvaluationDetailsHeader`, `EvaluationOverviewCard`, `EvaluationLotCard`, `EvaluationLotComparativeTable`, `EvaluationLotSpecBreakdown`, `EvaluationBottomActionBar`).
 - ✅ **SettingsPage.jsx**: декомпозирован из 917 строк в **125 строк**. Вынесены хук `useSettingsState.js` и 5 модульных компонентов в `src/components/settings/` (`SettingsHeader`, `SettingsSidebar`, `SettingsGeneralTab`, `SettingsNotificationsTab`, `SettingsSecurityTab`, `SettingsSystemTab`). Реализован реальный таймер автоблокировки сессии в `App.jsx` и исправлен баг отключения звука в `Header.jsx`.
 - ✅ **LoginPage.jsx**: декомпозирован из 874 строк в **175 строк**. Вынесены хук `useLoginState.js`, константы `authConstants.js` и 6 модульных компонентов в `src/components/auth/` (`AuthShowcase`, `AuthLanguageSelector`, `LoginForm`, `RegisterForm`, `AuthDemoModal`, `AuthForgotPasswordModal`). Добавлена поддержка всех 7 демо-аккаунтов, официальная модалка восстановления пароля и адаптивный индикатор шагов.
+- ✅ **TenderDetails.jsx**: декомпозирован из 671 строки в **162 строки**. Вынесены хук `useTenderDetailsState.js` и 7 модульных компонентов в `src/components/tender-details/` (`TenderDetailsHeader`, `TenderDetailsStepper`, `TenderDetailsLotsTab`, `TenderDetailsLegacySpecs`, `TenderDetailsDocuments`, `TenderDetailsInvitedSuppliers`, `TenderDetailsClosedAccessDenied`). Интегрирован 5-шаговый интерактивный степпер жизненного цикла закупки и устранен жесткий хардкод URL `localhost:5000`.
 
 ### 📋 Очередь файлов на декомпозицию до уровня Senior:
-1. **`TenderDetails.jsx` (~890 строк)**:
-   - Разделение на компоненты в папку `src/components/tender-details/`:
-     - `TenderDetailsHeader.jsx` — шапка с бейджами, бюджетом и таймером.
-     - `TenderDetailsStepper.jsx` — 5-шаговый интерактивный трекер жизненного цикла.
-     - `TenderDetailsLotsList.jsx` — реестр лотов с товарами/работами/услугами.
-     - `TenderDetailsDocuments.jsx` — прикрепленная тендерная документация.
-     - `TenderDetailsCommission.jsx` — состав закупочной комиссии.
-6. **`SupplierProfilePage.jsx` (~880 строк)**:
+1. **`SupplierProfilePage.jsx` (~880 строк)**:
    - Полная интеграция имеющихся карточек из `src/components/supplier/` и чистка корневого файла страницы до ~150 строк.
-7. **`OfferDetailsPage.jsx` (~750 строк)**:
+2. **`OfferDetailsPage.jsx` (~750 строк)**:
    - Создание папки `src/components/offer-details/` (карточка коммерческого предложения, ведомость цен лота, документация поставщика).
 
 ---

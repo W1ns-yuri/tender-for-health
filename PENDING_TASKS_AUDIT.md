@@ -259,11 +259,12 @@
 | **4.2** | **Рефакторинг** | Декомпозиция [EvaluationDetailsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/EvaluationDetailsPage.jsx) (сокращен с 789 до 142 строк, хук `useEvaluationDetails`) | ✅ Готово | ⚡ Средний |
 | **4.3** | **Рефакторинг** | Декомпозиция [SettingsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/SettingsPage.jsx) (сокращен с 917 до 125 строк, хук `useSettingsState`, 5 модулей) | ✅ Готово | ⚡ Средний |
 | **4.4** | **Рефакторинг** | Декомпозиция [LoginPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/LoginPage.jsx) (сокращен с 874 до 175 строк, хук `useLoginState`, 6 модулей в `src/components/auth/`) | ✅ Готово | ⚡ Средний |
-| **4.5** | **Рефакторинг** | Декомпозиция [TenderDetails.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/TenderDetails.jsx) (~890 строк) | В очереди | ⚡ Средний |
+| **4.5** | **Рефакторинг** | Декомпозиция [TenderDetails.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/TenderDetails.jsx) (сокращен с 671 до 162 строк, хук `useTenderDetailsState`, 7 модулей в `src/components/tender-details/`) | ✅ Готово | ⚡ Средний |
+| **4.6** | **Рефакторинг** | Декомпозиция [SupplierProfilePage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/SupplierProfilePage.jsx) (~880 строк) | В очереди | ⚡ Средний |
 | **5** | **Безопасность** | Ревизия всего кода: RBAC, санитизация данных, скрытие деталей внутренних ошибок | В очереди | ⚡ Средний |
 | **6** | **Сотрудники / RBAC** | Модуль управления администраторами и сотрудниками (`/admin/users`) | В очереди | ⚡ Средний |
 | **7** | **Аудит-лог** | Полный аудит действий («Кто, где, когда, куда и зачем») с фиксацией IP и Diff изменений | В очереди | ⚡ Средний |
-| **8** | **Степпер** | 5-шаговый прогресс-бар жизненного цикла закупки (от публикации до контракта) | В очереди | ⚡ Средний |
+| **8** | **Степпер** | 5-шаговый прогресс-бар жизненного цикла закупки ([TenderDetailsStepper.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/components/tender-details/TenderDetailsStepper.jsx)) | ✅ Готово | ⚡ Средний |
 | **9** | **Контракты** | Модуль контрактов: модель `Contract`, автогенерация договора после оценки и реестр `/contracts` | В очереди | ⚡ Средний |
 | **10** | **Печать / PDF** | Официальные бланки протокола вскрытия и итогового протокола комиссии с `@media print` | В очереди | ⚡ Средний |
 | **11** | **Чат / Запросы** | Канал официальных разъяснений положений ТЗ между участниками и комиссией | Кандидат | 💡 Базовый |
