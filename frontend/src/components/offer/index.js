@@ -5,4 +5,5 @@ export { default as OfferLotCard } from './OfferLotCard';
 export { default as OfferLotItemRow } from './OfferLotItemRow';
 export { default as OfferLotsNavigation } from './OfferLotsNavigation';
 export { default as OfferStickyFooter } from './OfferStickyFooter';
+export { useCreateOfferState } from './useCreateOfferState';
 export * from './offerConstants';

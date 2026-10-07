@@ -122,6 +122,10 @@ export const resolveFileUrl = (url) => {
     ? normalized.split('/uploads/').pop() 
     : normalized.split('/').pop();
     
-  const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
-  return `${baseUrl}/uploads/${filename}`;
+  // Если задан внешний VITE_API_URL, используем его, иначе используем относительный URL через прокси
+  if (import.meta.env.VITE_API_URL) {
+    const baseUrl = import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
+    return `${baseUrl}/uploads/${encodeURIComponent(filename)}`;
+  }
+  return `/uploads/${encodeURIComponent(filename)}`;
 };

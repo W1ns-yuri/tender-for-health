@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import CustomSelect from '../CustomSelect';
 import OfferLotItemRow from './OfferLotItemRow';
+import { resolveFileUrl } from '../../utils/themeUtils';
 
 export default function OfferLotCard({
   lot,
@@ -112,7 +113,7 @@ export default function OfferLotCard({
                 return (
                   <a
                     key={doc.id || fIdx}
-                    href={`http://localhost:5000/${doc.filePath}`}
+                    href={resolveFileUrl(doc.filePath || doc.fileName || doc.name)}
                     target="_blank"
                     rel="noreferrer"
                     className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 hover:underline text-[11px] font-bold flex items-center gap-1 border border-blue-200/60 dark:border-blue-800"

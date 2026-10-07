@@ -264,9 +264,10 @@ model TenderInvitation {
 - ✅ **TenderDetails.jsx**: декомпозирован из 671 строки в **162 строки**. Вынесены хук `useTenderDetailsState.js` и 7 модульных компонентов в `src/components/tender-details/` (`TenderDetailsHeader`, `TenderDetailsStepper`, `TenderDetailsLotsTab`, `TenderDetailsLegacySpecs`, `TenderDetailsDocuments`, `TenderDetailsInvitedSuppliers`, `TenderDetailsClosedAccessDenied`). Интегрирован 5-шаговый интерактивный степпер жизненного цикла закупки и устранен жесткий хардкод URL `localhost:5000`.
 - ✅ **SupplierProfilePage.jsx**: декомпозирован из 910 строк в **250 строк**. Вынесен хук `useSupplierProfileState.js`, интегрированы модульные карточки из `src/components/supplier/`, устранен хардкод `localhost:5000` в `SupplierDocumentsCard.jsx` для корректного скачивания файлов через proxy/VPN, добавлены адаптивные табы и оптимизировано сохранение профиля.
 - ✅ **OfferDetailsPage.jsx**: декомпозирован из 570 строк в **165 строк**. Вынесен хук `useOfferDetailsState.js`, созданы 5 модульных компонентов в `src/components/offer-details/` (`OfferDetailsHeader`, `OfferLotGroupCard`, `OfferStandaloneTable`, `OfferDetailsDocuments`), устранен хардкод `localhost:5000` для скачивания прикрепленных документов, синхронизированы переводы TM/RU/EN и оптимизирована мобильная адаптация ведомостей цен.
+- ✅ **CreateOfferPage.jsx**: декомпозирован из 574 строк в **231 строку**. Вынесен хук `useCreateOfferState.js`, полностью ликвидирован хардкод `http://localhost:5000` в `OfferLotCard.jsx`, `OfferDocumentsCard.jsx` и `themeUtils.js`, вынесена бизнес-логика валидаций, расчет цен и эквивалентов.
 
 ### 📋 Очередь файлов на декомпозицию до уровня Senior:
-*Все ключевые монолитные страницы фронтенда (`AdminCatalogs`, `AnalyticsPage`, `CreateTenderPage`, `EvaluationDetailsPage`, `SettingsPage`, `LoginPage`, `TenderDetails`, `SupplierProfilePage`, `OfferDetailsPage`) успешно декомпозированы в модульную архитектуру!*
+*Все ключевые монолитные страницы фронтенда (`AdminCatalogs`, `AnalyticsPage`, `CreateTenderPage`, `EvaluationDetailsPage`, `SettingsPage`, `LoginPage`, `TenderDetails`, `SupplierProfilePage`, `OfferDetailsPage`, `CreateOfferPage`) успешно декомпозированы в модульную архитектуру!*
 
 ---
 

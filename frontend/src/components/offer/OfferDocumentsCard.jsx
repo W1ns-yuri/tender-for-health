@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
   FileText, 
   Download, 
@@ -10,7 +9,7 @@ import {
   CheckCircle2, 
   Trash2 
 } from 'lucide-react';
-import API from '../../services/api';
+import { resolveFileUrl } from '../../utils/themeUtils';
 
 export default function OfferDocumentsCard({
   tender,
@@ -29,7 +28,6 @@ export default function OfferDocumentsCard({
   theme,
   t
 }) {
-  const baseUrl = API.defaults?.baseURL ? API.defaults.baseURL.replace('/api', '') : 'http://localhost:5000';
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -50,7 +48,7 @@ export default function OfferDocumentsCard({
                 const doc = fileObj.document;
                 if (!doc) return null;
                 const actualFileName = doc.filePath ? doc.filePath.split(/[\\/]/).pop() : (doc.fileName || doc.name);
-                const fileUrl = `${baseUrl}/uploads/${actualFileName}`;
+                const fileUrl = resolveFileUrl(doc.filePath || actualFileName);
 
                 return (
                   <div key={doc.id || idx} className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
