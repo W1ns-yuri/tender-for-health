@@ -38,19 +38,26 @@ export default function Pagination({
   const finalItemsText = itemsText || currentL10n.items;
   const finalPerPageText = perPageText || currentL10n.perPage;
 
-  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const endItem = Math.min(currentPage * pageSize, totalItems);
+  // Безопасные значения для защиты от деления на 0 и Infinity
+  const safePageSize = (typeof pageSize === 'number' && pageSize > 0) ? pageSize : 10;
+  const safeTotalPages = (typeof totalPages === 'number' && Number.isFinite(totalPages) && totalPages > 0)
+    ? Math.max(1, totalPages)
+    : 1;
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), safeTotalPages);
+
+  const startItem = totalItems === 0 ? 0 : (safeCurrentPage - 1) * safePageSize + 1;
+  const endItem = Math.min(safeCurrentPage * safePageSize, totalItems);
 
   // Generate page numbers with smart ellipsis
   const getPageNumbers = () => {
     const pages = [];
     const delta = 1;
 
-    for (let i = 1; i <= totalPages; i++) {
+    for (let i = 1; i <= safeTotalPages; i++) {
       if (
         i === 1 ||
-        i === totalPages ||
-        (i >= currentPage - delta && i <= currentPage + delta)
+        i === safeTotalPages ||
+        (i >= safeCurrentPage - delta && i <= safeCurrentPage + delta)
       ) {
         pages.push(i);
       } else if (pages[pages.length - 1] !== '...') {
@@ -74,8 +81,13 @@ export default function Pagination({
             <CustomSelect
               role={isSupplier ? 'SUPPLIER' : 'ADMIN'}
               size="xs"
-              value={pageSize}
-              onChange={(val) => onPageSizeChange(Number(val))}
+              value={safePageSize}
+              onChange={(val) => {
+                const num = Number(val);
+                if (num > 0) {
+                  onPageSizeChange(num);
+                }
+              }}
               options={pageSizeOptions.map((opt) => ({
                 id: opt,
                 name: `${opt} ${finalPerPageText}`
@@ -83,6 +95,7 @@ export default function Pagination({
               isDarkMode={isDarkMode}
               theme={theme}
               searchable={false}
+              clearable={false}
               className="w-auto"
             />
           </div>
@@ -146,8 +159,8 @@ export default function Pagination({
           {/* Next page */}
           <button
             type="button"
-            disabled={currentPage >= totalPages}
-            onClick={() => onPageChange?.(currentPage + 1)}
+            disabled={safeCurrentPage >= safeTotalPages}
+            onClick={() => onPageChange?.(safeCurrentPage + 1)}
             className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-2xs"
             title={currentL10n.next}
           >
@@ -157,8 +170,8 @@ export default function Pagination({
           {/* Last page */}
           <button
             type="button"
-            disabled={currentPage >= totalPages}
-            onClick={() => onPageChange?.(totalPages)}
+            disabled={safeCurrentPage >= safeTotalPages}
+            onClick={() => onPageChange?.(safeTotalPages)}
             className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-2xs"
             title={currentL10n.last}
           >
