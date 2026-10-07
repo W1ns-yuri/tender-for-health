@@ -260,15 +260,10 @@ model TenderInvitation {
 - ✅ **CreateTenderPage.jsx**: декомпозирован из 1 134 строк в **176 строк**. Вынесены хук `useCreateTenderState.js`, навигация `TenderTopNavigationTabs.jsx` и менеджер лотов `TenderLotsManagerTab.jsx` с полной синхронизацией 3 языков (RU/TM/EN).
 - ✅ **EvaluationDetailsPage.jsx**: декомпозирован из 789 строк в **142 строки** (сокращение на 82%). Вынесены хук `useEvaluationDetails.js`, утилиты `evaluationUtils.js` и 6 субкомпонентов в `src/components/evaluation/` (`EvaluationDetailsHeader`, `EvaluationOverviewCard`, `EvaluationLotCard`, `EvaluationLotComparativeTable`, `EvaluationLotSpecBreakdown`, `EvaluationBottomActionBar`).
 - ✅ **SettingsPage.jsx**: декомпозирован из 917 строк в **125 строк**. Вынесены хук `useSettingsState.js` и 5 модульных компонентов в `src/components/settings/` (`SettingsHeader`, `SettingsSidebar`, `SettingsGeneralTab`, `SettingsNotificationsTab`, `SettingsSecurityTab`, `SettingsSystemTab`). Реализован реальный таймер автоблокировки сессии в `App.jsx` и исправлен баг отключения звука в `Header.jsx`.
+- ✅ **LoginPage.jsx**: декомпозирован из 874 строк в **175 строк**. Вынесены хук `useLoginState.js`, константы `authConstants.js` и 6 модульных компонентов в `src/components/auth/` (`AuthShowcase`, `AuthLanguageSelector`, `LoginForm`, `RegisterForm`, `AuthDemoModal`, `AuthForgotPasswordModal`). Добавлена поддержка всех 7 демо-аккаунтов, официальная модалка восстановления пароля и адаптивный индикатор шагов.
 
 ### 📋 Очередь файлов на декомпозицию до уровня Senior:
-1. **`LoginPage.jsx` (~930 строк)**:
-   - Разделение на компоненты в папку `src/components/auth/`:
-     - `AuthCard.jsx` — форма ввода логина и пароля с валидацией.
-     - `AuthRoleTabs.jsx` — быстрое переключение между ролями (Администратор, Поставщики).
-     - `AuthDemoAccountsModal.jsx` — всплывающее окно демонстрационных учетных записей.
-     - `AuthShowcaseFeatures.jsx` — презентационный блок возможностей платформы.
-5. **`TenderDetails.jsx` (~890 строк)**:
+1. **`TenderDetails.jsx` (~890 строк)**:
    - Разделение на компоненты в папку `src/components/tender-details/`:
      - `TenderDetailsHeader.jsx` — шапка с бейджами, бюджетом и таймером.
      - `TenderDetailsStepper.jsx` — 5-шаговый интерактивный трекер жизненного цикла.
