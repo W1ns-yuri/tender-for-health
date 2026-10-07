@@ -207,15 +207,24 @@ export default function SupplierDocumentsCard({
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <a
-                          href={`http://localhost:5000/${(doc.filePath || `uploads/${doc.fileName || doc.name}`).replace(/\\/g, '/')}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-1 px-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 text-[11px] font-bold"
-                        >
-                          <ExternalLink size={12} />
-                          <span>{t('openActionBtn', 'Открыть')}</span>
-                        </a>
+                        {(() => {
+                          const rawPath = (doc.filePath || `uploads/${doc.fileName || doc.name}`).replace(/\\/g, '/');
+                          const cleanRel = rawPath.startsWith('/') ? rawPath.slice(1) : rawPath;
+                          const fileUrl = doc.filePath && doc.filePath.startsWith('http')
+                            ? doc.filePath
+                            : `/${cleanRel.startsWith('uploads/') ? cleanRel : `uploads/${cleanRel}`}`;
+                          return (
+                            <a
+                              href={fileUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-1 px-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 text-[11px] font-bold"
+                            >
+                              <ExternalLink size={12} />
+                              <span>{t('openActionBtn', 'Открыть')}</span>
+                            </a>
+                          );
+                        })()}
                         {isEditable && (
                           <button
                             type="button"

@@ -26,3 +26,4 @@ export { default as RejectSupplierModal } from './RejectSupplierModal';
 // Constants & Utilities
 export * from './supplierConstants';
 export * from './supplierUtils';
+export { useSupplierProfileState } from './useSupplierProfileState';
