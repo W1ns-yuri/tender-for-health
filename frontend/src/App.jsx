@@ -165,6 +165,49 @@ export default function App() {
     setUser(null);
   };
 
+  // Автоматический логаут по таймауту неактивности (из настроек tender_session_timeout)
+  useEffect(() => {
+    if (!token) return;
+
+    let timer = null;
+
+    const resetTimer = () => {
+      if (timer) clearTimeout(timer);
+      const raw = localStorage.getItem('tender_session_timeout') || '30';
+      if (raw === 'never') return;
+      const mins = parseInt(raw, 10);
+      if (isNaN(mins) || mins <= 0) return;
+
+      timer = setTimeout(() => {
+        handleLogout();
+      }, mins * 60 * 1000);
+    };
+
+    const handleTimeoutConfigChange = () => {
+      resetTimer();
+    };
+
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    let lastReset = Date.now();
+    const handleUserActivity = () => {
+      const now = Date.now();
+      if (now - lastReset > 3000) {
+        lastReset = now;
+        resetTimer();
+      }
+    };
+
+    activityEvents.forEach(evt => window.addEventListener(evt, handleUserActivity, { passive: true }));
+    window.addEventListener('tender:session_timeout_changed', handleTimeoutConfigChange);
+    resetTimer();
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      activityEvents.forEach(evt => window.removeEventListener(evt, handleUserActivity));
+      window.removeEventListener('tender:session_timeout_changed', handleTimeoutConfigChange);
+    };
+  }, [token]);
+
   const handleNavigate = (tab, tenderId = null) => {
     if (tab === 'edit-tender' && tenderId) {
       navigate(`/tenders/${tenderId}/edit`);

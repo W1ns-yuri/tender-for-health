@@ -36,6 +36,9 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
   const prevUnreadRef = useRef(null);
 
   const playNotificationSound = () => {
+    if (typeof window !== 'undefined' && localStorage.getItem('tender_sound_enabled') === 'false') {
+      return;
+    }
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();

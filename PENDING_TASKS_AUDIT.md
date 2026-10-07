@@ -149,11 +149,10 @@
 ---
 
 ### 3.2. Автоматическое завершение сессии по таймауту (Session Security)
-* **Текущее состояние:**
-  * В настройках профиля ([SettingsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/SettingsPage.jsx)) есть выбор таймаута бездействия (15 мин, 30 мин, 60 мин), но значение просто сохраняется в `localStorage` и не задействуется реальным таймером активности пользователя.
-* **Что необходимо сделать:**
-  1. Добавить глобальный хук отслеживания активности (`mousemove`, `keydown`, `click`).
-  2. При отсутствии активности в течение установленного времени производить автоматический логаут с уведомлением: *«Сессия завершена из-за отсутствия активности в целях безопасности»*.
+* **Статус реализации:** ✅ Реализовано
+* В `App.jsx` внедрен сквозной слушатель активности пользователя (`mousedown`, `mousemove`, `keydown`, `scroll`, `touchstart`) с дросселированием (throttling).
+* При бездействии в течение времени, заданного в [SettingsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/SettingsPage.jsx) (`tender_session_timeout`: 15, 30, 60 мин), сессия автоматически сбрасывается (`handleLogout`), возвращая пользователя на экран входа.
+* При переключении таймаута в настройках диспатчится событие `tender:session_timeout_changed`, обновляющее таймер на лету.
 
 ---
 
@@ -258,7 +257,8 @@
 | **4** | **Рефакторинг** | Декомпозиция [AnalyticsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/AnalyticsPage.jsx) на 10 модульных компонентов в `src/components/analytics/` | ✅ Готово | 🔥 Высокий |
 | **4.1** | **Рефакторинг** | Декомпозиция [CreateTenderPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/CreateTenderPage.jsx) (сокращен с 1 134 до 176 строк, хук `useCreateTenderState`) | ✅ Готово | ⚡ Средний |
 | **4.2** | **Рефакторинг** | Декомпозиция [EvaluationDetailsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/EvaluationDetailsPage.jsx) (сокращен с 789 до 142 строк, хук `useEvaluationDetails`) | ✅ Готово | ⚡ Средний |
-| **4.3** | **Рефакторинг** | Декомпозиция [SettingsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/SettingsPage.jsx) (~1010 строк) и [LoginPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/LoginPage.jsx) (~930 строк) | В очереди | ⚡ Средний |
+| **4.3** | **Рефакторинг** | Декомпозиция [SettingsPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/SettingsPage.jsx) (сокращен с 917 до 125 строк, хук `useSettingsState`, 5 модулей) | ✅ Готово | ⚡ Средний |
+| **4.4** | **Рефакторинг** | Декомпозиция [LoginPage.jsx](file:///c:/Users/Yuri/Desktop/Tender%20for%20Helth/frontend/src/pages/LoginPage.jsx) (~930 строк) | В очереди | ⚡ Средний |
 | **5** | **Безопасность** | Ревизия всего кода: RBAC, санитизация данных, скрытие деталей внутренних ошибок | В очереди | ⚡ Средний |
 | **6** | **Сотрудники / RBAC** | Модуль управления администраторами и сотрудниками (`/admin/users`) | В очереди | ⚡ Средний |
 | **7** | **Аудит-лог** | Полный аудит действий («Кто, где, когда, куда и зачем») с фиксацией IP и Diff изменений | В очереди | ⚡ Средний |

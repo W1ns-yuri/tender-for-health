@@ -259,15 +259,10 @@ model TenderInvitation {
 - ✅ **AnalyticsPage.jsx**: декомпозирован из 1 289 строк в **10 изолированных компонентов** в `src/components/analytics/` (страница сокращена до ~170 строк).
 - ✅ **CreateTenderPage.jsx**: декомпозирован из 1 134 строк в **176 строк**. Вынесены хук `useCreateTenderState.js`, навигация `TenderTopNavigationTabs.jsx` и менеджер лотов `TenderLotsManagerTab.jsx` с полной синхронизацией 3 языков (RU/TM/EN).
 - ✅ **EvaluationDetailsPage.jsx**: декомпозирован из 789 строк в **142 строки** (сокращение на 82%). Вынесены хук `useEvaluationDetails.js`, утилиты `evaluationUtils.js` и 6 субкомпонентов в `src/components/evaluation/` (`EvaluationDetailsHeader`, `EvaluationOverviewCard`, `EvaluationLotCard`, `EvaluationLotComparativeTable`, `EvaluationLotSpecBreakdown`, `EvaluationBottomActionBar`).
+- ✅ **SettingsPage.jsx**: декомпозирован из 917 строк в **125 строк**. Вынесены хук `useSettingsState.js` и 5 модульных компонентов в `src/components/settings/` (`SettingsHeader`, `SettingsSidebar`, `SettingsGeneralTab`, `SettingsNotificationsTab`, `SettingsSecurityTab`, `SettingsSystemTab`). Реализован реальный таймер автоблокировки сессии в `App.jsx` и исправлен баг отключения звука в `Header.jsx`.
 
 ### 📋 Очередь файлов на декомпозицию до уровня Senior:
-1. **`SettingsPage.jsx` (~1 010 строк)**:
-   - Разделение на компоненты в папку `src/components/settings/`:
-     - `SettingsProfileTab.jsx` — реквизиты организации и контакты.
-     - `SettingsSecurityTab.jsx` — смена пароля и журнал сессий.
-     - `SettingsNotificationsTab.jsx` — тонкая настройка каналов уведомлений.
-     - `SettingsCommissionSignaturesTab.jsx` — подписи членов комиссии для официальных бланков.
-4. **`LoginPage.jsx` (~930 строк)**:
+1. **`LoginPage.jsx` (~930 строк)**:
    - Разделение на компоненты в папку `src/components/auth/`:
      - `AuthCard.jsx` — форма ввода логина и пароля с валидацией.
      - `AuthRoleTabs.jsx` — быстрое переключение между ролями (Администратор, Поставщики).
