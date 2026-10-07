@@ -254,8 +254,8 @@ export default function TenderLotDetailsCard({
       {/* Параметры работ */}
       {activeLot.lotType === 'WORKS' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-5">
               <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
                 {t('termLabel', 'Срок выполнения работ')} *
               </label>
@@ -282,17 +282,17 @@ export default function TenderLotDetailsCard({
                 };
 
                 return (
-                  <div className="flex items-center gap-2 max-w-70">
+                  <div className="flex items-center gap-2 w-full">
                     <input
                       type="number"
                       min="1"
                       step="1"
                       value={val}
                       onChange={(e) => handleValueChange(e.target.value)}
-                      className={`w-24 h-10 min-h-10 px-3 rounded-xl text-xs font-mono font-bold outline-none border ${theme?.inputBg || ''}`}
+                      className={`w-24 shrink-0 h-10 min-h-10 px-3 rounded-xl text-xs font-mono font-bold outline-none border ${theme?.inputBg || ''}`}
                       placeholder="60"
                     />
-                    <div className="w-44 shrink-0">
+                    <div className="flex-1 min-w-0">
                       <CustomSelect
                         role={role}
                         value={unit}
@@ -312,7 +312,7 @@ export default function TenderLotDetailsCard({
                 );
               })()}
             </div>
-            <div>
+            <div className="md:col-span-7">
               <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>
                 {t('endUser', 'Конечный получатель (Бенефициар)')} *
               </label>

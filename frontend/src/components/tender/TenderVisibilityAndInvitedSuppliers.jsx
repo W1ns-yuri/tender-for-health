@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Globe, Lock, Search, Plus, X, Users, Check, Building2, Sparkles, Trash2 } from 'lucide-react';
 import API from '../../services/api';
+import { parseCompanyName } from '../../utils/pluralize';
 import {
   TableContainer,
   Table,
@@ -17,24 +18,6 @@ import {
  * отделяет ОПФ (HK, HJ, ÝGP, IP, AÝG и т.д.) от основного названия,
  * исключая задвоенные кавычки и склейки.
  */
-const parseSupplierName = (rawName = '') => {
-  if (!rawName) return { opf: '', name: '—' };
-  const str = rawName.trim();
-  const match = str.match(/^([a-zA-Zа-яА-ЯýÝňŇşŞžŽçÇ]{2,4})\s+[«"“']?(.*?)[»"”']?$/);
-  const knownOpfs = ['HK', 'HJ', 'ÝGP', 'YGP', 'IP', 'AÝG', 'AYG', 'AO', 'PAO', 'OOO', 'ЗАО', 'ОАО', 'ИП', 'ХО', 'ХК'];
-  if (match && knownOpfs.includes(match[1].toUpperCase())) {
-    const opf = match[1].toUpperCase();
-    const cleanName = match[2].replace(/^[«"“']+|[»"”']+$/g, '').trim();
-    return { opf, name: cleanName || match[2].trim() };
-  }
-  const clean = str.replace(/^[«"“']+|[»"”']+$/g, '').trim();
-  return { opf: '', name: clean };
-};
-
-/**
- * Компонент управления видимостью тендера (Открытый / Закрытый)
- * и выбора приглашенных поставщиков для закрытых тендеров.
- */
 export default function TenderVisibilityAndInvitedSuppliers({
   visibility = 'ACYK',
   onChangeVisibility,
@@ -43,6 +26,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
   tenderCategoryId = null,
   isDarkMode = false,
   theme = {},
+  lang = 'RU',
   t = (k, f) => f
 }) {
   const [allSuppliers, setAllSuppliers] = useState([]);
@@ -337,7 +321,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                     {/* 1. Поставщики, подходящие по категории */}
                     {matchedSuppliers.map(supplier => {
                       const isAlreadyAdded = invitedSupplierIds.includes(supplier.id);
-                      const parsed = parseSupplierName(supplier.name);
+                      const parsed = parseCompanyName(supplier.name, lang, supplier.type);
                       const cats = supplier.categories || [];
                       return (
                         <div
@@ -363,7 +347,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                                   </span>
                                 )}
                                 <span className="font-bold text-slate-800 dark:text-slate-100 truncate">
-                                  {parsed.name}
+                                  {parsed.cleanName}
                                 </span>
                                 {tenderCategoryId && (
                                   <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 shrink-0 flex items-center gap-1">
@@ -416,7 +400,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                     {/* 2. Поставщики вне выбранной категории (более приглушенные) */}
                     {unmatchedSuppliers.map(supplier => {
                       const isAlreadyAdded = invitedSupplierIds.includes(supplier.id);
-                      const parsed = parseSupplierName(supplier.name);
+                      const parsed = parseCompanyName(supplier.name, lang, supplier.type);
                       const cats = supplier.categories || [];
                       return (
                         <div
@@ -442,7 +426,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                                   </span>
                                 )}
                                 <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">
-                                  {parsed.name}
+                                  {parsed.cleanName}
                                 </span>
                               </div>
                               <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2 mt-0.5">
@@ -545,7 +529,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                     />
                   ) : (
                     selectedSuppliers.map((supplier, idx) => {
-                      const parsed = parseSupplierName(supplier.name);
+                      const parsed = parseCompanyName(supplier.name, lang, supplier.type);
                       const cats = supplier.categories || [];
                       return (
                         <TableRow key={supplier.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
@@ -567,7 +551,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                                   </span>
                                 )}
                                 <span className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate" title={supplier.name}>
-                                  {parsed.name}
+                                  {parsed.cleanName}
                                 </span>
                               </div>
                             </div>

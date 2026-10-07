@@ -55,7 +55,7 @@ export default function CreateTenderPage({
   }
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-6">
       {/* 🟢 ШАПКА ТЕНДЕРА: Номер, статус, прогресс, публикация */}
       <TenderHeader
         tenderId={state.tenderId}

@@ -67,9 +67,20 @@ export const CustomSelect = ({
   const updateCoords = () => {
     if (wrapperRef.current) {
       const rect = wrapperRef.current.getBoundingClientRect();
-      const dropdownHeight = Math.min(280, Math.max(80, normalizedOptions.length * 36 + (isSearchEnabled ? 48 : 0)));
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const openUpwards = spaceBelow < 210 && rect.top > 210;
+      const estimatedItemsHeight = (normalizedOptions.length > 0 ? normalizedOptions.length : 1) * 36;
+      const searchBoxHeight = isSearchEnabled ? 48 : 0;
+      const clearBtnHeight = (clearable && value) ? 36 : 0;
+      const targetHeight = Math.min(280, Math.max(80, estimatedItemsHeight + searchBoxHeight + clearBtnHeight + 8));
+
+      const margin = 12;
+      const spaceBelow = window.innerHeight - rect.bottom - margin;
+      const spaceAbove = rect.top - margin;
+
+      // Flip upwards if space below is insufficient for targetHeight AND there is more space above
+      const openUpwards = (spaceBelow < targetHeight && spaceAbove > spaceBelow) || (spaceBelow < 180 && spaceAbove > 150);
+
+      const availableHeight = openUpwards ? Math.max(80, spaceAbove) : Math.max(80, spaceBelow);
+      const maxHeight = Math.min(targetHeight, availableHeight);
 
       const minW = Math.max(rect.width, 220);
       let left = rect.left;
@@ -78,11 +89,15 @@ export const CustomSelect = ({
       }
       left = Math.max(10, left);
 
+      const top = openUpwards
+        ? Math.max(margin, rect.top - maxHeight - 4)
+        : rect.bottom + 4;
+
       setCoords({
-        top: openUpwards ? (rect.top - dropdownHeight - 4) : (rect.bottom + 4),
+        top,
         left,
         width: Math.max(rect.width, minW),
-        maxHeight: dropdownHeight,
+        maxHeight,
       });
     }
   };

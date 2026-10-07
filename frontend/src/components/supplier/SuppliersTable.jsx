@@ -118,14 +118,8 @@ export default function SuppliersTable({
               />
             ) : (
               paginatedSuppliers.map((s, idx) => {
-                const parsed = parseCompanyName(s.name);
-                const opf = parsed.opf || (
-                  s.type === 'BUSINESS_SOCIETY' ? 'HJ' :
-                  s.type === 'PRIVATE_ENTERPRISE' || s.type === 'BUSINESS_COMPANY' ? 'HK' :
-                  s.type === 'ENTREPRENEUR' ? 'ИП' :
-                  s.type === 'DAÝHAN_HOJALYGY' ? 'DH' :
-                  s.type === 'FOREIGN_ENTITY' ? 'Foreign' : null
-                );
+                const parsed = parseCompanyName(s.name, lang, s.type);
+                const opf = parsed.opf;
 
                 return (
                   <TableRow key={s.id || idx}>
