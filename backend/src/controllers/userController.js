@@ -13,11 +13,15 @@ const getUsers = async (req, res) => {
                 middleName: true,
                 roleType: true,
                 position: true,
+                phone: true,
+                isActive: true,
+                lastLogin: true,
                 roleId: true,
                 createdAt: true,
                 updatedAt: true,
                 companies: true,
             },
+            orderBy: { createdAt: 'desc' }
         });
         res.json(users);
     } catch (error) {
@@ -28,7 +32,7 @@ const getUsers = async (req, res) => {
 // Создать пользователя (с паролем)
 const createUser = async (req, res) => {
     try {
-        const { username, password, firstName, lastName, roleType } = req.body;
+        const { username, password, firstName, lastName, middleName, roleType, position, phone } = req.body;
 
         if (!username || !password || !firstName || !lastName) {
             return res.status(400).json({ error: 'Обязательные поля: username, password, firstName, lastName' });
@@ -42,7 +46,17 @@ const createUser = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = await prisma.user.create({
-            data: { username, password: hashedPassword, firstName, lastName, roleType: roleType || 'SUPPLIER' },
+            data: {
+                username,
+                password: hashedPassword,
+                firstName,
+                lastName,
+                middleName: middleName || null,
+                roleType: roleType || 'SUPPLIER',
+                position: position || null,
+                phone: phone || null,
+                isActive: true
+            },
         });
 
         const { password: _, ...userWithoutPassword } = newUser;
@@ -52,7 +66,73 @@ const createUser = async (req, res) => {
     }
 };
 
+// Обновить данные пользователя
+const updateUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { firstName, lastName, middleName, roleType, position, phone, isActive } = req.body;
+
+        const updateData = {};
+        if (firstName !== undefined) updateData.firstName = firstName;
+        if (lastName !== undefined) updateData.lastName = lastName;
+        if (middleName !== undefined) updateData.middleName = middleName;
+        if (roleType !== undefined) updateData.roleType = roleType;
+        if (position !== undefined) updateData.position = position;
+        if (phone !== undefined) updateData.phone = phone;
+        if (isActive !== undefined) updateData.isActive = Boolean(isActive);
+
+        const updated = await prisma.user.update({
+            where: { id },
+            data: updateData,
+            select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                middleName: true,
+                roleType: true,
+                position: true,
+                phone: true,
+                isActive: true,
+                lastLogin: true,
+                roleId: true,
+                createdAt: true,
+                updatedAt: true,
+            }
+        });
+
+        res.json(updated);
+    } catch (error) {
+        console.error('Error updating user:', error);
+        res.status(400).json({ error: 'Не удалось обновить пользователя', details: error.message });
+    }
+};
+
+// Переключить статус блокировки пользователя
+const toggleUserStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await prisma.user.findUnique({ where: { id }, select: { isActive: true } });
+        if (!user) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+
+        const updated = await prisma.user.update({
+            where: { id },
+            data: { isActive: !user.isActive },
+            select: { id: true, username: true, isActive: true }
+        });
+
+        res.json(updated);
+    } catch (error) {
+        console.error('Error toggling user status:', error);
+        res.status(400).json({ error: 'Не удалось изменить статус пользователя', details: error.message });
+    }
+};
+
 module.exports = {
     getUsers,
     createUser,
+    updateUser,
+    toggleUserStatus,
 };
