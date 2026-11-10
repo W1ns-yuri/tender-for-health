@@ -126,227 +126,171 @@ const getLogs = async (req, res) => {
 };
 
 // 6. Аналитический центр и углубленная отчетность (Analytics)
+// Длина периода в миллисекундах и число точек на графике
+const ANALYTICS_PERIODS = {
+    '24h': { ms: 24 * 3600e3, buckets: 6 },
+    '7d': { ms: 7 * 24 * 3600e3, buckets: 7 },
+    '30d': { ms: 30 * 24 * 3600e3, buckets: 6 },
+    '6m': { ms: 182 * 24 * 3600e3, buckets: 6 },
+    '1y': { ms: 365 * 24 * 3600e3, buckets: 12 },
+};
+const FINISHED_STATUSES = ['YENIJI_YGLAN_EDILDI', 'ARHIWLENDI'];
+
+// Сумма выигранных позиций: unitPrice × quantity по isAwarded (победа присуждается по лотам, а не всей заявке)
+const awardedSum = (offers) => offers.reduce((sum, o) =>
+    sum + o.specs.reduce((s, sp) => s + (sp.isAwarded ? Number(sp.unitPrice) * Number(sp.quantity) : 0), 0), 0);
+
+const bucketLabel = (date, period) => {
+    const d = new Date(date);
+    if (period === '24h') return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ashgabat' });
+    if (period === '6m' || period === '1y') return d.toLocaleDateString('ru-RU', { month: 'short', year: '2-digit', timeZone: 'Asia/Ashgabat' });
+    return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', timeZone: 'Asia/Ashgabat' });
+};
+
+/**
+ * Аналитика только по реальным данным БД.
+ * Раньше период игнорировался, «+14.2% к прошлому периоду», курсы валют, экономия 8.5%,
+ * win rate 100% и регионы были захардкожены, а график делил итог поровну между точками.
+ */
 const getAnalyticsData = async (req, res) => {
     try {
-        const { period = '30d', currency = 'TMT' } = req.query;
+        const period = ANALYTICS_PERIODS[req.query.period] ? req.query.period : '30d';
+        const { ms, buckets } = ANALYTICS_PERIODS[period];
+        const now = Date.now();
+        const since = new Date(now - ms);
+        const prevSince = new Date(now - 2 * ms);
 
-        // 1. Получаем реальные не-черновые тендеры из базы
-        const nonDraftTenders = await prisma.tender.findMany({
-            where: {
-                status: { not: 'TASLAMA' }
+        // Валюта: пересчёт по курсу из справочника. Нет курса — показываем в TMT и честно говорим об этом.
+        let currency = String(req.query.currency || 'TMT').toUpperCase();
+        let rate = 1;
+        if (currency !== 'TMT') {
+            const pair = await prisma.exchangeRate.findFirst({
+                where: { fromCurrency: { code: currency }, toCurrency: { code: 'TMT' } },
+            });
+            if (pair && Number(pair.value) > 0) rate = 1 / Number(pair.value);
+            else currency = 'TMT';
+        }
+        const conv = (v) => Math.round(v * rate);
+
+        const tenderInclude = {
+            category: { select: { name: true } },
+            client: { select: { name: true } },
+            offers: {
+                where: { status: { not: 'TASLAMA' } },
+                select: {
+                    supplierId: true,
+                    supplier: { select: { id: true, name: true } },
+                    specs: { select: { isAwarded: true, unitPrice: true, quantity: true } },
+                },
             },
-            include: {
-                category: true,
-                client: true,
-                offers: {
-                    include: { supplier: true }
-                }
-            },
-            orderBy: { createdAt: 'desc' }
-        });
-
-        // 2. Реальные выигравшие предложения
-        const winningOffers = await prisma.offer.findMany({
-            where: { status: 'YENIJI' },
-            include: {
-                supplier: { select: { id: true, name: true } },
-                tender: { select: { id: true, title: true, price: true, client: { select: { name: true } } } }
-            }
-        });
-
-        // 3. Подсчет реальных метрик
-        const totalProcedures = nonDraftTenders.length;
-        const openProcedures = nonDraftTenders.filter(t => t.status === 'ACYK').length;
-        const successfulProcedures = nonDraftTenders.filter(t => t.status === 'YENIJI_YGLAN_EDILDI').length;
-        const inProgressProcedures = nonDraftTenders.filter(t => ['BAHALANDYRYLDY', 'YAPYK'].includes(t.status)).length;
-        const cancelledProcedures = nonDraftTenders.filter(t => t.status === 'GOYBOLSUN_EDILDI').length;
-
-        const totalOffers = nonDraftTenders.reduce((sum, t) => sum + (t.offers?.length || 0), 0);
-        const competitionIndex = totalProcedures > 0 ? (totalOffers / totalProcedures).toFixed(1) : '0.0';
-        const activeSuppliers = await prisma.supplier.count({ where: { isActive: true } });
-
-        // 4. Финансовые объемы
-        const currencyMultiplier = currency === 'USD' ? 0.285 : currency === 'EUR' ? 0.265 : 1;
-        const realPublishedSum = nonDraftTenders.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
-        const realContractSum = winningOffers.reduce((sum, o) => sum + (Number(o.offeredPrice || o.totalAmount) || 0), 0);
-
-        const totalVolume = Math.round(realPublishedSum * currencyMultiplier);
-        const actualContractedVolume = Math.round(realContractSum * currencyMultiplier);
-        const savingsAmount = Math.max(0, totalVolume - actualContractedVolume);
-        const savingsPercent = totalVolume > 0 && actualContractedVolume > 0 ? (((totalVolume - actualContractedVolume) / totalVolume) * 100).toFixed(1) : '8.5';
-
-        // 5. Метаданные периодов
-        const periodFactors = {
-            '24h': { delta: '+3.1%', timelinePoints: ['04:00', '08:00', '12:00', '16:00', '20:00', '23:59'] },
-            '7d': { delta: '+8.4%', timelinePoints: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] },
-            '30d': { delta: '+14.2%', timelinePoints: ['1-5 сен', '6-10 сен', '11-15 сен', '16-20 сен', '21-25 сен', '26-30 сен'] },
-            '6m': { delta: '+21.6%', timelinePoints: ['Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен'] },
-            '1y': { delta: '+28.9%', timelinePoints: ['Окт', 'Ноя', 'Дек', 'Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен'] },
         };
-        const currentPeriodMeta = periodFactors[period] || periodFactors['30d'];
+        const dateField = (from, to) => ({ createdAt: { gte: from, ...(to ? { lt: to } : {}) } });
 
-        // 6. Временной ряд (Area Chart)
-        const timeline = currentPeriodMeta.timelinePoints.map((label) => {
-            if (totalVolume === 0 && actualContractedVolume === 0) {
-                return { label, published: 0, awarded: 0, savings: 0 };
-            }
-            const bucketPublished = Math.round(totalVolume / currentPeriodMeta.timelinePoints.length);
-            const bucketAwarded = Math.round(actualContractedVolume / currentPeriodMeta.timelinePoints.length);
-            return {
-                label,
-                published: bucketPublished,
-                awarded: bucketAwarded,
-                savings: Math.max(0, bucketPublished - bucketAwarded),
-            };
+        const [tenders, prevTenders, activeSuppliers, newSuppliersPeriod] = await Promise.all([
+            prisma.tender.findMany({ where: { status: { not: 'TASLAMA' }, ...dateField(since) }, include: tenderInclude }),
+            prisma.tender.findMany({ where: { status: { not: 'TASLAMA' }, ...dateField(prevSince, since) }, select: { price: true } }),
+            prisma.supplier.count({ where: { isActive: true, verificationStatus: 'VERIFIED' } }),
+            prisma.supplier.count({ where: { createdAt: { gte: since } } }),
+        ]);
+
+        const byStatus = (list) => tenders.filter((t) => list.includes(t.status)).length;
+        const totalProcedures = tenders.length;
+        const successfulProcedures = byStatus(FINISHED_STATUSES);
+        const inProgressProcedures = byStatus(['YAPYK', 'BAHALANDYRYLDY']);
+        const openProcedures = byStatus(['ACYK']);
+        const cancelledProcedures = byStatus(['GOYBOLSUN_EDILDI']);
+        const totalOffers = tenders.reduce((s, t) => s + t.offers.length, 0);
+
+        const publishedSum = tenders.reduce((s, t) => s + Number(t.price || 0), 0);
+        const prevPublishedSum = prevTenders.reduce((s, t) => s + Number(t.price || 0), 0);
+        const finished = tenders.filter((t) => FINISHED_STATUSES.includes(t.status));
+        const contractedSum = finished.reduce((s, t) => s + awardedSum(t.offers), 0);
+        // Экономия = НМЦК завершённых тендеров с победителями − сумма выигранных позиций
+        const finishedWithAwards = finished.filter((t) => awardedSum(t.offers) > 0);
+        const finishedBudget = finishedWithAwards.reduce((s, t) => s + Number(t.price || 0), 0);
+        const savingsAmount = finishedBudget > 0 ? Math.max(0, finishedBudget - contractedSum) : 0;
+
+        // Динамика: реальные корзины по дате создания тендера
+        const step = ms / buckets;
+        const timeline = Array.from({ length: buckets }, (_, i) => {
+            const from = now - ms + i * step;
+            const to = from + step;
+            const inBucket = tenders.filter((t) => { const c = new Date(t.createdAt).getTime(); return c >= from && c < to; });
+            const published = inBucket.reduce((s, t) => s + Number(t.price || 0), 0);
+            const awarded = inBucket.filter((t) => FINISHED_STATUSES.includes(t.status)).reduce((s, t) => s + awardedSum(t.offers), 0);
+            return { label: bucketLabel(to, period), published: conv(published), awarded: conv(awarded), savings: conv(Math.max(0, published - awarded)) };
         });
 
-        // 7. Статусы процедур (Donut Chart)
+        const pct = (n) => (totalProcedures > 0 ? Math.round((n / totalProcedures) * 100) : 0);
         const statusDistribution = [
-            {
-                id: 'COMPLETED',
-                label: 'Успешно завершены',
-                count: successfulProcedures,
-                percent: totalProcedures > 0 ? Math.round((successfulProcedures / totalProcedures) * 100) : 0,
-                color: '#10B981'
-            },
-            {
-                id: 'IN_REVIEW',
-                label: 'На рассмотрении',
-                count: inProgressProcedures,
-                percent: totalProcedures > 0 ? Math.round((inProgressProcedures / totalProcedures) * 100) : 0,
-                color: '#F59E0B'
-            },
-            {
-                id: 'ACTIVE',
-                label: 'Активный приём заявок',
-                count: openProcedures,
-                percent: totalProcedures > 0 ? Math.round((openProcedures / totalProcedures) * 100) : 0,
-                color: '#0EA5E9'
-            },
-            {
-                id: 'CANCELLED',
-                label: 'Не состоялись',
-                count: cancelledProcedures,
-                percent: totalProcedures > 0 ? Math.round((cancelledProcedures / totalProcedures) * 100) : 0,
-                color: '#94A3B8'
-            },
+            { id: 'COMPLETED', label: 'Успешно завершены', count: successfulProcedures, percent: pct(successfulProcedures), color: '#10B981' },
+            { id: 'IN_REVIEW', label: 'На рассмотрении', count: inProgressProcedures, percent: pct(inProgressProcedures), color: '#F59E0B' },
+            { id: 'ACTIVE', label: 'Активный приём заявок', count: openProcedures, percent: pct(openProcedures), color: '#0EA5E9' },
+            { id: 'CANCELLED', label: 'Не состоялись', count: cancelledProcedures, percent: pct(cancelledProcedures), color: '#94A3B8' },
         ];
 
-        // 8. Категории по бюджету
-        const catMap = {};
-        nonDraftTenders.forEach(t => {
-            const name = t.category?.name || 'Медицинские товары и услуги';
-            if (!catMap[name]) catMap[name] = { name, amount: 0, tenders: 0 };
-            catMap[name].tenders += 1;
-            catMap[name].amount += Number(t.price) || 0;
-        });
-        const categories = Object.values(catMap).map(c => ({
-            name: c.name,
-            amount: Math.round(c.amount * currencyMultiplier),
-            tenders: c.tenders,
-            percent: totalProcedures > 0 ? Math.round((c.tenders / totalProcedures) * 100) : 0
-        })).sort((a, b) => b.tenders - a.tenders).slice(0, 5);
-
-        // 9. География по регионам (Велаяты)
-        const regMap = {};
-        nonDraftTenders.forEach(t => {
-            const name = t.client?.name || '';
-            const regName = name.includes('Аркадаг') ? 'г. Аркадаг (Arkadag)'
-                : name.includes('Мары') ? 'Марыйский велаят'
-                : name.includes('Балкан') ? 'Балканский велаят'
-                : name.includes('Лебап') ? 'Лебапский велаят'
-                : name.includes('Дашогуз') ? 'Дашогузский велаят'
-                : name.includes('Ахал') ? 'Ахалский велаят'
-                : 'г. Ашхабад (Aşgabat)';
-            if (!regMap[regName]) regMap[regName] = { id: regName, name: regName, tenders: 0, amount: 0 };
-            regMap[regName].tenders += 1;
-            regMap[regName].amount += Number(t.price) || 0;
-        });
-        const regions = Object.values(regMap).map(r => ({
-            ...r,
-            amount: Math.round(r.amount * currencyMultiplier),
-            percent: totalProcedures > 0 ? Math.round((r.tenders / totalProcedures) * 100) : 0
-        })).sort((a, b) => b.tenders - a.tenders);
-
-        // 10. Топ-5 поставщиков по суммам побед
-        const supWinsMap = {};
-        winningOffers.forEach(o => {
-            if (!o.supplier) return;
-            const supId = o.supplier.id;
-            if (!supWinsMap[supId]) {
-                supWinsMap[supId] = {
-                    id: supId,
-                    name: o.supplier.name,
-                    category: o.tender?.category?.name || 'Фармацевтика и препараты',
-                    winsCount: 0,
-                    totalContracts: 0,
-                };
+        const group = (keyFn) => {
+            const map = new Map();
+            for (const t of tenders) {
+                const key = keyFn(t);
+                const g = map.get(key) || { name: key, tenders: 0, amount: 0, offers: 0 };
+                g.tenders += 1; g.amount += Number(t.price || 0); g.offers += t.offers.length;
+                map.set(key, g);
             }
-            supWinsMap[supId].winsCount += 1;
-            supWinsMap[supId].totalContracts += Number(o.offeredPrice || o.totalAmount) || 0;
-        });
-        const topSuppliers = Object.values(supWinsMap)
-            .sort((a, b) => b.totalContracts - a.totalContracts)
-            .slice(0, 5)
-            .map((sup, idx) => ({
-                rank: idx + 1,
-                name: sup.name,
-                category: sup.category,
-                winsCount: sup.winsCount,
-                totalContracts: Math.round(sup.totalContracts * currencyMultiplier),
-                winRate: 100,
-            }));
+            return [...map.values()].sort((a, b) => b.tenders - a.tenders);
+        };
+        const categories = group((t) => t.category?.name || 'Без категории').slice(0, 5)
+            .map((c) => ({ name: c.name, amount: conv(c.amount), tenders: c.tenders, percent: pct(c.tenders) }));
+        const topClients = group((t) => t.client?.name || 'Заказчик не указан').slice(0, 4)
+            .map((c, idx) => ({ rank: idx + 1, name: c.name, procedures: c.tenders, budget: conv(c.amount), avgCompetition: (c.offers / c.tenders).toFixed(1) }));
 
-        // 11. Ключевые заказчики
-        const clMap = {};
-        nonDraftTenders.forEach(t => {
-            const clName = t.client?.name || 'Министерство здравоохранения и медицинской промышленности';
-            if (!clMap[clName]) clMap[clName] = { name: clName, procedures: 0, budget: 0, offers: 0 };
-            clMap[clName].procedures += 1;
-            clMap[clName].budget += Number(t.price) || 0;
-            clMap[clName].offers += (t.offers?.length || 0);
-        });
-        const topClients = Object.values(clMap)
-            .sort((a, b) => b.procedures - a.procedures)
-            .slice(0, 4)
-            .map((cl, idx) => ({
-                rank: idx + 1,
-                name: cl.name,
-                procedures: cl.procedures,
-                budget: Math.round(cl.budget * currencyMultiplier),
-                avgCompetition: cl.procedures > 0 ? (cl.offers / cl.procedures).toFixed(1) : '0.0',
-            }));
+        // Поставщики: участия и победы (победа = хотя бы одна выигранная позиция в тендере)
+        const sup = new Map();
+        for (const t of tenders) {
+            for (const o of t.offers) {
+                const s = sup.get(o.supplierId) || { name: o.supplier?.name || '—', participations: 0, wins: 0, total: 0, category: t.category?.name || 'Без категории' };
+                s.participations += 1;
+                const won = awardedSum([o]);
+                if (won > 0) { s.wins += 1; s.total += won; }
+                sup.set(o.supplierId, s);
+            }
+        }
+        const topSuppliers = [...sup.values()].filter((s) => s.wins > 0)
+            .sort((a, b) => b.total - a.total).slice(0, 5)
+            .map((s, idx) => ({ rank: idx + 1, name: s.name, category: s.category, winsCount: s.wins, totalContracts: conv(s.total), winRate: Math.round((s.wins / s.participations) * 100) }));
 
         res.json({
             meta: {
                 period,
                 currency,
-                delta: currentPeriodMeta.delta,
+                // null, когда сравнивать не с чем: фронт не должен рисовать выдуманный рост
+                delta: prevPublishedSum > 0 ? `${publishedSum >= prevPublishedSum ? '+' : ''}${(((publishedSum - prevPublishedSum) / prevPublishedSum) * 100).toFixed(1)}%` : null,
                 updatedAt: new Date().toISOString(),
             },
             kpi: {
-                totalVolume,
-                actualContractedVolume,
-                savingsAmount,
-                savingsPercent,
+                totalVolume: conv(publishedSum),
+                actualContractedVolume: conv(contractedSum),
+                savingsAmount: conv(savingsAmount),
+                savingsPercent: finishedBudget > 0 ? ((savingsAmount / finishedBudget) * 100).toFixed(1) : null,
                 totalProcedures,
                 successfulProcedures,
                 cancelledProcedures,
                 totalOffers,
-                competitionIndex,
+                competitionIndex: totalProcedures > 0 ? (totalOffers / totalProcedures).toFixed(1) : '0.0',
                 activeSuppliers,
-                newSuppliersPeriod: 0,
+                newSuppliersPeriod,
             },
             timeline,
             statusDistribution,
             categories,
-            regions,
+            // У заказчика нет поля региона: раньше регион угадывался по названию, а всё прочее записывалось в Ашхабад
+            regions: [],
             topSuppliers,
             topClients,
         });
     } catch (error) {
         console.error('Error calculating analytics data', error);
-        res.status(500).json({ error: 'Ошибка расчета аналитических данных', details: error.message });
+        res.status(500).json({ error: 'Ошибка расчета аналитических данных' });
     }
 };
 

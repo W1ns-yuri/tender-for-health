@@ -72,10 +72,10 @@ export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
         />
 
         {/* Карточка формы */}
-        <div className="w-full max-w-125 p-6 sm:p-10 border border-slate-200/60 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 bg-white animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="w-full max-w-125 p-6 sm:p-10 border border-slate-200/60 rounded-2xl shadow-sm bg-white animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* Шапка формы */}
           <div className="mb-8 text-center select-none">
-            <div className="w-14 h-14 bg-linear-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-blue-500/30 mx-auto">
+            <div className="w-14 h-14 bg-emerald-600 rounded-xl flex items-center justify-center mb-5 mx-auto">
               <span className="text-white font-black text-2xl tracking-tight">TU</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-800 mb-2.5 tracking-tight">

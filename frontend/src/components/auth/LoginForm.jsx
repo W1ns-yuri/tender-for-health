@@ -1,6 +1,9 @@
 import React from 'react';
 import { User, Lock, Eye, EyeOff, Building2, Users } from 'lucide-react';
 
+
+const SHOW_DEMO = import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO === 'true';
+
 export default function LoginForm({
   username,
   setUsername,
@@ -22,7 +25,7 @@ export default function LoginForm({
         {/* Логин или Email */}
         <div>
           <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
-            {t('loginOrEmailPlaceholder', 'Логин или Email')}
+            {t('usernameLabel', 'Логин')}
           </label>
           <div className="relative flex items-center">
             <User size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
@@ -32,7 +35,7 @@ export default function LoginForm({
               autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder={t('emailPlaceholderDemo', 'corp@company.ru')}
+              placeholder={t('usernamePlaceholder', 'Ваш логин')}
               className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-300 rounded-2xl text-slate-800 transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400 font-medium text-sm sm:text-base"
             />
           </div>
@@ -79,12 +82,13 @@ export default function LoginForm({
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-4 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-black shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] disabled:opacity-70 mt-6 text-[15px] cursor-pointer"
+        className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all flex items-center justify-center space-x-2 active:scale-[0.98] disabled:opacity-70 mt-6 text-[15px] cursor-pointer"
       >
         <span>{loading ? t('loggingIn', 'Вход...') : t('loginBtn', 'Войти в систему')}</span>
       </button>
 
-      {/* Демо-доступ */}
+      {/* Демо-доступ: только в dev или когда явно включён (VITE_SHOW_DEMO=true), в проде демо-учёток быть не должно */}
+      {SHOW_DEMO && (
       <div className="pt-4 mt-6">
         <div className="relative flex items-center justify-center mb-5">
           <div className="absolute inset-0 flex items-center">
@@ -98,16 +102,16 @@ export default function LoginForm({
         <div className="grid grid-cols-2 gap-3 mb-3">
           <button
             type="button"
-            onClick={() => onQuickLogin('admin', 'password123')}
-            className="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold transition-all hover:border-blue-300 hover:text-blue-600 active:scale-95 shadow-2xs cursor-pointer"
+            onClick={() => onQuickLogin('admin', 'admin123')}
+            className="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold transition-all hover:border-emerald-300 hover:text-emerald-700 active:scale-95 shadow-2xs cursor-pointer"
           >
             <User size={16} className="text-slate-400" />
             <span>Admin</span>
           </button>
           <button
             type="button"
-            onClick={() => onQuickLogin('supplier@1.com', 'password123')}
-            className="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold transition-all hover:border-blue-300 hover:text-blue-600 active:scale-95 shadow-2xs cursor-pointer"
+            onClick={() => onQuickLogin('derman_saglyk', 'supplier123')}
+            className="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold transition-all hover:border-emerald-300 hover:text-emerald-700 active:scale-95 shadow-2xs cursor-pointer"
           >
             <Building2 size={16} className="text-slate-400" />
             <span>Supplier</span>
@@ -124,6 +128,7 @@ export default function LoginForm({
           <span>{t('demoAccountsAllBtn', 'Все 7 демонстрационных аккаунтов')}</span>
         </button>
       </div>
+      )}
 
       {/* Переход к регистрации */}
       <div className="text-center mt-6 text-sm font-medium text-slate-500">
