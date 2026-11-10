@@ -35,3 +35,12 @@ npm run db:status                                  # должно быть "Data
 ```
 
 Если `migrate diff` показывает расхождения, сначала выполни `npx prisma db push` (последний раз), потом `resolve`.
+
+## Переменные окружения для продакшена
+
+| Переменная | Зачем |
+|---|---|
+| `NODE_ENV=production` | Включает secure-cookie и строгую проверку `JWT_SECRET` |
+| `JWT_SECRET` | Не короче 32 символов и не из `.env.example`, иначе сервер не стартует. Сгенерировать: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` |
+| `CORS_ORIGIN` | Адрес фронтенда, например `https://tender.example.tm` |
+| `TRUST_PROXY=1` | Если сервер стоит за nginx/Render/Railway: тогда лимит попыток входа считается по IP клиента, а не прокси |

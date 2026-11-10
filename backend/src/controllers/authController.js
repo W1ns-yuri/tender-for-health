@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const { passwordError } = require('../utils/accountRules');
 const jwt = require('jsonwebtoken');
 const prisma = require('../lib/prisma');
 const { setAuthCookie, clearAuthCookie } = require('../utils/authCookie');
@@ -32,6 +33,9 @@ const register = async (req, res) => {
         }
 
         // Хешируем пароль (10 раундов соли)
+        const pwdError = passwordError(password);
+        if (pwdError) return res.status(400).json({ error: pwdError });
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Очищаем наименование компании от случайных юридических приставок

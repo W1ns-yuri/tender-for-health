@@ -13,6 +13,6 @@ router.get('/stats', authMiddleware, getDashboardStats);
 router.get('/logs', authMiddleware, checkRole(['ADMIN']), getLogs);
 
 // 3. Аналитический центр и отчетность
-router.get('/analytics', authMiddleware, checkRole(['ADMIN', 'PURCHASING_SPECIALIST']), getAnalyticsData);
+router.get('/analytics', authMiddleware, checkRole(['ADMIN']), getAnalyticsData);
 
 module.exports = router;

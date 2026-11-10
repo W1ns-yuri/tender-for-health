@@ -1,5 +1,6 @@
     const prisma = require('../lib/prisma');
     const bcrypt = require('bcryptjs');
+    const { passwordError } = require('../utils/accountRules');
     const createCompany = async (req, res) => {
         try {
             const { name, inn, phone, address, username, password, email, license, countryId } = req.body;
@@ -21,6 +22,9 @@
             if (existingCompany) {
                 return res.status(400).json({ error: 'Компания с таким названием уже зарегистрирована' });
             }
+
+            const pwdError = passwordError(password);
+            if (pwdError) return res.status(400).json({ error: pwdError });
 
             const hashedPassword = await bcrypt.hash(password, 10);
 

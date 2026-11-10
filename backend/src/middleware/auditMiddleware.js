@@ -47,11 +47,20 @@ const auditLog = (eventType = 'TENDER', operationType = 'OKAMAK') => {
     };
 };
 
-// Функция скрывает пароли в журналах
-function sanitizeBody(body) {
-    if (typeof body !== 'object' || body === null) return body;
-    const sanitized = { ...body };
-    if (sanitized.password) sanitized.password = '***HIDDEN***';
+// Поля, которые нельзя писать в журнал: пароли и содержимое "конверта" предложения.
+// Журнал читают админы (и раньше видели поставщики на дашборде), а цены до вскрытия не должен видеть никто.
+const SECRET_KEYS = new Set(['password', 'newPassword', 'oldPassword', 'token']);
+const SEALED_KEYS = new Set(['specs', 'offeredPrice', 'unitPrice', 'exchangeRates', 'paymentTerms', 'deliveryTerm', 'comment']);
+
+function sanitizeBody(body, depth = 0) {
+    if (typeof body !== 'object' || body === null || depth > 5) return body;
+    if (Array.isArray(body)) return body.map((v) => sanitizeBody(v, depth + 1));
+    const sanitized = {};
+    for (const [key, value] of Object.entries(body)) {
+        if (SECRET_KEYS.has(key)) sanitized[key] = '***HIDDEN***';
+        else if (SEALED_KEYS.has(key)) sanitized[key] = '***SEALED***';
+        else sanitized[key] = sanitizeBody(value, depth + 1);
+    }
     return sanitized;
 }
 

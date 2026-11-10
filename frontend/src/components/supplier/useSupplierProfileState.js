@@ -140,14 +140,10 @@ export function useSupplierProfileState({
             currentSupplier.email = currentSupplier.email || userEmail;
           }
         } else if (id) {
-          try {
-            const compRes = await API.get(`/suppliers/${id}`);
-            currentSupplier = compRes.data;
-          } catch (fetchErr) {
-            console.warn('Direct supplier fetch fallback:', fetchErr);
-            const fallbackRes = await API.get('/offers/suppliers');
-            currentSupplier = fallbackRes.data?.find((c) => String(c.id) === String(id));
-          }
+          // Без запасного запроса на /offers/suppliers: этот список теперь только для админа,
+          // а чужой профиль поставщику смотреть и не положено (бэкенд ответит 403).
+          const compRes = await API.get(`/suppliers/${id}`);
+          currentSupplier = compRes.data;
         }
 
         if (isCancelled) return;
