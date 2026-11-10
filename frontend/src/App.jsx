@@ -105,7 +105,19 @@ export default function App() {
   };
 
   // Язык по умолчанию — RU
-  const [lang, setLang] = useState('RU');
+  // Язык запоминается между перезагрузками (раньше после F5 всегда сбрасывался на русский)
+  const [lang, setLang] = useState(() => {
+    try {
+      const saved = localStorage.getItem('tender_lang');
+      return ['TM', 'RU', 'EN'].includes(saved) ? saved : 'RU';
+    } catch {
+      return 'RU';
+    }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('tender_lang', lang); } catch { /* приватный режим */ }
+    document.documentElement.lang = { TM: 'tk', RU: 'ru', EN: 'en' }[lang] || 'ru';
+  }, [lang]);
 
   // Синхронизация сессии при монтировании
   useEffect(() => {

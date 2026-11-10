@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: health_tender_db
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:password@localhost:5432/health_tender_db?schema=public
+      JWT_SECRET: ci_only_secret_not_for_production_use_000000
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma validate
+      - run: npx prisma generate
+      # Все миграции с нуля на пустой базе + схема совпадает с миграциями
+      - run: npx prisma migrate deploy
+      - name: Schema matches migrations
+        run: |
+          DIFF=$(npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script 2>/dev/null)
+          echo "$DIFF"
+          echo "$DIFF" | grep -q "empty migration" || (echo "schema.prisma changed without a migration" && exit 1)
+      - run: npm run seed:demo
+      - name: Smoke test
+        run: |
+          node index.js > server.log 2>&1 &
+          for i in $(seq 1 20); do curl -sf localhost:5000/api/health && break; sleep 1; done
+          curl -sf localhost:5000/api/health
+          TOKEN=$(curl -sf localhost:5000/api/auth/login -H 'content-type: application/json' \
+            -d '{"username":"admin","password":"admin123"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).token')
+          curl -sf localhost:5000/api/tenders -H "authorization: Bearer $TOKEN" > /dev/null
+          curl -sf localhost:5000/api/dashboard/stats -H "authorization: Bearer $TOKEN" > /dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' localhost:5000/api/offers/suppliers)" = "401"
+      - if: failure()
+        run: cat server.log || true
+      - run: npm audit --omit=dev --audit-level=high
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high

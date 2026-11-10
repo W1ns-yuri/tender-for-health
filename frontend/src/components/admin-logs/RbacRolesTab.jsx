@@ -1,10 +1,10 @@
 import React from 'react';
-import { ShieldCheck, UserCog, Scale, Building, Truck } from 'lucide-react';
+import { ShieldCheck, Truck } from 'lucide-react';
 
 /**
  * RbacRolesTab Component
- * Outlines the comprehensive 5-role RBAC matrix for the platform,
- * clearly defining operational boundaries and privileges.
+ * Роли, которые реально есть в системе. Раньше тут были ещё три роли (специалист, комиссия,
+ * заказчик), под которые нет ни одного экрана и которых нельзя назначить.
  */
 export default function RbacRolesTab({ cardBg, t }) {
   const systemRoles = [
@@ -17,36 +17,6 @@ export default function RbacRolesTab({ cardBg, t }) {
       ),
       badgeColor: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
       icon: ShieldCheck
-    },
-    {
-      code: 'PURCHASING_SPECIALIST',
-      name: t('purchasingSpecialistRole', 'Специалист по закупкам'),
-      desc: t(
-        'purchasingSpecialistDesc',
-        'Формирование извещений и технических спецификаций, подготовка лотов, работа с каталогами МНН, классификаторами и прикреплением конкурсной документации'
-      ),
-      badgeColor: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-      icon: UserCog
-    },
-    {
-      code: 'COMMISSION_MEMBER',
-      name: t('commissionMemberRole', 'Член тендерной комиссии'),
-      desc: t(
-        'commissionMemberDesc',
-        'Процедура вскрытия конвертов, экспертная оценка предложенных товаров и эквивалентов, сопоставление критериев и голосование за выбор победителя'
-      ),
-      badgeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-      icon: Scale
-    },
-    {
-      code: 'CLIENT',
-      name: t('clientRole', 'Заказчик (Госпиталь / ЛПУ)'),
-      desc: t(
-        'clientDesc',
-        'Формирование заявок на закупку медицинских препаратов, расходных материалов и оборудования, отслеживание исполнения заключенных договоров'
-      ),
-      badgeColor: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
-      icon: Building
     },
     {
       code: 'SUPPLIER',
