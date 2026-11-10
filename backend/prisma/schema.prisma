@@ -244,7 +244,7 @@ model ExchangeRate {
   fromCurrency   Currency @relation("FromCurrency", fields: [fromCurrencyId], references: [id], onDelete: Cascade)
   toCurrencyId   String   @map("to_currency_id")
   toCurrency     Currency @relation("ToCurrency", fields: [toCurrencyId], references: [id], onDelete: Cascade)
-  value          Float
+  value          Decimal  @db.Decimal(18, 6)
 
   updatedAt DateTime @updatedAt
 
@@ -356,7 +356,7 @@ model Tender {
   title          String
   description    String?
   technicalSpecs String?          @map("technical_specs")
-  price          Float            @default(0)
+  price          Decimal          @default(0) @db.Decimal(18, 2)
   type           TenderType       @default(YERLI)
   status         TenderStatus     @default(TASLAMA)
   visibility     TenderVisibility @default(ACYK)
@@ -575,7 +575,7 @@ model Offer {
   version       Int           @default(1)
   isDefault     Boolean       @default(true) @map("is_default")
   status        OfferStatus   @default(TASLAMA)
-  offeredPrice  Float         @default(0) @map("offered_price")
+  offeredPrice  Decimal       @default(0) @map("offered_price") @db.Decimal(18, 2)
   comment       String?
 
   specs         OfferSpecification[]
@@ -604,7 +604,7 @@ model OfferSpecification {
   name                    String?
   positionNumber          Int?     @map("position_number")
   quantity                Float    @default(1)
-  unitPrice               Float    @default(0) @map("unit_price")
+  unitPrice               Decimal  @default(0) @map("unit_price") @db.Decimal(18, 4)
   description             String?
   isAwarded               Boolean  @default(false) @map("is_awarded")
   isEquivalent            Boolean? @default(false) @map("is_equivalent")
@@ -620,7 +620,7 @@ model OfferExchangeRate {
   offer      Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
   currencyId String   @map("currency_id")
   currency   Currency @relation(fields: [currencyId], references: [id], onDelete: Cascade)
-  value      Float
+  value      Decimal  @db.Decimal(18, 6)
 
   @@map("offer_exchange_rates")
 }
@@ -649,7 +649,7 @@ model Company {
 // Старая модель Bid для обратной совместимости
 model Bid {
   id           String    @id @default(uuid())
-  offeredPrice Float
+  offeredPrice Decimal   @db.Decimal(18, 2)
   comment      String?
   status       BidStatus @default(PENDING)
 
@@ -670,8 +670,8 @@ model Bid {
 
 model BidItem {
   id              String  @id @default(uuid())
-  pricePerUnit    Float
-  totalPrice      Float
+  pricePerUnit    Decimal @db.Decimal(18, 4)
+  totalPrice      Decimal @db.Decimal(18, 2)
   isAlternative   Boolean @default(false)
   alternativeDesc String?
 

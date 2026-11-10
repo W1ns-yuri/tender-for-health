@@ -1,5 +1,9 @@
 const prisma = require('../lib/prisma');
 const { sendNotification } = require('./notificationController');
+const { D } = require('../utils/money');
+const { isTenderOpened, sealOffer } = require('../utils/sealedEnvelope');
+
+const NOT_OPENED_ERROR = 'Сначала вскройте конверты: до вскрытия цены предложений запечатаны.';
 
 /**
  * 1. Вскрытие предложений (Teklipleri açmak)
@@ -88,17 +92,22 @@ const evaluateTenderBids = async (req, res) => {
             return res.status(404).json({ error: 'Тендер не найден' });
         }
 
+        if (!isTenderOpened(tender)) {
+            return res.status(400).json({ error: NOT_OPENED_ERROR });
+        }
+
         // Финансовый пересчет всех заявок с использованием зафиксированных курсов OfferExchangeRate
         const evaluatedOffers = tender.offers.map((offer) => {
-            let calculatedTotalInBase = 0;
+            let calculatedTotalInBase = D(0);
 
             offer.specs.forEach((spec) => {
                 // Ищем фиксированный курс для этой заявки или используем 1 (если базовая)
                 const rateObj = offer.exchangeRates.find((r) => r.currencyId === offer.baseCurrencyId);
                 const rate = rateObj ? rateObj.value : 1;
 
-                calculatedTotalInBase += spec.unitPrice * spec.quantity * rate;
+                calculatedTotalInBase = calculatedTotalInBase.plus(D(spec.unitPrice).times(D(spec.quantity)).times(D(rate)));
             });
+            calculatedTotalInBase = calculatedTotalInBase.toDecimalPlaces(2).toNumber();
 
             return {
                 offerId: offer.id,
@@ -144,6 +153,7 @@ const selectWinnerOffer = async (req, res) => {
         // Проверяем существование тендера и заявки
         const tender = await prisma.tender.findUnique({ where: { id: tenderId } });
         if (!tender) return res.status(404).json({ error: 'Тендер не найден' });
+        if (!isTenderOpened(tender)) return res.status(400).json({ error: NOT_OPENED_ERROR });
 
         const winningOffer = await prisma.offer.findUnique({ where: { id: winningOfferId } });
         if (!winningOffer || winningOffer.tenderId !== tenderId) {
@@ -255,6 +265,11 @@ const getTenderEvaluationDetails = async (req, res) => {
 
         if (!tender) return res.status(404).json({ error: 'Тендер не найден' });
 
+        // До вскрытия отдаём только метаданные заявок (кто и когда подал), без цен и позиций
+        if (!isTenderOpened(tender)) {
+            return res.json({ ...tender, offers: tender.offers.map(sealOffer), isSealed: true });
+        }
+
         res.json(tender);
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при получении деталей оценки', details: error.message });
@@ -274,6 +289,11 @@ const awardLot = async (req, res) => {
         if (!lot) return res.status(404).json({ error: 'Лот не найден' });
         if (lot.tenderId !== tenderId) {
             return res.status(400).json({ error: 'Указанный лот не принадлежит данному тендеру' });
+        }
+
+        const lotTender = await prisma.tender.findUnique({ where: { id: tenderId }, select: { status: true } });
+        if (!isTenderOpened(lotTender)) {
+            return res.status(400).json({ error: NOT_OPENED_ERROR });
         }
 
         if (offerId) {
@@ -342,9 +362,9 @@ const completeEvaluation = async (req, res) => {
         if (!tender) return res.status(404).json({ error: 'Тендер не найден' });
 
         // Нельзя завершить оценку не вскрытого тендера
-        if (tender.status === 'TASLAMA' || tender.status === 'ACYK') {
+        if (!isTenderOpened(tender)) {
             return res.status(400).json({ 
-                error: 'Нельзя завершить оценку тендера, пока он находится в статусе черновика или открыт для приема заявок. Сначала вскройте предложения.' 
+                error: 'Нельзя завершить оценку: конверты ещё не вскрыты. Сначала вскройте предложения.' 
             });
         }
 

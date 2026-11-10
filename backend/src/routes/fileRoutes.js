@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const prisma = require('../lib/prisma');
 const authMiddleware = require('../middleware/authMiddleware');
+const { isTenderOpened } = require('../utils/sealedEnvelope');
 
 const router = express.Router();
 const uploadDir = path.join(__dirname, '../../uploads');
@@ -10,7 +11,7 @@ const uploadDir = path.join(__dirname, '../../uploads');
 /**
  * Может ли пользователь скачать документ.
  *
- * - ADMIN: всё.
+ * - ADMIN: всё, кроме документов предложений до вскрытия конвертов.
  * - Документ тендера/лота: опубликованный (не TASLAMA) открытый тендер,
  *   либо закрытый, если поставщик в списке приглашённых.
  * - Документ поставщика: только сам поставщик.
@@ -21,7 +22,7 @@ const uploadDir = path.join(__dirname, '../../uploads');
  *   TODO: хранить uploadedById и пускать только загрузившего.
  */
 async function canAccessFile(user, fileName) {
-    if (user.roleType === 'ADMIN') return true;
+    const isAdmin = user.roleType === 'ADMIN';
 
     const doc = await prisma.document.findFirst({
         where: { fileName },
@@ -30,11 +31,19 @@ async function canAccessFile(user, fileName) {
             tenderFiles: { select: { tenderId: true } },
             lotFiles: { select: { lot: { select: { tenderId: true } } } },
             supplierFiles: { select: { supplier: { select: { userId: true } } } },
-            offerFiles: { select: { offer: { select: { supplier: { select: { userId: true } } } } } },
+            offerFiles: { select: { offer: { select: { supplier: { select: { userId: true } }, tender: { select: { status: true } } } } } },
         },
     });
 
     if (!doc) return true;
+
+    // Документ предложения = содержимое конверта: владелец видит всегда, админ только после вскрытия
+    if (doc.offerFiles.length > 0) {
+        if (doc.offerFiles.some((f) => f.offer?.supplier?.userId === user.id)) return true;
+        return isAdmin && doc.offerFiles.every((f) => isTenderOpened(f.offer?.tender));
+    }
+
+    if (isAdmin) return true;
 
     const tenderIds = [
         doc.tenderId,
@@ -42,11 +51,10 @@ async function canAccessFile(user, fileName) {
         ...doc.lotFiles.map((f) => f.lot?.tenderId),
     ].filter(Boolean);
 
-    const isLinked = tenderIds.length > 0 || doc.supplierFiles.length > 0 || doc.offerFiles.length > 0;
+    const isLinked = tenderIds.length > 0 || doc.supplierFiles.length > 0;
     if (!isLinked) return true;
 
     if (doc.supplierFiles.some((f) => f.supplier?.userId === user.id)) return true;
-    if (doc.offerFiles.some((f) => f.offer?.supplier?.userId === user.id)) return true;
 
     if (tenderIds.length > 0) {
         const visibleTender = await prisma.tender.findFirst({

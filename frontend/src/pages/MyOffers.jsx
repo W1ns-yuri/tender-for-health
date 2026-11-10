@@ -295,7 +295,9 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
 
                       {/* Предложенная цена */}
                       <td className="py-3 px-3 text-center font-bold tabular-nums text-slate-700 dark:text-slate-200">
-                        {offerPrice > 0 ? `${offerPrice.toLocaleString('ru-RU')} ${currency}` : '-'}
+                        {item.isSealed
+                          ? <span className="font-medium text-slate-400" title={t('offerSealedHint', 'Цена откроется после вскрытия конвертов')}>{t('offerSealed', 'Запечатано')}</span>
+                          : offerPrice > 0 ? `${offerPrice.toLocaleString('ru-RU')} ${currency}` : '-'}
                       </td>
 
                       {/* Дата подачи */}
