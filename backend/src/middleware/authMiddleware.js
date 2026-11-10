@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const prisma = require('../lib/prisma');
+const { readAuthCookie } = require('../utils/authCookie');
 
 const authMiddleware = async (req, res, next) => {
     // Получаем заголовок Authorization: Bearer <TOKEN>
@@ -71,6 +72,22 @@ const optionalAuthMiddleware = async (req, res, next) => {
     next();
 };
 
+/**
+ * То же, что authMiddleware, но токен можно передать и через httpOnly-cookie.
+ * Используется ТОЛЬКО для скачивания файлов (см. utils/authCookie.js).
+ * Для API оставляем только заголовок: так cookie нельзя использовать для CSRF на изменяющие запросы.
+ */
+const fileAuthMiddleware = (req, res, next) => {
+    if (!req.headers.authorization) {
+        const cookieToken = readAuthCookie(req);
+        if (cookieToken) {
+            req.headers.authorization = `Bearer ${cookieToken}`;
+        }
+    }
+    return authMiddleware(req, res, next);
+};
+
 authMiddleware.optional = optionalAuthMiddleware;
+authMiddleware.file = fileAuthMiddleware;
 
 module.exports = authMiddleware;

@@ -159,6 +159,8 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    // Сервер удаляет httpOnly-cookie, по которой скачиваются файлы. Ошибку игнорируем: выйти надо в любом случае
+    API.post('/auth/logout').catch(() => {});
     localStorage.removeItem('tender_token');
     localStorage.removeItem('tender_user');
     setToken('');
