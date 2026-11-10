@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../lib/prisma');
+const { setAuthCookie, clearAuthCookie } = require('../utils/authCookie');
 
 // Регистрация нового пользователя
 const register = async (req, res) => {
@@ -90,6 +91,7 @@ const register = async (req, res) => {
         );
 
         const { password: _, ...userWithoutPassword } = newUser;
+        setAuthCookie(res, token);
         res.status(201).json({ user: userWithoutPassword, token });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при регистрации', details: error.message });
@@ -153,6 +155,7 @@ const login = async (req, res) => {
         );
 
         const { password: _, ...userWithoutPassword } = user;
+        setAuthCookie(res, token);
         res.json({ user: userWithoutPassword, token });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при входе', details: error.message });
@@ -180,6 +183,10 @@ const getMe = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
+
+        // Сессии, начатые до появления cookie, получат её при первой загрузке приложения
+        const bearer = req.headers.authorization?.split(' ')[1];
+        if (bearer) setAuthCookie(res, bearer);
 
         const { password: _, ...userWithoutPassword } = user;
         res.json(userWithoutPassword);
@@ -226,7 +233,14 @@ const changePassword = async (req, res) => {
     }
 };
 
+// Выход: удаляем cookie для скачивания файлов (токен в localStorage удаляет фронт)
+const logout = (req, res) => {
+    clearAuthCookie(res);
+    res.json({ success: true });
+};
+
 module.exports = {
+    logout,
     register,
     login,
     getMe,

@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 require('dotenv').config();
 
 // Строгая валидация секретного ключа для JWT
@@ -34,8 +33,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Отдача статических файлов (чтобы скачивать загруженные документы)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Скачивание загруженных документов: только для вошедших и с проверкой прав (см. fileRoutes.js).
+// Раньше здесь был express.static, и любой документ мог скачать кто угодно по имени файла.
+app.use('/uploads', require('./src/routes/fileRoutes'));
 
 // Подключаем автоматическое журналирование (Log)
 app.use(auditLog('TENDER', 'OKAMAK'));
