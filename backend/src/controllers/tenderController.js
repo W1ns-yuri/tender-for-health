@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { isTenderOpened } = require('../utils/sealedEnvelope');
 const { sendNotification } = require('./notificationController');
 
 // Генерация последовательного номера тендера вида TNDR-YYYY-MM-001
@@ -436,7 +437,8 @@ const getTenderById = async (req, res) => {
         // 3. Если победитель объявлен (YENIJI_YGLAN_EDILDI):
         //    - Заявки и победители открыты для прозрачности результатов.
         let includeOffers = false;
-        const isSealedState = tenderBase.status === 'ACYK' || tenderBase.status === 'TASLAMA';
+        // Запечатано всё, что ещё не вскрыто: в т.ч. YAPYK (дедлайн прошёл, но конверты не вскрыты)
+        const isSealedState = !isTenderOpened(tenderBase);
 
         if (req.user) {
             if (req.user.roleType === 'ADMIN') {
