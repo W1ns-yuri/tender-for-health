@@ -1,5 +1,14 @@
 const prisma = require('../lib/prisma');
 const { isTenderOpened } = require('../utils/sealedEnvelope');
+const { canTransitionManually, isStructureEditable, parseDeadline } = require('../utils/tenderRules');
+
+const LOCKED_STRUCTURE_ERROR = 'Лоты и позиции нельзя менять: по тендеру уже поданы предложения или приём заявок закрыт. Отмените тендер и создайте новый.';
+
+// Можно ли менять лоты/позиции тендера (иначе удаление позиций каскадно стирает позиции поданных предложений)
+const assertStructureEditable = async (tender) => {
+    const offersCount = await prisma.offer.count({ where: { tenderId: tender.id } });
+    return isStructureEditable(tender, offersCount);
+};
 const { sendNotification } = require('./notificationController');
 
 // Генерация последовательного номера тендера вида TNDR-YYYY-MM-001
@@ -63,10 +72,17 @@ const createTender = async (req, res) => {
         }
 
         // Проверка корректности дедлайна и даты объявления в соответствии с регламентом закупок
-        if (!deadline || isNaN(new Date(deadline).getTime())) {
+        const deadlineDate = parseDeadline(deadline);
+        if (!deadlineDate) {
             return res.status(400).json({ error: 'Пожалуйста, укажите корректный крайний срок подачи заявок (дедлайн)' });
         }
-        const deadlineDate = new Date(deadline);
+        // Создать можно только черновик или сразу открытый тендер (не "оценённый" и не "с победителем")
+        if (status && !['TASLAMA', 'ACYK'].includes(status)) {
+            return res.status(400).json({ error: 'Новый тендер может быть только черновиком или открытым' });
+        }
+        if (status === 'ACYK' && deadlineDate <= new Date()) {
+            return res.status(400).json({ error: 'Нельзя открыть тендер с дедлайном в прошлом' });
+        }
         const announcementDate = req.body.announcementDate ? new Date(req.body.announcementDate) : new Date();
         if (deadlineDate <= announcementDate) {
             return res.status(400).json({ error: 'Крайний срок подачи заявок (дедлайн) должен быть позже даты объявления тендера' });
@@ -545,9 +561,49 @@ const updateTender = async (req, res) => {
             invitedSupplierIds
         } = req.body;
 
-        const existingTender = await prisma.tender.findUnique({ where: { id } });
+        const existingTender = await prisma.tender.findUnique({
+            where: { id },
+            include: { invitedSuppliers: { select: { supplierId: true } } },
+        });
         if (!existingTender) {
             return res.status(404).json({ error: 'Тендер не найден' });
+        }
+
+        // --- Правила изменения статуса: только отмена и архив, остальное через свои эндпоинты ---
+        const statusChanged = status !== undefined && status !== existingTender.status;
+        if (statusChanged && !canTransitionManually(existingTender.status, status)) {
+            return res.status(400).json({
+                error: 'Этот переход статуса недоступен. Публикация, вскрытие и итоги выполняются отдельными кнопками; вручную можно только отменить или архивировать тендер.',
+            });
+        }
+
+        // --- После публикации условия процедуры менять нельзя (кроме продления дедлайна и добавления участников) ---
+        const newDeadline = deadline ? parseDeadline(deadline) : null;
+        if (deadline && !newDeadline) {
+            return res.status(400).json({ error: 'Некорректный дедлайн' });
+        }
+        if (existingTender.status !== 'TASLAMA' && !statusChanged) {
+            if (existingTender.status !== 'ACYK') {
+                return res.status(400).json({ error: 'Приём заявок закрыт: тендер больше нельзя редактировать. Доступны только отмена или архив.' });
+            }
+            if (newDeadline && newDeadline.getTime() !== existingTender.deadline.getTime()) {
+                if (newDeadline < existingTender.deadline) {
+                    return res.status(400).json({ error: 'После публикации дедлайн можно только продлить, но не сократить' });
+                }
+            }
+            if (type !== undefined && type !== existingTender.type) {
+                return res.status(400).json({ error: 'После публикации нельзя менять тип тендера' });
+            }
+            if (visibility !== undefined && visibility !== existingTender.visibility) {
+                return res.status(400).json({ error: 'После публикации нельзя менять доступность тендера (открытый/закрытый)' });
+            }
+            if (Array.isArray(invitedSupplierIds) && existingTender.visibility === 'YAPYK') {
+                const newIds = new Set(invitedSupplierIds.filter(Boolean));
+                const removed = existingTender.invitedSuppliers.some((inv) => !newIds.has(inv.supplierId));
+                if (removed) {
+                    return res.status(400).json({ error: 'После публикации нельзя исключать приглашённых поставщиков, только добавлять новых' });
+                }
+            }
         }
 
         const updateData = {};
@@ -559,11 +615,11 @@ const updateTender = async (req, res) => {
         if (technicalSpecs !== undefined) updateData.technicalSpecs = technicalSpecs;
         if (type !== undefined) updateData.type = type;
         if (visibility !== undefined) updateData.visibility = visibility;
-        if (status !== undefined) updateData.status = status;
+        if (statusChanged) updateData.status = status;
         if (procurementType !== undefined) updateData.procurementType = procurementType;
         if (categoryId !== undefined) updateData.categoryId = (categoryId && categoryId !== '') ? categoryId : null;
         if (clientId !== undefined) updateData.clientId = (clientId && clientId !== '') ? clientId : null;
-        if (deadline) updateData.deadline = new Date(deadline);
+        if (newDeadline) updateData.deadline = newDeadline;
         if (announcementDate) updateData.announcementDate = new Date(announcementDate);
 
         // Синхронизация приглашенных поставщиков для закрытых тендеров
@@ -622,8 +678,21 @@ const publishTender = async (req, res) => {
             return res.status(404).json({ error: 'Тендер не найден' });
         }
 
+        if (tender.status !== 'TASLAMA') {
+            return res.status(400).json({ error: 'Опубликовать можно только черновик' });
+        }
+
         if (!tender.lots || tender.lots.length === 0) {
             return res.status(400).json({ error: 'Невозможно опубликовать тендер: добавьте как минимум один лот' });
+        }
+
+        const emptyLot = tender.lots.find((l) => !l.specs || l.specs.length === 0);
+        if (emptyLot) {
+            return res.status(400).json({ error: `Невозможно опубликовать тендер: в лоте «${emptyLot.name || emptyLot.lotNumber}» нет ни одной позиции` });
+        }
+
+        if (new Date(tender.deadline) <= new Date()) {
+            return res.status(400).json({ error: 'Невозможно опубликовать тендер: дедлайн уже прошёл. Укажите новый срок.' });
         }
 
         const updated = await prisma.tender.update({
@@ -730,6 +799,9 @@ const createLot = async (req, res) => {
         if (!tender) {
             return res.status(404).json({ error: 'Тендер не найден' });
         }
+        if (!(await assertStructureEditable(tender))) {
+            return res.status(400).json({ error: LOCKED_STRUCTURE_ERROR });
+        }
 
         let finalLotNumber = lotNumber;
         if (!finalLotNumber) {
@@ -828,6 +900,10 @@ const updateLot = async (req, res) => {
         if (!existingLot) {
             return res.status(404).json({ error: 'Лот не найден в данном тендере' });
         }
+        const lotTender = await prisma.tender.findUnique({ where: { id } });
+        if (!(await assertStructureEditable(lotTender))) {
+            return res.status(400).json({ error: LOCKED_STRUCTURE_ERROR });
+        }
 
         const updatedLot = await prisma.$transaction(async (tx) => {
             await tx.tenderLot.update({
@@ -904,6 +980,10 @@ const deleteLot = async (req, res) => {
         if (!existingLot) {
             return res.status(404).json({ error: 'Лот не найден' });
         }
+        const lotTender = await prisma.tender.findUnique({ where: { id } });
+        if (!(await assertStructureEditable(lotTender))) {
+            return res.status(400).json({ error: LOCKED_STRUCTURE_ERROR });
+        }
 
         await prisma.$transaction(async (tx) => {
             await tx.tenderSpecification.deleteMany({ where: { lotId } });
@@ -921,6 +1001,14 @@ const deleteLot = async (req, res) => {
 const deleteTender = async (req, res) => {
     try {
         const { id } = req.params;
+        const tender = await prisma.tender.findUnique({ where: { id } });
+        if (!tender) {
+            return res.status(404).json({ error: 'Тендер не найден' });
+        }
+        // Удаление каскадно стирает все поданные предложения. Тендер с заявками можно только отменить.
+        if (!(await assertStructureEditable(tender))) {
+            return res.status(400).json({ error: 'Тендер с поданными предложениями удалить нельзя, его можно только отменить (статус «Отменён»).' });
+        }
         await prisma.tender.delete({
             where: { id }
         });

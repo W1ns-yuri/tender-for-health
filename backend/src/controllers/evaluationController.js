@@ -3,7 +3,10 @@ const { sendNotification } = require('./notificationController');
 const { D } = require('../utils/money');
 const { isTenderOpened, sealOffer } = require('../utils/sealedEnvelope');
 
+const { isAwardingOpen } = require('../utils/tenderRules');
+
 const NOT_OPENED_ERROR = 'Сначала вскройте конверты: до вскрытия цены предложений запечатаны.';
+const AWARDING_CLOSED_ERROR = 'Выбор победителей доступен только после вскрытия и до объявления итогов.';
 
 /**
  * 1. Вскрытие предложений (Teklipleri açmak)
@@ -29,6 +32,11 @@ const openTenderBids = async (req, res) => {
 
         if (tender.status === 'BAHALANDYRYLDY' || tender.status === 'YENIJI_YGLAN_EDILDI') {
             return res.status(400).json({ error: 'Предложения по этому тендеру уже вскрыты и находятся на оценке' });
+        }
+
+        // Отменённый или архивный тендер не вскрывается: иначе отмена стала бы способом подсмотреть цены
+        if (!['ACYK', 'YAPYK'].includes(tender.status)) {
+            return res.status(400).json({ error: 'Вскрыть можно только тендер, по которому закончен приём заявок' });
         }
 
         // Проверка регламента закупок: вскрытие предложений запрещено до наступления дедлайна
@@ -153,7 +161,7 @@ const selectWinnerOffer = async (req, res) => {
         // Проверяем существование тендера и заявки
         const tender = await prisma.tender.findUnique({ where: { id: tenderId } });
         if (!tender) return res.status(404).json({ error: 'Тендер не найден' });
-        if (!isTenderOpened(tender)) return res.status(400).json({ error: NOT_OPENED_ERROR });
+        if (!isAwardingOpen(tender)) return res.status(400).json({ error: AWARDING_CLOSED_ERROR });
 
         const winningOffer = await prisma.offer.findUnique({ where: { id: winningOfferId } });
         if (!winningOffer || winningOffer.tenderId !== tenderId) {
@@ -292,8 +300,9 @@ const awardLot = async (req, res) => {
         }
 
         const lotTender = await prisma.tender.findUnique({ where: { id: tenderId }, select: { status: true } });
-        if (!isTenderOpened(lotTender)) {
-            return res.status(400).json({ error: NOT_OPENED_ERROR });
+        // После объявления итогов победителя менять нельзя
+        if (!isAwardingOpen(lotTender)) {
+            return res.status(400).json({ error: AWARDING_CLOSED_ERROR });
         }
 
         if (offerId) {
@@ -361,10 +370,12 @@ const completeEvaluation = async (req, res) => {
 
         if (!tender) return res.status(404).json({ error: 'Тендер не найден' });
 
-        // Нельзя завершить оценку не вскрытого тендера
-        if (!isTenderOpened(tender)) {
+        // Завершить оценку можно один раз: после вскрытия и до объявления итогов
+        if (!isAwardingOpen(tender)) {
             return res.status(400).json({ 
-                error: 'Нельзя завершить оценку: конверты ещё не вскрыты. Сначала вскройте предложения.' 
+                error: tender.status === 'YENIJI_YGLAN_EDILDI'
+                    ? 'Итоги по этому тендеру уже объявлены.'
+                    : 'Нельзя завершить оценку: конверты ещё не вскрыты. Сначала вскройте предложения.'
             });
         }
 

@@ -36,10 +36,13 @@ async function checkTenderDeadlines() {
 
         for (const tender of expiredTenders) {
             // Переводим статус в YAPYK (Прием заявок закрыт)
-            await prisma.tender.update({
-                where: { id: tender.id },
+            // Атомарно: переводим только если тендер всё ещё ACYK. Если запущено два инстанса сервера
+            // или админ успел вскрыть конверты, второй раз ничего не произойдёт и уведомления не задвоятся.
+            const { count } = await prisma.tender.updateMany({
+                where: { id: tender.id, status: 'ACYK' },
                 data: { status: 'YAPYK' }
             });
+            if (count === 0) continue;
 
             // 1. Уведомление администраторам платформы
             await notifyAdmins({
