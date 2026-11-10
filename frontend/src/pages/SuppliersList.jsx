@@ -145,7 +145,7 @@ export default function SuppliersList({ role = 'ADMIN', isDarkMode = false, lang
       console.error('Failed to delete supplier', err);
       showAlert({
         title: t('error', 'Ошибка'),
-        message: t('errorCreateSupplier', 'Ошибка при удалении'),
+        message: err.response?.data?.error || t('errorCreateSupplier', 'Ошибка при удалении'),
         type: 'error',
       });
     }
