@@ -461,6 +461,15 @@ const deleteSupplier = async (req, res) => {
             return res.status(404).json({ error: 'Поставщик не найден' });
         }
 
+        // Поставщика с поданными заявками удалять нельзя: пропадут заявки и итоги прошлых тендеров.
+        // Для таких — блокировка аккаунта (isActive = false) вместо удаления.
+        const offersCount = await prisma.offer.count({ where: { supplierId: id } });
+        if (offersCount > 0) {
+            return res.status(409).json({
+                error: `Заявок у поставщика в тендерах: ${offersCount}. Удаление сотрёт историю торгов — заблокируйте аккаунт вместо удаления.`,
+            });
+        }
+
         await prisma.$transaction([
             prisma.supplierModerationLog.deleteMany({ where: { supplierId: id } }),
             prisma.supplierFile.deleteMany({ where: { supplierId: id } }),

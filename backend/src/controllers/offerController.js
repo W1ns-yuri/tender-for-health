@@ -296,6 +296,10 @@ const createOffer = async (req, res) => {
 
         res.status(201).json(offer);
     } catch (error) {
+        // Уникальный индекс (tender_id, supplier_id): две одновременные отправки (двойной клик) — вторая сюда
+        if (error.code === 'P2002') {
+            return res.status(400).json({ error: 'Вы уже подали заявку на этот тендер. От одного поставщика принимается только одна заявка.' });
+        }
         res.status(500).json({ error: 'Ошибка при сохранении коммерческого предложения', details: error.message });
     }
 };

@@ -157,6 +157,8 @@ model Log {
   data          Json? // Данные в формате JSON (до/после изменений)
   createdAt     DateTime      @default(now())
 
+  @@index([createdAt])
+  @@index([userId])
   @@map("logs")
 }
 
@@ -373,7 +375,7 @@ model Tender {
   procurementType String? @default("GOODS") @map("procurement_type") // GOODS | SERVICES_WORKS | MIXED
 
   createdById String @map("created_by_id")
-  createdBy   User   @relation("CreatedTenders", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy   User   @relation("CreatedTenders", fields: [createdById], references: [id], onDelete: Restrict)
 
   // Новые спецификации ТЗ
   specs            TenderSpecification[]
@@ -390,6 +392,8 @@ model Tender {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([status, deadline])
+  @@index([createdById])
   @@map("tenders")
 }
 
@@ -419,6 +423,7 @@ model TenderLot {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([tenderId])
   @@map("tender_lots")
 }
 
@@ -445,6 +450,8 @@ model TenderSpecification {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([tenderId])
+  @@index([lotId])
   @@map("tender_specifications")
 }
 
@@ -521,6 +528,8 @@ model Supplier {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([userId])
+  @@index([verificationStatus])
   @@map("suppliers")
 }
 
@@ -552,6 +561,7 @@ model TenderInvitedSupplier {
   updatedAt DateTime @updatedAt
 
   @@unique([tenderId, supplierId])
+  @@index([supplierId])
   @@map("tender_invited_suppliers")
 }
 
@@ -560,7 +570,7 @@ model Offer {
   tenderId       String        @map("tender_id")
   tender         Tender        @relation(fields: [tenderId], references: [id], onDelete: Cascade)
   supplierId     String        @map("supplier_id")
-  supplier       Supplier      @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplier       Supplier      @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   deliveryTermId String?       @map("delivery_term_id")
   deliveryTerm   DeliveryTerm? @relation(fields: [deliveryTermId], references: [id], onDelete: SetNull)
   baseCurrencyId String?       @map("base_currency_id")
@@ -584,6 +594,9 @@ model Offer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Одна заявка от поставщика на тендер (раньше проверялось только в коде: двойной клик = несколько заявок)
+  @@unique([tenderId, supplierId])
+  @@index([supplierId])
   @@map("offers")
 }
 
@@ -610,6 +623,8 @@ model OfferSpecification {
   equivalentName          String?  @map("equivalent_name")
   equivalentJustification String?  @map("equivalent_justification")
 
+  @@unique([offerId, tenderSpecId])
+  @@index([tenderSpecId])
   @@map("offer_specifications")
 }
 
@@ -719,6 +734,7 @@ model Document {
 
   createdAt DateTime @default(now())
 
+  @@index([fileName])
   @@map("documents")
 }
 
@@ -729,6 +745,8 @@ model TenderFile {
   documentId String   @map("document_id")
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
+  @@unique([tenderId, documentId])
+  @@index([documentId])
   @@map("tender_files")
 }
 
@@ -739,6 +757,8 @@ model LotFile {
   documentId String    @map("document_id")
   document   Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
+  @@unique([lotId, documentId])
+  @@index([documentId])
   @@map("lot_files")
 }
 
@@ -749,6 +769,8 @@ model SupplierFile {
   documentId String   @map("document_id")
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
+  @@unique([supplierId, documentId])
+  @@index([documentId])
   @@map("supplier_files")
 }
 
@@ -759,6 +781,8 @@ model OfferFile {
   documentId String   @map("document_id")
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
+  @@unique([offerId, documentId])
+  @@index([documentId])
   @@map("offer_files")
 }
 
