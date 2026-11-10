@@ -364,7 +364,8 @@ const getTenders = async (req, res) => {
                 },
                 category: true,
                 client: true,
-                invitedSuppliers: {
+                // Кто приглашён в тендер — только организатору (список был виден всем, даже без входа)
+                invitedSuppliers: req.user?.roleType !== 'ADMIN' ? false : {
                     select: {
                         id: true,
                         supplierId: true,
@@ -469,8 +470,20 @@ const getTenderById = async (req, res) => {
                 }
             } else {
                 if (tenderBase.status === 'YENIJI_YGLAN_EDILDI') {
+                    // Итоги: своё предложение + предложения победителей. Раньше любой поставщик получал
+                    // ВСЕ предложения с полной карточкой (банк, паспорт директора) — теперь только название.
                     includeOffers = {
-                        include: { supplier: true, specs: true, exchangeRates: { include: { currency: true } } }
+                        where: {
+                            OR: [
+                                { supplier: { userId: req.user.id } },
+                                { specs: { some: { isAwarded: true } } },
+                            ],
+                        },
+                        include: {
+                            supplier: { select: { id: true, name: true, userId: true } },
+                            specs: true,
+                            exchangeRates: { include: { currency: true } },
+                        },
                     };
                 } else {
                     includeOffers = {
@@ -510,7 +523,8 @@ const getTenderById = async (req, res) => {
                     select: { id: true, username: true, firstName: true, lastName: true },
                 },
                 offers: includeOffers,
-                invitedSuppliers: {
+                // Список приглашённых видит только организатор: поставщикам незачем знать конкурентов
+                invitedSuppliers: req.user?.roleType !== 'ADMIN' ? false : {
                     include: {
                         supplier: {
                             select: {
@@ -534,6 +548,16 @@ const getTenderById = async (req, res) => {
 
         if (!tender) {
             return res.status(404).json({ error: 'Тендер не найден' });
+        }
+
+        // isMine: фронт по нему понимает, подавал ли поставщик заявку (в итогах есть и чужие победные)
+        if (req.user && req.user.roleType !== 'ADMIN' && Array.isArray(tender.offers)) {
+            tender.offers = tender.offers.map((offer) => {
+                const isMine = offer.supplier?.userId === req.user.id;
+                const supplier = offer.supplier ? { ...offer.supplier } : offer.supplier;
+                if (supplier) delete supplier.userId;
+                return { ...offer, supplier, isMine };
+            });
         }
 
         res.json(tender);

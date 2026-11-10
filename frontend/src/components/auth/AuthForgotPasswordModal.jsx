@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, Phone, Mail, Clock, X, Check } from 'lucide-react';
+import { ShieldAlert, Phone, Mail, Clock, X } from 'lucide-react';
 
 export default function AuthForgotPasswordModal({ isOpen, onClose, t }) {
   if (!isOpen) return null;

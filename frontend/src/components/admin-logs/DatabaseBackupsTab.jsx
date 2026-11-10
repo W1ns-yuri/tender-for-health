@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, HardDriveDownload, Download, Undo2, Copy } from 'lucide-react';
+import { CheckCircle, HardDriveDownload, Download, Undo2 } from 'lucide-react';
 
 /**
  * DatabaseBackupsTab Component
