@@ -10,7 +10,8 @@ const {
     getSupplierStats,
     approveSupplier, 
     rejectSupplier,
-    getModerationArchive 
+    getModerationArchive,
+    getMyProfile
 } = require('../controllers/supplierController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { checkRole } = require('../middleware/rbacMiddleware');
@@ -19,6 +20,7 @@ const { checkRole } = require('../middleware/rbacMiddleware');
 router.get('/', authMiddleware, checkRole(['ADMIN']), getAllSuppliers);
 
 // Поставщик обновляет свой профиль
+router.get('/profile', authMiddleware, checkRole(['SUPPLIER']), getMyProfile);
 router.put('/profile', authMiddleware, checkRole(['SUPPLIER', 'ADMIN']), updateProfile);
 
 // Роуты для администратора

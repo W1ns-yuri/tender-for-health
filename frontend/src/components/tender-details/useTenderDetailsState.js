@@ -82,7 +82,8 @@ export function useTenderDetailsState({ tenderId, role, t }) {
 
   // Проверка подачи КП текущим поставщиком
   const hasSubmittedOffer = useMemo(() => {
-    return Boolean(data?.offers?.length > 0);
+    // В итогах в offers есть и чужие победные предложения, поэтому смотрим на isMine
+    return Boolean(data?.offers?.some((offer) => offer.isMine !== false));
   }, [data?.offers]);
 
   // Текущий активный лот

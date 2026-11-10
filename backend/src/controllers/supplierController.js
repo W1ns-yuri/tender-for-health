@@ -384,6 +384,22 @@ const getAllSuppliers = async (req, res) => {
 };
 
 // Получение полной информации о поставщике по id (для профиля и модерации)
+// Профиль текущего поставщика (фронт берёт отсюда актуальный статус верификации, а не из localStorage)
+const getMyProfile = async (req, res) => {
+    try {
+        const supplier = await prisma.supplier.findFirst({
+            where: { userId: req.user.id },
+            include: { country: true, categories: { include: { category: true } } },
+        });
+        if (!supplier) {
+            return res.status(404).json({ error: 'Профиль поставщика не найден' });
+        }
+        res.json(supplier);
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка при получении профиля', details: error.message });
+    }
+};
+
 const getSupplierById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -712,6 +728,7 @@ const getModerationArchive = async (req, res) => {
 };
 
 module.exports = {
+    getMyProfile,
     getAllSuppliers,
     deleteSupplier,
     adminUpdateSupplier,

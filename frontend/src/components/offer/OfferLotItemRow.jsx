@@ -1,5 +1,5 @@
 import React from 'react';
-import { CornerDownRight, Info, Plus } from 'lucide-react';
+import { CornerDownRight, Info } from 'lucide-react';
 import ProductSearchableSelect from '../tender/ProductSearchableSelect';
 
 export default function OfferLotItemRow({

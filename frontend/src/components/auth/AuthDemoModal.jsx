@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ShieldCheck, UserCheck, ArrowRight } from 'lucide-react';
+import { X, UserCheck, ArrowRight } from 'lucide-react';
 import { DEMO_ACCOUNTS } from './authConstants';
 
 export default function AuthDemoModal({
