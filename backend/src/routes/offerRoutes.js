@@ -16,8 +16,9 @@ const { checkRole } = require('../middleware/rbacMiddleware');
 const router = express.Router();
 
 // Поставщики (Suppliers)
-router.get('/suppliers', getSuppliers);
-router.post('/suppliers', authMiddleware, createSupplier);
+// Полный список поставщиков (ИНН, e-mail, телефоны) — только админу (раньше был публичным)
+router.get('/suppliers', authMiddleware, checkRole(['ADMIN']), getSuppliers);
+router.post('/suppliers', authMiddleware, checkRole(['ADMIN']), createSupplier);
 
 // Коммерческие предложения (Offers)
 router.get('/', authMiddleware, checkRole(['ADMIN']), getAllOffers);

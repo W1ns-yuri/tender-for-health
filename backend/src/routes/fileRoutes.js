@@ -17,9 +17,9 @@ const uploadDir = path.join(__dirname, '../../uploads');
  * - Документ поставщика: только сам поставщик.
  * - Документ предложения: только поставщик, подавший предложение
  *   (конкуренты не должны видеть "конверт").
- * - Файл без записи в documents (логотип) или ещё не привязанный ни к чему документ
- *   (загружен в форме, но форма не сохранена): любой вошедший пользователь.
- *   TODO: хранить uploadedById и пускать только загрузившего.
+ * - Ещё не привязанный ни к чему документ (загружен в форме, форма не сохранена, логотип):
+ *   тот, кто загрузил, и админ.
+ * - Файл без записи в documents: только админ.
  */
 async function canAccessFile(user, fileName) {
     const isAdmin = user.roleType === 'ADMIN';
@@ -27,6 +27,7 @@ async function canAccessFile(user, fileName) {
     const doc = await prisma.document.findFirst({
         where: { fileName },
         select: {
+            uploadedById: true,
             tenderId: true,
             tenderFiles: { select: { tenderId: true } },
             lotFiles: { select: { lot: { select: { tenderId: true } } } },
@@ -35,7 +36,7 @@ async function canAccessFile(user, fileName) {
         },
     });
 
-    if (!doc) return true;
+    if (!doc) return isAdmin;
 
     // Документ предложения = содержимое конверта: владелец видит всегда, админ только после вскрытия
     if (doc.offerFiles.length > 0) {
@@ -52,7 +53,7 @@ async function canAccessFile(user, fileName) {
     ].filter(Boolean);
 
     const isLinked = tenderIds.length > 0 || doc.supplierFiles.length > 0;
-    if (!isLinked) return true;
+    if (!isLinked) return Boolean(doc.uploadedById) && doc.uploadedById === user.id;
 
     if (doc.supplierFiles.some((f) => f.supplier?.userId === user.id)) return true;
 

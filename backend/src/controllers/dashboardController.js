@@ -4,7 +4,6 @@ const prisma = require('../lib/prisma');
 const getDashboardStats = async (req, res) => {
     try {
         let { roleType, id } = req.user;
-        console.log("DASHBOARD STATS: req.user =", req.user);
 
         // Если токен старый и в нем нет roleType, берем из базы
         if (!roleType) {
@@ -22,12 +21,8 @@ const getDashboardStats = async (req, res) => {
             const suppliers = await prisma.supplier.findMany({ where: { userId: id } });
             const supplierIds = suppliers.map(s => s.id);
             totalOffersQuery = { where: { supplierId: { in: supplierIds } } };
-            console.log("DASHBOARD STATS: SUPPLIER QUERY:", totalOffersQuery);
-        } else {
-            console.log("DASHBOARD STATS: NOT SUPPLIER OR ROLETYPE MISSING", roleType);
         }
         const totalOffers = await prisma.offer.count(totalOffersQuery);
-        console.log("DASHBOARD STATS: totalOffers result =", totalOffers);
 
         const totalWinners = await prisma.tender.count({ where: { status: 'YENIJI_YGLAN_EDILDI' } });
         const totalSuppliers = await prisma.supplier.count();
@@ -44,8 +39,18 @@ const getDashboardStats = async (req, res) => {
         }, {});
 
         // 3. Последние 5 открытых тендеров
+        // Поставщику — только то, что он и так видит в списке тендеров:
+        // без черновиков и без чужих закрытых (YAPYK) тендеров.
+        const isAdmin = roleType === 'ADMIN';
         const recentTenders = await prisma.tender.findMany({
             take: 5,
+            where: isAdmin ? undefined : {
+                status: { not: 'TASLAMA' },
+                OR: [
+                    { visibility: 'ACYK' },
+                    { invitedSuppliers: { some: { supplier: { userId: id } } } },
+                ],
+            },
             orderBy: { createdAt: 'desc' },
             include: {
                 category: true,
@@ -55,7 +60,8 @@ const getDashboardStats = async (req, res) => {
         });
 
         // 4. Последние действия из Журнала Аудита (Log)
-        const recentLogs = await prisma.log.findMany({
+        // Журнал аудита — только администратору (раньше его видел любой поставщик)
+        const recentLogs = !isAdmin ? [] : await prisma.log.findMany({
             take: 5,
             orderBy: { createdAt: 'desc' },
             include: {

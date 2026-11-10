@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
+const { ASSIGNABLE_ROLES, passwordError } = require('../utils/accountRules');
 
 // Получить всех пользователей (без паролей!)
 const getUsers = async (req, res) => {
@@ -43,6 +44,12 @@ const createUser = async (req, res) => {
             return res.status(400).json({ error: 'Пользователь с таким логином уже существует' });
         }
 
+        const pwdError = passwordError(password);
+        if (pwdError) return res.status(400).json({ error: pwdError });
+        if (roleType && !ASSIGNABLE_ROLES.includes(roleType)) {
+            return res.status(400).json({ error: 'Недопустимая роль' });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = await prisma.user.create({
@@ -76,7 +83,16 @@ const updateUser = async (req, res) => {
         if (firstName !== undefined) updateData.firstName = firstName;
         if (lastName !== undefined) updateData.lastName = lastName;
         if (middleName !== undefined) updateData.middleName = middleName;
-        if (roleType !== undefined) updateData.roleType = roleType;
+        if (roleType !== undefined) {
+            if (!ASSIGNABLE_ROLES.includes(roleType)) {
+                return res.status(400).json({ error: 'Недопустимая роль' });
+            }
+            updateData.roleType = roleType;
+        }
+        // Админ не может случайно разжаловать или заблокировать сам себя и остаться без доступа
+        if (id === req.user.id && ((roleType !== undefined && roleType !== 'ADMIN') || isActive === false)) {
+            return res.status(400).json({ error: 'Нельзя снять с себя роль администратора или заблокировать себя' });
+        }
         if (position !== undefined) updateData.position = position;
         if (phone !== undefined) updateData.phone = phone;
         if (isActive !== undefined) updateData.isActive = Boolean(isActive);
@@ -112,6 +128,9 @@ const updateUser = async (req, res) => {
 const toggleUserStatus = async (req, res) => {
     try {
         const { id } = req.params;
+        if (id === req.user.id) {
+            return res.status(400).json({ error: 'Нельзя заблокировать самого себя' });
+        }
         const user = await prisma.user.findUnique({ where: { id }, select: { isActive: true } });
         if (!user) {
             return res.status(404).json({ error: 'Пользователь не найден' });

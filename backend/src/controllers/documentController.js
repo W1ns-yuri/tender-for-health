@@ -5,6 +5,94 @@ const { isTenderOpened } = require('../utils/sealedEnvelope');
 
 const uploadDir = path.join(__dirname, '../../uploads');
 
+// Предложение можно менять (файлы тоже), только пока приём открыт: тендер ACYK и дедлайн не прошёл.
+// После дедлайна файл в "конверте" нельзя ни добавить, ни удалить — даже админу.
+const isOfferEditable = (offer) =>
+    Boolean(offer?.tender) && offer.tender.status === 'ACYK' && new Date(offer.tender.deadline) > new Date();
+
+const OFFER_LOCKED_ERROR = 'Приём предложений закрыт: файлы предложения больше нельзя менять';
+
+const docWithLinks = {
+    supplierFiles: { include: { supplier: { select: { userId: true } } } },
+    offerFiles: { include: { offer: { select: { supplier: { select: { userId: true } }, tender: { select: { status: true, deadline: true } } } } } },
+    tenderFiles: { select: { tenderId: true } },
+    lotFiles: { select: { lotId: true } },
+};
+
+/**
+ * Может ли пользователь изменить/удалить документ. Возвращает текст ошибки или null.
+ */
+function checkCanModifyDocument(user, doc) {
+    const isAdmin = user.roleType === 'ADMIN';
+
+    if (doc.offerFiles.length > 0) {
+        const isOwner = doc.offerFiles.every((f) => f.offer?.supplier?.userId === user.id);
+        if (!isOwner) return 'Доступ запрещен. Вы не являетесь владельцем этого документа.';
+        if (!doc.offerFiles.every((f) => isOfferEditable(f.offer))) return OFFER_LOCKED_ERROR;
+        return null;
+    }
+
+    if (isAdmin) return null;
+
+    if (doc.tenderFiles.length > 0 || doc.lotFiles.length > 0 || doc.tenderId) {
+        return 'У вас нет прав на изменение документов тендера или лота';
+    }
+
+    if (doc.supplierFiles.length > 0) {
+        return doc.supplierFiles.some((f) => f.supplier?.userId === user.id)
+            ? null
+            : 'Доступ запрещен. Вы не являетесь владельцем этого документа.';
+    }
+
+    // Непривязанный документ: только тот, кто загрузил
+    return doc.uploadedById && doc.uploadedById === user.id
+        ? null
+        : 'Доступ запрещен. Вы не являетесь владельцем этого документа.';
+}
+
+/**
+ * Проверка, к чему пользователь может привязать новый файл при загрузке.
+ */
+async function checkUploadTargets(user, { tenderId, lotId, supplierId, offerId }) {
+    const isAdmin = user.roleType === 'ADMIN';
+
+    if ((tenderId || lotId) && !isAdmin) {
+        return { status: 403, error: 'Документы тендера и лотов загружает только организатор' };
+    }
+    if (tenderId && !(await prisma.tender.findUnique({ where: { id: tenderId }, select: { id: true } }))) {
+        return { status: 404, error: 'Тендер не найден' };
+    }
+    if (lotId && !(await prisma.lot.findUnique({ where: { id: lotId }, select: { id: true } }))) {
+        return { status: 404, error: 'Лот не найден' };
+    }
+
+    if (supplierId) {
+        const supplier = await prisma.supplier.findUnique({ where: { id: supplierId }, select: { userId: true } });
+        if (!supplier) return { status: 404, error: 'Поставщик не найден' };
+        if (!isAdmin && supplier.userId !== user.id) {
+            return { status: 403, error: 'Нельзя загружать документы в чужой профиль' };
+        }
+    }
+
+    if (offerId) {
+        const offer = await prisma.offer.findUnique({
+            where: { id: offerId },
+            select: { supplier: { select: { userId: true } }, tender: { select: { status: true, deadline: true } } },
+        });
+        if (!offer) return { status: 404, error: 'Предложение не найдено' };
+        if (offer.supplier?.userId !== user.id) {
+            return { status: 403, error: 'Нельзя загружать файлы в чужое предложение' };
+        }
+        if (!isOfferEditable(offer)) return { status: 400, error: OFFER_LOCKED_ERROR };
+    }
+
+    return null;
+}
+
+const removeUploadedFile = (file) => {
+    if (file?.path) fs.unlink(file.path, () => {});
+};
+
 // Загрузка документа и привязка его к Тендеру, Поставщику или Предложению
 const uploadDocument = async (req, res) => {
     try {
@@ -13,6 +101,13 @@ const uploadDocument = async (req, res) => {
         }
 
         const { name, description, documentTypeId, tenderId, lotId, supplierId, offerId } = req.body;
+
+        const targetError = await checkUploadTargets(req.user, { tenderId, lotId, supplierId, offerId });
+        if (targetError) {
+            removeUploadedFile(req.file);
+            return res.status(targetError.status).json({ error: targetError.error });
+        }
+
         const publicPath = `/uploads/${req.file.filename}`;
 
         // Создаем запись базового документа с веб-доступным путем
@@ -25,6 +120,7 @@ const uploadDocument = async (req, res) => {
                 fileType: req.file.mimetype,
                 fileSize: req.file.size || null,
                 documentTypeId: documentTypeId || null,
+                uploadedById: req.user.id,
             },
         });
 
@@ -116,34 +212,16 @@ const deleteDocument = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const doc = await prisma.document.findUnique({
-            where: { id },
-            include: {
-                supplierFiles: { include: { supplier: true } },
-                offerFiles: { include: { offer: { include: { supplier: true } } } },
-                tenderFiles: { include: { tender: true } },
-                lotFiles: { include: { lot: true } }
-            }
-        });
+        const doc = await prisma.document.findUnique({ where: { id }, include: docWithLinks });
 
         if (!doc) {
             return res.status(404).json({ error: 'Документ не найден' });
         }
 
-        // Защита от IDOR: проверка прав доступа
-        if (req.user.roleType !== 'ADMIN') {
-            // Документы тендера и лотов может удалять только организатор/администратор
-            if ((doc.tenderFiles && doc.tenderFiles.length > 0) || (doc.lotFiles && doc.lotFiles.length > 0)) {
-                return res.status(403).json({ error: 'У вас нет прав на удаление документов тендера или лота' });
-            }
-
-            // Проверяем принадлежность документа поставщику
-            const isOwnerOfSupplierDoc = doc.supplierFiles.some(sf => sf.supplier?.userId === req.user.id);
-            const isOwnerOfOfferDoc = doc.offerFiles.some(of => of.offer?.supplier?.userId === req.user.id);
-
-            if (!isOwnerOfSupplierDoc && !isOwnerOfOfferDoc) {
-                return res.status(403).json({ error: 'Доступ запрещен. Вы не являетесь владельцем этого документа.' });
-            }
+        // Защита от IDOR и от подмены файлов в "конверте" после дедлайна
+        const accessError = checkCanModifyDocument(req.user, doc);
+        if (accessError) {
+            return res.status(403).json({ error: accessError });
         }
 
         const filePath = doc.filePath;
@@ -180,9 +258,14 @@ const updateDocument = async (req, res) => {
         const { id } = req.params;
         const { name, description, documentTypeId } = req.body;
 
-        const doc = await prisma.document.findUnique({ where: { id } });
+        const doc = await prisma.document.findUnique({ where: { id }, include: docWithLinks });
         if (!doc) {
             return res.status(404).json({ error: 'Документ не найден' });
+        }
+
+        const accessError = checkCanModifyDocument(req.user, doc);
+        if (accessError) {
+            return res.status(403).json({ error: accessError });
         }
 
         const updated = await prisma.document.update({

@@ -5,8 +5,9 @@ const { checkRole } = require('../middleware/rbacMiddleware');
 
 const router = express.Router();
 
-router.get('/', getCompanies);
-router.get('/:id/stats', getCompanyStats);
+// Список компаний содержит ИНН, телефоны и логины — только админу (раньше был публичным)
+router.get('/', authMiddleware, checkRole(['ADMIN']), getCompanies);
+router.get('/:id/stats', authMiddleware, checkRole(['ADMIN']), getCompanyStats);
 router.post('/', authMiddleware, checkRole(['ADMIN']), createCompany);
 router.put('/:id', authMiddleware, checkRole(['ADMIN']), updateCompany);
 router.delete('/:id', authMiddleware, checkRole(['ADMIN']), deleteCompany);

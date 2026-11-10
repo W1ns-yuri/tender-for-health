@@ -25,7 +25,6 @@ enum VerificationStatus {
   REJECTED
 }
 
-
 enum TenderStatus {
   TASLAMA             @map("taslama") // черновик
   ACYK                @map("açyk") // открыт
@@ -128,19 +127,20 @@ model User {
   roleId String? @map("role_id")
   role   Role?   @relation(fields: [roleId], references: [id], onDelete: SetNull)
 
-  companies Company[]
-  suppliers Supplier[]
-  tenders   Tender[]   @relation("CreatedTenders")
-  logs      Log[]
-  moderationLogs SupplierModerationLog[]
-  notifications  Notification[]
+  companies         Company[]
+  suppliers         Supplier[]
+  tenders           Tender[]                @relation("CreatedTenders")
+  logs              Log[]
+  moderationLogs    SupplierModerationLog[]
+  notifications     Notification[]
+  uploadedDocuments Document[]              @relation("UploadedDocuments")
 
   // Поля безопасности из UserAuth (ERD)
   lastLogin         DateTime? @map("last_login")
   failedCount       Int       @default(0) @map("failed_count")
   lockoutExpireDate DateTime? @map("lockout_expire_date")
   isActive          Boolean   @default(true) @map("is_active")
- 
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -174,14 +174,14 @@ model Backup {
 // ==========================================
 
 model Category {
-  id              String           @id @default(uuid())
-  name            String
-  code            String?          @unique
-  description     String?
-  type            String?          @default("GOODS") // GOODS | WORKS | SERVICES
-  generalProducts GeneralProduct[]
-  tenders         Tender[]
-  lots            TenderLot[]
+  id                 String             @id @default(uuid())
+  name               String
+  code               String?            @unique
+  description        String?
+  type               String?            @default("GOODS") // GOODS | WORKS | SERVICES
+  generalProducts    GeneralProduct[]
+  tenders            Tender[]
+  lots               TenderLot[]
   supplierCategories SupplierCategory[]
 
   isActive Boolean @default(true) @map("is_active")
@@ -293,10 +293,10 @@ model Manufacturer {
 }
 
 model DeliveryTerm {
-  id        String  @id @default(uuid())
-  name      String // DAP, DDP, CIP
-  shortName String  @map("short_name")
-  offers    Offer[]
+  id         String      @id @default(uuid())
+  name       String // DAP, DDP, CIP
+  shortName  String      @map("short_name")
+  offers     Offer[]
   tenderLots TenderLot[]
 
   isActive Boolean @default(true) @map("is_active")
@@ -393,32 +393,31 @@ model Tender {
   @@map("tenders")
 }
 
-
 model TenderLot {
-  id              String         @id @default(uuid())
-  tenderId        String         @map("tender_id")
-  tender          Tender         @relation(fields: [tenderId], references: [id], onDelete: Cascade)
-  lotNumber       Int?           @map("lot_number")
+  id              String        @id @default(uuid())
+  tenderId        String        @map("tender_id")
+  tender          Tender        @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  lotNumber       Int?          @map("lot_number")
   name            String
   description     String?
-  lotType         String?        @default("GOODS") @map("lot_type") // GOODS | WORKS | SERVICES
-  categoryId      String?        @map("category_id")
-  category        Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  endUser         String?        @map("end_user")
-  deliveryTermId  String?        @map("delivery_term_id")
-  deliveryTerm    DeliveryTerm?  @relation(fields: [deliveryTermId], references: [id], onDelete: SetNull)
-  deliveryAddress String?        @map("delivery_address")
-  workAddress     String?        @map("work_address")
-  workPeriod      String?        @map("work_period")
-  licenseRequired Boolean?       @default(false) @map("license_required")
-  serviceFormat   String?        @map("service_format") // REMOTE | ON_SITE | HYBRID
-  slaPeriod       String?        @map("sla_period")
-  
-  specs           TenderSpecification[]
-  files           LotFile[]
+  lotType         String?       @default("GOODS") @map("lot_type") // GOODS | WORKS | SERVICES
+  categoryId      String?       @map("category_id")
+  category        Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  endUser         String?       @map("end_user")
+  deliveryTermId  String?       @map("delivery_term_id")
+  deliveryTerm    DeliveryTerm? @relation(fields: [deliveryTermId], references: [id], onDelete: SetNull)
+  deliveryAddress String?       @map("delivery_address")
+  workAddress     String?       @map("work_address")
+  workPeriod      String?       @map("work_period")
+  licenseRequired Boolean?      @default(false) @map("license_required")
+  serviceFormat   String?       @map("service_format") // REMOTE | ON_SITE | HYBRID
+  slaPeriod       String?       @map("sla_period")
 
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  specs TenderSpecification[]
+  files LotFile[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("tender_lots")
 }
@@ -492,26 +491,26 @@ model Supplier {
   notes         String?
   isActive      Boolean       @default(true) @map("is_active")
 
-  verificationStatus VerificationStatus @default(PENDING) @map("verification_status")
-  rejectionReason String?       @map("rejection_reason")
-  bankName      String?       @map("bank_name")
-  bankAccount   String?       @map("bank_account")
-  bankMfo       String?       @map("bank_mfo")
-  passportInfo  String?       @map("passport_info")
-  passportSeries String?      @map("passport_series")
-  passportIssuedBy String?    @map("passport_issued_by")
-  directorName        String?       @map("director_name")
-  directorPersonalCode String?      @map("director_personal_code")
-  okpoCode            String?       @map("okpo_code")
-  legalAddress        String?       @map("legal_address")
-  isMedicalLicensed   Boolean?      @default(false) @map("is_medical_licensed")
-  licenseIssuedBy     String?       @map("license_issued_by")
-  licenseExpiryDate   String?       @map("license_expiry_date")
-  bankCorrAccount     String?       @map("bank_corr_account")
-  bankSwift           String?       @map("bank_swift")
-  bankIban            String?       @map("bank_iban")
-  bankCurrency        String?       @default("TMT") @map("bank_currency")
-  logoUrl             String?       @map("logo_url")
+  verificationStatus   VerificationStatus @default(PENDING) @map("verification_status")
+  rejectionReason      String?            @map("rejection_reason")
+  bankName             String?            @map("bank_name")
+  bankAccount          String?            @map("bank_account")
+  bankMfo              String?            @map("bank_mfo")
+  passportInfo         String?            @map("passport_info")
+  passportSeries       String?            @map("passport_series")
+  passportIssuedBy     String?            @map("passport_issued_by")
+  directorName         String?            @map("director_name")
+  directorPersonalCode String?            @map("director_personal_code")
+  okpoCode             String?            @map("okpo_code")
+  legalAddress         String?            @map("legal_address")
+  isMedicalLicensed    Boolean?           @default(false) @map("is_medical_licensed")
+  licenseIssuedBy      String?            @map("license_issued_by")
+  licenseExpiryDate    String?            @map("license_expiry_date")
+  bankCorrAccount      String?            @map("bank_corr_account")
+  bankSwift            String?            @map("bank_swift")
+  bankIban             String?            @map("bank_iban")
+  bankCurrency         String?            @default("TMT") @map("bank_currency")
+  logoUrl              String?            @map("logo_url")
 
   offers            Offer[]
   files             SupplierFile[]
@@ -544,13 +543,13 @@ model TenderInvitedSupplier {
   supplierId String   @map("supplier_id")
   supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
 
-  invitedAt  DateTime  @default(now()) @map("invited_at")
-  isViewed   Boolean   @default(false) @map("is_viewed")
-  viewedAt   DateTime? @map("viewed_at")
-  notes      String?
+  invitedAt DateTime  @default(now()) @map("invited_at")
+  isViewed  Boolean   @default(false) @map("is_viewed")
+  viewedAt  DateTime? @map("viewed_at")
+  notes     String?
 
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenderId, supplierId])
   @@map("tender_invited_suppliers")
@@ -702,6 +701,10 @@ model Document {
   documentTypeId String?       @map("document_type_id")
   documentType   DocumentType? @relation(fields: [documentTypeId], references: [id], onDelete: SetNull)
 
+  // Кто загрузил файл: нужно, чтобы непривязанный документ мог скачать/изменить только автор
+  uploadedById String? @map("uploaded_by_id")
+  uploadedBy   User?   @relation("UploadedDocuments", fields: [uploadedById], references: [id], onDelete: SetNull)
+
   tenderFiles   TenderFile[]
   lotFiles      LotFile[]
   supplierFiles SupplierFile[]
@@ -760,16 +763,16 @@ model OfferFile {
 }
 
 model SupplierModerationLog {
-  id             String    @id @default(uuid())
-  supplierId     String    @map("supplier_id")
-  supplier       Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  adminId        String?   @map("admin_id")
-  admin          User?     @relation(fields: [adminId], references: [id], onDelete: SetNull)
-  action         String    // 'APPROVED', 'REJECTED', 'SUBMITTED', 'RESUBMITTED'
-  previousStatus String?   @map("previous_status")
-  newStatus      String    @map("new_status")
+  id             String   @id @default(uuid())
+  supplierId     String   @map("supplier_id")
+  supplier       Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  adminId        String?  @map("admin_id")
+  admin          User?    @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  action         String // 'APPROVED', 'REJECTED', 'SUBMITTED', 'RESUBMITTED'
+  previousStatus String?  @map("previous_status")
+  newStatus      String   @map("new_status")
   reason         String?
-  createdAt      DateTime  @default(now()) @map("created_at")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   @@map("supplier_moderation_logs")
 }
@@ -781,11 +784,10 @@ model Notification {
   title     String
   message   String
   type      String   @default("INFO") // 'supplier' | 'offer' | 'tender' | 'winner' | 'INFO' | 'WARNING'
-  link      String?  // Ссылка для перехода (e.g. /tenders/123, /suppliers, /evaluation/123)
+  link      String? // Ссылка для перехода (e.g. /tenders/123, /suppliers, /evaluation/123)
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId, isRead])
   @@map("notifications")
 }
-
