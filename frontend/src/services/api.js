@@ -23,10 +23,12 @@ API.interceptors.response.use(
   async (error) => {
     const config = error.config;
 
-    // Авто-повтор запроса при кратковременной перезагрузке dev-сервера (502 / 503 / 504 / ECONNREFUSED)
+    // Авто-повтор при кратковременной недоступности сервера (502 / 503 / 504 / нет сети).
+    // Только для GET: повтор POST/PUT/DELETE мог продублировать действие (две заявки, два тендера).
     if (
       config &&
       !config._retry &&
+      (config.method || 'get').toLowerCase() === 'get' &&
       (error.code === 'ERR_NETWORK' ||
         (error.response && [502, 503, 504].includes(error.response.status)))
     ) {

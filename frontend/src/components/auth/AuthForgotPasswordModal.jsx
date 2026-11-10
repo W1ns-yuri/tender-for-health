@@ -1,5 +1,10 @@
 import React from 'react';
-import { ShieldAlert, Phone, Mail, Clock, X, Check } from 'lucide-react';
+import { ShieldAlert, Phone, Mail, Clock, X } from 'lucide-react';
+
+// Контакты поддержки задаются при деплое (frontend/.env). Раньше тут были выдуманные
+// телефон и адрес на домене gov.tm — пользователь звонил бы в никуда.
+const SUPPORT_PHONE = import.meta.env.VITE_SUPPORT_PHONE || '';
+const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || '';
 
 export default function AuthForgotPasswordModal({ isOpen, onClose, t }) {
   if (!isOpen) return null;
@@ -36,14 +41,21 @@ export default function AuthForgotPasswordModal({ isOpen, onClose, t }) {
         </p>
 
         <div className="space-y-3 p-4 bg-slate-50 border border-slate-200/60 rounded-2xl text-xs sm:text-sm text-slate-700 mb-6">
-          <div className="flex items-center gap-3">
-            <Phone size={16} className="text-blue-600 shrink-0" />
-            <span className="font-semibold">+993 (12) 40-00-00</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Mail size={16} className="text-blue-600 shrink-0" />
-            <span className="font-semibold">support@tender.gov.tm</span>
-          </div>
+          {SUPPORT_PHONE && (
+            <div className="flex items-center gap-3">
+              <Phone size={16} className="text-emerald-600 shrink-0" />
+              <a href={`tel:${SUPPORT_PHONE.replace(/[^+\d]/g, '')}`} className="font-semibold">{SUPPORT_PHONE}</a>
+            </div>
+          )}
+          {SUPPORT_EMAIL && (
+            <div className="flex items-center gap-3">
+              <Mail size={16} className="text-emerald-600 shrink-0" />
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold">{SUPPORT_EMAIL}</a>
+            </div>
+          )}
+          {!SUPPORT_PHONE && !SUPPORT_EMAIL && (
+            <div className="text-slate-600">{t('contactAdminHint', 'Обратитесь к администратору платформы.')}</div>
+          )}
           <div className="flex items-center gap-3 text-slate-500 text-xs">
             <Clock size={16} className="text-slate-400 shrink-0" />
             <span>{t('supportWorkingHours', 'Режим работы: Пн – Пт, 09:00 – 18:00')}</span>
@@ -53,7 +65,7 @@ export default function AuthForgotPasswordModal({ isOpen, onClose, t }) {
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-md shadow-blue-500/20 transition-all text-sm cursor-pointer"
+          className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all text-sm cursor-pointer"
         >
           {t('closeBtn', 'Понятно')}
         </button>

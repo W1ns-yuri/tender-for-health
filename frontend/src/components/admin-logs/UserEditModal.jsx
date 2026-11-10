@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, X, Shield, Lock, Phone, Briefcase } from 'lucide-react';
+import { UserCheck, X } from 'lucide-react';
 
 /**
  * UserEditModal Component
