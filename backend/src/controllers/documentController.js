@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const prisma = require('../lib/prisma');
+const { isTenderOpened } = require('../utils/sealedEnvelope');
 
 const uploadDir = path.join(__dirname, '../../uploads');
 
@@ -62,6 +63,31 @@ const uploadDocument = async (req, res) => {
 const getDocuments = async (req, res) => {
     try {
         const { tenderId, lotId, supplierId, offerId } = req.query;
+        const isAdmin = req.user.roleType === 'ADMIN';
+
+        // Без фильтра это список ВСЕХ документов системы: только для админа
+        if (!lotId && !tenderId && !supplierId && !offerId && !isAdmin) {
+            return res.status(403).json({ error: 'Нет доступа' });
+        }
+
+        // Документы поставщика: только сам поставщик или админ
+        if (supplierId && !lotId && !tenderId && !isAdmin) {
+            const own = await prisma.supplier.findFirst({ where: { id: supplierId, userId: req.user.id }, select: { id: true } });
+            if (!own) return res.status(403).json({ error: 'Нет доступа' });
+        }
+
+        // Документы предложения (содержимое конверта): владелец всегда, админ только после вскрытия
+        if (offerId && !lotId && !tenderId && !supplierId) {
+            const offer = await prisma.offer.findUnique({
+                where: { id: offerId },
+                select: { supplier: { select: { userId: true } }, tender: { select: { status: true } } },
+            });
+            if (!offer) return res.status(404).json({ error: 'Предложение не найдено' });
+            const isOwner = offer.supplier?.userId === req.user.id;
+            if (!isOwner && !(isAdmin && isTenderOpened(offer.tender))) {
+                return res.status(403).json({ error: 'Предложение запечатано или нет доступа' });
+            }
+        }
 
         let where = {};
         if (lotId) {

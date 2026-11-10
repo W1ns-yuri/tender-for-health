@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Lock } from 'lucide-react';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { useAlert } from '../context/AlertContext';
@@ -94,6 +94,18 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
         t={t}
       />
 
+      {/* До вскрытия конвертов сервер не отдаёт цены: показываем только, что заявки поданы */}
+      {tenderDetails.isSealed ? (
+        <div className={`p-12 text-center rounded-2xl border ${theme.cardBg}`}>
+          <Lock size={40} className="mx-auto mb-3 text-slate-400" />
+          <p className="font-semibold text-slate-800 dark:text-slate-100">
+            {t('offersSealedTitle', 'Конверты ещё не вскрыты')}
+          </p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {t('offersSealedHint', 'Подано заявок: {count}. Цены и документы станут доступны после вскрытия конвертов.').replace('{count}', String(tenderDetails.offers?.length || 0))}
+          </p>
+        </div>
+      ) : (<>
       {/* 3. Рабочая область по лотам с попозиционным сравнением */}
       <div className="space-y-8 mb-16">
         {lotsList.length === 0 ? (
@@ -127,6 +139,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
         onComplete={handleCompleteEvaluation}
         t={t}
       />
+      </>)}
     </div>
   );
 }

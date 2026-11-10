@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { sendNotification, notifyAdmins } = require('./notificationController');
+const { isTenderOpened, sealOfferFor, SEALED_ERROR } = require('../utils/sealedEnvelope');
 
 // 1. Создание профиля Поставщика (Supplier)
 const createSupplier = async (req, res) => {
@@ -307,7 +308,8 @@ const getOffersByTender = async (req, res) => {
             orderBy: { createdAt: 'desc' },
         });
 
-        res.json(offers);
+        // До вскрытия конвертов чужие цены скрыты, в том числе от админа
+        res.json(offers.map((o) => sealOfferFor(req.user, o, tender, o.supplier?.userId)));
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при получении предложений', details: error.message });
     }
@@ -424,7 +426,7 @@ const getAllOffers = async (req, res) => {
             orderBy: { createdAt: 'desc' },
         });
 
-        res.json(offers);
+        res.json(offers.map((o) => sealOfferFor(req.user, o, o.tender, o.supplier?.userId)));
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при получении всех предложений', details: error.message });
     }
@@ -497,11 +499,9 @@ const getOfferById = async (req, res) => {
                 }
             }
         } else {
-            // Для администратора: если тендер еще открыт (до дедлайна и вскрытия заявок), коммерческие цены запечатаны
-            if (offer.tender?.status === 'ACYK' && new Date() < new Date(offer.tender?.deadline)) {
-                return res.status(403).json({ 
-                    error: 'Заявка запечатана в закрытый конверт. Просмотр коммерческих позиций доступен только после наступления дедлайна и процедуры вскрытия предложений.' 
-                });
+            // Для администратора: до вскрытия конвертов (а не только до дедлайна) коммерческие данные запечатаны
+            if (!isTenderOpened(offer.tender)) {
+                return res.status(403).json({ error: SEALED_ERROR, sealed: true });
             }
         }
 
