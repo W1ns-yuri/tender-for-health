@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { sendNotification, notifyAdmins } = require('./notificationController');
+const { D, sumLineTotals } = require('../utils/money');
 
 // 1. Создание профиля Поставщика (Supplier)
 const createSupplier = async (req, res) => {
@@ -161,13 +162,11 @@ const createOffer = async (req, res) => {
             }
         }
 
-        // Автоматический подсчёт общей цены коммерческого предложения
-        let totalPrice = 0;
+        // Автоматический подсчёт общей цены коммерческого предложения (через Decimal, без ошибок Float)
+        const totalPrice = sumLineTotals(specs);
         const offerSpecsData = specs.map((item) => {
-            const unitPrice = parseFloat(item.unitPrice);
+            const unitPrice = D(item.unitPrice).toDecimalPlaces(4);
             const quantity = parseFloat(item.quantity);
-            const itemTotal = unitPrice * quantity;
-            totalPrice += itemTotal;
 
             return {
                 tenderSpecId: item.tenderSpecId,

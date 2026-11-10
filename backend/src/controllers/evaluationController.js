@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { sendNotification } = require('./notificationController');
+const { D } = require('../utils/money');
 
 /**
  * 1. Вскрытие предложений (Teklipleri açmak)
@@ -90,15 +91,16 @@ const evaluateTenderBids = async (req, res) => {
 
         // Финансовый пересчет всех заявок с использованием зафиксированных курсов OfferExchangeRate
         const evaluatedOffers = tender.offers.map((offer) => {
-            let calculatedTotalInBase = 0;
+            let calculatedTotalInBase = D(0);
 
             offer.specs.forEach((spec) => {
                 // Ищем фиксированный курс для этой заявки или используем 1 (если базовая)
                 const rateObj = offer.exchangeRates.find((r) => r.currencyId === offer.baseCurrencyId);
                 const rate = rateObj ? rateObj.value : 1;
 
-                calculatedTotalInBase += spec.unitPrice * spec.quantity * rate;
+                calculatedTotalInBase = calculatedTotalInBase.plus(D(spec.unitPrice).times(D(spec.quantity)).times(D(rate)));
             });
+            calculatedTotalInBase = calculatedTotalInBase.toDecimalPlaces(2).toNumber();
 
             return {
                 offerId: offer.id,
