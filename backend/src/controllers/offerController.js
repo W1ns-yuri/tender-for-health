@@ -60,19 +60,28 @@ const createOffer = async (req, res) => {
         const userId = req.user.id;
         let finalSupplierId = supplierId;
 
-        // Проверяем, принадлежит ли профиль поставщика текущему пользователю (если не админ)
-        if (req.user.roleType !== 'ADMIN') {
-            const supplier = await prisma.supplier.findFirst({
-                where: supplierId ? { id: supplierId, userId: userId } : { userId: userId },
-            });
-            if (!supplier) {
-                return res.status(403).json({ error: 'Профиль поставщика не найден' });
-            }
-            if (supplier.verificationStatus !== 'VERIFIED') {
-                return res.status(403).json({ error: 'Ваш профиль еще не прошел верификацию. Вы не можете подавать предложения.' });
-            }
-            finalSupplierId = supplier.id;
+        // Предложение подаёт только сам поставщик. Раньше админ мог подать заявку от имени любого поставщика,
+        // в обход верификации и списка приглашённых.
+        if (req.user.roleType !== 'SUPPLIER') {
+            return res.status(403).json({ error: 'Подавать предложения может только поставщик' });
         }
+
+        // Статус задаёт сервер. Раньше можно было прислать status: "YENIJI" и подать заявку сразу «победителем».
+        if (status !== undefined && status !== 'TABSARYLDY') {
+            return res.status(400).json({ error: 'Недопустимый статус предложения' });
+        }
+
+        // Проверяем, принадлежит ли профиль поставщика текущему пользователю
+        const supplier = await prisma.supplier.findFirst({
+            where: supplierId ? { id: supplierId, userId: userId } : { userId: userId },
+        });
+        if (!supplier) {
+            return res.status(403).json({ error: 'Профиль поставщика не найден' });
+        }
+        if (supplier.verificationStatus !== 'VERIFIED') {
+            return res.status(403).json({ error: 'Ваш профиль еще не прошел верификацию. Вы не можете подавать предложения.' });
+        }
+        finalSupplierId = supplier.id;
 
         // Проверяем статус тендера и права доступа к закрытым процедурам
         const tender = await prisma.tender.findUnique({
@@ -130,6 +139,12 @@ const createOffer = async (req, res) => {
         });
         const validSpecMap = new Map(tenderSpecs.map(s => [s.id, s.quantity]));
 
+        // Одна позиция тендера = одна строка в предложении
+        const specIds = specs.map((s) => s.tenderSpecId);
+        if (new Set(specIds).size !== specIds.length) {
+            return res.status(400).json({ error: 'Позиция спецификации указана в предложении несколько раз' });
+        }
+
         // Проверяем аккредитацию поставщика по категориям
         const supplierCategories = await prisma.supplierCategory.findMany({
             where: { supplierId: finalSupplierId },
@@ -154,12 +169,30 @@ const createOffer = async (req, res) => {
                 return res.status(400).json({ error: `Спецификация с ID "${item.tenderSpecId}" не принадлежит данному тендеру` });
             }
             const unitPrice = parseFloat(item.unitPrice);
-            const quantity = parseFloat(item.quantity);
             if (isNaN(unitPrice) || unitPrice < 0) {
                 return res.status(400).json({ error: 'Цена за единицу товара не может быть отрицательной или пустой' });
             }
-            if (isNaN(quantity) || quantity <= 0) {
-                return res.status(400).json({ error: 'Количество товара должно быть больше 0' });
+            // Количество задаёт заказчик в тендере. Раньше поставщик мог прислать quantity: 1 вместо 6000,
+            // получить сумму в тысячи раз меньше и "выиграть" сравнение по цене.
+            item.quantity = validSpecMap.get(item.tenderSpecId);
+        }
+
+        // Прикрепить можно только свои свежие, ещё ни к чему не привязанные файлы
+        // (иначе можно привязать чужой документ и получить к нему доступ как "владелец")
+        if (Array.isArray(attachedDocumentIds) && attachedDocumentIds.length > 0) {
+            const usableDocs = await prisma.document.count({
+                where: {
+                    id: { in: attachedDocumentIds },
+                    tenderId: null,
+                    bidId: null,
+                    tenderFiles: { none: {} },
+                    lotFiles: { none: {} },
+                    supplierFiles: { none: {} },
+                    offerFiles: { none: {} },
+                },
+            });
+            if (usableDocs !== new Set(attachedDocumentIds).size) {
+                return res.status(400).json({ error: 'Некоторые прикреплённые документы недоступны для этого предложения' });
             }
         }
 
@@ -219,7 +252,7 @@ const createOffer = async (req, res) => {
                 paymentTerms,
                 version: newVersion,
                 isDefault: true,
-                status: status || 'TABSARYLDY', // По умолчанию 'отправлено' (tabşyryldy)
+                status: 'TABSARYLDY', // отправлено (tabşyryldy); статус задаёт только сервер
                 offeredPrice: totalPrice,
                 comment: req.body.comment || null,
                 specs: {
@@ -526,11 +559,10 @@ const deleteOffer = async (req, res) => {
             return res.status(403).json({ error: 'У вас нет прав на удаление этого коммерческого предложения' });
         }
 
-        // Поставщик может отозвать/удалить заявку только пока тендер открыт для приема заявок и дедлайн не истек
-        if (req.user.roleType !== 'ADMIN') {
-            if (offer.tender.status !== 'ACYK' || (offer.tender.deadline && new Date() > new Date(offer.tender.deadline))) {
-                return res.status(400).json({ error: 'Нельзя отозвать заявку после окончания установленного срока подачи заявок (дедлайна) или закрытия тендера' });
-            }
+        // Отозвать/удалить заявку можно только пока идёт приём заявок. Это касается и админа:
+        // после дедлайна удалить чужую заявку = повлиять на итог тендера.
+        if (offer.tender.status !== 'ACYK' || (offer.tender.deadline && new Date() > new Date(offer.tender.deadline))) {
+            return res.status(400).json({ error: 'Нельзя отозвать заявку после окончания установленного срока подачи заявок (дедлайна) или закрытия тендера' });
         }
 
         await prisma.$transaction([
