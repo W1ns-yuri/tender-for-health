@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bookmark, Trophy, Paperclip, FileText } from 'lucide-react';
+import { Bookmark, Trophy, Paperclip, FileText, Folder, Building2, Package, MapPin, Clock, ScrollText } from 'lucide-react';
 import { cleanLotTitle, lotLabel } from '../../utils/pluralize';
 import { safeString } from '../../utils/themeUtils';
 import { getFileDownloadUrl } from './useTenderDetailsState';
@@ -117,7 +117,7 @@ export default function TenderDetailsLotsTab({
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
               {lot.category?.name && (
                 <span>
-                  📁 {t('lotCategory', 'Категория')}:{' '}
+                  <Folder size={12} className="inline align-[-2px] mr-1" />{t('lotCategory', 'Категория')}:{' '}
                   <strong className={isDarkMode ? 'text-slate-300' : 'text-slate-700'}>
                     {lot.category.name}
                   </strong>
@@ -125,7 +125,7 @@ export default function TenderDetailsLotsTab({
               )}
               {lot.endUser && (
                 <span>
-                  🏢 {t('endUser', 'Конечный получатель')}:{' '}
+                  <Building2 size={12} className="inline align-[-2px] mr-1" />{t('endUser', 'Конечный получатель')}:{' '}
                   <strong
                     className={`font-semibold ${
                       role === 'SUPPLIER'
@@ -143,26 +143,26 @@ export default function TenderDetailsLotsTab({
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
               {isGoods && lot.deliveryTerm && (
                 <span>
-                  📦 {t('deliveryTerm', 'Условие поставки')}:{' '}
+                  <Package size={12} className="inline align-[-2px] mr-1" />{t('deliveryTerm', 'Условие поставки')}:{' '}
                   <strong>{lot.deliveryTerm.shortName}</strong>
                 </span>
               )}
               {isGoods && lot.deliveryAddress && (
                 <span>
-                  📍 {t('deliveryAddressLabel', 'Пункт назначения')}: {lot.deliveryAddress}
+                  <MapPin size={12} className="inline align-[-2px] mr-1" />{t('deliveryAddressLabel', 'Пункт назначения')}: {lot.deliveryAddress}
                 </span>
               )}
               {isWorks && (
                 <>
                   {lot.workAddress && (
-                    <span>📍 {t('siteLabel', 'Объект')}: {lot.workAddress}</span>
+                    <span><MapPin size={12} className="inline align-[-2px] mr-1" />{t('siteLabel', 'Объект')}: {lot.workAddress}</span>
                   )}
                   {lot.workPeriod && (
-                    <span>⏱️ {t('termLabel', 'Срок')}: {lot.workPeriod}</span>
+                    <span><Clock size={12} className="inline align-[-2px] mr-1" />{t('termLabel', 'Срок')}: {lot.workPeriod}</span>
                   )}
                   {lot.licenseRequired && (
                     <span className="text-amber-600 font-semibold">
-                      📜 {t('licenseRequired', 'Требуется лицензия')}
+                      <ScrollText size={12} className="inline align-[-2px] mr-1" />{t('licenseRequired', 'Требуется лицензия')}
                     </span>
                   )}
                 </>
@@ -170,9 +170,9 @@ export default function TenderDetailsLotsTab({
               {isServices && (
                 <>
                   {lot.serviceFormat && (
-                    <span>🏢 {t('serviceFormat', 'Формат')}: {lot.serviceFormat}</span>
+                    <span><Building2 size={12} className="inline align-[-2px] mr-1" />{t('serviceFormat', 'Формат')}: {lot.serviceFormat}</span>
                   )}
-                  {lot.slaPeriod && <span>⏱️ SLA: {lot.slaPeriod}</span>}
+                  {lot.slaPeriod && <span><Clock size={12} className="inline align-[-2px] mr-1" />SLA: {lot.slaPeriod}</span>}
                 </>
               )}
             </div>

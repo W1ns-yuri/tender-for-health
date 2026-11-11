@@ -536,11 +536,10 @@ const getOfferById = async (req, res) => {
         if (req.user.roleType !== 'ADMIN') {
             const suppliers = await prisma.supplier.findMany({ where: { userId: req.user.id } });
             const supplierIds = suppliers.map(s => s.id);
+            // Чужое предложение не отдаём никогда: в нём банк, паспорт и файлы конкурента.
+            // Итоги для прозрачности видны через GET /offers/tender/:id (там данные конкурентов урезаны).
             if (!supplierIds.includes(offer.supplierId)) {
-                // Если победители уже объявлены, просмотр открыт для прозрачности
-                if (offer.tender?.status !== 'YENIJI_YGLAN_EDILDI') {
-                    return res.status(403).json({ error: 'Нет доступа к этому предложению' });
-                }
+                return res.status(403).json({ error: 'Нет доступа к этому предложению' });
             }
         } else {
             // Для администратора: до вскрытия конвертов (а не только до дедлайна) коммерческие данные запечатаны
@@ -567,12 +566,11 @@ const deleteOffer = async (req, res) => {
         }
 
         // Защита от IDOR: удалить может только админ или автор предложения
-        if (req.user.roleType !== 'ADMIN' && offer.supplier.userId !== req.user.id) {
+        if (offer.supplier.userId !== req.user.id) {
             return res.status(403).json({ error: 'У вас нет прав на удаление этого коммерческого предложения' });
         }
 
-        // Отозвать/удалить заявку можно только пока идёт приём заявок. Это касается и админа:
-        // после дедлайна удалить чужую заявку = повлиять на итог тендера.
+        // Отозвать заявку можно только пока идёт приём заявок.
         if (offer.tender.status !== 'ACYK' || (offer.tender.deadline && new Date() > new Date(offer.tender.deadline))) {
             return res.status(400).json({ error: 'Нельзя отозвать заявку после окончания установленного срока подачи заявок (дедлайна) или закрытия тендера' });
         }

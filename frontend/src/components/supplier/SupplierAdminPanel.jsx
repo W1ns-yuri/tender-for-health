@@ -93,7 +93,7 @@ export default function SupplierAdminPanel({
           </div>
           <div>
             <h4 className="text-sm font-bold text-emerald-900 dark:text-emerald-100">
-              {t('verifiedDossierStatus', '🟢 Профиль поставщика верифицирован')}
+              {t('verifiedDossierStatus', 'Профиль поставщика верифицирован')}
             </h4>
             <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
               {t('fullAuthorizationNotice', 'Компания имеет полный доступ к участию в электронных торгах.')}

@@ -35,10 +35,11 @@ const getDashboardStats = async (req, res) => {
                 ? { status: 'YENIJI_YGLAN_EDILDI', offers: { some: { supplierId: { in: supplierIds }, specs: { some: { isAwarded: true } } } } }
                 : { status: 'YENIJI_YGLAN_EDILDI' },
         });
-        const totalSuppliers = await prisma.supplier.count();
+        // Число всех поставщиков и разбивка по статусам (включая черновики) — внутренняя статистика организатора
+        const totalSuppliers = isSupplier ? null : await prisma.supplier.count();
 
         // 2. Группировка тендеров по статусам
-        const statusGroups = await prisma.tender.groupBy({
+        const statusGroups = isSupplier ? [] : await prisma.tender.groupBy({
             by: ['status'],
             _count: { status: true },
         });

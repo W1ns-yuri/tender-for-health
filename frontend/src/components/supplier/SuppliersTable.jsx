@@ -54,7 +54,7 @@ export default function SuppliersTable({
   }, [suppliers, safeCurrentPage, pageSize]);
 
   const categoryOptions = [
-    { id: 'ALL', name: `🏢 ${t('allCategories', 'Все направления деятельности')}` },
+    { id: 'ALL', name: t('allCategories', 'Все направления деятельности') },
     ...categories.map((c) => ({ id: c.id, name: c.name })),
   ];
 

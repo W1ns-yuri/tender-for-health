@@ -20,7 +20,7 @@ const router = express.Router();
 router.get('/', authMiddleware.optional, getTenders);
 
 // 2. Получить следующий порядковый номер тендера (TNDR-YYYY-MM-001)
-router.get('/next-number', authMiddleware, getNextNumber);
+router.get('/next-number', authMiddleware, checkRole(['ADMIN']), getNextNumber);
 
 // 3. Посмотреть ОДИН тендер по ID со всеми позициями и заявками
 router.get('/:id', authMiddleware, getTenderById);

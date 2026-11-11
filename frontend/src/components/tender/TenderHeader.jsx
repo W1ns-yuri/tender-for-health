@@ -44,7 +44,7 @@ export default function TenderHeader({
 
   return (
     <div className="space-y-4">
-      {/* 🟢 ИНФОРМАТИВНАЯ КАРТОЧКА С МИНИ-СТЕППЕРОМ ПРОГРЕССА */}
+      {/* ИНФОРМАТИВНАЯ КАРТОЧКА С МИНИ-СТЕППЕРОМ ПРОГРЕССА */}
       <div className={`p-5 rounded-2xl border shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5 ${theme?.cardBg || 'bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800'}`}>
         {/* Левая часть: Строгая SVG-иконка, номер, статус и динамический заголовок */}
         <div className="flex items-center gap-3.5 min-w-0">

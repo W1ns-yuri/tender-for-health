@@ -138,7 +138,7 @@ export default function SupplierSidebar({
               <div className="pt-2">
                 <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 rounded-xl text-center space-y-2">
                   <p className="text-xs font-bold text-emerald-800 dark:text-emerald-200">
-                    {t('profileVerified100', '🟢 Профиль активен на 100%')}
+                    {t('profileVerified100', 'Профиль активен на 100%')}
                   </p>
                   <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
                     {t('verificationConfirmedStatus', 'Верификация подтверждена')}

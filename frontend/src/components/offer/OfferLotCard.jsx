@@ -8,7 +8,8 @@ import {
   FileText, 
   MapPin, 
   Clock, 
-  ShieldCheck 
+  ShieldCheck,
+  Building2,
 } from 'lucide-react';
 import CustomSelect from '../CustomSelect';
 import OfferLotItemRow from './OfferLotItemRow';
@@ -100,7 +101,7 @@ export default function OfferLotCard({
 
           {lot.endUser && (
             <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium pl-1">
-              🏢 {t('endUser', 'Конечный получатель')}: <strong className="text-slate-800 dark:text-slate-200 font-bold">{lot.endUser}</strong>
+              <Building2 size={12} /> {t('endUser', 'Конечный получатель')}: <strong className="text-slate-800 dark:text-slate-200 font-bold">{lot.endUser}</strong>
             </span>
           )}
 

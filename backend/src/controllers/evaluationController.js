@@ -188,7 +188,7 @@ const selectWinnerOffer = async (req, res) => {
         ]);
 
         res.json({
-            message: '🏆 Победитель тендера успешно объявлен!',
+            message: 'Победитель тендера объявлен',
             tenderId,
             winningOfferId,
             status: 'YENIJI_YGLAN_EDILDI',
@@ -313,6 +313,14 @@ const awardLot = async (req, res) => {
         }
 
         const specIds = lot.specs.map(s => s.id);
+
+        // Победителем лота может быть только тот, кто подал цены именно по этому лоту
+        if (offerId) {
+            const hasLotPrices = await prisma.offerSpecification.count({ where: { offerId, tenderSpecId: { in: specIds } } });
+            if (!hasLotPrices) {
+                return res.status(400).json({ error: 'Этот поставщик не подавал предложение по данному лоту' });
+            }
+        }
 
         await prisma.$transaction(async (prisma) => {
             // 1. Снимаем флаг isAwarded со всех предложений на спецификации ЭТОГО лота

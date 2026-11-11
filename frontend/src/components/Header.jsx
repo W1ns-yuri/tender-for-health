@@ -428,7 +428,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
           )}
         </div>
 
-        {/* 🔔 Интерактивный Центр уведомлений */}
+        {/* Интерактивный Центр уведомлений */}
         <div className="relative" ref={notifContainerRef}>
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
@@ -612,7 +612,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
           )}
         </div>
 
-        {/* 🟢 Кнопка Настройки */}
+        {/* Кнопка Настройки */}
         <button
           onClick={() => { if (onNavigate) onNavigate('settings'); }}
           className={`p-2 rounded-xl transition-colors ${
@@ -625,7 +625,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
 
         <div className={`h-6 w-px ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
 
-        {/* 🟢 Профиль */}
+        {/* Профиль */}
         <div className="relative" ref={profileContainerRef}>
           <div
             onClick={() => setShowProfileMenu(!showProfileMenu)}

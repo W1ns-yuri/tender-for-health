@@ -287,7 +287,7 @@ export default function App() {
           onNavigate={handleNavigate}
         />
 
-        {/* 🟢 ЦЕНТРАЛЬНОЕ ОКНО С ЗАЩИТОЙ ERROR BOUNDARY */}
+        {/* ЦЕНТРАЛЬНОЕ ОКНО С ЗАЩИТОЙ ERROR BOUNDARY */}
         <main className={`p-6 flex-1 overflow-y-auto ${isDarkMode ? 'bg-[#0b0f17]' : 'bg-slate-50'}`}>
           <ErrorBoundary key={location.pathname} resetKey={location.pathname} onReset={() => navigate('/dashboard')}>
             <Suspense fallback={<div className="flex justify-center py-24"><div className="h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent opacity-40" /></div>}>

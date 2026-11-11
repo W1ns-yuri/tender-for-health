@@ -72,7 +72,7 @@ if (process.env.NODE_ENV === 'production') {
 // 20 нормальных входов за утро остальных бы не пускало.
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 20,
+    limit: Number(process.env.LOGIN_RATE_LIMIT) || 20,
     skipSuccessfulRequests: true,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
@@ -83,7 +83,8 @@ app.use('/api/auth/login', authLimiter);
 // Регистрация: успешные тоже считаем, иначе можно наплодить тысячи фейковых поставщиков
 const registerLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
-    limit: 10,
+    // В CI автотесты регистрируют десятки поставщиков: там лимит поднимают через REGISTER_RATE_LIMIT
+    limit: Number(process.env.REGISTER_RATE_LIMIT) || 10,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     message: { error: 'Слишком много регистраций с этого адреса. Попробуйте позже.' },

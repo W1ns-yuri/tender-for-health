@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const prisma = require('../lib/prisma');
 const { isTenderOpened } = require('../utils/sealedEnvelope');
+const { checkTenderVisible } = require('../utils/tenderAccess');
 
 const uploadDir = path.join(__dirname, '../../uploads');
 
@@ -62,7 +63,7 @@ async function checkUploadTargets(user, { tenderId, lotId, supplierId, offerId }
     if (tenderId && !(await prisma.tender.findUnique({ where: { id: tenderId }, select: { id: true } }))) {
         return { status: 404, error: 'Тендер не найден' };
     }
-    if (lotId && !(await prisma.lot.findUnique({ where: { id: lotId }, select: { id: true } }))) {
+    if (lotId && !(await prisma.tenderLot.findUnique({ where: { id: lotId }, select: { id: true } }))) {
         return { status: 404, error: 'Лот не найден' };
     }
 
@@ -161,19 +162,38 @@ const getDocuments = async (req, res) => {
         const { tenderId, lotId, supplierId, offerId } = req.query;
         const isAdmin = req.user.roleType === 'ADMIN';
 
+        // Ровно один фильтр за запрос: раньше комбинация (например, supplierId + lotId)
+        // обходила проверки, потому что where строился по первому найденному фильтру.
+        const filters = [lotId, tenderId, supplierId, offerId].filter(Boolean);
+        if (filters.length > 1) {
+            return res.status(400).json({ error: 'Укажите только один фильтр: lotId, tenderId, supplierId или offerId' });
+        }
+
         // Без фильтра это список ВСЕХ документов системы: только для админа
-        if (!lotId && !tenderId && !supplierId && !offerId && !isAdmin) {
+        if (filters.length === 0 && !isAdmin) {
             return res.status(403).json({ error: 'Нет доступа' });
         }
 
+        // Документы тендера/лота: только если сам тендер виден пользователю (не черновик, не чужой закрытый)
+        if ((tenderId || lotId) && !isAdmin) {
+            let targetTenderId = tenderId;
+            if (lotId) {
+                const lot = await prisma.tenderLot.findUnique({ where: { id: lotId }, select: { tenderId: true } });
+                if (!lot) return res.status(404).json({ error: 'Лот не найден' });
+                targetTenderId = lot.tenderId;
+            }
+            const access = await checkTenderVisible(req.user, targetTenderId);
+            if (!access.ok) return res.status(access.status).json({ error: access.error });
+        }
+
         // Документы поставщика: только сам поставщик или админ
-        if (supplierId && !lotId && !tenderId && !isAdmin) {
+        if (supplierId && !isAdmin) {
             const own = await prisma.supplier.findFirst({ where: { id: supplierId, userId: req.user.id }, select: { id: true } });
             if (!own) return res.status(403).json({ error: 'Нет доступа' });
         }
 
         // Документы предложения (содержимое конверта): владелец всегда, админ только после вскрытия
-        if (offerId && !lotId && !tenderId && !supplierId) {
+        if (offerId) {
             const offer = await prisma.offer.findUnique({
                 where: { id: offerId },
                 select: { supplier: { select: { userId: true } }, tender: { select: { status: true } } },

@@ -69,6 +69,10 @@ const createGeneralProduct = async (req, res) => {
         const cleanCatId = (categoryId && typeof categoryId === 'string' && categoryId.trim()) ? categoryId.trim() : null;
         const cleanTrade = (tradeName && typeof tradeName === 'string' && tradeName.trim()) ? tradeName.trim() : null;
 
+        if (!name || typeof name !== 'string' || !name.trim()) {
+            return res.status(400).json({ error: 'Укажите название позиции' });
+        }
+
         const product = await prisma.generalProduct.create({
             data: {
                 name: (name || '').trim(),

@@ -56,7 +56,7 @@ export default function CreateTenderPage({
 
   return (
     <div className="space-y-6 pb-6">
-      {/* 🟢 ШАПКА ТЕНДЕРА: Номер, статус, прогресс, публикация */}
+      {/* ШАПКА ТЕНДЕРА: Номер, статус, прогресс, публикация */}
       <TenderHeader
         tenderId={state.tenderId}
         formData={state.formData}
@@ -74,7 +74,7 @@ export default function CreateTenderPage({
         t={t}
       />
 
-      {/* 🟢 ЕДИНЫЙ БРАУЗЕРНЫЙ БЛОК: ВКЛАДКИ + СОДЕРЖИМОЕ (CHROME-STYLE TABS) */}
+      {/* ЕДИНЫЙ БРАУЗЕРНЫЙ БЛОК: ВКЛАДКИ + СОДЕРЖИМОЕ (CHROME-STYLE TABS) */}
       <div className="relative">
         {/* Вкладки браузера */}
         <TenderTopNavigationTabs
@@ -89,7 +89,7 @@ export default function CreateTenderPage({
 
         {/* Контейнер активной вкладки */}
         <div className={`rounded-2xl ${state.activeTopTab === 'params' ? 'rounded-tl-none' : ''} border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-xs overflow-hidden`}>
-          {/* 🟢 ВКЛАДКА 1: ПАРАМЕТРЫ ЗАКУПКИ */}
+          {/* ВКЛАДКА 1: ПАРАМЕТРЫ ЗАКУПКИ */}
           <TenderGeneralParamsTab
             activeTopTab={state.activeTopTab}
             formData={state.formData}
@@ -108,7 +108,7 @@ export default function CreateTenderPage({
             t={t}
           />
 
-          {/* 🟢 ВКЛАДКА 2: ЛОТЫ И СПЕЦИФИКАЦИИ */}
+          {/* ВКЛАДКА 2: ЛОТЫ И СПЕЦИФИКАЦИИ */}
           <TenderLotsManagerTab
             activeTopTab={state.activeTopTab}
             tenderId={state.tenderId}
@@ -142,7 +142,7 @@ export default function CreateTenderPage({
             t={t}
           />
 
-          {/* 🟢 ВКЛАДКА 3: ОБЩИЕ ДОКУМЕНТЫ ТЕНДЕРА */}
+          {/* ВКЛАДКА 3: ОБЩИЕ ДОКУМЕНТЫ ТЕНДЕРА */}
           {state.activeTopTab === 'docs' && state.tenderId && (
             <TenderGeneralDocumentsTab
               tenderId={state.tenderId}
