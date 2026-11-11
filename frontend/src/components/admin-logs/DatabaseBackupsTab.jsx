@@ -31,7 +31,7 @@ export default function DatabaseBackupsTab({ logsCount, usersCount, cardBg, t })
         </div>
         <div className={`p-4 rounded-xl border ${cardBg} space-y-1`}>
           <p className="text-xs text-slate-400 font-semibold uppercase">{t('activeAccountsCount', 'Активных учетных записей')}</p>
-          <p className="text-2xl font-bold text-emerald-600">{usersCount}</p>
+          <p className="text-2xl font-bold text-blue-600">{usersCount}</p>
         </div>
       </div>
     </div>
