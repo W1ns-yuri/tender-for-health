@@ -19,7 +19,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { getRoleTheme } from '../utils/themeUtils';
-import { getTranslation } from '../utils/translations';
+import useT from '../utils/useT';
 
 export default function Sidebar({
   activeTab,
@@ -34,7 +34,7 @@ export default function Sidebar({
 }) {
   const theme = getRoleTheme(role, isDarkMode);
   const isAdmin = role === 'ADMIN';
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
 
   // Надежная проверка активной вкладки с поддержкой дочерних путей
   const isTabActive = (tabKey) => {

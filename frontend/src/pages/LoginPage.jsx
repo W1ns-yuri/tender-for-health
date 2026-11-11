@@ -1,6 +1,5 @@
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
-import { getTranslation } from '../utils/translations';
 import { useLoginState } from '../components/auth/useLoginState';
 import AuthShowcase from '../components/auth/AuthShowcase';
 import AuthLanguageSelector from '../components/auth/AuthLanguageSelector';
@@ -8,9 +7,10 @@ import LoginForm from '../components/auth/LoginForm';
 import RegisterForm from '../components/auth/RegisterForm';
 import AuthDemoModal from '../components/auth/AuthDemoModal';
 import AuthForgotPasswordModal from '../components/auth/AuthForgotPasswordModal';
+import useT from '../utils/useT';
 
 export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
 
   const {
     isRegister,

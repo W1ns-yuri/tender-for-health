@@ -53,7 +53,7 @@ npm run db:status                                  # должно быть "Data
 ## Деплой в прод (чек-лист)
 
 1. **База**: PostgreSQL 16, отдельный пользователь с паролем. `npm run db:migrate` при каждом деплое (только `migrate deploy`, никогда `migrate dev` / `db push` на проде).
-2. **Демо-данные в прод не заливать**: `seed:demo` создаёт учётки с известными паролями (`admin123`, `supplier123`). Первого админа создать вручную и сменить пароль.
+2. **Демо-данные в прод не заливать**: `seed:demo` создаёт учётки с известными паролями (`admin123`, `supplier123`). Первого админа создать командой `ADMIN_USERNAME=admin ADMIN_PASSWORD='длинный-пароль' npm run admin:create` (она же сбрасывает пароль админу, если забыли). Демо- и чистящие скрипты при `NODE_ENV=production` сами откажутся запускаться.
 3. **Переменные** (см. таблицу выше): `NODE_ENV=production`, длинный `JWT_SECRET`, `CORS_ORIGIN`, `TRUST_PROXY=1` за прокси.
 4. **Фронт**: `cd frontend && npm ci && npm run build`. Два варианта:
    - один сервис: `SERVE_FRONTEND=true` — бэкенд сам отдаёт `frontend/dist` (путь можно сменить `FRONTEND_DIST`);

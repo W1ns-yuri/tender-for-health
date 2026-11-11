@@ -1,3 +1,4 @@
+require('./_refuseInProduction')('seed_notifications');
 const prisma = require('../src/lib/prisma');
 
 async function seedNotifications() {

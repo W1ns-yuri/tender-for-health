@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./_refuseInProduction')('test_closed_tenders_suite');
 const jwt = require('jsonwebtoken');
 const prisma = require('../src/lib/prisma');
 

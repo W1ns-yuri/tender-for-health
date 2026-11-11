@@ -13,18 +13,28 @@ const getDashboardStats = async (req, res) => {
             }
         }
 
-        // 1. Счетчики по ТЗ
-        const totalOpenTenders = await prisma.tender.count({ where: { status: 'ACYK' } });
-        
-        let totalOffersQuery = {};
-        if (roleType === 'SUPPLIER') {
-            const suppliers = await prisma.supplier.findMany({ where: { userId: id } });
-            const supplierIds = suppliers.map(s => s.id);
-            totalOffersQuery = { where: { supplierId: { in: supplierIds } } };
+        // 1. Счетчики по ТЗ. Поставщику — его собственные цифры: открытые тендеры, которые он
+        // может видеть, его заявки и его победы (раньше «Победители» показывал все итоги по системе).
+        const isSupplier = roleType === 'SUPPLIER';
+        let supplierIds = [];
+        if (isSupplier) {
+            const suppliers = await prisma.supplier.findMany({ where: { userId: id }, select: { id: true } });
+            supplierIds = suppliers.map(s => s.id);
         }
-        const totalOffers = await prisma.offer.count(totalOffersQuery);
 
-        const totalWinners = await prisma.tender.count({ where: { status: 'YENIJI_YGLAN_EDILDI' } });
+        const totalOpenTenders = await prisma.tender.count({
+            where: isSupplier
+                ? { status: 'ACYK', OR: [{ visibility: 'ACYK' }, { invitedSuppliers: { some: { supplierId: { in: supplierIds } } } }] }
+                : { status: 'ACYK' },
+        });
+
+        const totalOffers = await prisma.offer.count(isSupplier ? { where: { supplierId: { in: supplierIds } } } : {});
+
+        const totalWinners = await prisma.tender.count({
+            where: isSupplier
+                ? { status: 'YENIJI_YGLAN_EDILDI', offers: { some: { supplierId: { in: supplierIds }, specs: { some: { isAwarded: true } } } } }
+                : { status: 'YENIJI_YGLAN_EDILDI' },
+        });
         const totalSuppliers = await prisma.supplier.count();
 
         // 2. Группировка тендеров по статусам

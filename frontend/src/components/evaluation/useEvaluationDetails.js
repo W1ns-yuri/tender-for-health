@@ -190,6 +190,34 @@ export default function useEvaluationDetails({
     }
   }, [allLotsAwarded, awardedLots.length, fetchTenderDetails, id, lotsWithOffers.length]);
 
+  // Вскрытие конвертов: доступно после дедлайна. До этого сервер отдаёт заявки запечатанными.
+  const canOpenEnvelopes = Boolean(
+    tenderDetails?.isSealed &&
+    (tenderDetails.status === 'YAPYK' ||
+      (tenderDetails.status === 'ACYK' && new Date(tenderDetails.deadline) <= new Date()))
+  );
+
+  const handleOpenEnvelopes = useCallback(async () => {
+    const isConfirmed = await showConfirmRef.current?.({
+      title: tRef.current('openEnvelopesTitle', 'Вскрытие конвертов'),
+      message: tRef.current('openEnvelopesConfirm', 'После вскрытия цены и документы всех заявок станут видны комиссии. Отменить вскрытие нельзя. Продолжить?'),
+      type: 'warning',
+      confirmText: tRef.current('openEnvelopesBtn', 'Вскрыть конверты'),
+      cancelText: tRef.current('cancelEditBtn', 'Отмена'),
+    });
+    if (!isConfirmed) return;
+    try {
+      await API.post(`/evaluation/open/${id}`);
+      await fetchTenderDetails(id);
+    } catch (e) {
+      showAlertRef.current?.({
+        title: tRef.current('errorTitle', 'Ошибка'),
+        message: e.response?.data?.error || tRef.current('openEnvelopesError', 'Не удалось вскрыть конверты'),
+        type: 'error'
+      });
+    }
+  }, [id, fetchTenderDetails]);
+
   const handlePrint = useCallback(() => {
     window.print();
   }, []);
@@ -202,6 +230,8 @@ export default function useEvaluationDetails({
     handleAwardLot,
     handleCompleteEvaluation,
     handlePrint,
+    canOpenEnvelopes,
+    handleOpenEnvelopes,
     lotsList,
     lotsWithOffers,
     awardedLots,

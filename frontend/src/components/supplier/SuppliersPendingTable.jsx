@@ -13,8 +13,9 @@ import {
   Button,
 } from '../ui';
 import { safeString } from '../../utils/themeUtils';
-import { getTranslation } from '../../utils/translations';
+import { getStandardizedOpfBadge } from '../../utils/pluralize';
 import { parseSupplierChanges } from './supplierUtils';
+import useT from '../../utils/useT';
 
 export default function SuppliersPendingTable({
   pendingSuppliers = [],
@@ -23,7 +24,7 @@ export default function SuppliersPendingTable({
   onReject,
   lang = 'RU',
 }) {
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
 
   return (
     <TableContainer>
@@ -103,7 +104,7 @@ export default function SuppliersPendingTable({
                 {/* 2. Тип / ИНН */}
                 <TableCell>
                   <span className="inline-block font-semibold px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md text-[11px]">
-                    {s.type || 'ÝAŞ / HJ'}
+                    {getStandardizedOpfBadge(s.type, lang) || '—'}
                   </span>
                   <p className="font-mono text-xs text-slate-500 dark:text-slate-400 mt-1">
                     {safeString(s.taxId)}

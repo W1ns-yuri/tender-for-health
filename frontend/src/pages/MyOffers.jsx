@@ -2,16 +2,16 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Trash2, Eye, RefreshCw, AlertCircle } from 'lucide-react';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import API from '../services/api';
-import { getTranslation } from '../utils/translations';
 import { useNavigate } from 'react-router-dom';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
 import { TableFilters, Pagination, TableSkeletonRows } from '../components/ui';
+import useT from '../utils/useT';
 
 export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
   const isAdmin = role === 'ADMIN';
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
   const navigate = useNavigate();
   const { showAlert, showConfirm } = useAlert();
   

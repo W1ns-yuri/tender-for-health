@@ -67,16 +67,28 @@ if (process.env.NODE_ENV === 'production') {
     });
 }
 
-// Защита от перебора паролей и массовой регистрации: не больше 20 попыток входа за 15 минут с одного IP
+// Защита от перебора паролей: не больше 20 НЕУДАЧНЫХ попыток входа за 15 минут с одного IP.
+// Успешные входы не считаем: в больнице вся бухгалтерия может сидеть за одним IP, и после
+// 20 нормальных входов за утро остальных бы не пускало.
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 20,
+    skipSuccessfulRequests: true,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     message: { error: 'Слишком много попыток. Попробуйте через 15 минут.' },
 });
 app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
+
+// Регистрация: успешные тоже считаем, иначе можно наплодить тысячи фейковых поставщиков
+const registerLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: 10,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { error: 'Слишком много регистраций с этого адреса. Попробуйте позже.' },
+});
+app.use('/api/auth/register', registerLimiter);
 
 // Скачивание загруженных документов: только для вошедших и с проверкой прав (см. fileRoutes.js).
 // Раньше здесь был express.static, и любой документ мог скачать кто угодно по имени файла.

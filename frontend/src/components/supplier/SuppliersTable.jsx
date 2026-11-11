@@ -15,8 +15,8 @@ import {
   TableSkeletonRows,
 } from '../ui';
 import { safeString, getRoleTheme } from '../../utils/themeUtils';
-import { getTranslation } from '../../utils/translations';
 import { parseCompanyName } from '../../utils/pluralize';
+import useT from '../../utils/useT';
 
 export default function SuppliersTable({
   suppliers = [],
@@ -33,7 +33,7 @@ export default function SuppliersTable({
   isDarkMode = false,
   lang = 'RU',
 }) {
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
   const theme = getRoleTheme(role, isDarkMode);
 
   // Пагинация (по 10 строк на страницу, как в UI Kit)

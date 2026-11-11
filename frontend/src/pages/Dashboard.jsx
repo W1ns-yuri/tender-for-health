@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FileText, Send, Trophy, Eye, Plus, Edit2, Trash2, Users, ChevronRight, Lock } from 'lucide-react';
+import { FileText, Send, Trophy, Eye, Plus, Users, ChevronRight, Lock } from 'lucide-react';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
-import { getTranslation } from '../utils/translations';
 import { Pagination, TableSkeletonRows } from '../components/ui';
+import useT from '../utils/useT';
 
 export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDarkMode, lang = 'RU' }) {
   const [tenders, setTenders] = useState([]);
@@ -23,7 +23,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
   const [offerPageSize, setOfferPageSize] = useState(10);
 
   const theme = getRoleTheme(role, isDarkMode);
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
 
   // Расчет пагинации тендеров
   const totalTenders = tenders.length;
@@ -241,11 +241,11 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
               <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center">
                 <Trophy size={20} />
               </div>
-              <span className="text-sm font-medium">{t('winners', 'Ýeňijilik')}</span>
+              <span className="text-sm font-medium">{t('myWins', 'Мои победы')}</span>
             </div>
             <div className="text-right">
               <span className="text-2xl font-bold tabular-nums">{stats.winnersCount}</span>
-              <span className={`text-xs block font-medium ${theme.subText}`}>{t('totalWinners', 'Jemi ýeňiji bolunan tenderler')}</span>
+              <span className={`text-xs block font-medium ${theme.subText}`}>{t('myWonTendersHint', 'Выигранных тендеров')}</span>
             </div>
           </div>
         </div>
@@ -415,22 +415,6 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
                           >
                             <Eye size={16} />
                           </button>
-                          {role !== 'ADMIN' && (
-                            <>
-                              <button
-                                className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 transition-all active:scale-95"
-                                title={t('edit', 'Редактировать')}
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button
-                                className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-all active:scale-95"
-                                title={t('delete', 'Удалить')}
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </>
-                          )}
                         </div>
                       </td>
                     </tr>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Bookmark, Trophy, Paperclip, FileText } from 'lucide-react';
-import { cleanLotTitle } from '../../utils/pluralize';
+import { cleanLotTitle, lotLabel } from '../../utils/pluralize';
 import { safeString } from '../../utils/themeUtils';
 import { getFileDownloadUrl } from './useTenderDetailsState';
 
@@ -59,7 +59,7 @@ export default function TenderDetailsLotsTab({
                 }
               />
               <span className="truncate max-w-44">
-                {cleanLotTitle(lItem.name || `Лот №${lItem.lotNumber || lIdx + 1}`, lItem.lotNumber || lIdx + 1)}
+                {lotLabel(lItem.name, lItem.lotNumber || lIdx + 1)}
               </span>
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-black ${

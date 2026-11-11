@@ -26,17 +26,21 @@ export function pluralize(n, forms, includeCount = true) {
  * @param {number} [idx] Индекс лота (если нужно сформировать стандартный вид "Лот №1: ...")
  * @returns {string}
  */
-export function cleanLotTitle(title, idx = null) {
-  if (!title) return idx !== null ? `Лот №${idx + 1}` : '';
+export function cleanLotTitle(title, number = null) {
   // Убираем цепочки повторяющихся префиксов "Лот №X", "ЛОТ #X:", "Лот 1:", "Lot #1:", etc.
-  const cleaned = String(title)
+  // number — номер лота для показа (1, 2, 3…), используется только если без префикса имени не осталось.
+  const cleaned = String(title || '')
     .replace(/^(?:(?:лот|lot)\s*[№#]?\s*\d+[\s:.-]*)+/gi, '')
     .trim();
+  if (cleaned) return cleaned;
+  return number !== null ? `Лот №${number}` : String(title || '');
+}
 
-  if (idx !== null) {
-    return cleaned ? `Лот №${idx + 1}: ${cleaned}` : `Лот №${idx + 1}`;
-  }
-  return cleaned || String(title);
+/** «Лот №1: Цефалоспорины» — для мест, где номер лота больше нигде не показан */
+export function lotLabel(title, number) {
+  const cleaned = cleanLotTitle(title);
+  const bare = /^(?:лот|lot)\s*[№#]?\s*\d+$/i.test(cleaned) || !cleaned;
+  return bare ? `Лот №${number}` : `Лот №${number}: ${cleaned}`;
 }
 
 /**

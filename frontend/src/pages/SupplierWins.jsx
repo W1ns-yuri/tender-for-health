@@ -3,11 +3,11 @@ import { Trophy, CheckCircle, ExternalLink, Calendar, Package } from 'lucide-rea
 import { Link } from 'react-router-dom';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
-import { getTranslation } from '../utils/translations';
+import useT from '../utils/useT';
 
 export default function SupplierWins({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
   
   const [wins, setWins] = useState([]);
   const [loading, setLoading] = useState(true);

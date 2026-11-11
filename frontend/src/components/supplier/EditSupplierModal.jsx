@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
 import API from '../../services/api';
-import { getTranslation } from '../../utils/translations';
 import { useAlert } from '../../context/AlertContext';
 import { CustomSelect } from '../ui';
+import useT from '../../utils/useT';
 
 export default function EditSupplierModal({ supplier, onClose, onSuccess, lang = 'RU', isDarkMode, countries = [] }) {
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
   const { showAlert } = useAlert();
   const [formData, setFormData] = useState({
     name: '',

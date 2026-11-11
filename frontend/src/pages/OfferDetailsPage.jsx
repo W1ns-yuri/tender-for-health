@@ -1,7 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Package } from 'lucide-react';
-import { getTranslation } from '../utils/translations';
 import { getRoleTheme } from '../utils/themeUtils';
 import {
   useOfferDetailsState,
@@ -10,6 +9,7 @@ import {
   OfferStandaloneTable,
   OfferDetailsDocuments
 } from '../components/offer-details';
+import useT from '../utils/useT';
 
 /**
  * OfferDetailsPage
@@ -19,7 +19,7 @@ import {
 export default function OfferDetailsPage({ role, lang = 'RU', isDarkMode }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
   const theme = getRoleTheme(role, isDarkMode);
   const isAdmin = role === 'ADMIN';
 

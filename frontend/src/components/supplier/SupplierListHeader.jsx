@@ -1,7 +1,7 @@
 import React from 'react';
 import { Plus, Layers } from 'lucide-react';
 import { Button } from '../ui';
-import { getTranslation } from '../../utils/translations';
+import useT from '../../utils/useT';
 
 export default function SupplierListHeader({
   role = 'ADMIN',
@@ -9,7 +9,7 @@ export default function SupplierListHeader({
   onManageCategories,
   onAddSupplier,
 }) {
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
   const isAdmin = role === 'ADMIN';
 
   return (

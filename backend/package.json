@@ -10,7 +10,8 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:status": "prisma migrate status",
-    "seed:demo": "node prisma/seed_comprehensive_demo.js"
+    "seed:demo": "node prisma/seed_comprehensive_demo.js",
+    "admin:create": "node scripts/createAdmin.js"
   },
   "keywords": [],
   "author": "",

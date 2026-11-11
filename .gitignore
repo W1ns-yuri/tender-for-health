@@ -13,3 +13,6 @@ dist-ssr/
 scratch/
 
 backend/backups/
+
+# Временные lock-файлы Office
+~$*

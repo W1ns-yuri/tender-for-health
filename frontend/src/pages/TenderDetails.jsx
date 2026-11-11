@@ -1,7 +1,6 @@
 import React from 'react';
 import { Lock } from 'lucide-react';
 import { getRoleTheme } from '../utils/themeUtils';
-import { getTranslation } from '../utils/translations';
 import { TenderDetailsSkeleton } from '../components/ui';
 import { useTenderDetailsState } from '../components/tender-details/useTenderDetailsState';
 import TenderDetailsClosedAccessDenied from '../components/tender-details/TenderDetailsClosedAccessDenied';
@@ -11,6 +10,7 @@ import TenderDetailsLotsTab from '../components/tender-details/TenderDetailsLots
 import TenderDetailsLegacySpecs from '../components/tender-details/TenderDetailsLegacySpecs';
 import TenderDetailsDocuments from '../components/tender-details/TenderDetailsDocuments';
 import TenderDetailsInvitedSuppliers from '../components/tender-details/TenderDetailsInvitedSuppliers';
+import useT from '../utils/useT';
 
 export default function TenderDetails({
   tenderId,
@@ -19,7 +19,7 @@ export default function TenderDetails({
   lang = 'RU',
 }) {
   const theme = getRoleTheme(role, isDarkMode);
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
 
   const {
     tender,
