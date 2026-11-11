@@ -297,7 +297,7 @@ export default function Sidebar({
           {!isCollapsed && (
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`w-10 h-5 flex items-center rounded-full p-1 transition-colors ${isDarkMode ? 'bg-emerald-600' : 'bg-slate-300'}`}
+              className={`w-10 h-5 flex items-center rounded-full p-1 transition-colors ${isDarkMode ? 'bg-indigo-600' : 'bg-slate-300'}`}
             >
               <div className={`bg-white w-3.5 h-3.5 rounded-full shadow-md transform transition-transform ${isDarkMode ? 'translate-x-5' : 'translate-x-0'}`} />
             </button>
