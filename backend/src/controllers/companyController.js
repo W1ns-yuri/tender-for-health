@@ -159,6 +159,15 @@
 
             // Удаляем пользователя (компания удалится каскадно, если настроено Cascade)
             // Но мы вручную удалим сначала компанию, потом пользователя, или просто пользователя, а остальное Cascade
+            // Нельзя удалять аккаунт, за которым есть заявки или созданные тендеры (БД тоже не даст: onDelete Restrict)
+            const [offersCount, tendersCount] = await Promise.all([
+                prisma.offer.count({ where: { supplier: { userId: company.userId } } }),
+                prisma.tender.count({ where: { createdById: company.userId } }),
+            ]);
+            if (offersCount > 0 || tendersCount > 0) {
+                return res.status(409).json({ error: 'За аккаунтом есть заявки или тендеры. Удаление сотрёт историю торгов — заблокируйте аккаунт вместо удаления.' });
+            }
+
             await prisma.user.delete({
                 where: { id: company.userId }
             });
