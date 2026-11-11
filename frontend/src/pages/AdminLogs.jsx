@@ -46,14 +46,9 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
     setSelectedLog,
     editingUser,
     setEditingUser,
-    isDumping,
-    backupHistory,
     filteredLogs,
     filteredUsers,
     fetchAllData,
-    handleCreateDump,
-    handleDownloadDump,
-    handleRestoreDump,
     handleToggleUserBlock,
     handleResetUserPassword,
     handleSaveUser
@@ -206,15 +201,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
           <DatabaseBackupsTab
             logsCount={logs.length}
             usersCount={users.length}
-            backupHistory={backupHistory}
-            isDumping={isDumping}
-            onCreateDump={handleCreateDump}
-            onDownloadDump={handleDownloadDump}
-            onRestoreDump={handleRestoreDump}
             cardBg={cardBg}
-            tableHeaderBg={tableHeaderBg}
-            theme={theme}
-            isDarkMode={isDarkMode}
             t={t}
           />
         )}

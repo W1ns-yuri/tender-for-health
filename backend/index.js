@@ -33,6 +33,7 @@ const supplierRoutes = require('./src/routes/supplierRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
 
 const auditLog = require('./src/middleware/auditMiddleware');
+const prisma = require('./src/lib/prisma');
 
 const app = express();
 
@@ -48,6 +49,23 @@ app.use(cors({
     credentials: true,
 }));
 app.use(express.json({ limit: '1mb' }));
+
+// В проде не отдаём наружу текст внутренних ошибок (Prisma, SQL, пути файлов): контроллеры
+// пишут его в поле details при 500. Сама ошибка остаётся в логе сервера.
+if (process.env.NODE_ENV === 'production') {
+    app.use((req, res, next) => {
+        const json = res.json.bind(res);
+        res.json = (body) => {
+            if (res.statusCode >= 500 && body && typeof body === 'object' && 'details' in body) {
+                console.error(`[${req.method} ${req.originalUrl}]`, body.details);
+                const { details: _details, ...rest } = body;
+                return json(rest);
+            }
+            return json(body);
+        };
+        next();
+    });
+}
 
 // Защита от перебора паролей и массовой регистрации: не больше 20 попыток входа за 15 минут с одного IP
 const authLimiter = rateLimit({
@@ -83,9 +101,29 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Сервер тендерной системы (Tender System Backend) работает!' });
+// Проверка для хостинга/мониторинга: 200 только если жива и база
+app.get('/api/health', async (req, res) => {
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        res.json({ status: 'ok', db: 'ok' });
+    } catch (error) {
+        console.error('Health check DB error:', error.message);
+        res.status(503).json({ status: 'error', db: 'unavailable' });
+    }
 });
+
+// Один сервис на всё: если собранный фронт лежит рядом, отдаём его отсюда же (SERVE_FRONTEND=true).
+// Иначе фронт раздаётся отдельно (nginx / статический хостинг), а сюда идёт только /api.
+if (process.env.SERVE_FRONTEND === 'true') {
+    const path = require('path');
+    const distDir = path.resolve(__dirname, process.env.FRONTEND_DIST || '../frontend/dist');
+    app.use(express.static(distDir, { index: false, maxAge: '1h' }));
+    // SPA: все не-API адреса отдают index.html, роутинг делает React
+    app.get(/^\/(?!api\/|uploads\/).*/, (req, res) => res.sendFile(path.join(distDir, 'index.html')));
+}
+
+// Неизвестный адрес API: JSON, а не HTML-страница Express
+app.use('/api', (req, res) => res.status(404).json({ error: 'Маршрут не найден' }));
 
 // Глобальный обработчик ошибок (Global Error Handler)
 app.use((err, req, res, next) => {
@@ -99,8 +137,22 @@ app.use((err, req, res, next) => {
 const { initTenderScheduler } = require('./src/services/tenderScheduler');
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
+let schedulerTimer = null;
+const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Сервер тендерной системы успешно запущен на порту ${PORT}`);
     // Запуск фонового планировщика дедлайнов тендеров
-    initTenderScheduler(60000);
+    schedulerTimer = initTenderScheduler(60000);
 });
+
+// Корректная остановка при деплое/перезапуске: дожидаемся текущих запросов и закрываем пул БД
+const shutdown = (signal) => {
+    console.log(`${signal}: останавливаем сервер...`);
+    if (schedulerTimer) clearInterval(schedulerTimer);
+    server.close(async () => {
+        await prisma.$disconnect().catch(() => {});
+        process.exit(0);
+    });
+    setTimeout(() => process.exit(1), 10000).unref();
+};
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

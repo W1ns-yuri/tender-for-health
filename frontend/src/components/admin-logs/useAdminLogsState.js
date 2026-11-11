@@ -13,35 +13,7 @@ export function useAdminLogsState({ t, showAlert, showConfirm }) {
   const [search, setSearch] = useState('');
   const [selectedLog, setSelectedLog] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
-  const [isDumping, setIsDumping] = useState(false);
 
-  // История дампов БД
-  const [backupHistory, setBackupHistory] = useState([
-    {
-      id: 'bk-2026-09-26-01',
-      createdAt: '2026-09-26 04:00:00',
-      dbVersion: 'PostgreSQL 16.2 (Debian 16.2-1.pgdg120+2)',
-      size: '14.8 MB',
-      sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-      fileName: 'tender_ulgam_dump_20260926_040000.sql.gz'
-    },
-    {
-      id: 'bk-2026-09-25-01',
-      createdAt: '2026-09-25 04:00:00',
-      dbVersion: 'PostgreSQL 16.2 (Debian 16.2-1.pgdg120+2)',
-      size: '14.6 MB',
-      sha256: 'a18fbc83d910e527f00a8270575d3ec628a58a98f489721262d665b1ffc116c9',
-      fileName: 'tender_ulgam_dump_20260925_040000.sql.gz'
-    },
-    {
-      id: 'bk-2026-09-24-01',
-      createdAt: '2026-09-24 04:00:00',
-      dbVersion: 'PostgreSQL 16.2 (Debian 16.2-1.pgdg120+2)',
-      size: '14.2 MB',
-      sha256: '7c92b0412e84e8bbba7f1ef2e8fc177f154378f8cb0869a19d7d93d395a3ec2b',
-      fileName: 'tender_ulgam_dump_20260924_040000.sql.gz'
-    }
-  ]);
 
   const fetchAllData = useCallback(async () => {
     setLoading(true);
@@ -62,56 +34,6 @@ export function useAdminLogsState({ t, showAlert, showConfirm }) {
   useEffect(() => {
     fetchAllData();
   }, [fetchAllData]);
-
-  // Создание дампа
-  const handleCreateDump = useCallback(() => {
-    setIsDumping(true);
-    setTimeout(() => {
-      const now = new Date();
-      const dateStr = now.toISOString().replace('T', ' ').substring(0, 19);
-      const timeStamp = now.toISOString().replace(/[-:T]/g, '').slice(0, 14);
-      const newDump = {
-        id: `bk-${Date.now()}`,
-        createdAt: dateStr,
-        dbVersion: 'PostgreSQL 16.2 (Debian 16.2-1.pgdg120+2)',
-        size: '15.1 MB',
-        sha256: Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
-        fileName: `tender_ulgam_dump_${timeStamp}.sql.gz`
-      };
-      setBackupHistory((prev) => [newDump, ...prev]);
-      setIsDumping(false);
-      showAlert({
-        title: t('successTitle', 'Успешно'),
-        message: t('backupManualSuccess', 'Резервная копия базы данных успешно сформирована'),
-        type: 'success'
-      });
-    }, 800);
-  }, [showAlert, t]);
-
-  const handleDownloadDump = useCallback((dump) => {
-    showAlert({
-      title: t('downloadStarted', 'Скачивание архива'),
-      message: `${dump.fileName} (${dump.size})`,
-      type: 'info'
-    });
-  }, [showAlert, t]);
-
-  const handleRestoreDump = useCallback(async (dump) => {
-    const isConfirmed = await showConfirm({
-      title: t('restoreTitle', 'Восстановление базы данных'),
-      message: `${t('backupRestoreConfirm', 'Вы уверены, что хотите восстановить базу данных из выбранного архива?')} (${dump.fileName})`,
-      type: 'warning',
-      confirmText: t('backupColRestore', 'Восстановить'),
-      cancelText: t('cancel', 'Отмена')
-    });
-    if (!isConfirmed) return;
-
-    showAlert({
-      title: t('successTitle', 'Успешно'),
-      message: t('backupRestoreSuccess', 'База данных успешно восстановлена'),
-      type: 'success'
-    });
-  }, [showConfirm, showAlert, t]);
 
   // Переключение блокировки пользователя с вызовом реального API
   const handleToggleUserBlock = useCallback(async (user) => {
@@ -243,14 +165,9 @@ export function useAdminLogsState({ t, showAlert, showConfirm }) {
     setSelectedLog,
     editingUser,
     setEditingUser,
-    isDumping,
-    backupHistory,
     filteredLogs,
     filteredUsers,
     fetchAllData,
-    handleCreateDump,
-    handleDownloadDump,
-    handleRestoreDump,
     handleToggleUserBlock,
     handleResetUserPassword,
     handleSaveUser

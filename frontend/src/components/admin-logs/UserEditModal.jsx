@@ -22,7 +22,7 @@ export default function UserEditModal({
     firstName: '',
     lastName: '',
     middleName: '',
-    roleType: 'PURCHASING_SPECIALIST',
+    roleType: 'ADMIN',
     position: '',
     phone: ''
   });
@@ -47,7 +47,7 @@ export default function UserEditModal({
         firstName: '',
         lastName: '',
         middleName: '',
-        roleType: 'PURCHASING_SPECIALIST',
+        roleType: 'ADMIN',
         position: '',
         phone: ''
       });
@@ -155,9 +155,6 @@ export default function UserEditModal({
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-semibold"
               >
                 <option value="ADMIN">ADMIN (Администратор)</option>
-                <option value="PURCHASING_SPECIALIST">PURCHASING_SPECIALIST (Специалист по закупкам)</option>
-                <option value="COMMISSION_MEMBER">COMMISSION_MEMBER (Член комиссии)</option>
-                <option value="CLIENT">CLIENT (Заказчик / Госпиталь)</option>
                 <option value="SUPPLIER">SUPPLIER (Поставщик)</option>
               </select>
             </div>
