@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Plus } from 'lucide-react';
-import { getTranslation } from '../../utils/translations';
+import useT from '../../utils/useT';
 
 export default function ProductSearchableSelect({
   products = [],
@@ -18,7 +18,7 @@ export default function ProductSearchableSelect({
   disabled = false,
   buttonLabel = null
 }) {
-  const t = (key, fallback, params) => getTranslation(lang, key, fallback, params);
+  const t = useT(lang);
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });

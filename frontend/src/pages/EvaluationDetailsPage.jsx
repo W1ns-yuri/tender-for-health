@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, AlertCircle, Lock } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Lock, Unlock } from 'lucide-react';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getTranslation } from '../utils/translations';
 import { useAlert } from '../context/AlertContext';
@@ -30,6 +30,8 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
     handleAwardLot,
     handleCompleteEvaluation,
     handlePrint,
+    canOpenEnvelopes,
+    handleOpenEnvelopes,
     lotsList,
     lotsWithOffers,
     awardedLots,
@@ -104,6 +106,20 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {t('offersSealedHint', 'Подано заявок: {count}. Цены и документы станут доступны после вскрытия конвертов.').replace('{count}', String(tenderDetails.offers?.length || 0))}
           </p>
+          {canOpenEnvelopes ? (
+            <button
+              type="button"
+              onClick={handleOpenEnvelopes}
+              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-colors cursor-pointer"
+            >
+              <Unlock size={16} />
+              {t('openEnvelopesBtn', 'Вскрыть конверты')}
+            </button>
+          ) : (
+            <p className="mt-3 text-xs text-slate-400">
+              {t('openEnvelopesAfterDeadline', 'Вскрыть конверты можно после окончания приёма заявок.')}
+            </p>
+          )}
         </div>
       ) : (<>
       {/* 3. Рабочая область по лотам с попозиционным сравнением */}

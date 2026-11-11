@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('../scripts/_refuseInProduction')('seed:demo');
 const bcrypt = require('bcryptjs');
 const prisma = require('../src/lib/prisma');
 

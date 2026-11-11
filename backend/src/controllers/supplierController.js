@@ -162,6 +162,17 @@ const updateProfile = async (req, res) => {
 
         // Валидация срока действия медицинской лицензии при отправке на проверку
         const willSubmitForReview = submitForReview !== false;
+
+        // То же, что проверяет форма: без категорий и документов анкету на модерацию не принимаем
+        if (willSubmitForReview) {
+            const finalCategories = Array.isArray(categoryIds) ? categoryIds : supplier.categories;
+            if (!finalCategories || finalCategories.length === 0) {
+                return res.status(400).json({ error: 'Выберите хотя бы одну категорию деятельности' });
+            }
+            if (!supplier.files || supplier.files.length === 0) {
+                return res.status(400).json({ error: 'Прикрепите хотя бы один документ для отправки на проверку' });
+            }
+        }
         if (willSubmitForReview && isMedicalLicensed) {
             if (!licenseNumber || !licenseNumber.trim()) {
                 return res.status(400).json({ error: 'Укажите номер медицинской лицензии Минздрава' });
@@ -192,7 +203,8 @@ const updateProfile = async (req, res) => {
         // Формируем структурированные данные изменений для модератора
         let moderationNotes = supplier.notes;
         if (willSubmitForReview) {
-            if (changedFields.length > 0) {
+            // Первичная анкета: при первой подаче «изменено» всё подряд, модератору это ничего не говорит
+            if (previousStatus !== 'PENDING' && changedFields.length > 0) {
                 moderationNotes = JSON.stringify({
                     type: 'PROFILE_CHANGES',
                     submittedAt: new Date().toISOString(),
@@ -286,7 +298,7 @@ const updateProfile = async (req, res) => {
         if (willSubmitForReview) {
             try {
                 const logAction = previousStatus === 'VERIFIED' ? 'PROFILE_UPDATED' : (previousStatus === 'REJECTED' ? 'RESUBMITTED' : 'SUBMITTED');
-                const logReason = changedFields.length > 0 
+                const logReason = previousStatus !== 'PENDING' && changedFields.length > 0 
                     ? `Изменения: ${changedFields.map(c => c.label).join(', ')}`
                     : (previousStatus === 'REJECTED' 
                         ? 'Повторная подача профиля на проверку после исправления замечаний' 
@@ -308,7 +320,7 @@ const updateProfile = async (req, res) => {
 
         // Оповещаем администраторов о поступлении анкеты поставщика на модерацию с конкретным списком изменений
         if (willSubmitForReview) {
-            const changeSummary = changedFields.length > 0 ? ` (изменено: ${changedFields.map(c => c.label).join(', ')})` : '';
+            const changeSummary = previousStatus !== 'PENDING' && changedFields.length > 0 ? ` (изменено: ${changedFields.map(c => c.label).join(', ')})` : '';
             notifyAdmins({
                 title: previousStatus === 'VERIFIED' ? 'Изменение реквизитов поставщика' : 'Анкета поставщика ожидает модерации',
                 message: `«${cleanName}» направил профиль компании на рассмотрение${changeSummary}.`,

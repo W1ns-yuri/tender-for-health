@@ -16,7 +16,7 @@ import {
   Tabs,
 } from '../ui';
 import { safeString } from '../../utils/themeUtils';
-import { getTranslation } from '../../utils/translations';
+import useT from '../../utils/useT';
 
 export default function SuppliersArchiveTab({
   archiveLogs = [],
@@ -34,7 +34,7 @@ export default function SuppliersArchiveTab({
   onViewSupplier,
   lang = 'RU',
 }) {
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
 
   const filterTabs = [
     { id: 'ALL', label: t('allBtn', 'Все') },

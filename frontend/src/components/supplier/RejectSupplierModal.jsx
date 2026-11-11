@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, AlertTriangle, ShieldAlert } from 'lucide-react';
-import { getTranslation } from '../../utils/translations';
+import useT from '../../utils/useT';
 
 export default function RejectSupplierModal({ 
   isOpen, 
@@ -10,7 +10,7 @@ export default function RejectSupplierModal({
   lang = 'RU', 
   isDarkMode = false 
 }) {
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

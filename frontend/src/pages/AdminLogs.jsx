@@ -8,7 +8,6 @@ import {
   Search 
 } from 'lucide-react';
 import { getRoleTheme } from '../utils/themeUtils';
-import { getTranslation } from '../utils/translations';
 import { useAlert } from '../context/AlertContext';
 import {
   useAdminLogsState,
@@ -19,6 +18,7 @@ import {
   LogDetailsModal,
   UserEditModal
 } from '../components/admin-logs';
+import useT from '../utils/useT';
 
 /**
  * AdminLogs Page
@@ -28,7 +28,7 @@ import {
 export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = 'RU' }) {
   const { showAlert, showConfirm } = useAlert();
   const theme = getRoleTheme(role, isDarkMode);
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
 
   const cardBg = isDarkMode ? 'bg-[#111827] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-800';
   const tableHeaderBg = theme.tableHeaderBg;

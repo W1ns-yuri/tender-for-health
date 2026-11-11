@@ -1,7 +1,7 @@
 import React from 'react';
 import { Archive, Users, Shield } from 'lucide-react';
 import { Tabs } from '../ui';
-import { getTranslation } from '../../utils/translations';
+import useT from '../../utils/useT';
 
 export default function SupplierTabsNav({
   activeTab = 'all',
@@ -11,7 +11,7 @@ export default function SupplierTabsNav({
   role = 'ADMIN',
   lang = 'RU',
 }) {
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
 
   const tabs = [
     {

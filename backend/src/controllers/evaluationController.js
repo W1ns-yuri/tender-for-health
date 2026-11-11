@@ -64,7 +64,7 @@ const openTenderBids = async (req, res) => {
         });
 
         res.json({
-            message: '🔔 Вскрытие предложений (Teklipleri açmak) успешно проведено!',
+            message: 'Вскрытие предложений успешно проведено',
             tender: updatedTender,
             openedOffersCount: updatedTender.offers.length,
         });

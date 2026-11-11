@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import API from '../services/api';
-import { getTranslation } from '../utils/translations';
 import { useAlert } from '../context/AlertContext';
 
 import {
@@ -15,6 +14,7 @@ import {
   getCurrencySymbol,
   exportAnalyticsReport,
 } from '../components/analytics';
+import useT from '../utils/useT';
 
 /**
  * Аналитический центр платформы (AnalyticsPage)
@@ -22,7 +22,7 @@ import {
  */
 export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = false, lang = 'RU' }) {
   const { showAlert } = useAlert();
-  const t = (key, fallback, params) => getTranslation(lang, key, fallback, params);
+  const t = useT(lang);
 
   // Состояния фильтров
   const [period, setPeriod] = useState('30d');

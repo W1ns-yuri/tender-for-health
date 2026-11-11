@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import API from '../services/api';
-import { getTranslation } from '../utils/translations';
 import { useAlert } from '../context/AlertContext';
 
 // Subcomponents & Modals
@@ -15,9 +14,10 @@ import {
   EditSupplierModal,
   RejectSupplierModal,
 } from '../components/supplier';
+import useT from '../utils/useT';
 
 export default function SuppliersList({ role = 'ADMIN', isDarkMode = false, lang = 'RU' }) {
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
   const navigate = useNavigate();
   const location = useLocation();
   const { showAlert, showConfirm } = useAlert();

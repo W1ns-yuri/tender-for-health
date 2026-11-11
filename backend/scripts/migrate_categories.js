@@ -1,3 +1,4 @@
+require('./_refuseInProduction')('migrate_categories');
 const prisma = require('../src/lib/prisma');
 
 async function migrate() {

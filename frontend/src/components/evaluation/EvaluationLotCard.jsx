@@ -61,10 +61,10 @@ export default function EvaluationLotCard({
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
             <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold text-xs">
-              {t('lotUpperLabel', 'ЛОТ')} #{lotIndex + 1}
+              {t('lotUpperLabel', 'ЛОТ')} #{lot.lotNumber || lotIndex + 1}
             </span>
             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
-              {cleanLotTitle(lot.name, lotIndex)}
+              {cleanLotTitle(lot.name, lot.lotNumber || lotIndex + 1)}
             </h3>
             {hasWinner && (
               <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">

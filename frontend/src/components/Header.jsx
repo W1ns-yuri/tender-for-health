@@ -7,13 +7,13 @@ import {
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 import { getRoleTheme, getAvatarInitials, resolveFileUrl } from '../utils/themeUtils';
-import { getTranslation } from '../utils/translations';
+import useT from '../utils/useT';
 
 export default function Header({ user, role, isDarkMode, lang, setLang, onNavigate }) {
   const theme = getRoleTheme(role, isDarkMode);
   const isAdmin = role === 'ADMIN';
   const navigate = useNavigate();
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
 
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);

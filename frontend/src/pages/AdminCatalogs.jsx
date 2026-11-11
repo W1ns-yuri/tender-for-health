@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
-import { getTranslation } from '../utils/translations';
 import AdminLogs from './AdminLogs';
 import { useAlert } from '../context/AlertContext';
 import { TableSkeletonRows } from '../components/ui';
@@ -29,6 +28,7 @@ import {
   ClientsCatalogTable,
   CatalogFormModal,
 } from '../components/catalogs';
+import useT from '../utils/useT';
 
 /**
  * Главный экран управления справочниками и классификаторами (AdminCatalogs)
@@ -51,7 +51,7 @@ export default function AdminCatalogs({ section = 'umumy', role, isDarkMode, lan
 
 function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
   const { showAlert, showConfirm } = useAlert();
   const location = useLocation();
 

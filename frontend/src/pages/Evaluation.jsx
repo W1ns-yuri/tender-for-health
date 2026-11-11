@@ -3,14 +3,14 @@ import { CheckCircle2, FileText, Clock, Building2, Layers, AlertCircle, ArrowRig
 import { Link } from 'react-router-dom';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
-import { getTranslation } from '../utils/translations';
 import { getStatusBadge } from '../utils/statusUtils';
 import { TableFilters, Pagination, TableSkeletonRows } from '../components/ui';
 import { pluralize } from '../utils/pluralize';
+import useT from '../utils/useT';
 
 export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);
-  const t = (key, fallback, params) => getTranslation(lang, key, fallback, params);
+  const t = useT(lang);
 
   const [tenders, setTenders] = useState([]);
   const [loading, setLoading] = useState(true);

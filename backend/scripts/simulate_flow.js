@@ -1,5 +1,6 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+require('./_refuseInProduction')('simulate_flow');
 const prisma = require('../src/lib/prisma');
 const bcrypt = require('bcryptjs');
 

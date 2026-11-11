@@ -2,7 +2,6 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
-import { getTranslation } from '../utils/translations';
 import {
   useSupplierProfileState,
   SupplierStatusBanner,
@@ -21,6 +20,7 @@ import {
   SupplierCompanyCardModal,
   RejectSupplierModal,
 } from '../components/supplier';
+import useT from '../utils/useT';
 
 export default function SupplierProfilePage({
   role,
@@ -30,7 +30,7 @@ export default function SupplierProfilePage({
 }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
   const { showAlert, showConfirm } = useAlert();
 
   const {

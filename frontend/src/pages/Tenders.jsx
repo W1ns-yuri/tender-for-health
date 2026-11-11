@@ -3,10 +3,10 @@ import { Eye, Edit2, Trash2, Lock } from 'lucide-react';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
-import { getTranslation } from '../utils/translations';
 import { useAlert } from '../context/AlertContext';
 import CustomDatePicker from '../components/CustomDatePicker';
 import { TableFilters, Tabs, Pagination, TableSkeletonRows } from '../components/ui';
+import useT from '../utils/useT';
 
 export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
   const [tenders, setTenders] = useState([]);
@@ -24,7 +24,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
   const [pageSize, setPageSize] = useState(10);
 
   const theme = getRoleTheme(role, isDarkMode);
-  const t = (key, fallback) => getTranslation(lang, key, fallback);
+  const t = useT(lang);
   const { showAlert, showConfirm } = useAlert();
 
   // Дебаунс поискового запроса: обновляет debouncedSearch через 300мс после окончания ввода

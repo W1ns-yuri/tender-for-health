@@ -169,8 +169,9 @@ const createOffer = async (req, res) => {
                 return res.status(400).json({ error: `Спецификация с ID "${item.tenderSpecId}" не принадлежит данному тендеру` });
             }
             const unitPrice = parseFloat(item.unitPrice);
-            if (isNaN(unitPrice) || unitPrice < 0) {
-                return res.status(400).json({ error: 'Цена за единицу товара не может быть отрицательной или пустой' });
+            // Цена 0 автоматически «выигрывала» бы сравнение, поэтому принимаем только положительную
+            if (isNaN(unitPrice) || unitPrice <= 0) {
+                return res.status(400).json({ error: 'Цена за единицу товара должна быть больше нуля' });
             }
             // Количество задаёт заказчик в тендере. Раньше поставщик мог прислать quantity: 1 вместо 6000,
             // получить сумму в тысячи раз меньше и "выиграть" сравнение по цене.
@@ -344,8 +345,15 @@ const getOffersByTender = async (req, res) => {
             orderBy: { createdAt: 'desc' },
         });
 
-        // До вскрытия конвертов чужие цены скрыты, в том числе от админа
-        res.json(offers.map((o) => sealOfferFor(req.user, o, tender, o.supplier?.userId)));
+        // До вскрытия конвертов чужие цены скрыты, в том числе от админа.
+        // После итогов поставщик видит цены конкурентов, но не их банк, паспорт и личные коды.
+        const isAdmin = req.user?.roleType === 'ADMIN';
+        res.json(offers.map((o) => {
+            const sealed = sealOfferFor(req.user, o, tender, o.supplier?.userId);
+            const isMine = o.supplier?.userId === req.user?.id;
+            if (isAdmin || isMine || !sealed.supplier) return sealed;
+            return { ...sealed, supplier: { id: o.supplier.id, name: o.supplier.name } };
+        }));
     } catch (error) {
         res.status(500).json({ error: 'Ошибка при получении предложений', details: error.message });
     }
@@ -369,7 +377,7 @@ const getMyOffers = async (req, res) => {
         const offers = await prisma.offer.findMany({
             where: { supplierId: { in: supplierIds } },
             include: {
-                tender: true,
+                tender: { include: { client: { select: { id: true, name: true } } } },
                 supplier: true,
                 baseCurrency: true,
             },
