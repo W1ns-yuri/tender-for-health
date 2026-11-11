@@ -82,7 +82,7 @@ export default function LoginForm({
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all flex items-center justify-center space-x-2 active:scale-[0.98] disabled:opacity-70 mt-6 text-[15px] cursor-pointer"
+        className="w-full py-4 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-black shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.98] disabled:opacity-70 mt-6 text-[15px] cursor-pointer"
       >
         <span>{loading ? t('loggingIn', 'Вход...') : t('loginBtn', 'Войти в систему')}</span>
       </button>
@@ -103,7 +103,7 @@ export default function LoginForm({
           <button
             type="button"
             onClick={() => onQuickLogin('admin', 'admin123')}
-            className="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold transition-all hover:border-emerald-300 hover:text-emerald-700 active:scale-95 shadow-2xs cursor-pointer"
+            className="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold transition-all hover:border-blue-300 hover:text-blue-600 active:scale-95 shadow-2xs cursor-pointer"
           >
             <User size={16} className="text-slate-400" />
             <span>Admin</span>
@@ -111,7 +111,7 @@ export default function LoginForm({
           <button
             type="button"
             onClick={() => onQuickLogin('derman_saglyk', 'supplier123')}
-            className="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold transition-all hover:border-emerald-300 hover:text-emerald-700 active:scale-95 shadow-2xs cursor-pointer"
+            className="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold transition-all hover:border-blue-300 hover:text-blue-600 active:scale-95 shadow-2xs cursor-pointer"
           >
             <Building2 size={16} className="text-slate-400" />
             <span>Supplier</span>

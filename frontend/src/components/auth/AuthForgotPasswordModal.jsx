@@ -43,13 +43,13 @@ export default function AuthForgotPasswordModal({ isOpen, onClose, t }) {
         <div className="space-y-3 p-4 bg-slate-50 border border-slate-200/60 rounded-2xl text-xs sm:text-sm text-slate-700 mb-6">
           {SUPPORT_PHONE && (
             <div className="flex items-center gap-3">
-              <Phone size={16} className="text-emerald-600 shrink-0" />
+              <Phone size={16} className="text-blue-600 shrink-0" />
               <a href={`tel:${SUPPORT_PHONE.replace(/[^+\d]/g, '')}`} className="font-semibold">{SUPPORT_PHONE}</a>
             </div>
           )}
           {SUPPORT_EMAIL && (
             <div className="flex items-center gap-3">
-              <Mail size={16} className="text-emerald-600 shrink-0" />
+              <Mail size={16} className="text-blue-600 shrink-0" />
               <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold">{SUPPORT_EMAIL}</a>
             </div>
           )}
@@ -65,7 +65,7 @@ export default function AuthForgotPasswordModal({ isOpen, onClose, t }) {
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all text-sm cursor-pointer"
+          className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-md shadow-blue-500/20 transition-all text-sm cursor-pointer"
         >
           {t('closeBtn', 'Понятно')}
         </button>
