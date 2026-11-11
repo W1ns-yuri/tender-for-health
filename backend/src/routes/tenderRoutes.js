@@ -5,6 +5,7 @@ const {
     getTenderById,
     updateTender,
     publishTender,
+    unscheduleTender,
     deleteTender,
     getNextNumber,
     createLot,
@@ -33,6 +34,8 @@ router.put('/:id', authMiddleware, checkRole(['ADMIN']), updateTender);
 
 // 6. Опубликовать тендер (перевод из черновика в открытый)
 router.post('/:id/publish', authMiddleware, checkRole(['ADMIN']), publishTender);
+// Отменить запланированную публикацию
+router.delete('/:id/schedule', authMiddleware, checkRole(['ADMIN']), unscheduleTender);
 
 // 7. Добавить отдельный лот к тендеру (атомарно)
 router.post('/:id/lots', authMiddleware, checkRole(['ADMIN']), createLot);
