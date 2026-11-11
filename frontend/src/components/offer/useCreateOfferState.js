@@ -264,7 +264,11 @@ export function useCreateOfferState({ id, role = 'SUPPLIER', t, showAlert, showC
         tradeName: savedData.tradeName?.trim() || undefined,
         code: savedData.code?.trim() || undefined,
         description: savedData.description?.trim() || undefined,
-        categoryId: savedData.categoryId || undefined
+        categoryId: savedData.categoryId || undefined,
+        brandId: savedData.brandId || undefined,
+        officialUrl: savedData.officialUrl?.trim() || undefined,
+        imageFileName: savedData.imageFileName || undefined,
+        attributes: savedData.attributes || []
       });
       if (res.data) {
         const created = res.data;
@@ -283,7 +287,9 @@ export function useCreateOfferState({ id, role = 'SUPPLIER', t, showAlert, showC
         setCatalogModal({ isOpen: false, lotId: null, itemIdx: null, field: null, initialName: '' });
         showAlert({
           title: t('successTitle', 'Успешно'),
-          message: t('productAddedToCatalog', `Товар "${created.tradeName || created.name}" добавлен в справочник!`),
+          message: created.moderationStatus === 'PENDING'
+            ? `Товар «${created.tradeName || created.name}» добавлен в ваше предложение. В общий справочник он попадёт после проверки организатором.`
+            : t('productAddedToCatalog', `Товар "${created.tradeName || created.name}" добавлен в справочник!`),
           type: 'success'
         });
       }

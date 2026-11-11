@@ -109,6 +109,7 @@ export default function useCreateTenderState({
           status: tData.status || 'TASLAMA',
           visibility: tData.visibility || 'ACYK',
           invitedSupplierIds: (tData.invitedSuppliers || []).map(inv => inv.supplierId || inv.supplier?.id).filter(Boolean),
+          publishAt: tData.publishAt || null,
         });
 
         const loadedLots = (tData.lots || []).map(lot => ({
@@ -791,30 +792,36 @@ export default function useCreateTenderState({
   }, []);
 
   // ФИНАЛЬНАЯ ПУБЛИКАЦИЯ ТЕНДЕРА (POST /api/tenders/:id/publish)
-  const handlePublishTender = useCallback(async () => {
-    if (!tenderId) return;
+  // Проверки перед публикацией (сейчас или по расписанию). true — можно публиковать.
+  const checkReadyToPublish = useCallback(() => {
+    if (!tenderId) return false;
 
     if (lots.length === 0) {
       showToast({ title: t('attentionTitle', 'Внимание'), message: t('noLotsYet', 'Добавьте хотя бы один лот для публикации тендера'), type: 'warning' });
-      return;
+      return false;
     }
 
     if (activeLotDirty) {
       showToast({ title: t('attentionTitle', 'Внимание'), message: t('cannotPublishUnsavedChanges', 'Сохраните изменения в текущем лоте перед публикацией тендера'), type: 'warning' });
-      return;
+      return false;
     }
 
     const hasEmpty = lots.some(l => !l.specs || l.specs.length === 0 || !l.specs.some(s => (s.haryt || s.name)?.trim()));
     if (hasEmpty) {
       showToast({ title: t('attentionTitle', 'Внимание'), message: t('cannotPublishEmptyLots', 'Для публикации добавьте минимум 1 позицию спецификации во все лоты'), type: 'warning' });
-      return;
+      return false;
     }
 
     const hasDocs = (tenderFiles && tenderFiles.length > 0) || lots.some(l => l.files && l.files.length > 0);
     if (!hasDocs) {
       showToast({ title: t('attentionTitle', 'Внимание'), message: t('mustAttachDocToPublish', 'Прикрепите хотя бы один документ для публикации тендера'), type: 'warning' });
-      return;
+      return false;
     }
+    return true;
+  }, [activeLotDirty, lots, showToast, t, tenderFiles, tenderId]);
+
+  const handlePublishTender = useCallback(async () => {
+    if (!checkReadyToPublish()) return;
 
     const confirmed = await showConfirm({
       title: t('publishTenderBtn', 'Опубликовать тендер'),
@@ -843,7 +850,43 @@ export default function useCreateTenderState({
     } finally {
       setPublishing(false);
     }
-  }, [activeLotDirty, lots, navigate, showAlert, showConfirm, showToast, t, tenderFiles, tenderId]);
+  }, [checkReadyToPublish, navigate, showAlert, showConfirm, showToast, t, tenderId]);
+
+  // ПУБЛИКАЦИЯ ПО РАСПИСАНИЮ: тендер остаётся черновиком и сам откроется в указанное время
+  const handleScheduleTender = useCallback(async (localDateTime) => {
+    if (!checkReadyToPublish()) return false;
+    const at = new Date(localDateTime);
+    if (Number.isNaN(at.getTime()) || at <= new Date()) {
+      showToast({ title: t('attentionTitle', 'Внимание'), message: t('schedulePastError', 'Укажите время в будущем'), type: 'warning' });
+      return false;
+    }
+    try {
+      setPublishing(true);
+      const res = await API.post(`/tenders/${tenderId}/publish`, { publishAt: at.toISOString() });
+      setFormData(prev => ({ ...prev, publishAt: res.data?.publishAt || at.toISOString() }));
+      showAlert({
+        title: t('successTitle', 'Успешно'),
+        message: `${t('tenderScheduled', 'Тендер опубликуется автоматически')} ${at.toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'short' })}`,
+        type: 'success'
+      });
+      return true;
+    } catch (err) {
+      showToast({ title: t('errorTitle', 'Ошибка'), message: err.response?.data?.error || t('errorSaving', 'Не удалось запланировать публикацию'), type: 'error' });
+      return false;
+    } finally {
+      setPublishing(false);
+    }
+  }, [checkReadyToPublish, showAlert, showToast, t, tenderId]);
+
+  const handleUnscheduleTender = useCallback(async () => {
+    try {
+      await API.delete(`/tenders/${tenderId}/schedule`);
+      setFormData(prev => ({ ...prev, publishAt: null }));
+      showToast({ title: t('successTitle', 'Успешно'), message: t('scheduleCancelled', 'Публикация по расписанию отменена'), type: 'success' });
+    } catch (err) {
+      showToast({ title: t('errorTitle', 'Ошибка'), message: err.response?.data?.error || t('errorSaving', 'Ошибка'), type: 'error' });
+    }
+  }, [showToast, t, tenderId]);
 
   // Модалка добавления позиции (товара, работы или услуги) в каталог
   const handleOpenProductModal = useCallback((initialName = '', specIdx = null) => {
@@ -996,6 +1039,8 @@ export default function useCreateTenderState({
     handleTenderFileUpdate,
     handleTenderFileDelete,
     handlePublishTender,
+    handleScheduleTender,
+    handleUnscheduleTender,
     handleOpenProductModal,
     handleSaveProductFromModal,
     isStep1Done,

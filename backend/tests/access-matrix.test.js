@@ -39,6 +39,10 @@ const ADMIN_ONLY = [
         .flatMap((c) => [['POST', `/catalogs/${c}`], ['PUT', `/catalogs/${c}/${FAKE}`], ['DELETE', `/catalogs/${c}/${FAKE}`]]),
     ['PUT', `/catalogs/products/${FAKE}`], ['DELETE', `/catalogs/products/${FAKE}`],
     ['POST', '/catalogs/currencies/rates'],
+    ['POST', '/catalogs/attributes'], ['PUT', `/catalogs/attributes/${FAKE}`], ['DELETE', `/catalogs/attributes/${FAKE}`],
+    ['PUT', `/catalogs/categories/${FAKE}/attributes`],
+    ['POST', `/catalogs/products/${FAKE}/approve`], ['POST', `/catalogs/products/${FAKE}/reject`],
+    ['DELETE', `/tenders/${FAKE}/schedule`],
 ];
 
 test('админские запросы: гость 401, поставщик 403, админ проходит', async () => {

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Check, AlertCircle, FilePlus2, FolderGit2 } from 'lucide-react';
+import { Eye, Check, AlertCircle, FilePlus2, FolderGit2, CalendarClock, X } from 'lucide-react';
 import { IconBox } from '../ui';
 
 export default function TenderHeader({
@@ -16,10 +16,26 @@ export default function TenderHeader({
   publishing,
   publishDisabledReason,
   onPublishTender,
+  onScheduleTender,
+  onUnscheduleTender,
   theme,
   t = (k, f) => f
 }) {
   const navigate = useNavigate();
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleAt, setScheduleAt] = useState('');
+
+  // Значение для <input type="datetime-local"> в местном времени: завтра в 09:00
+  const defaultScheduleValue = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const scheduledLabel = formData.publishAt
+    ? new Date(formData.publishAt).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+    : '';
 
   // Mini-stepper logic
   const stepConfig = {
@@ -141,33 +157,98 @@ export default function TenderHeader({
                 <span>{t('previewTenderBtn', 'Просмотр тендера')}</span>
               </button>
 
+              {formData.status === 'TASLAMA' && onScheduleTender && !formData.publishAt && (
+                <button
+                  type="button"
+                  onClick={() => { setScheduleAt(defaultScheduleValue()); setScheduleOpen((v) => !v); }}
+                  disabled={!canPublish || publishing}
+                  className={`px-4 py-2.5 font-bold rounded-xl text-xs flex items-center gap-1.5 border transition-all ${
+                    canPublish
+                      ? 'border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer'
+                      : 'border-slate-300 dark:border-slate-700 text-slate-400 cursor-not-allowed'
+                  }`}
+                >
+                  <CalendarClock size={15} />
+                  <span>{t('scheduleBtn', 'Запланировать')}</span>
+                </button>
+              )}
+
               {formData.status === 'TASLAMA' && (
-                <div className="relative group flex items-center">
-                  <button
-                    type="button"
-                    onClick={onPublishTender}
-                    disabled={!canPublish || publishing}
-                    className={`px-5 py-2.5 font-black rounded-xl text-xs flex items-center gap-2 transition-all shadow-sm ${
-                      canPublish 
-                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 active:scale-95 cursor-pointer' 
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-300 dark:border-slate-700'
-                    }`}
-                  >
-                    <Check size={16} />
-                    <span>{publishing ? t('publishing', 'Публикация...') : t('publishTenderBtn', 'Опубликовать')}</span>
-                  </button>
-                  {!canPublish && publishDisabledReason && (
-                    <div className="absolute right-0 top-full mt-2 hidden group-hover:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 text-xs font-semibold shadow-xl z-50 whitespace-nowrap animate-in fade-in">
-                      <AlertCircle size={14} className="text-amber-500 shrink-0" />
-                      <span>{publishDisabledReason}</span>
-                    </div>
-                  )}
-                </div>
+                <button
+                  type="button"
+                  onClick={onPublishTender}
+                  disabled={!canPublish || publishing}
+                  className={`px-5 py-2.5 font-black rounded-xl text-xs flex items-center gap-2 transition-all shadow-sm ${
+                    canPublish 
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 active:scale-95 cursor-pointer' 
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-300 dark:border-slate-700'
+                  }`}
+                >
+                  <Check size={16} />
+                  <span>{publishing ? t('publishing', 'Публикация...') : formData.publishAt ? t('publishNowBtn', 'Опубликовать сейчас') : t('publishTenderBtn', 'Опубликовать')}</span>
+                </button>
               )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Почему нельзя опубликовать: раньше было видно только при наведении */}
+      {tenderId && formData.status === 'TASLAMA' && !canPublish && publishDisabledReason && (
+        <p className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
+          <AlertCircle size={14} className="shrink-0" />
+          {t('cannotPublishYet', 'Опубликовать пока нельзя')}: {publishDisabledReason}
+        </p>
+      )}
+
+      {formData.status === 'TASLAMA' && formData.publishAt && (
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200">
+          <CalendarClock size={18} className="shrink-0" />
+          <span className="text-sm font-semibold">
+            {t('willPublishAt', 'Тендер опубликуется автоматически')} {scheduledLabel}
+          </span>
+          <span className="text-xs text-emerald-800/80 dark:text-emerald-300/80">
+            {t('scheduleEditHint', 'До этого момента его видите только вы, и его можно править.')}
+          </span>
+          <button
+            type="button"
+            onClick={onUnscheduleTender}
+            className="ml-auto inline-flex items-center gap-1 text-xs font-semibold underline cursor-pointer"
+          >
+            <X size={14} /> {t('cancelSchedule', 'Отменить расписание')}
+          </button>
+        </div>
+      )}
+
+      {scheduleOpen && !formData.publishAt && (
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (await onScheduleTender(scheduleAt)) setScheduleOpen(false);
+          }}
+          className="flex flex-wrap items-end gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+        >
+          <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 space-y-1">
+            <span className="block">{t('publishAtLabel', 'Когда опубликовать')}</span>
+            <input
+              type="datetime-local"
+              value={scheduleAt}
+              onChange={(e) => setScheduleAt(e.target.value)}
+              required
+              className="px-3 py-2 text-xs border rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            />
+          </label>
+          <button type="submit" disabled={publishing} className="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 cursor-pointer">
+            {t('confirmSchedule', 'Запланировать публикацию')}
+          </button>
+          <button type="button" onClick={() => setScheduleOpen(false)} className="px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer">
+            {t('cancel', 'Отмена')}
+          </button>
+          <p className="basis-full text-xs text-slate-500 dark:text-slate-400">
+            {t('scheduleHint', 'Тендер останется черновиком и откроется для поставщиков сам, с точностью до минуты. Срок подачи должен быть позже времени публикации.')}
+          </p>
+        </form>
+      )}
     </div>
   );
 }

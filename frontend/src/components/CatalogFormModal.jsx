@@ -3,6 +3,9 @@ import { X, Check } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 import MnnCombobox from './MnnCombobox';
 import API from '../services/api';
+import ProductAttributesFields from './catalogs/ProductAttributesFields';
+import CategoryAttributesEditor from './catalogs/CategoryAttributesEditor';
+import { ATTRIBUTE_TYPES } from './catalogs/attributeTypes';
 
 export default function CatalogFormModal({
   isOpen,
@@ -22,6 +25,9 @@ export default function CatalogFormModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [internalCategories, setInternalCategories] = useState(categories || []);
   const [internalCountries, setInternalCountries] = useState(countries || []);
+  const [brands, setBrands] = useState([]);
+  const isProduct = catalogId === 'productsMNN' || catalogId === 'generalProducts';
+  const isCategory = catalogId === 'categories' || catalogId === 'productCategories';
 
   // Подгрузка категорий и стран, если не переданы извне
   useEffect(() => {
@@ -34,6 +40,12 @@ export default function CatalogFormModal({
           .catch(err => console.error('Не удалось загрузить категории:', err));
       } else if (categories && categories.length > 0) {
         setInternalCategories(categories);
+      }
+
+      if (catalogId === 'productsMNN' || catalogId === 'generalProducts') {
+        API.get('/catalogs/brands')
+          .then(res => setBrands(Array.isArray(res.data) ? res.data.filter(b => b.isActive !== false) : []))
+          .catch(() => setBrands([]));
       }
 
       if ((!countries || countries.length === 0) && catalogId === 'manufacturers') {
@@ -77,7 +89,16 @@ export default function CatalogFormModal({
                 { id: 'SERVICES', name: t('typeServices', 'Услуги (ТО, поверка, утилизация)') }
               ]
             },
-            { name: 'code', label: t('colCode', 'Код категории'), required: false, placeholder: 'Например: MED-01, WRK-01, SRV-01' }
+            { name: 'code', label: t('colCode', 'Код категории'), required: false, placeholder: 'Например: MED-01, WRK-01, SRV-01' },
+            {
+              name: 'parentId',
+              label: t('parentCategory', 'Родительская категория'),
+              required: false,
+              type: 'select',
+              placeholder: t('noParentCategory', 'Нет (верхний уровень)'),
+              options: internalCategories.filter(c => c.id !== editingItem?.id && c.isActive !== false)
+            },
+            { name: 'photoEnabled', label: t('photoEnabledLabel', 'У товаров этой категории можно указывать фото'), type: 'checkbox' }
           ]
         };
       case 'works':
@@ -186,16 +207,16 @@ export default function CatalogFormModal({
           fields: [
             { 
               name: 'name', 
-              label: t('innName', 'Международное непатентованное наименование (МНН)'), 
+              label: t('productNameLabel', 'Название товара (для лекарств: МНН)'), 
               required: true,
               type: 'mnn_combobox',
               placeholder: t('mnnPlaceholder', 'Выберите МНН из архива или введите новое...')
             },
             { 
               name: 'tradeName', 
-              label: t('tradeName', 'Торговое (патентованное) название'), 
+              label: t('tradeNameOrModel', 'Торговое название или модель'), 
               required: false,
-              placeholder: 'Например: Аспирин Кардио, Тромбо АСС, Панадол...'
+              placeholder: 'Например: Аспирин Кардио или HP E24 G5'
             },
             { 
               name: 'categoryId', 
@@ -206,16 +227,31 @@ export default function CatalogFormModal({
             },
             { 
               name: 'code', 
-              label: t('colCode', 'Код (АТХ / номенклатурный)'), 
+              label: t('productCodeLabel', 'Код (АТХ, артикул)'), 
               required: false,
-              placeholder: 'Например: B01AC06'
+              placeholder: 'Например: B01AC06 или 6N4E2AA'
+            },
+            {
+              name: 'brandId',
+              label: t('brand', 'Бренд'),
+              required: false,
+              type: 'select',
+              placeholder: t('noBrand', 'Без бренда'),
+              options: brands
+            },
+            {
+              name: 'officialUrl',
+              label: t('officialUrl', 'Ссылка на товар на сайте производителя'),
+              required: false,
+              type: 'url',
+              placeholder: 'https://...'
             },
             { 
               name: 'description', 
-              label: t('colDesc', 'Описание / Форма выпуска / Дозировка'), 
+              label: t('productDescLabel', 'Описание'), 
               required: false, 
               type: 'textarea',
-              placeholder: 'Например: Таблетки кишечнорастворимые 100 мг, блистер №20...'
+              placeholder: 'Например: таблетки 100 мг, блистер №20. Или: IPS, 1920×1080, 75 Гц'
             }
           ]
         };
@@ -247,6 +283,17 @@ export default function CatalogFormModal({
             { name: 'code', label: t('colCode', 'Код бренда'), required: false }
           ]
         };
+      case 'attributes':
+        return {
+          title: t('addAttribute', 'Добавить характеристику'),
+          editTitle: t('editAttribute', 'Редактировать характеристику'),
+          fields: [
+            { name: 'name', label: t('attrName', 'Название характеристики'), required: true, placeholder: 'Диагональ, Цвет, Объём...' },
+            { name: 'type', label: t('attrType', 'Тип значения'), required: true, type: 'select', options: ATTRIBUTE_TYPES },
+            { name: 'unit', label: t('attrUnit', 'Единица измерения (для чисел)'), required: false, placeholder: 'дюйм, кг, мг, мл' },
+            { name: 'options', label: t('attrOptions', 'Варианты через запятую (для выбора из списка)'), required: false, placeholder: 'белый, чёрный, серый' }
+          ]
+        };
       case 'variations':
         return {
           title: t('addVariationGroup', 'Добавить группу вариаций'),
@@ -276,6 +323,14 @@ export default function CatalogFormModal({
         if (catalogId === 'variations' && Array.isArray(editingItem.values)) {
           initialData.values = editingItem.values.map(v => v.value).join(', ');
         }
+        if (catalogId === 'attributes' && Array.isArray(editingItem.options)) {
+          initialData.options = editingItem.options.join(', ');
+        }
+        if (Array.isArray(editingItem.attributeValues)) {
+          initialData.attributes = editingItem.attributeValues.map(av => (
+            av.attributeId ? { attributeId: av.attributeId, value: av.value } : { customName: av.customName, value: av.value }
+          ));
+        }
         setFormData(initialData);
       } else {
         const initial = {};
@@ -283,6 +338,10 @@ export default function CatalogFormModal({
           config.fields.forEach(f => {
             if (f.name === 'type' && (catalogId === 'categories' || catalogId === 'productCategories')) {
               initial[f.name] = 'GOODS';
+            } else if (f.name === 'type' && catalogId === 'attributes') {
+              initial[f.name] = 'TEXT';
+            } else if (f.type === 'checkbox') {
+              initial[f.name] = true;
             } else {
               initial[f.name] = f.type === 'number' ? 0 : '';
             }
@@ -329,6 +388,16 @@ export default function CatalogFormModal({
       delete submissionData.offerSpecs;
       delete submissionData.createdAt;
       delete submissionData.updatedAt;
+      delete submissionData.attributeValues;
+      delete submissionData.createdBy;
+      delete submissionData.moderationStatus;
+      delete submissionData.moderationNote;
+      delete submissionData._count;
+      delete submissionData.children;
+      delete submissionData.parent;
+      if (isProduct && Array.isArray(submissionData.attributes)) {
+        submissionData.attributes = submissionData.attributes.filter(a => String(a.value ?? '').trim() || (a.customName && a.customName.trim()));
+      }
 
       await onSave(submissionData, editingItem?.id);
     } catch (error) {
@@ -340,19 +409,30 @@ export default function CatalogFormModal({
 
   const bgClass = isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-800';
   const inputBg = isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500' : 'bg-slate-50 border-slate-200 placeholder:text-slate-400';
+  const fieldClass = `w-full p-2.5 text-xs border rounded-lg outline-none transition-all ${
+    role === 'SUPPLIER'
+      ? 'focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500'
+      : 'focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500'
+  } ${inputBg}`;
 
   return (
     <div className="fixed inset-0 z-10000 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className={`w-full max-w-lg rounded-2xl shadow-2xl border ${bgClass} overflow-hidden animate-in zoom-in-95 duration-200 my-auto`}>
+      <div className={`w-full ${isProduct || isCategory ? 'max-w-2xl' : 'max-w-lg'} rounded-2xl shadow-2xl border ${bgClass} overflow-hidden animate-in zoom-in-95 duration-200 my-auto`}>
         
         {/* Header */}
         <div className="flex items-center justify-between p-4 md:p-6 border-b border-slate-100/10">
           <div>
-            <h2 className={`text-lg md:text-xl font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
-              {editingItem ? config.editTitle : config.title}
+            <h2 className={`text-lg md:text-xl font-bold ${
+              role === 'SUPPLIER'
+                ? (isDarkMode ? 'text-blue-400' : 'text-blue-600')
+                : (isDarkMode ? 'text-emerald-400' : 'text-emerald-600')
+            }`}>
+              {editingItem?.id ? config.editTitle : config.title}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              {catalogId === 'productsMNN' || catalogId === 'generalProducts' 
+              {isProduct && role === 'SUPPLIER'
+                ? t('productModalSubSupplier', 'Опишите товар, который вы предлагаете. Организатор проверит его, прежде чем он станет виден другим.')
+                : catalogId === 'productsMNN' || catalogId === 'generalProducts' 
                 ? t('productModalSub', 'Введите данные препарата или выберите активное МНН из архива')
                 : catalogId === 'works'
                 ? t('worksModalSub', 'Введите наименование вида или этапа монтажных / строительных работ')
@@ -372,7 +452,16 @@ export default function CatalogFormModal({
 
         {/* Body */}
         <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4">
-          {config.fields.map((field) => (
+          {config.fields.map((field) => field.type === 'checkbox' ? (
+            <label key={field.name} className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={formData[field.name] !== false}
+                onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.checked }))}
+              />
+              {field.label}
+            </label>
+          ) : (
             <div key={field.name} className="space-y-1">
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 {field.label} {field.required && <span className="text-rose-500">*</span>}
@@ -426,7 +515,7 @@ export default function CatalogFormModal({
                 />
               ) : (
                 <input
-                  type={field.type === 'number' ? 'number' : 'text'}
+                  type={field.type === 'number' ? 'number' : field.type === 'url' ? 'url' : 'text'}
                   value={formData[field.name] || ''}
                   onChange={(e) => setFormData({ ...formData, [field.name]: field.type === 'number' ? Number(e.target.value) : e.target.value })}
                   required={field.required}
@@ -440,6 +529,31 @@ export default function CatalogFormModal({
               )}
             </div>
           ))}
+
+          {isProduct && (
+            <ProductAttributesFields
+              categoryId={formData.categoryId || null}
+              value={formData.attributes || []}
+              onChange={(attributes) => setFormData(prev => ({ ...prev, attributes }))}
+              imageFileName={formData.imageFileName || ''}
+              onImageChange={(imageFileName) => setFormData(prev => ({ ...prev, imageFileName }))}
+              inputClass={fieldClass}
+              isDarkMode={isDarkMode}
+              t={t}
+            />
+          )}
+
+          {isCategory && (
+            <CategoryAttributesEditor
+              categoryId={editingItem?.id || null}
+              parentId={formData.parentId || null}
+              value={formData.attributeSet}
+              onChange={(attributeSet) => setFormData(prev => ({ ...prev, attributeSet }))}
+              inputClass={fieldClass}
+              isDarkMode={isDarkMode}
+              t={t}
+            />
+          )}
 
           {/* Footer */}
           <div className="pt-4 mt-6 flex justify-end gap-3 border-t border-slate-100/10">
