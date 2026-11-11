@@ -33,7 +33,8 @@ export default function AddSupplierModal({ onClose, onSuccess, lang = 'RU', isDa
 
     try {
       setIsSubmitting(true);
-      await API.post('/suppliers', formData);
+      // Аккаунт + компания + профиль поставщика создаются одним запросом (POST /suppliers на бэкенде нет — была 404)
+      await API.post('/companies', formData);
       showAlert({
         title: t('success', 'Успешно'),
         message: t('supplierCreatedSuccess', 'Поставщик успешно добавлен в систему.'),
@@ -44,7 +45,7 @@ export default function AddSupplierModal({ onClose, onSuccess, lang = 'RU', isDa
     } catch (err) {
       showAlert({
         title: t('error', 'Ошибка'),
-        message: err.response?.data?.message || t('errorCreateSupplier', 'Не удалось добавить поставщика.'),
+        message: err.response?.data?.error || t('errorCreateSupplier', 'Не удалось добавить поставщика.'),
         type: 'danger'
       });
     } finally {

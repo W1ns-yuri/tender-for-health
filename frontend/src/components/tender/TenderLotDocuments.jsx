@@ -1,8 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { 
-  Paperclip, Plus, FileText, Trash2, UploadCloud, Download, 
-  ExternalLink, Check, X, ShieldAlert, FileCheck
-} from 'lucide-react';
+import { Paperclip, Plus, FileText, Trash2, UploadCloud, ExternalLink } from 'lucide-react';
 import { resolveFileUrl } from '../../utils/themeUtils';
 import CustomSelect from '../CustomSelect';
 

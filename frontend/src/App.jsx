@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -6,24 +6,26 @@ import ErrorBoundary from './components/ErrorBoundary';
 import API from './services/api';
 
 import LoginPage from './pages/LoginPage';
-import Dashboard from './pages/Dashboard';
-import Tenders from './pages/Tenders';
-import TenderDetails from './pages/TenderDetails';
-import MyOffers from './pages/MyOffers';
-import Evaluation from './pages/Evaluation';
-import EvaluationDetailsPage from './pages/EvaluationDetailsPage';
-import SupplierWins from './pages/SupplierWins';
-import AdminCatalogs from './pages/AdminCatalogs';
-import AdminLogs from './pages/AdminLogs';
-import CreateTenderPage from './pages/CreateTenderPage';
-import SuppliersList from './pages/SuppliersList';
-import SupplierProfilePage from './pages/SupplierProfilePage';
-import CreateOfferPage from './pages/CreateOfferPage';
-import OfferDetailsPage from './pages/OfferDetailsPage';
-import UiKitGallery from './pages/UiKitGallery';
+// Страницы грузятся по требованию: первый экран не тянет код всех разделов (было 1.4 МБ одним файлом)
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Tenders = lazy(() => import('./pages/Tenders'));
+const TenderDetails = lazy(() => import('./pages/TenderDetails'));
+const MyOffers = lazy(() => import('./pages/MyOffers'));
+const Evaluation = lazy(() => import('./pages/Evaluation'));
+const EvaluationDetailsPage = lazy(() => import('./pages/EvaluationDetailsPage'));
+const SupplierWins = lazy(() => import('./pages/SupplierWins'));
+const AdminCatalogs = lazy(() => import('./pages/AdminCatalogs'));
+const AdminLogs = lazy(() => import('./pages/AdminLogs'));
+const CreateTenderPage = lazy(() => import('./pages/CreateTenderPage'));
+const SuppliersList = lazy(() => import('./pages/SuppliersList'));
+const SupplierProfilePage = lazy(() => import('./pages/SupplierProfilePage'));
+const CreateOfferPage = lazy(() => import('./pages/CreateOfferPage'));
+const OfferDetailsPage = lazy(() => import('./pages/OfferDetailsPage'));
+// Галерея UI-кита — инструмент разработчика, в прод-сборку не попадает
+const UiKitGallery = import.meta.env.DEV ? lazy(() => import('./pages/UiKitGallery')) : null;
 import { AlertProvider } from './context/AlertContext';
-import SettingsPage from './pages/SettingsPage';
-import AnalyticsPage from './pages/AnalyticsPage';
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('tender_token') || '');
@@ -227,14 +229,18 @@ export default function App() {
       <AlertProvider isDarkMode={isDarkMode} lang={lang}>
         <Routes>
           <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} lang={lang} setLang={setLang} />} />
-          <Route
-            path="/ui-kit"
-            element={
-              <div className={`min-h-screen p-6 overflow-y-auto ${isDarkMode ? 'bg-[#0b0f17] text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
-                <UiKitGallery role="ADMIN" isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} lang={lang} />
-              </div>
-            }
-          />
+          {UiKitGallery && (
+            <Route
+              path="/ui-kit"
+              element={
+                <Suspense fallback={null}>
+                  <div className={`min-h-screen p-6 overflow-y-auto ${isDarkMode ? 'bg-[#0b0f17] text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
+                    <UiKitGallery role="ADMIN" isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} lang={lang} />
+                  </div>
+                </Suspense>
+              }
+            />
+          )}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AlertProvider>
@@ -272,6 +278,7 @@ export default function App() {
         {/* 🟢 ЦЕНТРАЛЬНОЕ ОКНО С ЗАЩИТОЙ ERROR BOUNDARY */}
         <main className={`p-6 flex-1 overflow-y-auto ${isDarkMode ? 'bg-[#0b0f17]' : 'bg-slate-50'}`}>
           <ErrorBoundary key={location.pathname} resetKey={location.pathname} onReset={() => navigate('/dashboard')}>
+            <Suspense fallback={<div className="flex justify-center py-24"><div className="h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent opacity-40" /></div>}>
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/login" element={<Navigate to="/dashboard" replace />} />
@@ -284,12 +291,12 @@ export default function App() {
                   lang={lang}
                 />
               } />
-              <Route path="/analytics" element={<AnalyticsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
+              <Route path="/analytics" element={role === 'ADMIN' ? <AnalyticsPage role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               
               <Route path="/create-tender" element={role === 'ADMIN' ? <CreateTenderPage onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/tenders/:id/edit" element={role === 'ADMIN' ? <CreateTenderPage onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} isEdit={true} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/suppliers" element={role === 'ADMIN' ? <SuppliersList role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
-              <Route path="/suppliers/:id" element={<SupplierProfilePage role={role} isDarkMode={isDarkMode} lang={lang} />} />
+              <Route path="/suppliers/:id" element={role === 'ADMIN' ? <SupplierProfilePage role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/profile" replace />} />
               <Route path="/tenders" element={<Tenders onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/tenders/:id" element={<TenderDetails onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/tender-details/:id" element={<TenderDetails onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} />} />
@@ -308,7 +315,7 @@ export default function App() {
               <Route path="/administrasiya" element={role === 'ADMIN' ? <AdminCatalogs section="administrasiya" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/admin-logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
-              <Route path="/ui-kit" element={<UiKitGallery role={role} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} lang={lang} />} />
+              {UiKitGallery && <Route path="/ui-kit" element={<UiKitGallery role={role} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} lang={lang} />} />}
               
               <Route path="/profile" element={<SupplierProfilePage role={role} isDarkMode={isDarkMode} lang={lang} isOwner={true} />} />
               
@@ -327,6 +334,7 @@ export default function App() {
               />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
+            </Suspense>
           </ErrorBoundary>
         </main>
       </div>
