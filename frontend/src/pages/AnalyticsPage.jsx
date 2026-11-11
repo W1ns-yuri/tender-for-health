@@ -13,8 +13,6 @@ import {
   AnalyticsTopSuppliersTable,
   AnalyticsTopClientsCards,
   getCurrencySymbol,
-  getFallbackData,
-  getDemoShowcaseData,
   exportAnalyticsReport,
 } from '../components/analytics';
 
@@ -26,19 +24,14 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
   const { showAlert } = useAlert();
   const t = (key, fallback, params) => getTranslation(lang, key, fallback, params);
 
-  // Режим данных: 'demo' (демо-показ Bloomberg) или 'real' (реальная БД)
-  const [dataSource, setDataSource] = useState(() => {
-    return localStorage.getItem('tender_analytics_source') || 'demo';
-  });
-
   // Состояния фильтров
   const [period, setPeriod] = useState('30d');
   const [currency, setCurrency] = useState('TMT');
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
 
-  // Валютный символ
-  const currencySymbol = useMemo(() => getCurrencySymbol(currency), [currency]);
+  // Валюта ответа: если курса нет в справочнике, бэкенд вернёт суммы в TMT
+  const currencySymbol = useMemo(() => getCurrencySymbol(data?.meta?.currency || currency), [data, currency]);
 
   // Загрузка данных аналитики из API
   const fetchAnalytics = useCallback(async () => {
@@ -47,32 +40,22 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
       const res = await API.get(`/dashboard/analytics?period=${period}&currency=${currency}`);
       setData(res.data);
     } catch (err) {
-      console.warn('Analytics API error or offline, fallback to calibrated enterprise dataset', err);
-      setData(getFallbackData(period, currency));
+      // Никаких подставных «демо-цифр»: админ должен видеть, что данных нет, а не красивую выдумку
+      setData(null);
+      showAlert({
+        title: t('error', 'Ошибка'),
+        message: err.response?.data?.error || t('analyticsLoadError', 'Не удалось загрузить аналитику'),
+        type: 'danger',
+      });
     } finally {
       setLoading(false);
     }
-  }, [period, currency]);
-
-  // Переключение источника данных (Демо vs Реальная БД)
-  const handleToggleDataSource = (mode) => {
-    setDataSource(mode);
-    localStorage.setItem('tender_analytics_source', mode);
-    if (mode === 'demo') {
-      setData(getDemoShowcaseData(period, currency));
-    } else {
-      fetchAnalytics();
-    }
-  };
+  }, [period, currency]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (dataSource === 'demo') {
-      setData(getDemoShowcaseData(period, currency));
-      setLoading(false);
-    } else {
-      fetchAnalytics();
-    }
-  }, [period, currency, dataSource, fetchAnalytics]);
+    try { localStorage.removeItem('tender_analytics_source'); } catch { /* старый переключатель демо-режима */ }
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   // Обработчик экспорта
   const handleExport = (format) => {
@@ -87,8 +70,6 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
     >
       {/* 1. ШАПКА И ФИЛЬТРЫ */}
       <AnalyticsHeader
-        dataSource={dataSource}
-        onToggleDataSource={handleToggleDataSource}
         period={period}
         onPeriodChange={setPeriod}
         currency={currency}
@@ -129,20 +110,22 @@ export default function AnalyticsPage({ role: _role = 'ADMIN', isDarkMode = fals
         </div>
       </div>
 
-      {/* 4. РЯД 3: ОТРАСЛЕВОЙ И ГЕОГРАФИЧЕСКИЙ АНАЛИЗ (50% / 50%) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* 4. РЯД 3: ОТРАСЛЕВОЙ И ГЕОГРАФИЧЕСКИЙ АНАЛИЗ. Регионы — только когда они реально есть в данных */}
+      <div className={`grid grid-cols-1 gap-6 ${data?.regions?.length ? 'lg:grid-cols-2' : ''}`}>
         <AnalyticsCategoryDistribution
           categories={data?.categories || []}
           currencySymbol={currencySymbol}
           isDarkMode={isDarkMode}
           t={t}
         />
-        <AnalyticsRegionalDistribution
-          regions={data?.regions || []}
-          currencySymbol={currencySymbol}
-          isDarkMode={isDarkMode}
-          t={t}
-        />
+        {data?.regions?.length > 0 && (
+          <AnalyticsRegionalDistribution
+            regions={data.regions}
+            currencySymbol={currencySymbol}
+            isDarkMode={isDarkMode}
+            t={t}
+          />
+        )}
       </div>
 
       {/* 5. РЯД 4: ЛИДЕРБОРДЫ — ТОП ПОСТАВЩИКОВ И КЛЮЧЕВЫЕ ЗАКАЗЧИКИ (65% / 35%) */}

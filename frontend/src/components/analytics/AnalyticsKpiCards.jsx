@@ -37,12 +37,12 @@ export default function AnalyticsKpiCards({
         <div className="flex items-center mt-2.5">
           <span className="inline-flex items-center text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200/60 dark:border-emerald-800/50">
             <TrendingUp size={11} className="mr-1" />
-            {Number(kpi?.totalVolume || 0) > 0 ? meta?.delta || '+14.2%' : '0.0%'}
+            {meta?.delta || '—'}
           </span>
           <span className="text-[11px] text-slate-400 ml-2">
-            {Number(kpi?.totalVolume || 0) > 0
+            {meta?.delta
               ? t('vsPreviousPeriod', 'к прошлому периоду')
-              : 'Ожидается запуск'}
+              : t('noPreviousPeriod', 'нет данных за прошлый период')}
           </span>
         </div>
       </div>
@@ -64,7 +64,7 @@ export default function AnalyticsKpiCards({
         </div>
         <div className="flex items-center justify-between mt-2.5">
           <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-            {kpi?.savingsPercent || '0.0'}% {t('budgetSavings', 'экономии')}
+            {kpi?.savingsPercent != null ? `${kpi.savingsPercent}% ${t('budgetSavings', 'экономии')}` : t('noFinishedTenders', 'нет завершённых тендеров')}
           </span>
           <span
             className="text-[10px] text-slate-400 cursor-help"

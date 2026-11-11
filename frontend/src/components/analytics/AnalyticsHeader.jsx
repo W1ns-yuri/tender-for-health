@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   BarChart2,
-  Database,
-  Sparkles,
   RefreshCw,
   Download,
   Printer,
@@ -12,8 +10,6 @@ import {
 import { CustomSelect } from '../ui';
 
 export default function AnalyticsHeader({
-  dataSource,
-  onToggleDataSource,
   period,
   onPeriodChange,
   currency,
@@ -75,32 +71,6 @@ export default function AnalyticsHeader({
 
         {/* Правый блок: Переключатель режима данных + Табы периодов + Валюта + Экспорт */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Переключатель: Демо / Реальная БД */}
-          <button
-            type="button"
-            onClick={() => onToggleDataSource(dataSource === 'demo' ? 'real' : 'demo')}
-            className={`inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all duration-150 cursor-pointer ${
-              dataSource === 'real'
-                ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-600/25'
-                : isDarkMode
-                ? 'bg-[#0b0f17] border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
-                : 'bg-slate-100/90 border-slate-200/80 text-slate-700 hover:bg-slate-200/70'
-            }`}
-            title="Переключить между демонстрационным показом и реальной базой данных"
-          >
-            {dataSource === 'real' ? (
-              <>
-                <Database size={13} className="text-white" />
-                <span>{t('realDbModeBtn', 'Реальная БД')}</span>
-              </>
-            ) : (
-              <>
-                <Sparkles size={13} className="text-amber-500" />
-                <span>{t('demoModeBtn', 'Демо')}</span>
-              </>
-            )}
-          </button>
-
           {/* Табы периодов */}
           <div
             className={`inline-flex items-center p-1 rounded-xl border ${
