@@ -102,7 +102,7 @@ export function useLoginState({ onLoginSuccess, t }) {
   const isStep3Valid = Boolean(
     regData.username?.trim() &&
     regData.username.includes('@') &&
-    regData.password?.length >= 6 &&
+    regData.password?.length >= 8 &&
     regData.termsAccepted
   );
 

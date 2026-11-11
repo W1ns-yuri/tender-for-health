@@ -61,7 +61,7 @@ export default function TenderHeader({
               <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-black tracking-wide border border-emerald-500/20">
                 {formData.tenderNumber || 'TNDR-NEW'}
               </span>
-              <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+              <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-full ${
                 formData.status === 'TASLAMA' 
                   ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800' 
                   : 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
@@ -88,7 +88,7 @@ export default function TenderHeader({
                 {t('stepLabel', 'Шаг')} {currentStepInfo.step} {t('ofThree', 'из 3')}:{' '}
                 <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{currentStepInfo.label}</span>
               </span>
-              <span className="font-mono text-[11px] font-bold text-slate-500 dark:text-slate-400 ml-2">
+              <span className="font-mono text-[12px] font-bold text-slate-500 dark:text-slate-400 ml-2">
                 {progressPercent}%
               </span>
             </div>
@@ -102,7 +102,7 @@ export default function TenderHeader({
             </div>
 
             {/* Метки 3 шагов */}
-            <div className="flex justify-between items-center text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-semibold">
+            <div className="flex justify-between items-center text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-semibold">
               <button
                 type="button"
                 onClick={() => onNavigateTab ? onNavigateTab('params') : setActiveTopTab?.('params')}

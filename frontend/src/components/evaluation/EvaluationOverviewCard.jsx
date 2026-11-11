@@ -47,7 +47,7 @@ export default function EvaluationOverviewCard({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-slate-100 dark:border-slate-800/80">
         {/* Заказчик */}
         <div>
-          <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
+          <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
             {t('client', 'Заказчик')}
           </p>
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
@@ -58,7 +58,7 @@ export default function EvaluationOverviewCard({
 
         {/* Категория и тип */}
         <div>
-          <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
+          <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
             {t('categoryAndTypeSummary', 'Категория и тип')}
           </p>
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
@@ -71,7 +71,7 @@ export default function EvaluationOverviewCard({
 
         {/* Срок подачи */}
         <div>
-          <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
+          <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
             {t('submissionDeadlineSummary', 'Крайний срок подачи')}
           </p>
           <p className="text-sm font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
@@ -84,7 +84,7 @@ export default function EvaluationOverviewCard({
 
         {/* Лоты и заявки */}
         <div>
-          <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
+          <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold mb-1">
             {t('lotsAndBidsTab', 'Лоты и заявки')}
           </p>
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">

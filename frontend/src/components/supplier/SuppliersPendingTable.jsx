@@ -65,26 +65,26 @@ export default function SuppliersPendingTable({
                       s.categories.map((sc, scIdx) => (
                         <span
                           key={sc.categoryId || scIdx}
-                          className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                          className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
                         >
                           {sc.category?.name}
                         </span>
                       ))
                     ) : (
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-[11px] text-slate-400">
                         {t('noCategoriesAssigned', 'Направления не указаны')}
                       </span>
                     )}
                   </div>
                   {hasChanges ? (
                     <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                      <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                      <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
                         {t('moderationFieldChangedBadge', 'Изменено')}:
                       </span>
                       {parsedNotes.changes.map((c, cIdx) => (
                         <span
                           key={c.field || cIdx}
-                          className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+                          className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
                         >
                           {t(c.key, c.label)}
                         </span>
@@ -93,7 +93,7 @@ export default function SuppliersPendingTable({
                   ) : (
                     s.verificationStatus === 'PENDING_REVIEW' && (
                       <div className="flex items-center gap-1 mt-1.5">
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800">
+                        <span className="px-1.5 py-0.5 rounded text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800">
                           {t('initialSubmissionNotice', 'Первичная анкета')}
                         </span>
                       </div>
@@ -103,7 +103,7 @@ export default function SuppliersPendingTable({
 
                 {/* 2. Тип / ИНН */}
                 <TableCell>
-                  <span className="inline-block font-semibold px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md text-[11px]">
+                  <span className="inline-block font-semibold px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md text-[12px]">
                     {getStandardizedOpfBadge(s.type, lang) || '—'}
                   </span>
                   <p className="font-mono text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -126,7 +126,7 @@ export default function SuppliersPendingTable({
                   <p className="font-medium text-xs text-slate-800 dark:text-slate-200">
                     {safeString(s.bankName || '-')}
                   </p>
-                  <p className="font-mono text-[11px] text-slate-400 mt-0.5">
+                  <p className="font-mono text-[12px] text-slate-400 mt-0.5">
                     {safeString(s.bankAccount || '-')}
                   </p>
                 </TableCell>

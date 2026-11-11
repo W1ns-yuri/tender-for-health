@@ -248,7 +248,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
                       {/* Номер и название тендера */}
                       <td className="py-3 px-3 text-center font-semibold">
                         <span className="font-bold font-mono tabular-nums text-slate-800 dark:text-slate-100">{safeString(item.tender?.tenderNumber || item.lot)}</span>
-                        {item.tender?.title && <span className="block text-[11px] font-normal text-slate-500 truncate max-w-40">{item.tender.title}</span>}
+                        {item.tender?.title && <span className="block text-[12px] font-normal text-slate-500 truncate max-w-40">{item.tender.title}</span>}
                       </td>
 
                       {/* Вид закупки */}
@@ -279,7 +279,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
                         {item.supplier?.verificationStatus === 'PENDING_REVIEW' ? (
                           <div className="flex flex-col items-center gap-1">
                             {getStatusBadge(item.status, lang, isDarkMode)}
-                            <span className="text-[10px] text-amber-500 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded">
+                            <span className="text-[11px] text-amber-500 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded">
                               {t('moderationBadge', 'На модерации')}
                             </span>
                           </div>

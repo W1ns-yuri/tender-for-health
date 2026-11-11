@@ -65,7 +65,7 @@ export default function SupplierBankCard({
           <CreditCard size={18} className="text-blue-600" />
           {t('bankDetails', 'Банковские реквизиты')}
           {isBankModified && (
-            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800 uppercase tracking-wider">
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800 uppercase tracking-wider">
               {t('moderationFieldChangedBadge', 'Изменено')}
             </span>
           )}
@@ -180,7 +180,7 @@ export default function SupplierBankCard({
                         >
                           <div>
                             <p className="text-xs font-bold text-slate-800 group-hover:text-blue-700">{bank.name}</p>
-                            {bank.code && <p className="text-[11px] text-slate-400">МФО: {bank.code}</p>}
+                            {bank.code && <p className="text-[12px] text-slate-400">МФО: {bank.code}</p>}
                           </div>
                           {formData.bankName === bank.name && (
                             <Check size={16} className="text-blue-600" />
@@ -226,7 +226,7 @@ export default function SupplierBankCard({
               className={`w-full px-4 py-3 rounded-xl text-sm font-medium tracking-wider border ${inputBg}`} 
             />
             {isEditable && (
-              <p className="text-[11px] text-slate-400 mt-1 ml-1">{t('bankAccountHint', '28 символов (стандарт ЦБ Туркменистана)')}</p>
+              <p className="text-[12px] text-slate-400 mt-1 ml-1">{t('bankAccountHint', '28 символов (стандарт ЦБ Туркменистана)')}</p>
             )}
           </div>
 

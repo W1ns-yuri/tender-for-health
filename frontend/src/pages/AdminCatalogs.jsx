@@ -384,7 +384,7 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
     || sections.haryt.find(s => s.id === activeCatalog);
 
   return (
-    <div className={`flex flex-col min-h-[calc(100vh-100px)] -mx-6 -mt-6 ${isDarkMode ? 'bg-[#0b0f17]' : 'bg-slate-50/50'}`}>
+    <div className={`flex flex-col min-h-[calc(100vh-100px)] -mx-3 -mt-3 sm:-mx-6 sm:-mt-6 ${isDarkMode ? 'bg-[#0b0f17]' : 'bg-slate-50/50'}`}>
       <div className="flex-1 p-6 overflow-y-auto">
         {!activeCatalog ? (
           <CatalogCardGrid

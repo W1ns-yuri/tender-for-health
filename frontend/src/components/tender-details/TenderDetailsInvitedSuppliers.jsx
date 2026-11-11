@@ -69,12 +69,12 @@ export default function TenderDetailsInvitedSuppliers({
                     </td>
                     <td className="py-3.5 px-4 text-center">
                       {inv.isViewed ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                           <Eye size={12} />
                           <span>{t('viewed', 'Ознакомился')}</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500">
                           <Clock size={12} />
                           <span>{t('awaitingView', 'Ожидает просмотра')}</span>
                         </span>
@@ -82,7 +82,7 @@ export default function TenderDetailsInvitedSuppliers({
                     </td>
                     <td className="py-3.5 px-4 text-center">
                       {hasSubmitted ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200">
                           <CheckCircle2 size={12} />
                           <span>{t('offerSubmitted', 'КП подано')}</span>
                         </span>

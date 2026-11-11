@@ -51,7 +51,7 @@ export default function SupplierStatusBanner({
             </p>
 
             <div className="mt-3 p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-rose-200 dark:border-rose-900/60 shadow-xs">
-              <span className="text-[11px] font-bold text-rose-500 uppercase tracking-wider block mb-1">
+              <span className="text-[12px] font-bold text-rose-500 uppercase tracking-wider block mb-1">
                 {t('rejectionReasonLabel', 'Причина отклонения')}:
               </span>
               <p className="text-sm font-semibold text-rose-950 dark:text-rose-100 whitespace-pre-wrap">
@@ -113,7 +113,7 @@ export default function SupplierStatusBanner({
 
             {hasChanges && (
               <div className="mt-3.5 pt-3 border-t border-amber-200/60 dark:border-amber-900/60">
-                <span className="text-[11px] font-bold text-amber-800/80 dark:text-amber-300/80 uppercase tracking-wider block mb-2">
+                <span className="text-[12px] font-bold text-amber-800/80 dark:text-amber-300/80 uppercase tracking-wider block mb-2">
                   {t('modifiedFieldsLabel', 'Обновленные разделы анкеты:')}
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -130,7 +130,7 @@ export default function SupplierStatusBanner({
                             {labelText}
                           </p>
                           {item.description && (
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                            <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
                               {item.description}
                             </p>
                           )}
@@ -158,7 +158,7 @@ export default function SupplierStatusBanner({
           <h3 className="font-bold text-blue-900 dark:text-blue-200 text-sm">
             {t('statusGuestTitle', 'Гостевой режим: доступен только просмотр торгов')}
           </h3>
-          <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-[10px] font-black rounded-md">
+          <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-[11px] font-black rounded-md">
             {t('statusGuestBadge', 'Гостевой доступ')}
           </span>
         </div>

@@ -1,6 +1,7 @@
 const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
 const { ASSIGNABLE_ROLES, passwordError } = require('../utils/accountRules');
+const { sendError } = require('../utils/httpErrors');
 
 // Получить всех пользователей (без паролей!)
 const getUsers = async (req, res) => {
@@ -26,7 +27,7 @@ const getUsers = async (req, res) => {
         });
         res.json(users);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении пользователей', details: error.message });
+        sendError(res, error, 'Ошибка при получении пользователей');
     }
 };
 
@@ -69,7 +70,7 @@ const createUser = async (req, res) => {
         const { password: _, ...userWithoutPassword } = newUser;
         res.status(201).json(userWithoutPassword);
     } catch (error) {
-        res.status(400).json({ error: 'Не удалось создать пользователя', details: error.message });
+        res.status(400).json({ error: 'Не удалось создать пользователя' });
     }
 };
 
@@ -120,7 +121,7 @@ const updateUser = async (req, res) => {
         res.json(updated);
     } catch (error) {
         console.error('Error updating user:', error);
-        res.status(400).json({ error: 'Не удалось обновить пользователя', details: error.message });
+        res.status(400).json({ error: 'Не удалось обновить пользователя' });
     }
 };
 
@@ -145,7 +146,7 @@ const toggleUserStatus = async (req, res) => {
         res.json(updated);
     } catch (error) {
         console.error('Error toggling user status:', error);
-        res.status(400).json({ error: 'Не удалось изменить статус пользователя', details: error.message });
+        res.status(400).json({ error: 'Не удалось изменить статус пользователя' });
     }
 };
 

@@ -27,7 +27,7 @@ export default function SupplierHeader({
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pb-6 border-b border-slate-100 dark:border-slate-800">
       <div className="relative group shrink-0">
         {isLogoModified && (
-          <span className="absolute -top-2 -left-2 px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-black rounded-md shadow-sm uppercase tracking-wider z-10">
+          <span className="absolute -top-2 -left-2 px-1.5 py-0.5 bg-amber-500 text-white text-[11px] font-black rounded-md shadow-sm uppercase tracking-wider z-10">
             {t('moderationFieldChangedBadge', 'Изменено')}
           </span>
         )}

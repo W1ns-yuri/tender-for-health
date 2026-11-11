@@ -123,27 +123,27 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
 
     if (diffDays < 0) {
       return (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60">
+        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60">
           {t('deadlineExpiredBadge', 'Срок истёк')}
         </span>
       );
     }
     if (diffDays === 0) {
       return (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60 animate-pulse">
+        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60 animate-pulse">
           {t('todayBtn', 'Сегодня')}
         </span>
       );
     }
     if (diffDays <= 3) {
       return (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
+        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
           {t('daysRemainingCount', `Осталось ${diffDays} дн.`, { diffDays })}
         </span>
       );
     }
     return (
-      <span className="text-[10px] font-medium text-slate-400">
+      <span className="text-[11px] font-medium text-slate-400">
         {t('daysCountShort', `${diffDays} дн.`, { diffDays })}
       </span>
     );
@@ -170,7 +170,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
             <Layers size={18} />
           </div>
           <div className="min-w-0">
-            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider truncate" title={t('totalTendersMetric', 'Всего тендеров')}>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider truncate" title={t('totalTendersMetric', 'Всего тендеров')}>
               {t('totalTendersMetric', 'Всего тендеров')}
             </div>
             <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{totalTendersCount}</div>
@@ -182,7 +182,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
             <Clock size={18} />
           </div>
           <div className="min-w-0">
-            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider truncate" title={t('statusBahalandyryldy', 'На рассмотрении')}>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider truncate" title={t('statusBahalandyryldy', 'На рассмотрении')}>
               {t('statusBahalandyryldy', 'На рассмотрении')}
             </div>
             <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{inProgressCount}</div>
@@ -194,7 +194,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
             <FileText size={18} />
           </div>
           <div className="min-w-0">
-            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider truncate" title={t('submittedOffers', 'Подано предложений')}>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider truncate" title={t('submittedOffers', 'Подано предложений')}>
               {t('submittedOffers', 'Подано предложений')}
             </div>
             <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{totalOffersCount}</div>
@@ -206,7 +206,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
             <CheckCircle2 size={18} />
           </div>
           <div className="min-w-0">
-            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider truncate" title={t('resultsAnnouncedStatus', 'Итоги оглашены')}>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider truncate" title={t('resultsAnnouncedStatus', 'Итоги оглашены')}>
               {t('resultsAnnouncedStatus', 'Итоги оглашены')}
             </div>
             <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{completedCount}</div>
@@ -327,7 +327,7 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                             {tender.tenderNumber}
                           </Link>
                           {tender.visibility === 'YAPYK' && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-extrabold uppercase bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60">
                               <Lock size={10} />
                               <span>ÝAPYK</span>
                             </span>

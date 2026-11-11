@@ -24,7 +24,7 @@ export default function OfferStickyFooter({
         </div>
       )}
 
-      <div className="sticky bottom-0 z-30 -mx-6 -mb-6 px-6 sm:px-8 py-4 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="sticky bottom-0 z-30 -mx-3 -mb-3 sm:-mx-6 sm:-mb-6 px-6 sm:px-8 py-4 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
         {!isVerified && (
           <div className="w-full p-2.5 bg-rose-50 text-rose-700 text-xs font-bold rounded-xl flex items-center gap-2 border border-rose-200">
             <AlertCircle size={15} />
@@ -42,7 +42,7 @@ export default function OfferStickyFooter({
                   : 'bg-amber-400 ring-4 ring-amber-100 dark:ring-amber-900/30'
               }`} />
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-bold block tracking-wider">
+                <span className="text-[11px] text-slate-400 uppercase font-bold block tracking-wider">
                   {t('totalOfferAmountTitle', 'Итоговая сумма заявки')}:
                 </span>
                 <span className="text-2xl font-black text-blue-600 dark:text-blue-400">
@@ -54,7 +54,7 @@ export default function OfferStickyFooter({
               <div className="font-semibold text-slate-700 dark:text-slate-300">
                 {t('selectedLotsCountStr', `Выбрано лотов: ${activeLotIds.length}`, { count: activeLotIds.length, activeLotsCount: activeLotIds.length })}
               </div>
-              <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
+              <div className="text-[12px] text-slate-400 mt-0.5 flex items-center gap-1">
                 <CheckCircle2 size={12} className={pricedItemsCount > 0 ? "text-emerald-500" : "text-slate-400"} />
                 <span>{t('pricedItemsProgress', `Оценено: ${pricedItemsCount} из ${totalActiveItemsCount} позиций`, { pricedItemsCount, totalActiveItemsCount })}</span>
               </div>

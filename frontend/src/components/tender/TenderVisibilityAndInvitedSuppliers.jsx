@@ -177,7 +177,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                   <span className={`text-xs font-bold ${!isClosed ? 'text-emerald-950 dark:text-emerald-200' : 'text-slate-800 dark:text-slate-200'}`}>
                     {t('openTender', 'Открытый тендер')}
                   </span>
-                  <span className={`text-[10px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded transition-colors ${
+                  <span className={`text-[11px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded transition-colors ${
                     !isClosed
                       ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
@@ -185,7 +185,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                     Açyk
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                   {t('openTenderDesc', 'Публичная закупка. Видна всем аккредитованным поставщикам в общем реестре.')}
                 </p>
               </div>
@@ -220,7 +220,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                   <span className={`text-xs font-bold ${isClosed ? 'text-emerald-950 dark:text-emerald-200' : 'text-slate-800 dark:text-slate-200'}`}>
                     {t('closedTender', 'Закрытый тендер')}
                   </span>
-                  <span className={`text-[10px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded transition-colors ${
+                  <span className={`text-[11px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded transition-colors ${
                     isClosed
                       ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
@@ -228,7 +228,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                     Ýapyk
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                   {t('closedTenderDesc', 'Скрыт из общего каталога. Доступ только по персональному приглашению организатора.')}
                 </p>
               </div>
@@ -255,7 +255,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                 <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
                   {t('invitedSuppliersTitle', 'Приглашенные поставщики')}
                 </h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">
                   {t('invitedSuppliersSubtitle', 'Только выбранные компании смогут увидеть ТЗ и подать заявку')}
                 </p>
               </div>
@@ -342,7 +342,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 {parsed.opf && (
-                                  <span className="px-1 py-0.2 rounded text-[9px] font-extrabold bg-slate-100 dark:bg-slate-750 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700 shrink-0">
+                                  <span className="px-1 py-0.2 rounded text-[11px] font-extrabold bg-slate-100 dark:bg-slate-750 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700 shrink-0">
                                     {parsed.opf}
                                   </span>
                                 )}
@@ -350,24 +350,24 @@ export default function TenderVisibilityAndInvitedSuppliers({
                                   {parsed.cleanName}
                                 </span>
                                 {tenderCategoryId && (
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 shrink-0 flex items-center gap-1">
+                                  <span className="px-1.5 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 shrink-0 flex items-center gap-1">
                                     <Sparkles size={10} /> {t('categoryMatchBadge', 'Подходит по категории')}
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2 mt-0.5">
+                              <div className="text-[11px] text-slate-400 font-mono flex items-center gap-2 mt-0.5">
                                 <span>STŞK: {supplier.taxId || '—'}</span>
                                 {supplier.legalAddress && <span className="font-sans truncate">· {supplier.legalAddress}</span>}
                               </div>
                               {cats.length > 0 && (
                                 <div className="flex items-center gap-1 mt-1 flex-wrap">
                                   {cats.slice(0, 3).map((c, cIdx) => (
-                                    <span key={c.categoryId || c.id || cIdx} className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                    <span key={c.categoryId || c.id || cIdx} className="px-1.5 py-0.2 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                                       {c.category?.name || c.name}
                                     </span>
                                   ))}
                                   {cats.length > 3 && (
-                                    <span className="text-[9px] text-slate-400 font-mono">+{cats.length - 3}</span>
+                                    <span className="text-[11px] text-slate-400 font-mono">+{cats.length - 3}</span>
                                   )}
                                 </div>
                               )}
@@ -376,11 +376,11 @@ export default function TenderVisibilityAndInvitedSuppliers({
 
                           <div className="shrink-0">
                             {isAlreadyAdded ? (
-                              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                              <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                                 <Check size={13} /> {t('invitedBadge', 'Приглашен')}
                               </span>
                             ) : (
-                              <span className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[11px] flex items-center gap-1 transition-colors">
+                              <span className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[12px] flex items-center gap-1 transition-colors">
                                 <Plus size={13} /> {t('inviteAction', 'Пригласить')}
                               </span>
                             )}
@@ -391,9 +391,9 @@ export default function TenderVisibilityAndInvitedSuppliers({
 
                     {/* Разделитель между подходящими и другими поставщиками */}
                     {matchedSuppliers.length > 0 && unmatchedSuppliers.length > 0 && (
-                      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100/90 dark:bg-slate-800/80 border-y border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                      <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100/90 dark:bg-slate-800/80 border-y border-slate-200 dark:border-slate-700 flex items-center justify-between">
                         <span>{t('otherSuppliersOutOfCategory', 'Другие поставщики (вне выбранной категории)')}</span>
-                        <span className="font-mono text-[9px] lowercase font-normal">{unmatchedSuppliers.length}</span>
+                        <span className="font-mono text-[11px] lowercase font-normal">{unmatchedSuppliers.length}</span>
                       </div>
                     )}
 
@@ -421,7 +421,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 {parsed.opf && (
-                                  <span className="px-1 py-0.2 rounded text-[9px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200/70 dark:border-slate-700 shrink-0">
+                                  <span className="px-1 py-0.2 rounded text-[11px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200/70 dark:border-slate-700 shrink-0">
                                     {parsed.opf}
                                   </span>
                                 )}
@@ -429,19 +429,19 @@ export default function TenderVisibilityAndInvitedSuppliers({
                                   {parsed.cleanName}
                                 </span>
                               </div>
-                              <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2 mt-0.5">
+                              <div className="text-[11px] text-slate-400 font-mono flex items-center gap-2 mt-0.5">
                                 <span>STŞK: {supplier.taxId || '—'}</span>
                                 {supplier.legalAddress && <span className="font-sans truncate">· {supplier.legalAddress}</span>}
                               </div>
                               {cats.length > 0 && (
                                 <div className="flex items-center gap-1 mt-1 flex-wrap">
                                   {cats.slice(0, 3).map((c, cIdx) => (
-                                    <span key={c.categoryId || c.id || cIdx} className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-200/70 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                                    <span key={c.categoryId || c.id || cIdx} className="px-1.5 py-0.2 rounded text-[11px] font-medium bg-slate-200/70 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                                       {c.category?.name || c.name}
                                     </span>
                                   ))}
                                   {cats.length > 3 && (
-                                    <span className="text-[9px] text-slate-400 font-mono">+{cats.length - 3}</span>
+                                    <span className="text-[11px] text-slate-400 font-mono">+{cats.length - 3}</span>
                                   )}
                                 </div>
                               )}
@@ -450,11 +450,11 @@ export default function TenderVisibilityAndInvitedSuppliers({
 
                           <div className="shrink-0">
                             {isAlreadyAdded ? (
-                              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                              <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                                 <Check size={13} /> {t('invitedBadge', 'Приглашен')}
                               </span>
                             ) : (
-                              <span className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold rounded-lg text-[11px] flex items-center gap-1 transition-colors">
+                              <span className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold rounded-lg text-[12px] flex items-center gap-1 transition-colors">
                                 <Plus size={13} /> {t('inviteAction', 'Пригласить')}
                               </span>
                             )}
@@ -478,7 +478,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                 <button
                   type="button"
                   onClick={() => onChangeInvitedSuppliers([])}
-                  className="text-[11px] text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 font-medium hover:underline cursor-pointer"
+                  className="text-[12px] text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 font-medium hover:underline cursor-pointer"
                 >
                   {t('clearAll', 'Очистить всех')}
                 </button>
@@ -546,7 +546,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                               </div>
                               <div className="flex items-center gap-1.5 min-w-0 truncate">
                                 {parsed.opf && (
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-slate-100 dark:bg-slate-750 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700 shrink-0 uppercase tracking-wide">
+                                  <span className="px-1.5 py-0.5 rounded text-[11px] font-extrabold bg-slate-100 dark:bg-slate-750 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700 shrink-0 uppercase tracking-wide">
                                     {parsed.opf}
                                   </span>
                                 )}
@@ -566,7 +566,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                           <TableCell>
                             <div className="flex flex-wrap gap-1 max-w-60">
                               {cats.length === 0 ? (
-                                <span className="text-[11px] text-slate-400 italic">—</span>
+                                <span className="text-[12px] text-slate-400 italic">—</span>
                               ) : (
                                 <>
                                   {cats.slice(0, 2).map((sc, scIdx) => {
@@ -575,7 +575,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                                     return (
                                       <span
                                         key={sc.categoryId || sc.id || scIdx}
-                                        className={`px-1.5 py-0.5 rounded text-[10px] font-semibold truncate max-w-32.5 ${
+                                        className={`px-1.5 py-0.5 rounded text-[11px] font-semibold truncate max-w-32.5 ${
                                           isMatch
                                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
                                             : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
@@ -588,7 +588,7 @@ export default function TenderVisibilityAndInvitedSuppliers({
                                   })}
                                   {cats.length > 2 && (
                                     <span 
-                                      className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
+                                      className="px-1.5 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
                                       title={cats.slice(2).map(sc => sc.category?.name || sc.name).join(', ')}
                                     >
                                       +{cats.length - 2}

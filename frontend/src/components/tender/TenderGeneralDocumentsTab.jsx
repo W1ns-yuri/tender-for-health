@@ -135,7 +135,7 @@ export default function TenderGeneralDocumentsTab({
           <p className="font-bold text-blue-900 dark:text-blue-200">
             {t('whyGeneralDocsTitle', 'Юридическая основа закупки')}
           </p>
-          <p className="text-blue-700 dark:text-blue-300 leading-relaxed text-[11px]">
+          <p className="text-blue-700 dark:text-blue-300 leading-relaxed text-[12px]">
             {t('whyGeneralDocsBody', 'Общие документы распространяются на весь тендер и видны всем участникам. Без проекта контракта или утвержденного регламента тендер не может быть опубликован, так как поставщикам необходимо знать юридические условия заключения контракта.')}
           </p>
         </div>
@@ -165,7 +165,7 @@ export default function TenderGeneralDocumentsTab({
                 : t('dragDropGeneralPrompt', 'Перетащите общие документы сюда (Drag & Drop) или нажмите для выбора')}
             </p>
             <p className="text-xs text-slate-400 mt-1">
-              {t('supportedDocFormats', 'PDF, Word, Excel, JPG, PNG, ZIP архивы (до 50 МБ)')}
+              {t('supportedDocFormats', 'PDF, Word, Excel, JPG, PNG (до 25 МБ)')}
             </p>
           </div>
           <button
@@ -248,7 +248,7 @@ export default function TenderGeneralDocumentsTab({
                         </div>
                       </td>
 
-                      <td className="py-3 px-2 text-center text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                      <td className="py-3 px-2 text-center text-slate-500 dark:text-slate-400 font-mono text-[12px]">
                         {doc.fileSize ? `${Math.round(doc.fileSize / 1024)} KB` : '—'}
                       </td>
 
@@ -264,7 +264,7 @@ export default function TenderGeneralDocumentsTab({
                             }}
                             className="w-3.5 h-3.5 rounded accent-emerald-600 dark:accent-emerald-500 cursor-pointer"
                           />
-                          <span className={`text-[11px] font-bold ${meta.isRequired ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                          <span className={`text-[12px] font-bold ${meta.isRequired ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500'}`}>
                             {meta.isRequired ? t('mandatoryDocFlag', 'Обязательный') : t('optionalBadge', 'Опциональный')}
                           </span>
                         </label>
@@ -320,8 +320,8 @@ export default function TenderGeneralDocumentsTab({
                 {t('browseFiles', 'выберите на компьютере')}
               </span>
             </div>
-            <span className="text-[10px] text-slate-400 font-mono">
-              {t('upTo50MB', 'до 50 МБ (PDF, DOC, XLS, ZIP)')}
+            <span className="text-[11px] text-slate-400 font-mono">
+              {t('upTo50MB', 'до 25 МБ (PDF, DOC, XLS, JPG, PNG)')}
             </span>
           </div>
         </div>

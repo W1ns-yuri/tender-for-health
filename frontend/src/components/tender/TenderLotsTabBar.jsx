@@ -1,3 +1,4 @@
+import { lotLabel } from '../../utils/pluralize';
 import React from 'react';
 import { Bookmark, X, Plus } from 'lucide-react';
 
@@ -56,11 +57,11 @@ export default function TenderLotsTabBar({
             
             {/* Информативный заголовок лота */}
             <span className={`max-w-xs md:max-w-sm truncate ${isActive ? 'font-black text-slate-800 dark:text-slate-100' : 'font-medium'}`}>
-              {`Лот ${lot.lotNumber || idx + 1}: ${lot.name || `Лот №${lot.lotNumber || idx + 1}`}`}
+              {lotLabel(lot.name, lot.lotNumber || idx + 1)}
             </span>
 
             {/* Счетчик позиций спецификации */}
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold ${
+            <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold ${
               isActive
                 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
                 : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'

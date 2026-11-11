@@ -44,7 +44,7 @@ export default function SettingsHeader({
           <div className="font-bold text-slate-900 dark:text-white">
             {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (t ? t('user', 'Пользователь') : 'Пользователь')}
           </div>
-          <div className="text-[11px] text-slate-400 font-mono">
+          <div className="text-[12px] text-slate-400 font-mono">
             @{user?.username || 'user'}
           </div>
         </div>

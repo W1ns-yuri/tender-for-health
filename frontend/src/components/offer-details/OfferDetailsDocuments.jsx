@@ -68,7 +68,7 @@ export default function OfferDetailsDocuments({
                       {fileDisplayName}
                     </td>
                     <td className="py-3 px-3 text-center">
-                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
+                      <span className={`px-2 py-0.5 rounded text-[12px] font-bold uppercase tracking-wider ${
                         theme.primaryBadge || 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                       }`}>
                         {fileType}

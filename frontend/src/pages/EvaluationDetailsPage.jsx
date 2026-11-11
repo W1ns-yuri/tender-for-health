@@ -153,6 +153,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
         allLotsAwarded={allLotsAwarded}
         onPrint={handlePrint}
         onComplete={handleCompleteEvaluation}
+        isCompleted={['YENIJI_YGLAN_EDILDI', 'ARHIWLENDI'].includes(effectiveStatus)}
         t={t}
       />
       </>)}

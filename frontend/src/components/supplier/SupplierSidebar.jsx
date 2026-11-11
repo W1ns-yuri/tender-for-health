@@ -36,7 +36,7 @@ export default function SupplierSidebar({
                 <h3 className="font-bold text-slate-800 dark:text-white text-sm leading-tight">
                   {t('adminReviewDossier', 'Анкета поставщика')}
                 </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[12px] text-slate-400 mt-0.5">
                   {t('profileVerificationHeader', 'Проверка профиля')}
                 </p>
               </div>
@@ -44,7 +44,7 @@ export default function SupplierSidebar({
 
             {/* Текущий статус */}
             <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                 {t('currentStatusLabel', 'Текущий статус')}
               </span>
               <div className="flex items-center gap-2">
@@ -103,7 +103,7 @@ export default function SupplierSidebar({
             {/* Если отклонен - показываем причину в сайдбаре */}
             {supplier.verificationStatus === 'REJECTED' && supplier.rejectionReason && (
               <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 rounded-xl">
-                <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wider block mb-1">
+                <span className="text-[11px] font-bold text-rose-500 uppercase tracking-wider block mb-1">
                   {t('rejectionReasonLabel', 'Причина отклонения')}:
                 </span>
                 <p className="text-xs text-rose-800 dark:text-rose-200 font-medium">
@@ -140,7 +140,7 @@ export default function SupplierSidebar({
                   <p className="text-xs font-bold text-emerald-800 dark:text-emerald-200">
                     {t('profileVerified100', 'Профиль активен на 100%')}
                   </p>
-                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
+                  <p className="text-[12px] text-emerald-600 dark:text-emerald-400">
                     {t('verificationConfirmedStatus', 'Верификация подтверждена')}
                   </p>
                   <button
@@ -168,7 +168,7 @@ export default function SupplierSidebar({
                     <h3 className="font-bold text-slate-800 dark:text-white text-sm leading-tight">
                       {t('profileReadiness', 'Готовность профиля')}
                     </h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-[12px] text-slate-400 mt-0.5">
                       {t('profileReadinessSub', 'Для допуска к торгам')}
                     </p>
                   </div>
@@ -186,7 +186,7 @@ export default function SupplierSidebar({
                     style={{ width: `${readiness?.percent || 0}%` }}
                   />
                 </div>
-                <div className="flex justify-between items-center text-[11px] text-slate-400 font-medium">
+                <div className="flex justify-between items-center text-[12px] text-slate-400 font-medium">
                   <span>{t('profileProgress', 'Прогресс')}</span>
                   <span>{readiness?.percent || 0}%</span>
                 </div>
@@ -214,7 +214,7 @@ export default function SupplierSidebar({
                         {step.title}
                       </p>
                       {step.pending && (
-                        <span className="text-[10px] text-amber-600 font-medium">
+                        <span className="text-[11px] text-amber-600 font-medium">
                           {t('profileStepWaiting', 'Ожидает решения модератора Минздрава')}
                         </span>
                       )}

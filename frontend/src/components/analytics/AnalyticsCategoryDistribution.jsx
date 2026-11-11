@@ -41,7 +41,7 @@ export default function AnalyticsCategoryDistribution({
             <div key={idx} className="group">
               <div className="flex items-center justify-between text-xs mb-1.5">
                 <span className="font-medium text-slate-800 dark:text-slate-200 flex items-center min-w-0 pr-2">
-                  <span className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center text-[10px] font-bold mr-2 shrink-0">
+                  <span className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center text-[11px] font-bold mr-2 shrink-0">
                     #{idx + 1}
                   </span>
                   <span className="truncate" title={cat.name}>
@@ -52,7 +52,7 @@ export default function AnalyticsCategoryDistribution({
                   <span className="font-bold text-slate-900 dark:text-white">
                     {formatCurrency(cat.amount, currencySymbol)}
                   </span>
-                  <span className="text-slate-400 text-[11px]">({cat.percent}%)</span>
+                  <span className="text-slate-400 text-[12px]">({cat.percent}%)</span>
                 </div>
               </div>
 
@@ -64,7 +64,7 @@ export default function AnalyticsCategoryDistribution({
                 />
               </div>
 
-              <div className="flex justify-between items-center text-[11px] text-slate-400 mt-1">
+              <div className="flex justify-between items-center text-[12px] text-slate-400 mt-1">
                 <span>
                   {cat.tenders} {t('tendersCount', 'тендеров')}
                 </span>

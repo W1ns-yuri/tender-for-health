@@ -74,7 +74,7 @@ export default function SupplierAddressCard({
         <MapPin size={18} className="text-blue-600" />
         {t('contactInfo', 'Контактная информация и адреса')}
         {isAddressModified && (
-          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800 uppercase tracking-wider">
+          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800 uppercase tracking-wider">
             {t('moderationFieldChangedBadge', 'Изменено')}
           </span>
         )}
@@ -129,7 +129,7 @@ export default function SupplierAddressCard({
                             {translatedLabel}
                           </p>
                           {r.defaultName && r.defaultName !== r.name && (
-                            <p className="text-[11px] text-slate-400 font-normal">{r.defaultName}</p>
+                            <p className="text-[12px] text-slate-400 font-normal">{r.defaultName}</p>
                           )}
                         </div>
                         {isSelected && (
@@ -193,7 +193,7 @@ export default function SupplierAddressCard({
             </div>
           )}
           {isEditable && (
-            <p className="text-[11px] text-slate-400 mt-1 ml-1">
+            <p className="text-[12px] text-slate-400 mt-1 ml-1">
               {!isForeignCompany ? t('phoneFormatHint', 'Формат: +993 XX XX-XX-XX') : t('phoneFormatInternationalHint', 'Формат: +[код страны] [номер]')}
             </p>
           )}
@@ -231,7 +231,7 @@ export default function SupplierAddressCard({
             className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`} 
           />
           {isEditable && !isForeignCompany && (
-            <p className="text-[11px] text-slate-400 mt-1 ml-1">
+            <p className="text-[12px] text-slate-400 mt-1 ml-1">
               {t('addressCleanHint', 'Указывайте без повторения города/велаята: этрап, улица, дом, офис')}
             </p>
           )}

@@ -10,6 +10,8 @@ const assertStructureEditable = async (tender) => {
     return isStructureEditable(tender, offersCount);
 };
 const { sendNotification } = require('./notificationController');
+const { sendError } = require('../utils/httpErrors');
+const { MAX_TITLE, tooLong, parseQuantity, specsError, lotNumberError, deadlineTooFar } = require('../utils/validation');
 
 // Генерация последовательного номера тендера вида TNDR-YYYY-MM-001
 const generateNextTenderNumber = async (txOrPrisma = prisma) => {
@@ -83,6 +85,16 @@ const createTender = async (req, res) => {
         if (status === 'ACYK' && deadlineDate <= new Date()) {
             return res.status(400).json({ error: 'Нельзя открыть тендер с дедлайном в прошлом' });
         }
+        if (deadlineTooFar(deadlineDate)) {
+            return res.status(400).json({ error: 'Дедлайн дальше чем через 2 года: проверьте год' });
+        }
+        if (tooLong(title, MAX_TITLE)) {
+            return res.status(400).json({ error: `Название тендера: не длиннее ${MAX_TITLE} символов` });
+        }
+        for (const lot of Array.isArray(lots) ? lots : []) {
+            const err = specsError(lot?.specs) || lotNumberError(lot?.lotNumber);
+            if (err) return res.status(400).json({ error: err });
+        }
         const announcementDate = req.body.announcementDate ? new Date(req.body.announcementDate) : new Date();
         if (deadlineDate <= announcementDate) {
             return res.status(400).json({ error: 'Крайний срок подачи заявок (дедлайн) должен быть позже даты объявления тендера' });
@@ -106,7 +118,7 @@ const createTender = async (req, res) => {
             const newTender = await tx.tender.create({
                 data: {
                     tenderNumber: finalTenderNumber,
-                    title: title || 'Без названия',
+                    title: (typeof title === 'string' && title.trim()) || 'Без названия',
                     description: req.body.description || null,
                     technicalSpecs: technicalSpecs || null,
                     type: req.body.type || 'YERLI',
@@ -162,7 +174,7 @@ const createTender = async (req, res) => {
                                 positionNumber: parseInt(spec.positionNumber, 10) || (sIdx + 1),
                                 generalProductId: (spec.generalProductId && spec.generalProductId !== '') ? spec.generalProductId : null,
                                 name: (spec.name || spec.haryt || '').trim(),
-                                quantity: parseFloat(spec.quantity || spec.mukdar) || 1,
+                                quantity: parseQuantity(spec.quantity ?? spec.mukdar),
                                 unitId: (spec.unitId && spec.unitId !== '') ? spec.unitId : ((spec.unit && spec.unit !== '') ? spec.unit : null),
                                 manufacturerId: (spec.manufacturerId && spec.manufacturerId !== '') ? spec.manufacturerId : ((spec.brand && spec.brand !== '') ? spec.brand : null),
                                 description: (spec.description || spec.desc || '').trim() || null
@@ -245,7 +257,7 @@ const createTender = async (req, res) => {
         res.status(201).json(tender);
     } catch (error) {
         console.error('CreateTender Error:', error);
-        res.status(error.isClientError ? 400 : 500).json({ error: error.message || 'Ошибка при создании тендера', details: error.message });
+        sendError(res, error, 'Ошибка при создании тендера');
     }
 };
 
@@ -384,7 +396,7 @@ const getTenders = async (req, res) => {
         res.json(tenders);
     } catch (error) {
         console.error('GetTenders Error:', error);
-        res.status(500).json({ error: 'Ошибка при получении списка тендеров', details: error.message });
+        sendError(res, error, 'Ошибка при получении списка тендеров');
     }
 };
 
@@ -606,6 +618,12 @@ const updateTender = async (req, res) => {
         if (deadline && !newDeadline) {
             return res.status(400).json({ error: 'Некорректный дедлайн' });
         }
+        if (newDeadline && deadlineTooFar(newDeadline)) {
+            return res.status(400).json({ error: 'Дедлайн дальше чем через 2 года: проверьте год' });
+        }
+        if (tooLong(req.body.title, MAX_TITLE)) {
+            return res.status(400).json({ error: `Название тендера: не длиннее ${MAX_TITLE} символов` });
+        }
         if (existingTender.status !== 'TASLAMA' && !statusChanged) {
             if (existingTender.status !== 'ACYK') {
                 return res.status(400).json({ error: 'Приём заявок закрыт: тендер больше нельзя редактировать. Доступны только отмена или архив.' });
@@ -682,7 +700,7 @@ const updateTender = async (req, res) => {
         res.json(updated);
     } catch (error) {
         console.error('UpdateTender Error:', error);
-        res.status(500).json({ error: 'Ошибка обновления тендера', details: error.message });
+        sendError(res, error, 'Ошибка обновления тендера');
     }
 };
 
@@ -719,9 +737,19 @@ const publishTender = async (req, res) => {
             return res.status(400).json({ error: 'Невозможно опубликовать тендер: дедлайн уже прошёл. Укажите новый срок.' });
         }
 
-        const updated = await prisma.tender.update({
+        if (!tender.title?.trim() || tender.title.trim() === 'Без названия') {
+            return res.status(400).json({ error: 'Невозможно опубликовать тендер: укажите название закупки' });
+        }
+
+        // Атомарно: при двойном клике второй запрос не пройдёт (статус уже не TASLAMA),
+        // иначе поставщики получили бы оповещение о публикации дважды
+        const switched = await prisma.tender.updateMany({ where: { id, status: 'TASLAMA' }, data: { status: 'ACYK' } });
+        if (switched.count === 0) {
+            return res.status(400).json({ error: 'Тендер уже опубликован' });
+        }
+
+        const updated = await prisma.tender.findUnique({
             where: { id },
-            data: { status: 'ACYK' },
             include: {
                 lots: {
                     orderBy: { lotNumber: 'asc' },
@@ -795,7 +823,7 @@ const publishTender = async (req, res) => {
         res.json(updated);
     } catch (error) {
         console.error('PublishTender Error:', error);
-        res.status(500).json({ error: 'Ошибка публикации тендера', details: error.message });
+        sendError(res, error, 'Ошибка публикации тендера');
     }
 };
 
@@ -818,6 +846,9 @@ const createLot = async (req, res) => {
             slaPeriod,
             specs
         } = req.body;
+
+        const inputError = specsError(specs) || lotNumberError(lotNumber) || (tooLong(name, MAX_TITLE) ? 'Слишком длинное название лота' : null);
+        if (inputError) return res.status(400).json({ error: inputError });
 
         const tender = await prisma.tender.findUnique({ where: { id } });
         if (!tender) {
@@ -866,7 +897,7 @@ const createLot = async (req, res) => {
                             positionNumber: parseInt(spec.positionNumber, 10) || (idx + 1),
                             generalProductId: (spec.generalProductId && spec.generalProductId !== '') ? spec.generalProductId : null,
                             name: (spec.name || spec.haryt || '').trim(),
-                            quantity: parseFloat(spec.quantity || spec.mukdar) || 1,
+                            quantity: parseQuantity(spec.quantity ?? spec.mukdar),
                             unitId: (spec.unitId && spec.unitId !== '') ? spec.unitId : ((spec.unit && spec.unit !== '') ? spec.unit : null),
                             manufacturerId: (spec.manufacturerId && spec.manufacturerId !== '') ? spec.manufacturerId : ((spec.brand && spec.brand !== '') ? spec.brand : null),
                             description: (spec.description || spec.desc || '').trim() || null
@@ -894,7 +925,7 @@ const createLot = async (req, res) => {
         res.status(201).json(newLot);
     } catch (error) {
         console.error('CreateLot error:', error);
-        res.status(500).json({ error: 'Ошибка создания лота', details: error.message });
+        sendError(res, error, 'Ошибка создания лота');
     }
 };
 
@@ -917,6 +948,9 @@ const updateLot = async (req, res) => {
             slaPeriod,
             specs
         } = req.body;
+
+        const inputError = specsError(specs) || lotNumberError(lotNumber) || (tooLong(name, MAX_TITLE) ? 'Слишком длинное название лота' : null);
+        if (inputError) return res.status(400).json({ error: inputError });
 
         const existingLot = await prisma.tenderLot.findFirst({
             where: { id: lotId, tenderId: id }
@@ -963,7 +997,7 @@ const updateLot = async (req, res) => {
                             positionNumber: parseInt(spec.positionNumber, 10) || (idx + 1),
                             generalProductId: (spec.generalProductId && spec.generalProductId !== '') ? spec.generalProductId : null,
                             name: (spec.name || spec.haryt || '').trim(),
-                            quantity: parseFloat(spec.quantity || spec.mukdar) || 1,
+                            quantity: parseQuantity(spec.quantity ?? spec.mukdar),
                             unitId: (spec.unitId && spec.unitId !== '') ? spec.unitId : ((spec.unit && spec.unit !== '') ? spec.unit : null),
                             manufacturerId: (spec.manufacturerId && spec.manufacturerId !== '') ? spec.manufacturerId : ((spec.brand && spec.brand !== '') ? spec.brand : null),
                             description: (spec.description || spec.desc || '').trim() || null
@@ -991,7 +1025,7 @@ const updateLot = async (req, res) => {
         res.json(updatedLot);
     } catch (error) {
         console.error('UpdateLot error:', error);
-        res.status(500).json({ error: 'Ошибка обновления лота', details: error.message });
+        sendError(res, error, 'Ошибка обновления лота');
     }
 };
 
@@ -1018,7 +1052,7 @@ const deleteLot = async (req, res) => {
         res.json({ success: true, message: 'Лот успешно удален', lotId });
     } catch (error) {
         console.error('DeleteLot error:', error);
-        res.status(500).json({ error: 'Ошибка удаления лота', details: error.message });
+        sendError(res, error, 'Ошибка удаления лота');
     }
 };
 
@@ -1039,7 +1073,7 @@ const deleteTender = async (req, res) => {
         res.json({ message: 'Тендер успешно удален' });
     } catch (error) {
         console.error('Delete tender error:', error);
-        res.status(500).json({ error: 'Ошибка при удалении тендера', details: error.message });
+        sendError(res, error, 'Ошибка при удалении тендера');
     }
 };
 

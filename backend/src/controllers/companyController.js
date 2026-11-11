@@ -1,4 +1,5 @@
     const prisma = require('../lib/prisma');
+const { sendError } = require('../utils/httpErrors');
     const bcrypt = require('bcryptjs');
     const { passwordError } = require('../utils/accountRules');
     const createCompany = async (req, res) => {
@@ -72,7 +73,7 @@
 
             res.status(201).json(result);
         } catch (error) {
-            res.status(500).json({ error: 'Ошибка при создании компании', details: error.message });
+            sendError(res, error, 'Ошибка при создании компании');
         }
     };
 
@@ -88,7 +89,7 @@
 
             res.json(companies);
         } catch (error) {
-            res.status(500).json({ error: 'Ошибка при получении компаний', details: error.message });
+            sendError(res, error, 'Ошибка при получении компаний');
         }
     };
 
@@ -143,7 +144,7 @@
 
             res.json(company);
         } catch (error) {
-            res.status(500).json({ error: 'Ошибка при обновлении компании', details: error.message });
+            sendError(res, error, 'Ошибка при обновлении компании');
         }
     };
 
@@ -174,7 +175,7 @@
 
             res.json({ message: 'Компания и связанный аккаунт успешно удалены' });
         } catch (error) {
-            res.status(500).json({ error: 'Ошибка при удалении компании', details: error.message });
+            sendError(res, error, 'Ошибка при удалении компании');
         }
     };
 

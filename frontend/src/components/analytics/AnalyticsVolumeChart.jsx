@@ -222,7 +222,7 @@ export default function AnalyticsVolumeChart({
                   x={pt.x}
                   y={svgHeight - 10}
                   textAnchor="middle"
-                  className={`text-[10px] font-medium transition-colors ${
+                  className={`text-[11px] font-medium transition-colors ${
                     isHovered
                       ? 'fill-emerald-600 dark:fill-emerald-400 font-bold'
                       : isDarkMode
@@ -270,7 +270,7 @@ export default function AnalyticsVolumeChart({
             >
               <div className="font-bold text-slate-900 dark:text-white border-b border-slate-200/60 dark:border-slate-700 pb-1.5 mb-1.5 flex items-center justify-between gap-4">
                 <span>{activeTimelineItem.label}</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 font-semibold">
+                <span className="text-[11px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 font-semibold">
                   {t('tradeDynamics', 'Динамика')}
                 </span>
               </div>
@@ -293,7 +293,7 @@ export default function AnalyticsVolumeChart({
                     {formatCurrency(activeTimelineItem.awarded, currencySymbol)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between gap-4 pt-1 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+                <div className="flex items-center justify-between gap-4 pt-1 border-t border-slate-100 dark:border-slate-800 text-[12px]">
                   <span className="text-slate-400">Экономия:</span>
                   <span className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
                     +{formatCurrency(activeTimelineItem.savings, currencySymbol)}

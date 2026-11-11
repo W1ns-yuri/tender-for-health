@@ -48,13 +48,13 @@ export default function SupplierAdminPanel({
           </p>
           {hasChanges && (
             <div className="flex items-center gap-1.5 flex-wrap mt-2">
-              <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+              <span className="text-[12px] font-bold text-amber-700 dark:text-amber-400">
                 {t('modifiedFieldsLabel', 'Изменено:')}
               </span>
               {parsedNotes.changes.map((c, i) => (
                 <span
                   key={c.field || i}
-                  className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800"
+                  className="px-2 py-0.5 rounded-md text-[12px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800"
                 >
                   {t(c.key, c.label)}
                 </span>

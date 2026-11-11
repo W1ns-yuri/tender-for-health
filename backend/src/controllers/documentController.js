@@ -3,6 +3,8 @@ const fs = require('fs');
 const prisma = require('../lib/prisma');
 const { isTenderOpened } = require('../utils/sealedEnvelope');
 const { checkTenderVisible } = require('../utils/tenderAccess');
+const { fileContentError } = require('../middleware/uploadMiddleware');
+const { sendError } = require('../utils/httpErrors');
 
 const uploadDir = path.join(__dirname, '../../uploads');
 
@@ -101,6 +103,12 @@ const uploadDocument = async (req, res) => {
             return res.status(400).json({ error: 'Файл не был загружен' });
         }
 
+        const contentError = fileContentError(req.file);
+        if (contentError) {
+            removeUploadedFile(req.file);
+            return res.status(400).json({ error: contentError });
+        }
+
         const { name, description, documentTypeId, tenderId, lotId, supplierId, offerId } = req.body;
 
         const targetError = await checkUploadTargets(req.user, { tenderId, lotId, supplierId, offerId });
@@ -152,7 +160,7 @@ const uploadDocument = async (req, res) => {
 
         res.status(201).json({ ...document, url: publicPath });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при сохранении документа', details: error.message });
+        sendError(res, error, 'Ошибка при сохранении документа');
     }
 };
 
@@ -224,7 +232,7 @@ const getDocuments = async (req, res) => {
 
         res.json(documents);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении документов', details: error.message });
+        sendError(res, error, 'Ошибка при получении документов');
     }
 };
 
@@ -268,7 +276,7 @@ const deleteDocument = async (req, res) => {
 
         res.json({ success: true, message: 'Документ успешно удален' });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при удалении документа', details: error.message });
+        sendError(res, error, 'Ошибка при удалении документа');
     }
 };
 
@@ -299,7 +307,7 @@ const updateDocument = async (req, res) => {
 
         res.json(updated);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при обновлении документа', details: error.message });
+        sendError(res, error, 'Ошибка при обновлении документа');
     }
 };
 

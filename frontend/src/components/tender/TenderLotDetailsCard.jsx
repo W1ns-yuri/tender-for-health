@@ -1,3 +1,4 @@
+import { lotLabel } from '../../utils/pluralize';
 import React, { useMemo } from 'react';
 import { Bookmark, Trash2 } from 'lucide-react';
 import CustomSelect from '../CustomSelect';
@@ -30,7 +31,7 @@ export default function TenderLotDetailsCard({
         <div className="flex items-center gap-2">
           <Bookmark size={16} className="text-emerald-600 dark:text-emerald-400" />
           <h3 className={`text-sm font-black ${theme?.primaryText || ''}`}>
-            {`Лот №${activeLot.lotNumber || activeLotIndex + 1}: ${activeLot.name || ''}`}
+            {lotLabel(activeLot.name, activeLot.lotNumber || activeLotIndex + 1)}
           </h3>
         </div>
 

@@ -218,13 +218,13 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
   }, []);
 
   return (
-    <header className={`h-16 px-6 flex items-center justify-between sticky top-0 z-20 border-b shadow-xs transition-colors ${
+    <header className={`h-16 px-3 sm:px-6 gap-2 flex items-center justify-between sticky top-0 z-20 border-b shadow-xs transition-colors ${
       isDarkMode ? 'bg-[#111827] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
     }`}>
       
       {/* 1. Навигация и интерактивный живой поиск */}
-      <div className="flex items-center space-x-3 flex-1 mr-4 max-w-2xl" ref={searchContainerRef}>
-        <div className="flex items-center space-x-1 shrink-0">
+      <div className="flex items-center space-x-3 flex-1 min-w-0 sm:mr-4 max-w-2xl" ref={searchContainerRef}>
+        <div className="hidden sm:flex items-center space-x-1 shrink-0">
           <button 
             onClick={() => navigate(-1)} 
             className={`p-1.5 rounded-lg border transition-colors ${
@@ -292,9 +292,9 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
                   {/* Группа: Тендеры */}
                   {searchResults.tenders.length > 0 && (
                     <div className="p-2">
-                      <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                      <div className="px-3 py-1.5 text-[12px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
                         <span>{t('tenders', 'Тендеры')}</span>
-                        <span className="text-[10px] font-medium lowercase">найдено {searchResults.tenders.length}</span>
+                        <span className="text-[11px] font-medium lowercase">найдено {searchResults.tenders.length}</span>
                       </div>
                       <div className="space-y-1">
                         {searchResults.tenders.map((tender) => (
@@ -318,7 +318,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
                                   <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">
                                     {tender.tenderNumber}
                                   </span>
-                                  <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold ${
+                                  <span className={`text-[11px] px-1.5 py-0.2 rounded font-semibold ${
                                     tender.status === 'ACYK'
                                       ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400'
                                       : tender.status === 'YENIJI_YGLAN_EDILDI'
@@ -347,9 +347,9 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
                   {/* Группа: Поставщики (для Администратора) */}
                   {isAdmin && searchResults.suppliers.length > 0 && (
                     <div className="p-2">
-                      <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                      <div className="px-3 py-1.5 text-[12px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
                         <span>{t('suppliersListTitle', 'Поставщики')}</span>
-                        <span className="text-[10px] font-medium lowercase">найдено {searchResults.suppliers.length}</span>
+                        <span className="text-[11px] font-medium lowercase">найдено {searchResults.suppliers.length}</span>
                       </div>
                       <div className="space-y-1">
                         {searchResults.suppliers.map((supplier) => (
@@ -372,7 +372,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
                                 <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
                                   {supplier.name}
                                 </p>
-                                <p className="text-[11px] text-slate-400 truncate">
+                                <p className="text-[12px] text-slate-400 truncate">
                                   {supplier.region || 'г. Ашхабад'} • {supplier.taxId ? `ИНН: ${supplier.taxId}` : 'Верифицирован'}
                                 </p>
                               </div>
@@ -392,7 +392,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
       </div>
 
       {/* 2. Правые инструменты (Язык + Центр уведомлений + Настройки + Профиль) */}
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
         
         {/* Выбор языка */}
         <div className="relative" ref={langContainerRef}>
@@ -403,7 +403,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
             }`}
           >
             <Globe size={15} className="text-slate-400" />
-            <span>{currentLang.name}</span>
+            <span className="hidden sm:inline">{currentLang.name}</span>
           </button>
 
           {showLangMenu && (
@@ -441,7 +441,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
           >
             <Bell size={18} />
             {unreadCount > 0 && (
-              <span className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center text-white ring-2 ${
+              <span className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-bold flex items-center justify-center text-white ring-2 ${
                 isDarkMode ? 'ring-[#111827]' : 'ring-white'
               } ${isAdmin ? 'bg-emerald-600' : 'bg-blue-600'} animate-pulse`}>
                 {unreadCount}
@@ -464,7 +464,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
                     {t('notificationsTitle', 'Уведомления')}
                   </h3>
                   {unreadCount > 0 && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                       {unreadCount} новых
                     </span>
                   )}
@@ -472,7 +472,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center space-x-1"
+                    className="text-[12px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center space-x-1"
                   >
                     <CheckCheck size={13} />
                     <span>{t('markAllAsRead', 'Прочитать все')}</span>
@@ -494,7 +494,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
                   }`}
                 >
                   <span>Все</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                  <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                     {notificationsList.length}
                   </span>
                 </button>
@@ -509,7 +509,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
                 >
                   <span>Непрочитанные</span>
                   {unreadCount > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
+                    <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
                       {unreadCount}
                     </span>
                   )}
@@ -530,7 +530,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
                         <p className="text-xs font-semibold">
                           {notifFilter === 'unread' ? 'Нет непрочитанных уведомлений' : t('noNotificationsTitle', 'Нет новых уведомлений')}
                         </p>
-                        <p className="text-[11px] text-slate-400">
+                        <p className="text-[12px] text-slate-400">
                           {notifFilter === 'unread' ? 'Все уведомления прочитаны' : t('noNotificationsHint', 'Все важные события по закупкам и предложениям появятся здесь')}
                         </p>
                       </div>
@@ -588,10 +588,10 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
                               </button>
                             </div>
                           </div>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed line-clamp-2">
+                          <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed line-clamp-2">
                             {notif.message || notif.description}
                           </p>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 inline-block">
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 inline-block">
                             {formatTimeAgo(notif.createdAt || notif.time)}
                           </span>
                         </div>
@@ -602,7 +602,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
               </div>
 
               {/* Подвал */}
-              <div className={`p-2.5 text-center border-t text-[11px] font-semibold text-slate-500 dark:text-slate-400 ${
+              <div className={`p-2.5 text-center border-t text-[12px] font-semibold text-slate-500 dark:text-slate-400 ${
                 isDarkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-100 bg-slate-50/70'
               }`}>
                 Центр оперативных уведомлений тендерной платформы

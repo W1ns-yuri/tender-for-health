@@ -67,7 +67,7 @@ export function TableHeaderCell({
     <th
       onClick={sortable ? onSort : undefined}
       className={`
-        py-3.5 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400
+        py-3.5 px-4 text-[12px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400
         ${sortable ? 'cursor-pointer select-none hover:text-slate-800 dark:hover:text-slate-200 transition-colors' : ''}
         ${alignClass}
         ${className}

@@ -109,7 +109,7 @@ export default function ProductSearchableSelect({
               updateCoords();
             }
           }}
-          className={`flex-1 px-2.5 py-1.5 rounded-md text-xs cursor-pointer flex justify-between items-center transition-all duration-150 font-medium ${
+          className={`flex-1 min-w-0 px-2.5 py-1.5 rounded-md text-xs cursor-pointer flex justify-between items-center transition-all duration-150 font-medium ${
             disabled
               ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800'
               : isDuplicate
@@ -209,15 +209,15 @@ export default function ProductSearchableSelect({
                   <div className="flex flex-col min-w-0 pr-2">
                     <span className="font-semibold text-xs leading-tight truncate">{p.name}</span>
                     {p.tradeName && (
-                      <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium truncate">
+                      <span className="text-[12px] text-emerald-600 dark:text-emerald-400 font-medium truncate">
                         {p.tradeName}
                       </span>
                     )}
                     {p.category?.name && (
-                      <span className="text-[10px] text-slate-400 truncate">{p.category.name}</span>
+                      <span className="text-[11px] text-slate-400 truncate">{p.category.name}</span>
                     )}
                   </div>
-                  {p.code && <span className="text-[10px] text-slate-400 font-mono shrink-0">{p.code}</span>}
+                  {p.code && <span className="text-[11px] text-slate-400 font-mono shrink-0">{p.code}</span>}
                 </div>
               ))
             ) : (
@@ -233,7 +233,7 @@ export default function ProductSearchableSelect({
                   <button
                     type="button"
                     onClick={() => handleOpenModalAndCloseDropdown(search.trim())}
-                    className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer inline-flex items-center gap-1 mt-1 text-[11px]"
+                    className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer inline-flex items-center gap-1 mt-1 text-[12px]"
                   >
                     <Plus size={12} />
                     <span>{t('createNowPrompt', 'Создать в справочнике')}</span>

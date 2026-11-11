@@ -55,7 +55,7 @@ export default function AuthDemoModal({
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span
-                    className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${acc.badgeColor}`}
+                    className={`text-[11px] font-black px-2 py-0.5 rounded-md border ${acc.badgeColor}`}
                   >
                     {acc.badge}
                   </span>

@@ -62,7 +62,7 @@ export default function TenderDetailsLotsTab({
                 {lotLabel(lItem.name, lItem.lotNumber || lIdx + 1)}
               </span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-black ${
+                className={`text-[11px] px-1.5 py-0.2 rounded-full font-mono font-black ${
                   isActive
                     ? role === 'SUPPLIER'
                       ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
@@ -95,7 +95,7 @@ export default function TenderDetailsLotsTab({
                 {cleanLotTitle(lot.name, lot.lotNumber || lotIdx + 1)}
               </h3>
               <span
-                className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+                className={`text-[12px] font-semibold px-2 py-0.5 rounded-md ${
                   isWorks
                     ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
                     : isServices
@@ -183,7 +183,7 @@ export default function TenderDetailsLotsTab({
             <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-800">
               <Trophy size={16} className="text-emerald-500" />
               <div>
-                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">
+                <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">
                   {t('winnerBadge', 'Победитель')}
                 </div>
                 <div className="text-sm font-bold text-slate-800 dark:text-slate-200">

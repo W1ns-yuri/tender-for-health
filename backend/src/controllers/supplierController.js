@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { sendNotification, notifyAdmins } = require('./notificationController');
+const { sendError } = require('../utils/httpErrors');
 
 // Вспомогательная функция определения измененных секций профиля поставщика для модератора
 const detectProfileChanges = (supplier, body, cleanName, combinedPassport) => {
@@ -331,7 +332,7 @@ const updateProfile = async (req, res) => {
 
         res.json(updatedSupplier);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка обновления профиля', details: error.message });
+        sendError(res, error, 'Ошибка обновления профиля');
     }
 };
 
@@ -353,7 +354,7 @@ const getPendingSuppliers = async (req, res) => {
         });
         res.json(pending);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении списка на модерацию', details: error.message });
+        sendError(res, error, 'Ошибка при получении списка на модерацию');
     }
 };
 
@@ -391,7 +392,7 @@ const getAllSuppliers = async (req, res) => {
         });
         res.json(suppliers);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении реестра поставщиков', details: error.message });
+        sendError(res, error, 'Ошибка при получении реестра поставщиков');
     }
 };
 
@@ -408,7 +409,7 @@ const getMyProfile = async (req, res) => {
         }
         res.json(supplier);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении профиля', details: error.message });
+        sendError(res, error, 'Ошибка при получении профиля');
     }
 };
 
@@ -443,7 +444,7 @@ const getSupplierById = async (req, res) => {
 
         res.json(supplier);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении данных поставщика', details: error.message });
+        sendError(res, error, 'Ошибка при получении данных поставщика');
     }
 };
 
@@ -476,7 +477,7 @@ const getSupplierStats = async (req, res) => {
 
         res.json({ totalOffers, wonOffers });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка получения статистики поставщика', details: error.message });
+        sendError(res, error, 'Ошибка получения статистики поставщика');
     }
 };
 
@@ -506,7 +507,7 @@ const deleteSupplier = async (req, res) => {
 
         res.json({ message: 'Поставщик успешно удален' });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при удалении поставщика', details: error.message });
+        sendError(res, error, 'Ошибка при удалении поставщика');
     }
 };
 
@@ -576,7 +577,7 @@ const adminUpdateSupplier = async (req, res) => {
 
         res.json(updated);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка обновления поставщика', details: error.message });
+        sendError(res, error, 'Ошибка обновления поставщика');
     }
 };
 
@@ -644,7 +645,7 @@ const approveSupplier = async (req, res) => {
 
         res.json(updated);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при одобрении', details: error.message });
+        sendError(res, error, 'Ошибка при одобрении');
     }
 };
 
@@ -696,7 +697,7 @@ const rejectSupplier = async (req, res) => {
 
         res.json(updated);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при отклонении', details: error.message });
+        sendError(res, error, 'Ошибка при отклонении');
     }
 };
 
@@ -744,7 +745,7 @@ const getModerationArchive = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении архива модерации', details: error.message });
+        sendError(res, error, 'Ошибка при получении архива модерации');
     }
 };
 

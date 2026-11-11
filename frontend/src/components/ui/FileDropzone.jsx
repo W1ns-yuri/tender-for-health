@@ -94,11 +94,11 @@ export default function FileDropzone({
             </h5>
             <div className="flex items-center gap-2 mt-0.5">
               {fileSize && (
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[12px] text-slate-400">
                   {formatSize(fileSize)}
                 </span>
               )}
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 size={12} />
                 <span>Ýüklenen</span>
               </span>
@@ -156,7 +156,7 @@ export default function FileDropzone({
           {title}
         </h4>
 
-        <p className="text-[11px] sm:text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
+        <p className="text-[12px] sm:text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
           {subtitle}
         </p>
       </div>

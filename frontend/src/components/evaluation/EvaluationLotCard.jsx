@@ -81,7 +81,7 @@ export default function EvaluationLotCard({
             </p>
             {lot.deliveryTerm && (
               <p className="flex items-center gap-1.5 border-l border-slate-300 dark:border-slate-700 pl-4">
-                <span className="uppercase text-[10px] text-slate-400 font-semibold tracking-wider">
+                <span className="uppercase text-[11px] text-slate-400 font-semibold tracking-wider">
                   {t('deliveryIncotermsLabel', 'Поставка (Incoterms):')}
                 </span>
                 <strong 

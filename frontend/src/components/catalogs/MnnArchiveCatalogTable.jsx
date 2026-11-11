@@ -67,7 +67,7 @@ export default function MnnArchiveCatalogTable({
                     {item.name}
                   </span>
                   {item.categories && item.categories.length > 0 && (
-                    <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 block">
+                    <span className="text-[12px] text-slate-400 dark:text-slate-500 mt-0.5 block">
                       {item.categories.map((c) => c.name).join(', ')}
                     </span>
                   )}

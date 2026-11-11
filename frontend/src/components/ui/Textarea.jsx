@@ -38,7 +38,7 @@ const Textarea = forwardRef(function Textarea(
         )}
 
         {showCount && maxLength && (
-          <span className="text-[11px] text-slate-400 dark:text-slate-500">
+          <span className="text-[12px] text-slate-400 dark:text-slate-500">
             {currentLength} / {maxLength}
           </span>
         )}

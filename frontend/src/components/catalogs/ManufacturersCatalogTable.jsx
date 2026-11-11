@@ -69,7 +69,7 @@ export default function ManufacturersCatalogTable({
                       <Globe size={13} className="text-emerald-500" />
                       <span>{m.country.name}</span>
                       {m.country.alpha2 && (
-                        <span className="font-mono text-[10px] text-slate-400">
+                        <span className="font-mono text-[11px] text-slate-400">
                           ({m.country.alpha2})
                         </span>
                       )}

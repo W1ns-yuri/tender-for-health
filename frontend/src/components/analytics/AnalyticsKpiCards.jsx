@@ -35,11 +35,11 @@ export default function AnalyticsKpiCards({
           {formatCurrency(kpi?.totalVolume || 0, currencySymbol)}
         </div>
         <div className="flex items-center mt-2.5">
-          <span className="inline-flex items-center text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200/60 dark:border-emerald-800/50">
+          <span className="inline-flex items-center text-[12px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200/60 dark:border-emerald-800/50">
             <TrendingUp size={11} className="mr-1" />
             {meta?.delta || '—'}
           </span>
-          <span className="text-[11px] text-slate-400 ml-2">
+          <span className="text-[12px] text-slate-400 ml-2">
             {meta?.delta
               ? t('vsPreviousPeriod', 'к прошлому периоду')
               : t('noPreviousPeriod', 'нет данных за прошлый период')}
@@ -67,7 +67,7 @@ export default function AnalyticsKpiCards({
             {kpi?.savingsPercent != null ? `${kpi.savingsPercent}% ${t('budgetSavings', 'экономии')}` : t('noFinishedTenders', 'нет завершённых тендеров')}
           </span>
           <span
-            className="text-[10px] text-slate-400 cursor-help"
+            className="text-[11px] text-slate-400 cursor-help"
             title={t('savingsHint', 'Разница между НМЦК и ценой победителей')}
           >
             ⓘ{' '}
@@ -99,7 +99,7 @@ export default function AnalyticsKpiCards({
             )}
           </span>
         </div>
-        <div className="flex items-center space-x-1.5 mt-2.5 text-[11px] text-slate-500 dark:text-slate-400">
+        <div className="flex items-center space-x-1.5 mt-2.5 text-[12px] text-slate-500 dark:text-slate-400">
           <span className="font-semibold text-emerald-600 dark:text-emerald-400">
             {kpi?.successfulProcedures || 0} {t('completedShort', 'успешно')}
           </span>
@@ -131,7 +131,7 @@ export default function AnalyticsKpiCards({
             )}
           </span>
         </div>
-        <div className="flex items-center mt-2.5 text-[11px] text-slate-500 dark:text-slate-400">
+        <div className="flex items-center mt-2.5 text-[12px] text-slate-500 dark:text-slate-400">
           <span className="font-medium text-slate-700 dark:text-slate-300">
             {t(
               'competitionAvg',
@@ -163,7 +163,7 @@ export default function AnalyticsKpiCards({
             )}
           </span>
         </div>
-        <div className="flex items-center mt-2.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+        <div className="flex items-center mt-2.5 text-[12px] text-emerald-600 dark:text-emerald-400 font-semibold">
           <span>+{kpi?.newSuppliersPeriod || 0} новых за период</span>
         </div>
       </div>

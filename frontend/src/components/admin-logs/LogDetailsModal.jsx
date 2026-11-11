@@ -45,7 +45,7 @@ export default function LogDetailsModal({
 
           <div>
             <p className="text-slate-400 font-semibold">{t('payloadLabel', 'Тело запроса (Payload)')}</p>
-            <pre className="p-3 bg-slate-100 dark:bg-slate-900 rounded-xl font-mono text-[11px] overflow-x-auto max-h-52 border border-slate-200/60 dark:border-slate-800">
+            <pre className="p-3 bg-slate-100 dark:bg-slate-900 rounded-xl font-mono text-[12px] overflow-x-auto max-h-52 border border-slate-200/60 dark:border-slate-800">
               {JSON.stringify(log.data, null, 2)}
             </pre>
           </div>

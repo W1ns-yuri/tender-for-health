@@ -75,7 +75,7 @@ export default function OfferStandaloneTable({
                         {productName}
                       </div>
                       {spec.description && (
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal">
+                        <div className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal">
                           {spec.description}
                         </div>
                       )}

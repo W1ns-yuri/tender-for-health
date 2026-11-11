@@ -65,7 +65,7 @@ export default function RejectSupplierModal({
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                 {t('rejectSupplierTitle', 'Отклонение заявки поставщика')}
               </h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-64">
+              <p className="text-[12px] text-slate-500 dark:text-slate-400 truncate max-w-64">
                 {supplierName}
               </p>
             </div>
@@ -123,7 +123,7 @@ export default function RejectSupplierModal({
 
           {/* Quick preset chips */}
           <div>
-            <span className="text-[11px] text-slate-400 block mb-1.5">
+            <span className="text-[12px] text-slate-400 block mb-1.5">
               {t('quickTemplates', 'Быстрые шаблоны:')}
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -137,7 +137,7 @@ export default function RejectSupplierModal({
                   key={tpl}
                   type="button"
                   onClick={() => setReason(tpl)}
-                  className={`text-[11px] px-2 py-1 rounded-lg border transition-colors cursor-pointer ${
+                  className={`text-[12px] px-2 py-1 rounded-lg border transition-colors cursor-pointer ${
                     isDarkMode 
                       ? 'border-slate-800 bg-slate-850 hover:bg-slate-800 text-slate-300' 
                       : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600'

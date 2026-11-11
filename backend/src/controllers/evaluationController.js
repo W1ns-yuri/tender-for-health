@@ -4,6 +4,7 @@ const { D } = require('../utils/money');
 const { isTenderOpened, sealOffer } = require('../utils/sealedEnvelope');
 
 const { isAwardingOpen } = require('../utils/tenderRules');
+const { sendError } = require('../utils/httpErrors');
 
 const NOT_OPENED_ERROR = 'Сначала вскройте конверты: до вскрытия цены предложений запечатаны.';
 const AWARDING_CLOSED_ERROR = 'Выбор победителей доступен только после вскрытия и до объявления итогов.';
@@ -69,7 +70,7 @@ const openTenderBids = async (req, res) => {
             openedOffersCount: updatedTender.offers.length,
         });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при вскрытии предложений', details: error.message });
+        sendError(res, error, 'Ошибка при вскрытии предложений');
     }
 };
 
@@ -146,7 +147,7 @@ const evaluateTenderBids = async (req, res) => {
             ranking: evaluatedOffers,
         });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при проведении оценки предложений', details: error.message });
+        sendError(res, error, 'Ошибка при проведении оценки предложений');
     }
 };
 
@@ -194,7 +195,7 @@ const selectWinnerOffer = async (req, res) => {
             status: 'YENIJI_YGLAN_EDILDI',
         });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при объявлении победителя', details: error.message });
+        sendError(res, error, 'Ошибка при объявлении победителя');
     }
 };
 
@@ -224,7 +225,7 @@ const getEvaluationTenders = async (req, res) => {
         });
         res.json(tenders);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении списка тендеров', details: error.message });
+        sendError(res, error, 'Ошибка при получении списка тендеров');
     }
 };
 
@@ -280,7 +281,7 @@ const getTenderEvaluationDetails = async (req, res) => {
 
         res.json(tender);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении деталей оценки', details: error.message });
+        sendError(res, error, 'Ошибка при получении деталей оценки');
     }
 };
 
@@ -355,7 +356,7 @@ const awardLot = async (req, res) => {
 
         res.json({ message: 'Победитель по лоту обновлен' });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при выборе победителя лота', details: error.message });
+        sendError(res, error, 'Ошибка при выборе победителя лота');
     }
 };
 
@@ -441,7 +442,7 @@ const completeEvaluation = async (req, res) => {
 
         res.json({ message: 'Оценка завершена, результаты оглашены' });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при завершении оценки', details: error.message });
+        sendError(res, error, 'Ошибка при завершении оценки');
     }
 };
 

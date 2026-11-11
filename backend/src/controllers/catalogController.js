@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { sendError } = require('../utils/httpErrors');
 
 // =============================
 // 1. Категории (Categories)
@@ -16,7 +17,7 @@ const getCategories = async (req, res) => {
         });
         res.json(categories);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении категорий', details: error.message });
+        sendError(res, error, 'Ошибка при получении категорий');
     }
 };
 
@@ -35,7 +36,7 @@ const createCategory = async (req, res) => {
         res.status(201).json(category);
     } catch (error) {
         console.error('createCategory error:', error);
-        res.status(500).json({ error: 'Ошибка при создании категории', details: error.message });
+        sendError(res, error, 'Ошибка при создании категории');
     }
 };
 
@@ -58,7 +59,7 @@ const getGeneralProducts = async (req, res) => {
         });
         res.json(products);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении справочника позиций', details: error.message });
+        sendError(res, error, 'Ошибка при получении справочника позиций');
     }
 };
 
@@ -88,7 +89,7 @@ const createGeneralProduct = async (req, res) => {
         res.status(201).json(product);
     } catch (error) {
         console.error('createGeneralProduct error:', error);
-        res.status(500).json({ error: 'Ошибка при добавлении записи в справочник', details: error.message });
+        sendError(res, error, 'Ошибка при добавлении записи в справочник');
     }
 };
 
@@ -102,7 +103,7 @@ const getUnits = async (req, res) => {
         });
         res.json(units);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении единиц измерения', details: error.message });
+        sendError(res, error, 'Ошибка при получении единиц измерения');
     }
 };
 
@@ -114,7 +115,7 @@ const createUnit = async (req, res) => {
         });
         res.status(201).json(unit);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при создании единицы измерения', details: error.message });
+        sendError(res, error, 'Ошибка при создании единицы измерения');
     }
 };
 
@@ -128,7 +129,7 @@ const getCurrencies = async (req, res) => {
         });
         res.json(currencies);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении валют', details: error.message });
+        sendError(res, error, 'Ошибка при получении валют');
     }
 };
 
@@ -140,7 +141,7 @@ const createCurrency = async (req, res) => {
         });
         res.status(201).json(currency);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при добавлении валюты', details: error.message });
+        sendError(res, error, 'Ошибка при добавлении валюты');
     }
 };
 
@@ -167,7 +168,7 @@ const setExchangeRate = async (req, res) => {
         });
         res.json(rate);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при обновлении курса валют', details: error.message });
+        sendError(res, error, 'Ошибка при обновлении курса валют');
     }
 };
 
@@ -181,7 +182,7 @@ const getCountries = async (req, res) => {
         });
         res.json(countries);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении списка стран', details: error.message });
+        sendError(res, error, 'Ошибка при получении списка стран');
     }
 };
 
@@ -193,7 +194,7 @@ const createCountry = async (req, res) => {
         });
         res.status(201).json(country);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при создании страны', details: error.message });
+        sendError(res, error, 'Ошибка при создании страны');
     }
 };
 
@@ -207,7 +208,7 @@ const getDeliveryTerms = async (req, res) => {
         });
         res.json(terms);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении условий поставки', details: error.message });
+        sendError(res, error, 'Ошибка при получении условий поставки');
     }
 };
 
@@ -219,7 +220,7 @@ const createDeliveryTerm = async (req, res) => {
         });
         res.status(201).json(term);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при создании условия поставки', details: error.message });
+        sendError(res, error, 'Ошибка при создании условия поставки');
     }
 };
 
@@ -234,7 +235,7 @@ const getManufacturers = async (req, res) => {
         });
         res.json(manufacturers);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении производителей', details: error.message });
+        sendError(res, error, 'Ошибка при получении производителей');
     }
 };
 
@@ -253,7 +254,7 @@ const createManufacturer = async (req, res) => {
         res.status(201).json(manufacturer);
     } catch (error) {
         console.error('createManufacturer error:', error);
-        res.status(500).json({ error: 'Ошибка при создании производителя', details: error.message });
+        sendError(res, error, 'Ошибка при создании производителя');
     }
 };
 
@@ -271,7 +272,7 @@ const updateCategory = async (req, res) => {
         res.json(category);
     } catch (error) { 
         console.error('updateCategory error:', error);
-        res.status(500).json({ error: 'Ошибка обновления категории', details: error.message }); 
+        sendError(res, error, 'Ошибка обновления категории'); 
     }
 };
 const deleteCategory = async (req, res) => {
@@ -280,7 +281,7 @@ const deleteCategory = async (req, res) => {
         res.status(204).send();
     } catch (error) { 
         console.error('deleteCategory error:', error);
-        res.status(500).json({ error: 'Ошибка удаления категории', details: error.message }); 
+        sendError(res, error, 'Ошибка удаления категории'); 
     }
 };
 
@@ -305,7 +306,7 @@ const updateGeneralProduct = async (req, res) => {
         res.json(product);
     } catch (error) { 
         console.error('updateGeneralProduct error:', error);
-        res.status(500).json({ error: 'Ошибка обновления позиции', details: error.message }); 
+        sendError(res, error, 'Ошибка обновления позиции'); 
     }
 };
 const deleteGeneralProduct = async (req, res) => {
@@ -314,7 +315,7 @@ const deleteGeneralProduct = async (req, res) => {
         res.status(204).send();
     } catch (error) { 
         console.error('deleteGeneralProduct error:', error);
-        res.status(500).json({ error: 'Ошибка удаления позиции', details: error.message }); 
+        sendError(res, error, 'Ошибка удаления позиции'); 
     }
 };
 
@@ -331,7 +332,7 @@ const updateUnit = async (req, res) => {
         res.json(unit);
     } catch (error) { 
         console.error('updateUnit error:', error);
-        res.status(500).json({ error: 'Ошибка обновления единицы измерения', details: error.message }); 
+        sendError(res, error, 'Ошибка обновления единицы измерения'); 
     }
 };
 const deleteUnit = async (req, res) => {
@@ -340,7 +341,7 @@ const deleteUnit = async (req, res) => {
         res.status(204).send();
     } catch (error) { 
         console.error('deleteUnit error:', error);
-        res.status(500).json({ error: 'Ошибка удаления единицы измерения', details: error.message }); 
+        sendError(res, error, 'Ошибка удаления единицы измерения'); 
     }
 };
 
@@ -359,7 +360,7 @@ const updateCurrency = async (req, res) => {
         res.json(currency);
     } catch (error) { 
         console.error('updateCurrency error:', error);
-        res.status(500).json({ error: 'Ошибка обновления валюты', details: error.message }); 
+        sendError(res, error, 'Ошибка обновления валюты'); 
     }
 };
 const deleteCurrency = async (req, res) => {
@@ -368,7 +369,7 @@ const deleteCurrency = async (req, res) => {
         res.status(204).send();
     } catch (error) { 
         console.error('deleteCurrency error:', error);
-        res.status(500).json({ error: 'Ошибка удаления валюты', details: error.message }); 
+        sendError(res, error, 'Ошибка удаления валюты'); 
     }
 };
 
@@ -386,7 +387,7 @@ const updateCountry = async (req, res) => {
         res.json(country);
     } catch (error) { 
         console.error('updateCountry error:', error);
-        res.status(500).json({ error: 'Ошибка обновления страны', details: error.message }); 
+        sendError(res, error, 'Ошибка обновления страны'); 
     }
 };
 const deleteCountry = async (req, res) => {
@@ -395,7 +396,7 @@ const deleteCountry = async (req, res) => {
         res.status(204).send();
     } catch (error) { 
         console.error('deleteCountry error:', error);
-        res.status(500).json({ error: 'Ошибка удаления страны', details: error.message }); 
+        sendError(res, error, 'Ошибка удаления страны'); 
     }
 };
 
@@ -411,7 +412,7 @@ const updateDeliveryTerm = async (req, res) => {
         res.json(term);
     } catch (error) { 
         console.error('updateDeliveryTerm error:', error);
-        res.status(500).json({ error: 'Ошибка обновления условия поставки', details: error.message }); 
+        sendError(res, error, 'Ошибка обновления условия поставки'); 
     }
 };
 const deleteDeliveryTerm = async (req, res) => {
@@ -420,7 +421,7 @@ const deleteDeliveryTerm = async (req, res) => {
         res.status(204).send();
     } catch (error) { 
         console.error('deleteDeliveryTerm error:', error);
-        res.status(500).json({ error: 'Ошибка удаления условия поставки', details: error.message }); 
+        sendError(res, error, 'Ошибка удаления условия поставки'); 
     }
 };
 
@@ -437,7 +438,7 @@ const updateManufacturer = async (req, res) => {
         res.json(m);
     } catch (error) { 
         console.error('updateManufacturer error:', error);
-        res.status(500).json({ error: 'Ошибка обновления производителя', details: error.message }); 
+        sendError(res, error, 'Ошибка обновления производителя'); 
     }
 };
 const deleteManufacturer = async (req, res) => {
@@ -446,7 +447,7 @@ const deleteManufacturer = async (req, res) => {
         res.status(204).send();
     } catch (error) { 
         console.error('deleteManufacturer error:', error);
-        res.status(500).json({ error: 'Ошибка удаления производителя', details: error.message }); 
+        sendError(res, error, 'Ошибка удаления производителя'); 
     }
 };
 
@@ -461,7 +462,7 @@ const getClients = async (req, res) => {
         });
         res.json(clients);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении заказчиков', details: error.message });
+        sendError(res, error, 'Ошибка при получении заказчиков');
     }
 };
 
@@ -473,7 +474,7 @@ const createClient = async (req, res) => {
         });
         res.status(201).json(client);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при создании заказчика', details: error.message });
+        sendError(res, error, 'Ошибка при создании заказчика');
     }
 };
 
@@ -487,7 +488,7 @@ const updateClient = async (req, res) => {
         });
         res.json(client);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при обновлении заказчика', details: error.message });
+        sendError(res, error, 'Ошибка при обновлении заказчика');
     }
 };
 
@@ -499,7 +500,7 @@ const deleteClient = async (req, res) => {
         });
         res.json({ message: 'Заказчик удален' });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при удалении заказчика', details: error.message });
+        sendError(res, error, 'Ошибка при удалении заказчика');
     }
 };
 
@@ -555,7 +556,7 @@ const getUniqueMNNs = async (req, res) => {
         const mnnList = Array.from(mnnMap.values()).sort((a, b) => a.name.localeCompare(b.name));
         res.json(mnnList);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении списка МНН', details: error.message });
+        sendError(res, error, 'Ошибка при получении списка МНН');
     }
 };
 
@@ -570,7 +571,7 @@ const getBrands = async (req, res) => {
         });
         res.json(brands);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении брендов', details: error.message });
+        sendError(res, error, 'Ошибка при получении брендов');
     }
 };
 
@@ -587,7 +588,7 @@ const createBrand = async (req, res) => {
         res.status(201).json(brand);
     } catch (error) {
         console.error('createBrand error:', error);
-        res.status(500).json({ error: 'Ошибка при создании бренда', details: error.message });
+        sendError(res, error, 'Ошибка при создании бренда');
     }
 };
 
@@ -606,7 +607,7 @@ const updateBrand = async (req, res) => {
         res.json(brand);
     } catch (error) {
         console.error('updateBrand error:', error);
-        res.status(500).json({ error: 'Ошибка при обновлении бренда', details: error.message });
+        sendError(res, error, 'Ошибка при обновлении бренда');
     }
 };
 
@@ -616,7 +617,7 @@ const deleteBrand = async (req, res) => {
         res.status(204).send();
     } catch (error) {
         console.error('deleteBrand error:', error);
-        res.status(500).json({ error: 'Ошибка при удалении бренда', details: error.message });
+        sendError(res, error, 'Ошибка при удалении бренда');
     }
 };
 
@@ -631,7 +632,7 @@ const getVariationGroups = async (req, res) => {
         });
         res.json(groups);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении вариаций', details: error.message });
+        sendError(res, error, 'Ошибка при получении вариаций');
     }
 };
 
@@ -649,7 +650,7 @@ const createVariationGroup = async (req, res) => {
         });
         res.status(201).json(group);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при создании группы вариаций', details: error.message });
+        sendError(res, error, 'Ошибка при создании группы вариаций');
     }
 };
 
@@ -663,7 +664,7 @@ const updateVariationGroup = async (req, res) => {
         });
         res.json(group);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при обновлении группы вариаций', details: error.message });
+        sendError(res, error, 'Ошибка при обновлении группы вариаций');
     }
 };
 
@@ -672,7 +673,7 @@ const deleteVariationGroup = async (req, res) => {
         await prisma.variationGroup.delete({ where: { id: req.params.id } });
         res.status(204).send();
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при удалении группы вариаций', details: error.message });
+        sendError(res, error, 'Ошибка при удалении группы вариаций');
     }
 };
 
@@ -685,7 +686,7 @@ const addVariationValue = async (req, res) => {
         });
         res.status(201).json(val);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка добавления значения вариации', details: error.message });
+        sendError(res, error, 'Ошибка добавления значения вариации');
     }
 };
 
@@ -694,7 +695,7 @@ const deleteVariationValue = async (req, res) => {
         await prisma.variationValue.delete({ where: { id: req.params.id } });
         res.status(204).send();
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка удаления значения вариации', details: error.message });
+        sendError(res, error, 'Ошибка удаления значения вариации');
     }
 };
 

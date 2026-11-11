@@ -58,11 +58,11 @@ export default function EvaluationLotComparativeTable({
                     {/* Условия поставки поставщика */}
                     {co.deliveryTerm && (
                       <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] text-slate-400 font-medium">
+                        <span className="text-[11px] text-slate-400 font-medium">
                           {t('deliveryLabel', 'Поставка:')}
                         </span>
                         <span 
-                          className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                          className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold border ${
                             lot.deliveryTerm && (co.deliveryTerm?.shortName || '').toLowerCase() !== (lot.deliveryTerm?.shortName || '').toLowerCase()
                               ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700/80'
                               : 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
@@ -71,7 +71,7 @@ export default function EvaluationLotComparativeTable({
                         >
                           {co.deliveryTerm?.shortName || co.deliveryTerm?.name}
                           {lot.deliveryTerm && (co.deliveryTerm?.shortName || '').toLowerCase() !== (lot.deliveryTerm?.shortName || '').toLowerCase() && (
-                            <span className="ml-1 text-[9px] font-sans font-normal opacity-90">
+                            <span className="ml-1 text-[11px] font-sans font-normal opacity-90">
                               ({t('differsFromSpecsBadge', 'отличается от ТЗ')})
                             </span>
                           )}
@@ -97,7 +97,7 @@ export default function EvaluationLotComparativeTable({
                       {Number(co.totalLotPrice).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {co.currencyCode}
                     </div>
                     {isLowest && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                         <TrendingDown size={11} />
                         {t('bestPriceBadge', 'Лучшая цена')}
                       </span>
@@ -107,11 +107,11 @@ export default function EvaluationLotComparativeTable({
                   {/* Сравнение цен */}
                   <td className="py-3 px-4 text-center">
                     {isLowest ? (
-                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded">
+                      <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded">
                         {t('baselineMinBadge', 'Базовая мин.')}
                       </span>
                     ) : (
-                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                      <span className="text-[12px] font-mono text-slate-500 dark:text-slate-400">
                         +{priceDiffPercent}%
                       </span>
                     )}

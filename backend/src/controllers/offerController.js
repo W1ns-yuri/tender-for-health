@@ -2,6 +2,8 @@ const prisma = require('../lib/prisma');
 const { sendNotification, notifyAdmins } = require('./notificationController');
 const { D, sumLineTotals } = require('../utils/money');
 const { isTenderOpened, sealOfferFor, SEALED_ERROR } = require('../utils/sealedEnvelope');
+const { sendError } = require('../utils/httpErrors');
+const { MAX_UNIT_PRICE } = require('../utils/validation');
 
 // 1. Создание профиля Поставщика (Supplier)
 const createSupplier = async (req, res) => {
@@ -26,7 +28,7 @@ const createSupplier = async (req, res) => {
 
         res.status(201).json(supplier);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при создании профиля поставщика', details: error.message });
+        sendError(res, error, 'Ошибка при создании профиля поставщика');
     }
 };
 
@@ -38,7 +40,7 @@ const getSuppliers = async (req, res) => {
         });
         res.json(suppliers);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении поставщиков', details: error.message });
+        sendError(res, error, 'Ошибка при получении поставщиков');
     }
 };
 
@@ -173,6 +175,9 @@ const createOffer = async (req, res) => {
             if (isNaN(unitPrice) || unitPrice <= 0) {
                 return res.status(400).json({ error: 'Цена за единицу товара должна быть больше нуля' });
             }
+            if (unitPrice > MAX_UNIT_PRICE) {
+                return res.status(400).json({ error: 'Слишком большая цена за единицу: проверьте, не лишние ли нули' });
+            }
             // Количество задаёт заказчик в тендере. Раньше поставщик мог прислать quantity: 1 вместо 6000,
             // получить сумму в тысячи раз меньше и "выиграть" сравнение по цене.
             item.quantity = validSpecMap.get(item.tenderSpecId);
@@ -301,7 +306,7 @@ const createOffer = async (req, res) => {
         if (error.code === 'P2002') {
             return res.status(400).json({ error: 'Вы уже подали заявку на этот тендер. От одного поставщика принимается только одна заявка.' });
         }
-        res.status(500).json({ error: 'Ошибка при сохранении коммерческого предложения', details: error.message });
+        sendError(res, error, 'Ошибка при сохранении коммерческого предложения');
     }
 };
 
@@ -355,7 +360,7 @@ const getOffersByTender = async (req, res) => {
             return { ...sealed, supplier: { id: o.supplier.id, name: o.supplier.name } };
         }));
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении предложений', details: error.message });
+        sendError(res, error, 'Ошибка при получении предложений');
     }
 };
 
@@ -386,7 +391,7 @@ const getMyOffers = async (req, res) => {
 
         res.json(offers);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении предложений', details: error.message });
+        sendError(res, error, 'Ошибка при получении предложений');
     }
 };
 
@@ -450,7 +455,7 @@ const getMyWins = async (req, res) => {
 
         res.json(winningOffers);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении выигранных тендеров', details: error.message });
+        sendError(res, error, 'Ошибка при получении выигранных тендеров');
     }
 };
 
@@ -472,7 +477,7 @@ const getAllOffers = async (req, res) => {
 
         res.json(offers.map((o) => sealOfferFor(req.user, o, o.tender, o.supplier?.userId)));
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении всех предложений', details: error.message });
+        sendError(res, error, 'Ошибка при получении всех предложений');
     }
 };
 
@@ -550,7 +555,7 @@ const getOfferById = async (req, res) => {
 
         res.json(offer);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении деталей предложения', details: error.message });
+        sendError(res, error, 'Ошибка при получении деталей предложения');
     }
 };
 
@@ -583,7 +588,7 @@ const deleteOffer = async (req, res) => {
         ]);
         res.json({ message: 'Предложение успешно удалено' });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при удалении предложения', details: error.message });
+        sendError(res, error, 'Ошибка при удалении предложения');
     }
 };
 

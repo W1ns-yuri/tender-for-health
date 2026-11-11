@@ -81,7 +81,7 @@ export default function OfferLotsNavigation({
                 <span className={`w-2 h-2 rounded-full ${isSelected ? (isActiveTab ? 'bg-white' : 'bg-blue-500') : 'bg-slate-300'}`}></span>
                 <span>{t('lotUpperLabel', 'Лот')} #{idx + 1}: {lot.name}</span>
                 {isSelected && lotTotal > 0 && (
-                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                  <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded ${
                     isActiveTab ? 'bg-blue-700 text-white' : 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300'
                   }`}>
                     {lotTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}

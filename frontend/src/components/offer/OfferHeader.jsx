@@ -88,13 +88,13 @@ export default function OfferHeader({
 
           {/* Виджет итоговой суммы предложения (компактный, расширяется по контенту) */}
           <div className="shrink-0 px-5 py-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 text-right shadow-xs">
-            <span className="text-[11px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider block">
+            <span className="text-[12px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider block">
               {t('totalOfferCost', 'Итоговая стоимость заявки')}
             </span>
             <div className="text-xl font-black text-blue-600 dark:text-blue-400 my-0.5 whitespace-nowrap">
               {grandTotal.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}
             </div>
-            <div className="text-[11px] text-slate-500 font-medium flex items-center justify-end gap-1.5 whitespace-nowrap">
+            <div className="text-[12px] text-slate-500 font-medium flex items-center justify-end gap-1.5 whitespace-nowrap">
               <CheckCircle2 size={13} className={pricedItemsCount > 0 ? "text-emerald-600" : "text-slate-400"} />
               <span>{t('pricedItemsProgress', `Оценено: ${pricedItemsCount} из ${totalActiveItemsCount} позиций`, { pricedItemsCount, totalActiveItemsCount })}</span>
             </div>
