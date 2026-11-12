@@ -5,6 +5,7 @@ const { isTenderOpened, sealOffer } = require('../utils/sealedEnvelope');
 
 const { isAwardingOpen } = require('../utils/tenderRules');
 const { sendError } = require('../utils/httpErrors');
+const { mandatoryViolations, attachRequirementChecks, REQUIREMENTS_INCLUDE, PRODUCT_VALUES_INCLUDE } = require('../services/specRequirements');
 
 const NOT_OPENED_ERROR = 'Сначала вскройте конверты: до вскрытия цены предложений запечатаны.';
 const AWARDING_CLOSED_ERROR = 'Выбор победителей доступен только после вскрытия и до объявления итогов.';
@@ -168,6 +169,11 @@ const selectWinnerOffer = async (req, res) => {
         if (!winningOffer || winningOffer.tenderId !== tenderId) {
             return res.status(400).json({ error: 'Указанная заявка не принадлежит данному тендеру' });
         }
+        const allSpecIds = (await prisma.tenderSpecification.findMany({ where: { tenderId }, select: { id: true } })).map((x) => x.id);
+        const problems = await mandatoryViolations(winningOfferId, allSpecIds);
+        if (problems.length) {
+            return res.status(400).json({ error: `Предложение не соответствует обязательным требованиям: ${problems.join('; ')}`, violations: problems });
+        }
 
         // Выполняем объявление победителя в транзакции
         await prisma.$transaction([
@@ -244,7 +250,8 @@ const getTenderEvaluationDetails = async (req, res) => {
                         specs: {
                             include: {
                                 generalProduct: true,
-                                unit: true
+                                unit: true,
+                                requirements: REQUIREMENTS_INCLUDE
                             }
                         }
                     }
@@ -261,10 +268,10 @@ const getTenderEvaluationDetails = async (req, res) => {
                         baseCurrency: true,
                         specs: {
                             include: {
-                                generalProduct: true,
+                                generalProduct: { include: PRODUCT_VALUES_INCLUDE },
                                 unit: true,
                                 manufacturer: true,
-                                tenderSpec: true
+                                tenderSpec: { include: { requirements: REQUIREMENTS_INCLUDE, generalProduct: { include: PRODUCT_VALUES_INCLUDE } } }
                             }
                         }
                     }
@@ -279,7 +286,7 @@ const getTenderEvaluationDetails = async (req, res) => {
             return res.json({ ...tender, offers: tender.offers.map(sealOffer), isSealed: true });
         }
 
-        res.json(tender);
+        res.json(attachRequirementChecks(tender));
     } catch (error) {
         sendError(res, error, 'Ошибка при получении деталей оценки');
     }
@@ -320,6 +327,14 @@ const awardLot = async (req, res) => {
             const hasLotPrices = await prisma.offerSpecification.count({ where: { offerId, tenderSpecId: { in: specIds } } });
             if (!hasLotPrices) {
                 return res.status(400).json({ error: 'Этот поставщик не подавал предложение по данному лоту' });
+            }
+        }
+
+        // Нарушено обязательное требование к характеристикам — такой товар победить не может
+        if (offerId) {
+            const problems = await mandatoryViolations(offerId, specIds);
+            if (problems.length) {
+                return res.status(400).json({ error: `Предложение не соответствует обязательным требованиям: ${problems.join('; ')}`, violations: problems });
             }
         }
 

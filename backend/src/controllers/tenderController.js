@@ -14,6 +14,35 @@ const { sendError } = require('../utils/httpErrors');
 const { publishTenderById, publishBlocker } = require('../services/tenderPublish');
 const { MAX_TITLE, tooLong, parseQuantity, specsError, lotNumberError, deadlineTooFar } = require('../utils/validation');
 
+const { normalizeSpecRequirements, REQUIREMENTS_INCLUDE } = require('../services/specRequirements');
+
+/**
+ * Записать позиции лота вместе с требованиями к характеристикам.
+ * Позиции без названия пропускаются. Ошибка в требованиях → 400 (isClientError), транзакция откатывается.
+ */
+async function createLotSpecs(tx, tenderId, lotId, specs) {
+    const valid = (Array.isArray(specs) ? specs : []).filter(s => (s.name || s.haryt) && (s.name || s.haryt).trim() !== '');
+    if (!valid.length) return;
+    const reqs = await normalizeSpecRequirements(valid);
+    if (reqs.error) throw Object.assign(new Error(reqs.error), { isClientError: true });
+    for (const [idx, spec] of valid.entries()) {
+        await tx.tenderSpecification.create({
+            data: {
+                tenderId,
+                lotId,
+                positionNumber: parseInt(spec.positionNumber, 10) || (idx + 1),
+                generalProductId: (spec.generalProductId && spec.generalProductId !== '') ? spec.generalProductId : null,
+                name: (spec.name || spec.haryt || '').trim(),
+                quantity: parseQuantity(spec.quantity ?? spec.mukdar),
+                unitId: (spec.unitId && spec.unitId !== '') ? spec.unitId : ((spec.unit && spec.unit !== '') ? spec.unit : null),
+                manufacturerId: (spec.manufacturerId && spec.manufacturerId !== '') ? spec.manufacturerId : ((spec.brand && spec.brand !== '') ? spec.brand : null),
+                description: (spec.description || spec.desc || '').trim() || null,
+                ...(reqs.bySpec[idx].length ? { requirements: { create: reqs.bySpec[idx] } } : {}),
+            },
+        });
+    }
+}
+
 // Генерация последовательного номера тендера вида TNDR-YYYY-MM-001
 const generateNextTenderNumber = async (txOrPrisma = prisma) => {
     const now = new Date();
@@ -166,22 +195,7 @@ const createTender = async (req, res) => {
                 });
 
                 if (lot.specs && Array.isArray(lot.specs)) {
-                    const validSpecs = lot.specs.filter(s => (s.name || s.haryt) && (s.name || s.haryt).trim() !== '');
-                    if (validSpecs.length > 0) {
-                        await tx.tenderSpecification.createMany({
-                            data: validSpecs.map((spec, sIdx) => ({
-                                tenderId: newTender.id,
-                                lotId: newLot.id,
-                                positionNumber: parseInt(spec.positionNumber, 10) || (sIdx + 1),
-                                generalProductId: (spec.generalProductId && spec.generalProductId !== '') ? spec.generalProductId : null,
-                                name: (spec.name || spec.haryt || '').trim(),
-                                quantity: parseQuantity(spec.quantity ?? spec.mukdar),
-                                unitId: (spec.unitId && spec.unitId !== '') ? spec.unitId : ((spec.unit && spec.unit !== '') ? spec.unit : null),
-                                manufacturerId: (spec.manufacturerId && spec.manufacturerId !== '') ? spec.manufacturerId : ((spec.brand && spec.brand !== '') ? spec.brand : null),
-                                description: (spec.description || spec.desc || '').trim() || null
-                            }))
-                        });
-                    }
+                    await createLotSpecs(tx, newTender.id, newLot.id, lot.specs);
                 }
             }
 
@@ -230,6 +244,7 @@ const createTender = async (req, res) => {
                                     generalProduct: true,
                                     unit: true,
                                     manufacturer: true,
+                                    requirements: REQUIREMENTS_INCLUDE,
                                 }
                             }
                         }
@@ -361,7 +376,7 @@ const getTenders = async (req, res) => {
                         category: true,
                         deliveryTerm: true,
                         specs: {
-                            include: { generalProduct: true, unit: true, manufacturer: true },
+                            include: { generalProduct: true, unit: true, manufacturer: true, requirements: REQUIREMENTS_INCLUDE },
                             orderBy: { positionNumber: 'asc' }
                         },
                         files: {
@@ -370,7 +385,7 @@ const getTenders = async (req, res) => {
                     }
                 },
                 specs: {
-                    include: { generalProduct: true, unit: true, manufacturer: true },
+                    include: { generalProduct: true, unit: true, manufacturer: true, requirements: REQUIREMENTS_INCLUDE },
                 },
                 createdBy: {
                     select: { id: true, username: true, firstName: true, lastName: true },
@@ -520,6 +535,7 @@ const getTenderById = async (req, res) => {
                                 generalProduct: true,
                                 unit: true,
                                 manufacturer: true,
+                                requirements: REQUIREMENTS_INCLUDE,
                             },
                             orderBy: { positionNumber: 'asc' }
                         },
@@ -803,22 +819,7 @@ const createLot = async (req, res) => {
             });
 
             if (specs && Array.isArray(specs)) {
-                const validSpecs = specs.filter(s => (s.name || s.haryt) && (s.name || s.haryt).trim() !== '');
-                if (validSpecs.length > 0) {
-                    await tx.tenderSpecification.createMany({
-                        data: validSpecs.map((spec, idx) => ({
-                            tenderId: id,
-                            lotId: lot.id,
-                            positionNumber: parseInt(spec.positionNumber, 10) || (idx + 1),
-                            generalProductId: (spec.generalProductId && spec.generalProductId !== '') ? spec.generalProductId : null,
-                            name: (spec.name || spec.haryt || '').trim(),
-                            quantity: parseQuantity(spec.quantity ?? spec.mukdar),
-                            unitId: (spec.unitId && spec.unitId !== '') ? spec.unitId : ((spec.unit && spec.unit !== '') ? spec.unit : null),
-                            manufacturerId: (spec.manufacturerId && spec.manufacturerId !== '') ? spec.manufacturerId : ((spec.brand && spec.brand !== '') ? spec.brand : null),
-                            description: (spec.description || spec.desc || '').trim() || null
-                        }))
-                    });
-                }
+                await createLotSpecs(tx, id, lot.id, specs);
             }
 
             return await tx.tenderLot.findUnique({
@@ -827,7 +828,7 @@ const createLot = async (req, res) => {
                     category: true,
                     deliveryTerm: true,
                     specs: {
-                        include: { generalProduct: true, unit: true, manufacturer: true },
+                        include: { generalProduct: true, unit: true, manufacturer: true, requirements: REQUIREMENTS_INCLUDE },
                         orderBy: { positionNumber: 'asc' }
                     },
                     files: {
@@ -903,22 +904,7 @@ const updateLot = async (req, res) => {
                     where: { lotId }
                 });
 
-                const validSpecs = specs.filter(s => (s.name || s.haryt) && (s.name || s.haryt).trim() !== '');
-                if (validSpecs.length > 0) {
-                    await tx.tenderSpecification.createMany({
-                        data: validSpecs.map((spec, idx) => ({
-                            tenderId: id,
-                            lotId: lotId,
-                            positionNumber: parseInt(spec.positionNumber, 10) || (idx + 1),
-                            generalProductId: (spec.generalProductId && spec.generalProductId !== '') ? spec.generalProductId : null,
-                            name: (spec.name || spec.haryt || '').trim(),
-                            quantity: parseQuantity(spec.quantity ?? spec.mukdar),
-                            unitId: (spec.unitId && spec.unitId !== '') ? spec.unitId : ((spec.unit && spec.unit !== '') ? spec.unit : null),
-                            manufacturerId: (spec.manufacturerId && spec.manufacturerId !== '') ? spec.manufacturerId : ((spec.brand && spec.brand !== '') ? spec.brand : null),
-                            description: (spec.description || spec.desc || '').trim() || null
-                        }))
-                    });
-                }
+                await createLotSpecs(tx, id, lotId, specs);
             }
 
             return await tx.tenderLot.findUnique({
@@ -927,7 +913,7 @@ const updateLot = async (req, res) => {
                     category: true,
                     deliveryTerm: true,
                     specs: {
-                        include: { generalProduct: true, unit: true, manufacturer: true },
+                        include: { generalProduct: true, unit: true, manufacturer: true, requirements: REQUIREMENTS_INCLUDE },
                         orderBy: { positionNumber: 'asc' }
                     },
                     files: {

@@ -257,6 +257,7 @@ model Attribute {
 
   categories CategoryAttribute[]
   values     ProductAttributeValue[]
+  requirements TenderSpecRequirement[]
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -531,7 +532,8 @@ model TenderSpecification {
   positionNumber Int     @default(1) @map("position_number")
   description    String?
 
-  offerSpecs OfferSpecification[]
+  offerSpecs   OfferSpecification[]
+  requirements TenderSpecRequirement[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -539,6 +541,31 @@ model TenderSpecification {
   @@index([tenderId])
   @@index([lotId])
   @@map("tender_specifications")
+}
+
+enum RequirementOperator {
+  EQ  // равно
+  GTE // не меньше
+  LTE // не больше
+}
+
+/// Требование к характеристике позиции: «Диагональ не меньше 23 дюймов».
+/// Обязательное нельзя нарушить (предложение не может победить), желательное только подсвечивается.
+model TenderSpecRequirement {
+  id          String              @id @default(uuid())
+  specId      String              @map("spec_id")
+  spec        TenderSpecification @relation(fields: [specId], references: [id], onDelete: Cascade)
+  attributeId String?             @map("attribute_id")
+  attribute   Attribute?          @relation(fields: [attributeId], references: [id], onDelete: SetNull)
+  customName  String?             @map("custom_name")
+  operator    RequirementOperator @default(EQ)
+  value       String
+  numberValue Float?              @map("number_value")
+  isMandatory Boolean             @default(true) @map("is_mandatory")
+  order       Int                 @default(0)
+
+  @@index([specId])
+  @@map("tender_spec_requirements")
 }
 
 // Старая модель TenderItem для прямой обратной совместимости
