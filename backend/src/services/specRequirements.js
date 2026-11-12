@@ -106,6 +106,7 @@ function checkRequirements(requirements = [], productValues = []) {
             requirementId: req.id,
             name: req.attribute?.name || req.customName,
             unit: req.attribute?.unit || null,
+            type: req.attribute?.type || null,
             operator: req.operator,
             required: req.value,
             isMandatory: req.isMandatory,

@@ -42,6 +42,10 @@ export default function EvaluationLotCard({
         totalItems: (lot.specs || []).length,
         offerSpecs: offerSpecsForLot,
         deliveryTerm: offer.deliveryTerm,
+        // Сравнение с требованиями к характеристикам (считает сервер)
+        mandatoryFailed: offerSpecsForLot.reduce((n, os) => n + (os.requirementCheck?.mandatoryFailed || 0), 0),
+        optionalFailed: offerSpecsForLot.reduce((n, os) => n + (os.requirementCheck?.optionalFailed || 0), 0),
+        reqUnknown: offerSpecsForLot.reduce((n, os) => n + (os.requirementCheck?.unknown || 0), 0),
       });
     }
   });

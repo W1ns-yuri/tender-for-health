@@ -1,5 +1,6 @@
 import React from 'react';
-import { CornerDownRight, Info } from 'lucide-react';
+import { CornerDownRight, Info, CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
+import { checkRequirements, requirementText, formatValue } from '../../utils/requirements';
 import ProductSearchableSelect from '../tender/ProductSearchableSelect';
 
 export default function OfferLotItemRow({
@@ -19,6 +20,10 @@ export default function OfferLotItemRow({
   const lineTotal = (parseFloat(item.requestedQty) || 0) * (parseFloat(item.price) || 0);
   const hasPrice = parseFloat(item.price) > 0;
   const isEq = Boolean(item.isEquivalent);
+  const requirements = item.requirements || [];
+  const offeredProduct = isEq ? products.find((p) => p.id === item.generalProductId) : null;
+  const checks = isEq && requirements.length ? checkRequirements(requirements, offeredProduct?.attributeValues || []) : [];
+  const mandatoryFailed = checks.filter((c) => c.req.isMandatory && c.status === 'MISMATCH').length;
 
   return (
     <React.Fragment key={item.tenderSpecId || idx}>
@@ -41,6 +46,21 @@ export default function OfferLotItemRow({
               {item.requestedName}
             </span>
           </div>
+          {requirements.length > 0 && (
+            <ul className="mt-1.5 flex flex-wrap gap-1.5" aria-label={t('requirementsLabel', 'Требования к характеристикам')}>
+              {requirements.map((r) => (
+                <li
+                  key={r.id}
+                  className={`text-xs px-2 py-0.5 rounded border ${r.isMandatory
+                    ? 'border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-200 font-semibold'
+                    : 'border-dashed border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400'}`}
+                  title={r.isMandatory ? t('reqMandatoryTip', 'Обязательно: аналог без этого не сможет победить') : t('reqOptionalTip', 'Желательно')}
+                >
+                  {requirementText(r)}{r.isMandatory ? '' : ` (${t('reqOptional', 'желательно')})`}
+                </li>
+              ))}
+            </ul>
+          )}
         </td>
 
         {/* Колонка 3: Запрошенное количество */}
@@ -233,6 +253,41 @@ export default function OfferLotItemRow({
           )}
         </td>
       </tr>
+
+      {/* Сравнение аналога с требованиями заказчика */}
+      {checks.length > 0 && (
+        <tr className="bg-white dark:bg-slate-800/90">
+          <td></td>
+          <td colSpan="6" className="py-2 px-3.5">
+            {!offeredProduct ? (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {t('reqPickProduct', 'Выберите аналог из справочника или добавьте его туда с характеристиками: тогда сразу будет видно, подходит ли он под требования.')}
+              </p>
+            ) : (
+              <>
+                <ul className="flex flex-wrap gap-x-4 gap-y-1">
+                  {checks.map(({ req, status, offered }) => (
+                    <li key={req.id} className={`flex items-center gap-1 text-xs ${
+                      status === 'MATCH' ? 'text-emerald-700 dark:text-emerald-400'
+                        : status === 'MISMATCH' ? (req.isMandatory ? 'text-rose-700 dark:text-rose-400 font-semibold' : 'text-amber-700 dark:text-amber-400')
+                        : 'text-slate-500 dark:text-slate-400'}`}>
+                      {status === 'MATCH' ? <CheckCircle2 size={13} /> : status === 'MISMATCH' ? <XCircle size={13} /> : <HelpCircle size={13} />}
+                      {requirementText(req)}
+                      {' → '}
+                      {offered === null ? t('reqNotSpecified', 'у товара не указано') : formatValue(offered, req.attribute?.type)}
+                    </li>
+                  ))}
+                </ul>
+                {mandatoryFailed > 0 && (
+                  <p className="mt-1 text-xs font-semibold text-rose-700 dark:text-rose-400">
+                    {t('reqMandatoryFailed', 'Аналог не выполняет обязательные требования. Такое предложение организатор не сможет выбрать победителем.')}
+                  </p>
+                )}
+              </>
+            )}
+          </td>
+        </tr>
+      )}
 
       {/* Подсказка об эквиваленте */}
       {isEq && (

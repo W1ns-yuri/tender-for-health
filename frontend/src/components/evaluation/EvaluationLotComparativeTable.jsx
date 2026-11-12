@@ -89,6 +89,21 @@ export default function EvaluationLotComparativeTable({
                     }`}>
                       {co.itemsCount} / {co.totalItems} {t('positionsAbbr', 'поз.')} ({Math.round((co.itemsCount / co.totalItems) * 100)}%)
                     </span>
+                    {co.mandatoryFailed > 0 && (
+                      <span className="mt-1 block text-xs font-semibold text-rose-700 dark:text-rose-400">
+                        {t('reqFailedBadge', 'Не выполняет обязательные требования')}: {co.mandatoryFailed}
+                      </span>
+                    )}
+                    {co.mandatoryFailed === 0 && co.optionalFailed > 0 && (
+                      <span className="mt-1 block text-xs font-semibold text-amber-700 dark:text-amber-400">
+                        {t('reqOptionalBadge', 'Отклонения от желательных')}: {co.optionalFailed}
+                      </span>
+                    )}
+                    {co.reqUnknown > 0 && (
+                      <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                        {t('reqUnknownBadge', 'Проверьте вручную')}: {co.reqUnknown}
+                      </span>
+                    )}
                   </td>
 
                   {/* Итоговая сумма с кодом валюты */}
@@ -122,10 +137,15 @@ export default function EvaluationLotComparativeTable({
                     <button
                       type="button"
                       onClick={() => handleAwardLot(lot.id, co.offerId, co.isAwarded)}
-                      title={co.isAwarded ? t('clickToDeselectTooltip', 'Нажмите, чтобы снять выбор') : undefined}
+                      disabled={!co.isAwarded && co.mandatoryFailed > 0}
+                      title={co.isAwarded
+                        ? t('clickToDeselectTooltip', 'Нажмите, чтобы снять выбор')
+                        : co.mandatoryFailed > 0 ? t('reqCannotWin', 'Аналог не выполняет обязательные требования, подробности в «Спецификации»') : undefined}
                       className={`group/award px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${
                         co.isAwarded 
                           ? 'bg-emerald-600 text-white shadow-sm hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 dark:hover:border-rose-700 border border-emerald-600' 
+                          : co.mandatoryFailed > 0
+                          ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700 cursor-not-allowed'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300 border border-slate-200 dark:border-slate-700'
                       }`}
                     >
@@ -139,7 +159,7 @@ export default function EvaluationLotComparativeTable({
                           </span>
                         </>
                       ) : (
-                        <span>{t('selectAsWinnerBtn', 'Выбрать победителем')}</span>
+                        <span>{co.mandatoryFailed > 0 ? t('reqNotCompliant', 'Не соответствует ТЗ') : t('selectAsWinnerBtn', 'Выбрать победителем')}</span>
                       )}
                     </button>
                   </td>
