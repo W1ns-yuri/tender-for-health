@@ -1,5 +1,6 @@
 import React from 'react';
-import { Trophy, Download, CheckCircle2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Trophy, Download, CheckCircle2, FileSignature } from 'lucide-react';
 import Button from '../ui/Button';
 
 /**
@@ -12,6 +13,7 @@ export default function EvaluationBottomActionBar({
   onPrint,
   onComplete,
   isCompleted = false,
+  contractsLink = '',
   t = (k, f) => f
 }) {
   const percent = lotsWithOffersCount > 0 
@@ -64,7 +66,13 @@ export default function EvaluationBottomActionBar({
               <CheckCircle2 size={16} />
               {t('protocolApprovedLabel', 'Протокол утверждён, итоги объявлены')}
             </span>
-          ) : (
+          ) : null}
+          {isCompleted && contractsLink && (
+            <Link to={contractsLink} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">
+              <FileSignature size={15} /> {t('goToContracts', 'Договоры с победителями')}
+            </Link>
+          )}
+          {isCompleted ? null : (
           <Button
             variant="success"
             size="sm"

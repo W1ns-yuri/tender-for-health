@@ -438,6 +438,7 @@ model Client {
 }
 
 model Tender {
+  contracts Contract[]
   id             String           @id @default(uuid())
   tenderNumber   String           @unique @map("tender_number")
   title          String
@@ -595,6 +596,7 @@ model TenderItem {
 // ==========================================
 
 model Supplier {
+  contracts Contract[]
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -682,6 +684,7 @@ model TenderInvitedSupplier {
 }
 
 model Offer {
+  contract Contract?
   id             String        @id @default(uuid())
   tenderId       String        @map("tender_id")
   tender         Tender        @relation(fields: [tenderId], references: [id], onDelete: Cascade)
@@ -930,4 +933,42 @@ model Notification {
 
   @@index([userId, isRead])
   @@map("notifications")
+}
+
+enum ContractStatus {
+  DRAFT           // проект сформирован, поставщик его ещё не видит
+  SENT            // отправлен поставщику на подпись
+  SUPPLIER_SIGNED // поставщик загрузил подписанный скан
+  SIGNED          // организатор подписал со своей стороны
+  CANCELLED       // отменён
+}
+
+/// Договор с победителем: один на поставщика в тендере, по всем выигранным им позициям
+model Contract {
+  id         String         @id @default(uuid())
+  number     String         @unique
+  tenderId   String         @map("tender_id")
+  tender     Tender         @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  offerId    String         @unique @map("offer_id")
+  offer      Offer          @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  supplierId String         @map("supplier_id")
+  supplier   Supplier       @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  amount     Decimal        @default(0) @db.Decimal(18, 2)
+  currencyCode String?      @map("currency_code")
+  status     ContractStatus @default(DRAFT)
+
+  supplierSignedFile String? @map("supplier_signed_file")
+  adminSignedFile    String? @map("admin_signed_file")
+  note               String? // замечание организатора (например, «скан нечитаемый»)
+  cancelReason       String? @map("cancel_reason")
+
+  sentAt           DateTime? @map("sent_at")
+  supplierSignedAt DateTime? @map("supplier_signed_at")
+  signedAt         DateTime? @map("signed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@index([tenderId])
+  @@index([supplierId])
+  @@map("contracts")
 }

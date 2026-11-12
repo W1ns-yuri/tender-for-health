@@ -154,6 +154,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
         onPrint={handlePrint}
         onComplete={handleCompleteEvaluation}
         isCompleted={['YENIJI_YGLAN_EDILDI', 'ARHIWLENDI'].includes(effectiveStatus)}
+        contractsLink={`/contracts?tenderId=${id}`}
         t={t}
       />
       </>)}

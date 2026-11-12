@@ -218,7 +218,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
   }, []);
 
   return (
-    <header className={`h-16 px-3 sm:px-6 gap-2 flex items-center justify-between sticky top-0 z-20 border-b shadow-xs transition-colors ${
+    <header className={`print:hidden h-16 px-3 sm:px-6 gap-2 flex items-center justify-between sticky top-0 z-20 border-b shadow-xs transition-colors ${
       isDarkMode ? 'bg-[#111827] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
     }`}>
       

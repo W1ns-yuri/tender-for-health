@@ -185,7 +185,7 @@ export const AlertProvider = ({ children, isDarkMode = false, lang = 'RU', role 
       {createPortal(
         <aside
           aria-label="Всплывающие уведомления"
-          className="fixed top-5 right-5 z-[10001] flex flex-col gap-3 pointer-events-none max-w-sm w-full px-3"
+          className="fixed top-5 right-5 z-[10001] flex flex-col gap-3 pointer-events-none max-w-sm w-full px-3 print:hidden"
         >
           {toasts.map((t) => (
             <Toast

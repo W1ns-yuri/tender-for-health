@@ -12,6 +12,8 @@ const Tenders = lazy(() => import('./pages/Tenders'));
 const TenderDetails = lazy(() => import('./pages/TenderDetails'));
 const MyOffers = lazy(() => import('./pages/MyOffers'));
 const Evaluation = lazy(() => import('./pages/Evaluation'));
+const ContractsPage = lazy(() => import('./pages/ContractsPage'));
+const ContractDetailsPage = lazy(() => import('./pages/ContractDetailsPage'));
 const EvaluationDetailsPage = lazy(() => import('./pages/EvaluationDetailsPage'));
 const SupplierWins = lazy(() => import('./pages/SupplierWins'));
 const AdminCatalogs = lazy(() => import('./pages/AdminCatalogs'));
@@ -96,6 +98,7 @@ export default function App() {
     if (pathname.startsWith('/suppliers')) return 'suppliers';
     if (pathname.startsWith('/offers') || pathname.startsWith('/my-offers')) return 'offers';
     if (pathname.startsWith('/evaluation') || pathname.startsWith('/admin/evaluations')) return 'evaluation';
+    if (pathname.startsWith('/contracts')) return 'contracts';
     if (pathname.startsWith('/analytics')) return 'analytics';
     if (pathname.startsWith('/settings')) return 'settings';
     if (pathname.startsWith('/profile')) return 'profile';
@@ -269,7 +272,7 @@ export default function App() {
 
   return (
     <AlertProvider isDarkMode={isDarkMode} lang={lang} role={role}>
-      <div className={`h-screen w-screen overflow-hidden flex font-sans ${isDarkMode ? 'bg-[#0b0f17] text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
+      <div className={`h-screen w-screen overflow-hidden print:h-auto print:overflow-visible flex font-sans ${isDarkMode ? 'bg-[#0b0f17] text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
       {/* 1. Боковое меню */}
       <Sidebar
         activeTab={activeTab}
@@ -284,7 +287,7 @@ export default function App() {
       />
 
       {/* 2. Главная область приложения */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden print:h-auto print:overflow-visible">
         <Header
           user={user}
           role={role}
@@ -296,7 +299,7 @@ export default function App() {
         />
 
         {/* ЦЕНТРАЛЬНОЕ ОКНО С ЗАЩИТОЙ ERROR BOUNDARY */}
-        <main className={`p-3 sm:p-6 flex-1 overflow-y-auto ${isDarkMode ? 'bg-[#0b0f17]' : 'bg-slate-50'}`}>
+        <main className={`p-3 sm:p-6 print:p-0 flex-1 overflow-y-auto print:overflow-visible ${isDarkMode ? 'bg-[#0b0f17]' : 'bg-slate-50'}`}>
           <ErrorBoundary key={location.pathname} resetKey={location.pathname} onReset={() => navigate('/dashboard')}>
             <Suspense fallback={<div className="flex justify-center py-24"><div className="h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent opacity-40" /></div>}>
             <Routes>
@@ -327,6 +330,8 @@ export default function App() {
               <Route path="/evaluation" element={role === 'SUPPLIER' ? <SupplierWins role={role} isDarkMode={isDarkMode} lang={lang} /> : <Evaluation role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/evaluation/:id" element={role === 'SUPPLIER' ? <SupplierWins role={role} isDarkMode={isDarkMode} lang={lang} /> : <EvaluationDetailsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/admin/evaluations/:id" element={role === 'SUPPLIER' ? <SupplierWins role={role} isDarkMode={isDarkMode} lang={lang} /> : <EvaluationDetailsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
+              <Route path="/contracts" element={<ContractsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
+              <Route path="/contracts/:id" element={<ContractDetailsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/umumy" element={role === 'ADMIN' ? <AdminCatalogs section="umumy" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/haryt" element={role === 'ADMIN' ? <AdminCatalogs section="haryt" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/catalogs" element={<Navigate to="/umumy" replace />} />
