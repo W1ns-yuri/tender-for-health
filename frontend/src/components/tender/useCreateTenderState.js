@@ -136,6 +136,9 @@ export default function useCreateTenderState({
           licenseRequired: Boolean(lot.licenseRequired),
           serviceFormat: lot.serviceFormat || 'ON_SITE',
           slaPeriod: lot.slaPeriod || '',
+          withOperator: Boolean(lot.withOperator),
+          fuelIncluded: Boolean(lot.fuelIncluded),
+          supportIncluded: Boolean(lot.supportIncluded),
           files: lot.files || [],
           specs: (lot.specs || []).map((s, sIdx) => ({
             id: s.id,
@@ -420,6 +423,10 @@ export default function useCreateTenderState({
     } else if (activeLot.lotType === 'WORKS') {
       const wrkUnit = units.find(u => (u.shortName || '').toLowerCase().includes('этап') || (u.shortName || '').toLowerCase().includes('компл') || (u.shortName || '').toLowerCase().includes('шт'));
       defaultUnitId = wrkUnit ? wrkUnit.id : (units[0]?.id || '');
+    } else if (activeLot.lotType === 'RENTAL' || activeLot.lotType === 'LICENSES') {
+      const want = activeLot.lotType === 'RENTAL' ? 'маш.-ч' : 'лиц';
+      const u = units.find(x => (x.shortName || '').toLowerCase() === want);
+      defaultUnitId = u ? u.id : (units[0]?.id || '');
     } else {
       const goodsUnit = units.find(u => (u.shortName || '').toLowerCase().includes('уп') || (u.shortName || '').toLowerCase().includes('шт'));
       defaultUnitId = goodsUnit ? goodsUnit.id : (units[0]?.id || '');
@@ -523,6 +530,9 @@ export default function useCreateTenderState({
         licenseRequired: Boolean(activeLot.licenseRequired),
         serviceFormat: activeLot.serviceFormat || undefined,
         slaPeriod: activeLot.slaPeriod ? sanitizeInputText(activeLot.slaPeriod).trim() : undefined,
+        withOperator: Boolean(activeLot.withOperator),
+        fuelIncluded: Boolean(activeLot.fuelIncluded),
+        supportIncluded: Boolean(activeLot.supportIncluded),
         specs: validSpecs
       };
 
@@ -905,7 +915,7 @@ export default function useCreateTenderState({
   // Модалка добавления позиции (товара, работы или услуги) в каталог
   const handleOpenProductModal = useCallback((initialName = '', specIdx = null) => {
     const lotType = activeLot?.lotType || 'GOODS';
-    const catalogId = lotType === 'WORKS' ? 'works' : lotType === 'SERVICES' ? 'services' : 'productsMNN';
+    const catalogId = lotType === 'WORKS' ? 'works' : (lotType === 'SERVICES' || lotType === 'RENTAL') ? 'services' : 'productsMNN';
     setCatalogModal({
       isOpen: true,
       catalogId,

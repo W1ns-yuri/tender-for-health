@@ -29,6 +29,8 @@ export default function OfferLotGroupCard({
   const isLotServiceOrWork = 
     group.lot?.lotType === 'SERVICES' || 
     group.lot?.lotType === 'WORKS' || 
+    group.lot?.lotType === 'RENTAL' || 
+    group.lot?.lotType === 'LICENSES' || 
     (group.lot?.name && (
       group.lot.name.toLowerCase().includes('сервис') || 
       group.lot.name.toLowerCase().includes('ремонт') || 

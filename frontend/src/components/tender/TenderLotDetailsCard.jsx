@@ -2,6 +2,7 @@ import { lotLabel } from '../../utils/pluralize';
 import React, { useMemo } from 'react';
 import { Bookmark, Trash2 } from 'lucide-react';
 import CustomSelect from '../CustomSelect';
+import { lotTypeInfo } from '../../utils/lotTypes';
 
 export default function TenderLotDetailsCard({
   activeLot,
@@ -17,7 +18,8 @@ export default function TenderLotDetailsCard({
   t = (k, f) => f
 }) {
   const relevantCategories = useMemo(() => {
-    const targetType = activeLot?.lotType || 'GOODS';
+    const targetType = lotTypeInfo(activeLot?.lotType).categoryType;
+    if (!targetType) return categories; // аренде и лицензиям подходят любые категории
     const filtered = categories.filter(c => !c.type || c.type === targetType);
     return filtered.length > 0 ? filtered : categories;
   }, [categories, activeLot?.lotType]);
@@ -86,7 +88,9 @@ export default function TenderLotDetailsCard({
             options={[
               { id: 'GOODS', name: t('catProducts', 'Товары (Goods)') },
               { id: 'WORKS', name: t('worksType', 'Работы (Works)') },
-              { id: 'SERVICES', name: t('servicesType', 'Услуги (Services)') }
+              { id: 'SERVICES', name: t('servicesType', 'Услуги (Services)') },
+              { id: 'RENTAL', name: t('rentalType', 'Аренда техники') },
+              { id: 'LICENSES', name: t('licensesType', 'Лицензии и поддержка') }
             ]}
             isDarkMode={isDarkMode}
             theme={theme}
@@ -249,6 +253,71 @@ export default function TenderLotDetailsCard({
               </label>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Параметры аренды техники */}
+      {activeLot.lotType === 'RENTAL' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-6">
+              <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>{t('rentalSite', 'Где будет работать техника')} *</label>
+              <input type="text" value={activeLot.workAddress || ''} onChange={(e) => handleActiveLotChange('workAddress', e.target.value)} className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`} placeholder="г. Ашхабад, стройплощадка больницы" />
+            </div>
+            <div className="md:col-span-3">
+              <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>{t('rentalTerm', 'Срок аренды')} *</label>
+              <input type="text" value={activeLot.workPeriod || ''} onChange={(e) => handleActiveLotChange('workPeriod', e.target.value)} className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`} placeholder="30 дней, 200 машино-часов" />
+            </div>
+            <div className="md:col-span-3">
+              <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>{t('endUser', 'Конечный получатель (Бенефициар)')}</label>
+              <input type="text" value={activeLot.endUser || ''} onChange={(e) => handleActiveLotChange('endUser', e.target.value)} className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`} placeholder={t('endUserPlaceholder', 'Например: Госпиталь №1')} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-3">
+              <label className="flex items-center gap-2 h-10 min-h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800 cursor-pointer select-none transition-all w-full">
+                <input type="checkbox" checked={Boolean(activeLot.withOperator)} onChange={(e) => handleActiveLotChange('withOperator', e.target.checked)} className="w-4 h-4 rounded accent-emerald-600 dark:accent-emerald-500 cursor-pointer shrink-0" />
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{t('withOperator', 'С оператором')}</span>
+              </label>
+            </div>
+            <div className="md:col-span-4">
+              <label className="flex items-center gap-2 h-10 min-h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800 cursor-pointer select-none transition-all w-full">
+                <input type="checkbox" checked={Boolean(activeLot.fuelIncluded)} onChange={(e) => handleActiveLotChange('fuelIncluded', e.target.checked)} className="w-4 h-4 rounded accent-emerald-600 dark:accent-emerald-500 cursor-pointer shrink-0" />
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{t('fuelIncluded', 'Топливо за счёт арендодателя')}</span>
+              </label>
+            </div>
+            <div className="md:col-span-5">
+              <input type="text" value={activeLot.deliveryAddress || ''} onChange={(e) => handleActiveLotChange('deliveryAddress', e.target.value)} className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`} aria-label={t('rentalDelivery', 'Доставка техники')} placeholder={t('rentalDeliveryPh', 'Доставка техники: кто и куда (необязательно)')} />
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('rentalHint', 'В позициях укажите технику и единицу: например «Экскаватор, ковш от 1 м³» — 200 машино-часов. Поставщик назовёт цену за единицу.')}</p>
+        </div>
+      )}
+
+      {/* Параметры лицензий и поддержки */}
+      {activeLot.lotType === 'LICENSES' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-3">
+              <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>{t('licenseTerm', 'Срок лицензии / подписки')} *</label>
+              <input type="text" value={activeLot.workPeriod || ''} onChange={(e) => handleActiveLotChange('workPeriod', e.target.value)} className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`} placeholder="12 месяцев, бессрочно" />
+            </div>
+            <div className="md:col-span-3 flex flex-col justify-end">
+              <label className="flex items-center gap-2 h-10 min-h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800 cursor-pointer select-none transition-all w-full">
+                <input type="checkbox" checked={Boolean(activeLot.supportIncluded)} onChange={(e) => handleActiveLotChange('supportIncluded', e.target.checked)} className="w-4 h-4 rounded accent-emerald-600 dark:accent-emerald-500 cursor-pointer shrink-0" />
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{t('supportIncluded', 'Техподдержка включена')}</span>
+              </label>
+            </div>
+            <div className="md:col-span-3">
+              <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>{t('slaPeriod', 'Требования к SLA / Реакции')}</label>
+              <input type="text" value={activeLot.slaPeriod || ''} disabled={!activeLot.supportIncluded} onChange={(e) => handleActiveLotChange('slaPeriod', e.target.value)} className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none disabled:opacity-50 border ${theme?.inputBg || ''}`} placeholder="реакция до 4 часов" />
+            </div>
+            <div className="md:col-span-3">
+              <label className={`block text-xs font-bold mb-1.5 ${theme?.subText || ''}`}>{t('endUser', 'Конечный получатель (Бенефициар)')}</label>
+              <input type="text" value={activeLot.endUser || ''} onChange={(e) => handleActiveLotChange('endUser', e.target.value)} className={`w-full h-10 min-h-10 px-3.5 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`} placeholder={t('endUserPlaceholder', 'Например: Госпиталь №1')} />
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('licensesHint', 'В позициях укажите продукт и количество: например «Windows Server 2022 Standard, 16 ядер» — 4 лицензии.')}</p>
         </div>
       )}
 

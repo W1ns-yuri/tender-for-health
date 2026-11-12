@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Trash2, ListChecks } from 'lucide-react';
 import SpecRequirementsEditor from './SpecRequirementsEditor';
+import { lotTypeInfo } from '../../utils/lotTypes';
 import ProductSearchableSelect from './ProductSearchableSelect';
 import CustomSelect from '../CustomSelect';
 
@@ -28,8 +29,8 @@ export default function TenderLotItemsTable({
   const colCount = activeLot?.lotType === 'GOODS' ? 7 : 6;
 
   const lotProducts = useMemo(() => {
-    const targetType = activeLot?.lotType || 'GOODS';
-    return products.filter(p => (p.itemType || 'GOODS') === targetType);
+    const allowed = lotTypeInfo(activeLot?.lotType).itemTypes;
+    return products.filter(p => allowed.includes(p.itemType || 'GOODS'));
   }, [products, activeLot?.lotType]);
 
   const sortedUnits = useMemo(() => {

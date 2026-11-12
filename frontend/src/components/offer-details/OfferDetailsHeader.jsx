@@ -42,7 +42,9 @@ export default function OfferDetailsHeader({
     offer?.tender?.type === 'WORKS' || 
     lotGroups.some(g => 
       g.lot?.lotType === 'SERVICES' || 
-      g.lot?.lotType === 'WORKS' || 
+      g.lot?.lotType === 'WORKS' ||
+      g.lot?.lotType === 'RENTAL' ||
+      g.lot?.lotType === 'LICENSES' ||
       (g.lot?.name && (
         g.lot.name.toLowerCase().includes('сервис') || 
         g.lot.name.toLowerCase().includes('ремонт') ||

@@ -20,6 +20,7 @@ export default function OfferLotItemRow({
   const lineTotal = (parseFloat(item.requestedQty) || 0) * (parseFloat(item.price) || 0);
   const hasPrice = parseFloat(item.price) > 0;
   const isEq = Boolean(item.isEquivalent);
+  const allowsAnalog = lotType === 'GOODS' || lotType === 'RENTAL' || lotType === 'LICENSES';
   const requirements = item.requirements || [];
   const offeredProduct = isEq ? products.find((p) => p.id === item.generalProductId) : null;
   const checks = isEq && requirements.length ? checkRequirements(requirements, offeredProduct?.attributeValues || []) : [];
@@ -115,8 +116,8 @@ export default function OfferLotItemRow({
               {t('yourBidColumn', 'Ваше КП')}
             </span>
 
-            {/* Чекбокс эквивалента / аналога (только для товаров) */}
-            {lotType === 'GOODS' && (
+            {/* Чекбокс эквивалента / аналога: товары, аренда техники, лицензии */}
+            {allowsAnalog && (
               <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-[12px] text-blue-600 dark:text-blue-400 font-semibold hover:underline">
                 <input
                   type="checkbox"
@@ -129,7 +130,7 @@ export default function OfferLotItemRow({
             )}
           </div>
 
-          {lotType === 'GOODS' ? (
+          {allowsAnalog ? (
             <ProductSearchableSelect
               products={products}
               disabled={!isAllowed || !isSelected}
