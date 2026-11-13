@@ -134,6 +134,7 @@ export default function CreateTenderPage({
             handleAddSpecRow={state.handleAddSpecRow}
             handleSpecChange={state.handleSpecChange}
             handleRemoveSpec={state.handleRemoveSpec}
+            handleImportSpecs={state.handleImportSpecs}
             handleOpenProductModal={state.handleOpenProductModal}
             savingActiveLot={state.savingActiveLot}
             handleSaveActiveLot={state.handleSaveActiveLot}

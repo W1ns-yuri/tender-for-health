@@ -37,6 +37,7 @@ async function createLotSpecs(tx, tenderId, lotId, specs) {
                 unitId: (spec.unitId && spec.unitId !== '') ? spec.unitId : ((spec.unit && spec.unit !== '') ? spec.unit : null),
                 manufacturerId: (spec.manufacturerId && spec.manufacturerId !== '') ? spec.manufacturerId : ((spec.brand && spec.brand !== '') ? spec.brand : null),
                 description: (spec.description || spec.desc || '').trim() || null,
+                section: String(spec.section ?? '').trim().slice(0, 200) || null,
                 ...(reqs.bySpec[idx].length ? { requirements: { create: reqs.bySpec[idx] } } : {}),
             },
         });

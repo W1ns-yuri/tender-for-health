@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Trash2, ListChecks } from 'lucide-react';
+import { Plus, Trash2, ListChecks, ClipboardPaste, FolderPlus, X } from 'lucide-react';
+import BoqImportModal from './BoqImportModal';
 import SpecRequirementsEditor from './SpecRequirementsEditor';
 import { lotTypeInfo } from '../../utils/lotTypes';
 import ProductSearchableSelect from './ProductSearchableSelect';
@@ -13,6 +14,7 @@ export default function TenderLotItemsTable({
   handleAddSpecRow,
   handleSpecChange,
   handleRemoveSpec,
+  handleImportSpecs,
   handleOpenProductModal,
   isDarkMode,
   theme,
@@ -21,6 +23,7 @@ export default function TenderLotItemsTable({
   role
 }) {
   const [openReqs, setOpenReqs] = useState(() => new Set());
+  const [importOpen, setImportOpen] = useState(false);
   const toggleReqs = (key) => setOpenReqs((prev) => {
     const next = new Set(prev);
     if (next.has(key)) next.delete(key); else next.add(key);
@@ -66,6 +69,14 @@ export default function TenderLotItemsTable({
     return t('selectProduct', 'Выберите товар / МНН или введите...');
   }, [activeLot?.lotType, t]);
 
+  const isWorks = activeLot?.lotType === 'WORKS';
+
+  // Новый раздел: пустая позиция с названием раздела, следующие позиции продолжат его
+  const addSection = () => {
+    const n = new Set((activeLot.specs || []).map((x) => x.section).filter(Boolean)).size + 1;
+    handleImportSpecs?.([{ name: '', quantity: 1, unitId: sortedUnits[0]?.id || '', section: `${t('sectionWord', 'Раздел')} ${n}` }], false);
+  };
+
   if (!activeLot) return null;
 
   return (
@@ -74,6 +85,25 @@ export default function TenderLotItemsTable({
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">
           {t('specificationsList', 'Спецификация позиций')} ({activeLot.specs?.length || 0})
         </h3>
+        <div className="flex flex-wrap items-center gap-2">
+        {handleImportSpecs && (
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+          >
+            <ClipboardPaste size={14} /> {t('boqImportBtn', 'Вставить из Excel')}
+          </button>
+        )}
+        {isWorks && (
+          <button
+            type="button"
+            onClick={addSection}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+          >
+            <FolderPlus size={14} /> {t('addSection', 'Раздел')}
+          </button>
+        )}
         {/* Заметная акцентная кнопка добавления позиции */}
         <button
           type="button"
@@ -83,7 +113,18 @@ export default function TenderLotItemsTable({
           <Plus size={14} />
           <span>{t('addPosition', 'Добавить позицию')}</span>
         </button>
+        </div>
       </div>
+      <BoqImportModal
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImport={handleImportSpecs}
+        units={units}
+        hasSpecs={(activeLot.specs || []).length > 0}
+        inputClass={`px-3 py-2 rounded-lg outline-none border ${theme.inputBg}`}
+        primaryBtn={theme.primaryBtn || 'bg-emerald-600 hover:bg-emerald-700 text-white'}
+        t={t}
+      />
 
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
         <table className="w-full text-left text-xs border-collapse">
@@ -157,6 +198,29 @@ export default function TenderLotItemsTable({
                 const reqOpen = openReqs.has(reqKey);
                 return (
                 <React.Fragment key={reqKey}>
+                {spec.section && spec.section !== activeLot.specs[sIdx - 1]?.section && (
+                  <tr className="bg-slate-50 dark:bg-slate-800/50">
+                    <td className="py-2 px-2 text-center text-slate-400"><FolderPlus size={13} className="inline" /></td>
+                    <td colSpan={colCount - 2} className="py-2 px-3">
+                      <input
+                        type="text" value={spec.section} maxLength={200}
+                        onChange={(e) => handleSpecChange(sIdx, 'sectionGroup', e.target.value)}
+                        aria-label={t('sectionName', 'Название раздела')}
+                        className="w-full max-w-md bg-transparent text-xs font-bold outline-none border-b border-transparent focus:border-slate-300 dark:focus:border-slate-600"
+                      />
+                    </td>
+                    <td className="py-2 px-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleSpecChange(sIdx, 'sectionGroup', activeLot.specs[sIdx - 1]?.section || '')}
+                        title={t('removeSection', 'Убрать раздел (позиции останутся)')}
+                        className="w-7 h-7 rounded-md text-slate-400 hover:text-rose-600 flex items-center justify-center cursor-pointer"
+                      >
+                        <X size={13} />
+                      </button>
+                    </td>
+                  </tr>
+                )}
                 <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
                   <td className="py-2.5 px-2 text-center font-mono font-bold text-slate-400">
                     {sIdx + 1}

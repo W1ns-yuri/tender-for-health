@@ -6,6 +6,7 @@ import { getRoleTheme, resolveFileUrl } from '../utils/themeUtils';
 import useT from '../utils/useT';
 import { useAlert } from '../context/AlertContext';
 import { contractStatus, formatMoney, formatDate } from '../utils/contracts';
+import SectionRow from '../components/ui/SectionRow';
 
 const unitName = (u) => u?.shortName || u?.name || '';
 
@@ -200,7 +201,9 @@ export default function ContractDetailsPage({ role, isDarkMode, lang = 'RU' }) {
               </thead>
               <tbody>
                 {specs.map((os, i) => (
-                  <tr key={os.id} className="border-b border-slate-200 dark:border-slate-800 print:border-slate-300 align-top">
+                  <React.Fragment key={os.id}>
+                  {os.tenderSpec?.section && os.tenderSpec.section !== specs[i - 1]?.tenderSpec?.section && <SectionRow title={os.tenderSpec.section} className="border-b border-slate-200" />}
+                  <tr className="border-b border-slate-200 dark:border-slate-800 print:border-slate-300 align-top">
                     <td className="py-2 pr-2">{i + 1}</td>
                     <td className="py-2 pr-2">
                       {os.isEquivalent && os.equivalentName ? os.equivalentName : (os.name || os.tenderSpec?.name)}
@@ -212,6 +215,7 @@ export default function ContractDetailsPage({ role, isDarkMode, lang = 'RU' }) {
                     <td className="py-2 pr-2 text-right font-mono">{formatMoney(os.unitPrice)}</td>
                     <td className="py-2 text-right font-mono">{formatMoney(Number(os.unitPrice) * Number(os.quantity))}</td>
                   </tr>
+                  </React.Fragment>
                 ))}
               </tbody>
               <tfoot>

@@ -124,6 +124,7 @@ export function useCreateOfferState({ id, role = 'SUPPLIER', t, showAlert, showC
               requestedQty: spec.quantity || 1,
               requestedBrand: spec.manufacturer?.name || '',
               requestedDesc: spec.description || '',
+              section: spec.section || '',
               requirements: spec.requirements || [],
               // Поля предложения поставщика (предзаполнены запросом заказчика)
               haryt: spec.generalProduct?.tradeName

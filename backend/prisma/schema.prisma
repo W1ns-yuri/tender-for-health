@@ -535,6 +535,8 @@ model TenderSpecification {
   quantity       Float   @default(1)
   positionNumber Int     @default(1) @map("position_number")
   description    String?
+  // Раздел ведомости объёмов: «Демонтаж», «Земляные работы». Подряд идущие позиции с одним разделом — одна группа
+  section        String?
 
   offerSpecs   OfferSpecification[]
   requirements TenderSpecRequirement[]

@@ -15,6 +15,8 @@ import LotTypeConditions from '../tender/LotTypeConditions';
 import { lotTypeInfo, isNewLotType } from '../../utils/lotTypes';
 import CustomSelect from '../CustomSelect';
 import OfferLotItemRow from './OfferLotItemRow';
+import SectionRow from '../ui/SectionRow';
+import { isSectionStart } from '../../utils/sections';
 import { resolveFileUrl } from '../../utils/themeUtils';
 
 export default function OfferLotCard({
@@ -284,8 +286,9 @@ export default function OfferLotCard({
                 </tr>
               ) : (
                 lotItems.map((item, idx) => (
+                  <React.Fragment key={item.tenderSpecId || idx}>
+                  {isSectionStart(lotItems, idx) && <SectionRow title={item.section} />}
                   <OfferLotItemRow
-                    key={item.tenderSpecId || idx}
                     item={item}
                     idx={idx}
                     lotId={lot.id}
@@ -299,6 +302,7 @@ export default function OfferLotCard({
                     theme={theme}
                     t={t}
                   />
+                  </React.Fragment>
                 ))
               )}
             </tbody>

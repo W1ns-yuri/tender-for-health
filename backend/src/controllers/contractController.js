@@ -35,6 +35,7 @@ const DETAIL_INCLUDE = {
             id: true, number: true,
             specs: {
                 where: { isAwarded: true },
+                orderBy: [{ tenderSpec: { lot: { lotNumber: 'asc' } } }, { tenderSpec: { positionNumber: 'asc' } }],
                 include: { unit: true, tenderSpec: { include: { unit: true, lot: { select: { lotNumber: true, name: true } } } } },
             },
         },
