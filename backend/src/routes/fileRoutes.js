@@ -19,10 +19,18 @@ const uploadDir = path.join(__dirname, '../../uploads');
  *   (конкуренты не должны видеть "конверт").
  * - Ещё не привязанный ни к чему документ (загружен в форме, форма не сохранена, логотип):
  *   тот, кто загрузил, и админ.
+ * - Фото товара справочника: все вошедшие, если товар проверен (до проверки — автор и админ).
  * - Файл без записи в documents: только админ.
  */
 async function canAccessFile(user, fileName) {
     const isAdmin = user.roleType === 'ADMIN';
+
+    // Фото товара справочника: видно всем, если товар проверен; до проверки — автору и админу
+    const product = await prisma.generalProduct.findFirst({
+        where: { imageFileName: fileName },
+        select: { moderationStatus: true, createdById: true },
+    });
+    if (product && (isAdmin || product.moderationStatus === 'APPROVED' || product.createdById === user.id)) return true;
 
     const doc = await prisma.document.findFirst({
         where: { fileName },

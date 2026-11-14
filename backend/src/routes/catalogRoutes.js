@@ -13,6 +13,10 @@ const {
     addVariationValue, deleteVariationValue,
     getClients, createClient, updateClient, deleteClient,
 } = require('../controllers/catalogController');
+const {
+    getAttributes, createAttribute, updateAttribute, deleteAttribute,
+    getCategoryAttributesHandler, setCategoryAttributes, approveProduct, rejectProduct,
+} = require('../controllers/attributeController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { checkRole } = require('../middleware/rbacMiddleware');
 
@@ -23,15 +27,26 @@ router.get('/categories', getCategories);
 router.post('/categories', authMiddleware, checkRole(['ADMIN']), createCategory);
 router.put('/categories/:id', authMiddleware, checkRole(['ADMIN']), updateCategory);
 router.delete('/categories/:id', authMiddleware, checkRole(['ADMIN']), deleteCategory);
+router.get('/categories/:id/attributes', getCategoryAttributesHandler);
+router.put('/categories/:id/attributes', authMiddleware, checkRole(['ADMIN']), setCategoryAttributes);
+
+// Характеристики товаров (диагональ, цвет, крепление…)
+router.get('/attributes', authMiddleware.optional, getAttributes);
+router.post('/attributes', authMiddleware, checkRole(['ADMIN']), createAttribute);
+router.put('/attributes/:id', authMiddleware, checkRole(['ADMIN']), updateAttribute);
+router.delete('/attributes/:id', authMiddleware, checkRole(['ADMIN']), deleteAttribute);
 
 // Общие товары (МНН / Препараты)
-router.get('/products', getGeneralProducts);
+// Гость видит только проверенные товары, поставщик ещё и свои на проверке, админ всё
+router.get('/products', authMiddleware.optional, getGeneralProducts);
+router.post('/products/:id/approve', authMiddleware, checkRole(['ADMIN']), approveProduct);
+router.post('/products/:id/reject', authMiddleware, checkRole(['ADMIN']), rejectProduct);
 router.post('/products', authMiddleware, checkRole(['ADMIN', 'SUPPLIER']), createGeneralProduct);
 router.put('/products/:id', authMiddleware, checkRole(['ADMIN']), updateGeneralProduct);
 router.delete('/products/:id', authMiddleware, checkRole(['ADMIN']), deleteGeneralProduct);
 
 // МНН (Уникальные международные непатентованные наименования)
-router.get('/mnn', getUniqueMNNs);
+router.get('/mnn', authMiddleware.optional, getUniqueMNNs);
 
 // Единицы измерения
 router.get('/units', getUnits);

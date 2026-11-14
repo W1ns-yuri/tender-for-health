@@ -3,7 +3,7 @@ import { useSearchParams, useLocation } from 'react-router-dom';
 import { 
   PlusCircle, Search, ArrowLeft, Database, Layers, Users, Truck, 
   Globe, DollarSign, Hash, Package, Wrench, Activity, Pill, Factory, 
-  Tag, SlidersHorizontal 
+  Tag, SlidersHorizontal, Ruler, ShieldCheck
 } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
@@ -26,6 +26,8 @@ import {
   BrandsCatalogTable,
   VariationsCatalogTable,
   ClientsCatalogTable,
+  AttributesCatalogTable,
+  RejectProductDialog,
   CatalogFormModal,
 } from '../components/catalogs';
 import useT from '../utils/useT';
@@ -76,6 +78,10 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
   const [brands, setBrands] = useState([]);
   const [variations, setVariations] = useState([]);
   const [clients, setClients] = useState([]);
+  const [attributes, setAttributes] = useState([]);
+  const [pendingProductsCount, setPendingProductsCount] = useState(0);
+  const [rejectingProduct, setRejectingProduct] = useState(null);
+  const onlyPending = searchParams.get('moderation') === '1';
   
   const [loading, setLoading] = useState(Boolean(activeCatalog));
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -96,6 +102,7 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
     if (cat === 'delivery') return 'delivery-terms';
     if (cat === 'brands') return 'brands';
     if (cat === 'variations') return 'variations';
+    if (cat === 'attributes') return 'attributes';
     return cat;
   };
 
@@ -138,6 +145,9 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
       } else if (catalogKey === 'variations') {
         const res = await API.get('/catalogs/variations');
         setVariations(Array.isArray(res.data) ? res.data : []);
+      } else if (catalogKey === 'attributes') {
+        const res = await API.get('/catalogs/attributes?all=true');
+        setAttributes(Array.isArray(res.data) ? res.data : []);
       } else if (catalogKey === 'clients') {
         const res = await API.get('/catalogs/clients');
         setClients(Array.isArray(res.data) ? res.data : []);
@@ -167,6 +177,39 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
     }
   }, [activeCatalog, countries.length, categories.length]);
 
+  // Ссылка из уведомления «/haryt?moderation=1» открывает реестр товаров сразу с фильтром
+  useEffect(() => {
+    if (onlyPending && !activeCatalog) setSearchParams({ catalog: 'productsMNN', moderation: '1' });
+  }, [onlyPending, activeCatalog, setSearchParams]);
+
+  useEffect(() => {
+    if (activeSection !== 'haryt' || activeCatalog) return;
+    API.get('/catalogs/products?moderationStatus=PENDING')
+      .then(res => setPendingProductsCount(Array.isArray(res.data) ? res.data.length : 0))
+      .catch(() => setPendingProductsCount(0));
+  }, [activeSection, activeCatalog]);
+
+  const handleApproveProduct = async (product) => {
+    try {
+      await API.post(`/catalogs/products/${product.id}/approve`);
+      fetchCatalogData(activeCatalog);
+      showAlert({ title: t('successTitle', 'Успешно'), message: t('productApproved', 'Товар одобрен и виден всем поставщикам'), type: 'success' });
+    } catch (e) {
+      showAlert({ title: t('errorTitle', 'Ошибка'), message: e.response?.data?.error || t('profileSaveError', 'Ошибка при сохранении'), type: 'error' });
+    }
+  };
+
+  const handleRejectProduct = async (product, note) => {
+    try {
+      await API.post(`/catalogs/products/${product.id}/reject`, { note });
+      setRejectingProduct(null);
+      fetchCatalogData(activeCatalog);
+      showAlert({ title: t('successTitle', 'Успешно'), message: t('productRejected', 'Товар отклонён, поставщик получил уведомление с причиной'), type: 'success' });
+    } catch (e) {
+      showAlert({ title: t('errorTitle', 'Ошибка'), message: e.response?.data?.error || t('profileSaveError', 'Ошибка при сохранении'), type: 'error' });
+    }
+  };
+
   const handleSaveModal = async (formData, itemId) => {
     try {
       const endpoint = getEndpoint(activeCatalog);
@@ -195,12 +238,19 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
       delete dataToSave.supplierCategories;
       delete dataToSave.createdAt;
       delete dataToSave.updatedAt;
+      delete dataToSave._count;
+      delete dataToSave.children;
+      delete dataToSave.parent;
+      const attributeSet = dataToSave.attributeSet;
+      delete dataToSave.attributeSet;
       if (dataToSave.id) delete dataToSave.id;
 
-      if (itemId) {
-        await API.put(`/catalogs/${endpoint}/${itemId}`, dataToSave);
-      } else {
-        await API.post(`/catalogs/${endpoint}`, dataToSave);
+      const saved = itemId
+        ? await API.put(`/catalogs/${endpoint}/${itemId}`, dataToSave)
+        : await API.post(`/catalogs/${endpoint}`, dataToSave);
+      // Набор характеристик категории сохраняем отдельным запросом, когда у категории уже есть id
+      if (endpoint === 'categories' && Array.isArray(attributeSet)) {
+        await API.put(`/catalogs/categories/${itemId || saved.data.id}/attributes`, { attributes: attributeSet });
       }
       setIsModalOpen(false);
       fetchCatalogData(activeCatalog);
@@ -247,11 +297,11 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
 
     try {
       const endpoint = getEndpoint(activeCatalog);
-      await API.delete(`/catalogs/${endpoint}/${itemId}`);
+      const res = await API.delete(`/catalogs/${endpoint}/${itemId}`);
       fetchCatalogData(activeCatalog);
       showAlert({
         title: t('successTitle', 'Успешно'),
-        message: t('recordDeletedSuccess', 'Запись успешно удалена'),
+        message: res.data?.message || t('recordDeletedSuccess', 'Запись успешно удалена'),
         type: 'success'
       });
     } catch (e) {
@@ -278,6 +328,7 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
       { id: 'works', title: t('catWorks', 'Реестр видов и этапов работ'), subtitle: t('catWorksSub', 'Монтаж оборудования, чистые помещения, кислородопровод, вентиляция'), icon: <Wrench size={24}/> },
       { id: 'services', title: t('catServices', 'Реестр медицинских услуг'), subtitle: t('catServicesSub', 'ТО томографов и ИВЛ, сервис, поверка, утилизация отходов'), icon: <Activity size={24}/> },
       { id: 'mnn', title: t('catMnnArchive', 'Архив веществ (МНН)'), subtitle: t('catMnnArchiveSub', 'Действующие вещества и зарегистрированные препараты'), icon: <Pill size={24}/> },
+      { id: 'attributes', title: t('catAttributes', 'Характеристики товаров'), subtitle: t('catAttributesSub', 'Размер, цвет, диагональ, объём: поля, которые заполняют у товара'), icon: <Ruler size={24}/> },
       { id: 'productCategories', title: t('catProductCategories', 'Категории классификатора'), subtitle: t('catProductCategoriesSub', 'Классификатор категорий товаров, работ и услуг'), icon: <Layers size={24}/> },
       { id: 'manufacturers', title: t('catManufacturers', 'Производители'), subtitle: t('catManufacturersSub', 'Фармацевтические заводы и фабрики с привязкой к стране'), icon: <Factory size={24}/> },
       { id: 'brands', title: t('catBrands', 'Торговые марки / Бренды'), subtitle: t('catBrandsSub', 'Зарегистрированные международные бренды'), icon: <Tag size={24}/> },
@@ -340,7 +391,18 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
         return <DeliveryTermsCatalogTable {...commonProps} deliveryTerms={deliveryTerms} />;
       case 'productsMNN':
       case 'generalProducts':
-        return <ProductsCatalogTable {...commonProps} products={productsMNN} />;
+        return (
+          <ProductsCatalogTable
+            {...commonProps}
+            products={productsMNN}
+            onlyPending={onlyPending}
+            onOnlyPendingChange={(v) => { setCurrentPage(1); setSearchParams(v ? { catalog: activeCatalog, moderation: '1' } : { catalog: activeCatalog }); }}
+            onApprove={handleApproveProduct}
+            onReject={setRejectingProduct}
+          />
+        );
+      case 'attributes':
+        return <AttributesCatalogTable {...commonProps} attributes={attributes} />;
       case 'works':
         return <WorksCatalogTable {...commonProps} works={worksList} />;
       case 'services':
@@ -386,6 +448,21 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
   return (
     <div className={`flex flex-col min-h-[calc(100vh-100px)] -mx-3 -mt-3 sm:-mx-6 sm:-mt-6 ${isDarkMode ? 'bg-[#0b0f17]' : 'bg-slate-50/50'}`}>
       <div className="flex-1 p-6 overflow-y-auto">
+        {!activeCatalog && activeSection === 'haryt' && pendingProductsCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setSearchParams({ catalog: 'productsMNN', moderation: '1' })}
+            className={`mb-4 w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left cursor-pointer ${
+              isDarkMode ? 'bg-amber-950/30 border-amber-900 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-900'
+            }`}
+          >
+            <ShieldCheck size={20} className="shrink-0" />
+            <span className="text-sm font-semibold">
+              {t('pendingProductsBanner', 'Товары от поставщиков ждут проверки')}: {pendingProductsCount}
+            </span>
+            <span className="ml-auto text-xs font-semibold underline">{t('review', 'Проверить')}</span>
+          </button>
+        )}
         {!activeCatalog ? (
           <CatalogCardGrid
             items={currentSectionItems}
@@ -468,6 +545,14 @@ function AdminCatalogsContent({ section = 'umumy', role, isDarkMode, lang = 'RU'
           </div>
         )}
       </div>
+
+      <RejectProductDialog
+        product={rejectingProduct}
+        onCancel={() => setRejectingProduct(null)}
+        onConfirm={handleRejectProduct}
+        isDarkMode={isDarkMode}
+        t={t}
+      />
 
       {isModalOpen && (
         <CatalogFormModal

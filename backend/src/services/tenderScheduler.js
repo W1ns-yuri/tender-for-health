@@ -1,5 +1,34 @@
 const prisma = require('../lib/prisma');
 const { notifyAdmins, sendNotification } = require('../controllers/notificationController');
+const { publishTenderById } = require('./tenderPublish');
+
+/**
+ * Отложенная публикация: черновики с наступившим publishAt публикуются.
+ * Если тендер к этому моменту не проходит проверки (например, дедлайн уже прошёл),
+ * снимаем расписание и сообщаем админам, а не молчим.
+ */
+async function publishScheduledTenders() {
+    try {
+        const due = await prisma.tender.findMany({
+            where: { status: 'TASLAMA', publishAt: { lte: new Date() } },
+            select: { id: true, tenderNumber: true, title: true },
+        });
+        for (const t of due) {
+            const result = await publishTenderById(t.id);
+            if (result.error) {
+                await prisma.tender.updateMany({ where: { id: t.id, status: 'TASLAMA' }, data: { publishAt: null } });
+                await notifyAdmins({
+                    title: 'Запланированная публикация не состоялась',
+                    message: `Тендер №${t.tenderNumber} («${t.title}») не опубликован: ${result.error}`,
+                    type: 'warning',
+                    link: `/tenders/${t.id}/edit`,
+                });
+            }
+        }
+    } catch (error) {
+        console.error('[TenderScheduler] Ошибка отложенной публикации:', error);
+    }
+}
 
 /**
  * Проверка дедлайнов открытых тендеров и авто-перевод в статус YAPYK
@@ -80,15 +109,20 @@ async function checkTenderDeadlines() {
  */
 function initTenderScheduler(intervalMs = 60000) {
     // Выполняем проверку через 3 секунды после старта сервера
-    setTimeout(checkTenderDeadlines, 3000);
-    
+    const tick = async () => {
+        await publishScheduledTenders();
+        await checkTenderDeadlines();
+    };
+    setTimeout(tick, 3000);
+
     // Регулярный интервал
-    const timer = setInterval(checkTenderDeadlines, intervalMs);
+    const timer = setInterval(tick, intervalMs);
     console.log(`⏱️ [TenderScheduler] Фоновый планировщик дедлайнов запущен (интервал: ${intervalMs / 1000} сек)`);
     return timer;
 }
 
 module.exports = {
     checkTenderDeadlines,
+    publishScheduledTenders,
     initTenderScheduler
 };

@@ -70,6 +70,8 @@ export default function CreateTenderPage({
         publishing={state.publishing}
         publishDisabledReason={state.publishDisabledReason}
         onPublishTender={state.handlePublishTender}
+        onScheduleTender={state.handleScheduleTender}
+        onUnscheduleTender={state.handleUnscheduleTender}
         theme={theme}
         t={t}
       />

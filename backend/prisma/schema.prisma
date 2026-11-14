@@ -134,6 +134,7 @@ model User {
   moderationLogs    SupplierModerationLog[]
   notifications     Notification[]
   uploadedDocuments Document[]              @relation("UploadedDocuments")
+  createdProducts   GeneralProduct[]        @relation("ProductCreatedBy")
 
   // Поля безопасности из UserAuth (ERD)
   lastLogin         DateTime? @map("last_login")
@@ -181,6 +182,13 @@ model Category {
   code               String?            @unique
   description        String?
   type               String?            @default("GOODS") // GOODS | WORKS | SERVICES
+  // Дерево категорий: Электроника → Мониторы. Подкатегория наследует характеристики родителя.
+  parentId           String?            @map("parent_id")
+  parent             Category?          @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children           Category[]         @relation("CategoryTree")
+  // Нужна ли товарам этой категории фотография (у щебня — нет)
+  photoEnabled       Boolean            @default(true) @map("photo_enabled")
+  attributes         CategoryAttribute[]
   generalProducts    GeneralProduct[]
   tenders            Tender[]
   lots               TenderLot[]
@@ -202,12 +210,87 @@ model GeneralProduct {
   itemType    String?     @default("GOODS") @map("item_type") // GOODS | WORKS | SERVICES
   description String?
 
+  // Бренд, фото, ссылка на официальный сайт производителя
+  brandId          String?  @map("brand_id")
+  brand            Brand?   @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  imageFileName    String?  @map("image_file_name")
+  officialUrl      String?  @map("official_url")
+  // Кто добавил и прошёл ли товар проверку. Товар от поставщика виден другим только после одобрения.
+  createdById      String?  @map("created_by_id")
+  createdBy        User?    @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  moderationStatus ProductModerationStatus @default(APPROVED) @map("moderation_status")
+  moderationNote   String?  @map("moderation_note")
+
+  attributeValues ProductAttributeValue[]
   tenderSpecs TenderSpecification[]
   offerSpecs  OfferSpecification[]
 
   isActive Boolean @default(true) @map("is_active")
 
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([moderationStatus])
   @@map("general_products")
+}
+
+enum ProductModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AttributeType {
+  NUMBER  // 23 (дюйм)
+  LIST    // белый / чёрный
+  BOOLEAN // есть / нет
+  TEXT    // свободный текст
+}
+
+/// Справочник характеристик: «Диагональ, дюйм», «Цвет», «Крепление VESA»
+model Attribute {
+  id       String        @id @default(uuid())
+  name     String
+  type     AttributeType @default(TEXT)
+  unit     String?
+  options  String[]      @default([]) // варианты для LIST
+  isActive Boolean       @default(true) @map("is_active")
+
+  categories CategoryAttribute[]
+  values     ProductAttributeValue[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("attributes")
+}
+
+/// Какие характеристики у товаров категории и какие из них обязательны
+model CategoryAttribute {
+  id          String    @id @default(uuid())
+  categoryId  String    @map("category_id")
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  attributeId String    @map("attribute_id")
+  attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  isRequired  Boolean   @default(false) @map("is_required")
+  order       Int       @default(0)
+
+  @@unique([categoryId, attributeId])
+  @@map("category_attributes")
+}
+
+/// Значение характеристики у товара. attributeId пустой = своя характеристика товара (customName)
+model ProductAttributeValue {
+  id          String         @id @default(uuid())
+  productId   String         @map("product_id")
+  product     GeneralProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attributeId String?        @map("attribute_id")
+  attribute   Attribute?     @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  customName  String?        @map("custom_name")
+  value       String
+  numberValue Float?         @map("number_value")
+  order       Int            @default(0)
+
+  @@index([productId])
+  @@map("product_attribute_values")
 }
 
 model Unit {
@@ -269,10 +352,11 @@ model Country {
 }
 
 model Brand {
-  id            String         @id @default(uuid())
+  id            String           @id @default(uuid())
   name          String
   code          String?
   manufacturers Manufacturer[]
+  products      GeneralProduct[]
 
   @@map("brands")
 }
@@ -365,6 +449,8 @@ model Tender {
 
   announcementDate DateTime? @map("announcement_date")
   deadline         DateTime
+  // Отложенная публикация: черновик с publishAt публикуется планировщиком в это время
+  publishAt        DateTime?        @map("publish_at")
 
   clientId String? @map("client_id")
   client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)

@@ -1,5 +1,9 @@
 const prisma = require('../lib/prisma');
 const { sendError } = require('../utils/httpErrors');
+const {
+    normalizeAttributeValues, productVisibilityWhere, PRODUCT_INCLUDE, officialUrlError, imageFileError, isPhotoEnabled,
+} = require('../services/productAttributes');
+const { notifyAdmins } = require('./notificationController');
 
 // =============================
 // 1. Категории (Categories)
@@ -14,6 +18,7 @@ const getCategories = async (req, res) => {
         const categories = await prisma.category.findMany({
             where,
             orderBy: { name: 'asc' },
+            include: { _count: { select: { attributes: true, children: true } } },
         });
         res.json(categories);
     } catch (error) {
@@ -23,14 +28,17 @@ const getCategories = async (req, res) => {
 
 const createCategory = async (req, res) => {
     try {
-        const { name, code, type, description } = req.body;
+        const { name, code, type, description, parentId, photoEnabled } = req.body;
+        if (!name || !String(name).trim()) return res.status(400).json({ error: 'Укажите название категории' });
         const cleanCode = (code && typeof code === 'string' && code.trim()) ? code.trim() : null;
         const category = await prisma.category.create({
             data: { 
                 name: (name || '').trim(), 
                 code: cleanCode, 
                 type: type || 'GOODS',
-                description: description || null
+                description: description || null,
+                parentId: parentId || null,
+                photoEnabled: photoEnabled === undefined ? true : Boolean(photoEnabled),
             },
         });
         res.status(201).json(category);
@@ -47,14 +55,17 @@ const getGeneralProducts = async (req, res) => {
     try {
         const { itemType, type } = req.query;
         const filterType = itemType || (type && ['GOODS', 'WORKS', 'SERVICES'].includes(type) ? type : undefined);
-        const where = {};
+        const where = { ...productVisibilityWhere(req.user) };
         if (filterType && filterType !== 'ALL') {
             where.itemType = filterType;
+        }
+        if (req.query.moderationStatus && req.user?.roleType === 'ADMIN') {
+            where.moderationStatus = req.query.moderationStatus;
         }
 
         const products = await prisma.generalProduct.findMany({
             where,
-            include: { category: true },
+            include: PRODUCT_INCLUDE,
             orderBy: { name: 'asc' },
         });
         res.json(products);
@@ -63,32 +74,83 @@ const getGeneralProducts = async (req, res) => {
     }
 };
 
+/**
+ * Общие поля товара из тела запроса (создание и правка). Возвращает { data, attributes } или { error }.
+ * attributes === undefined значит «характеристики не трогать».
+ */
+async function readProductInput(req, existing = null) {
+    const { name, tradeName, code, categoryId, type, itemType, description, brandId, officialUrl, imageFileName, attributes } = req.body;
+    const clean = (v) => (v && typeof v === 'string' && v.trim() ? v.trim() : null);
+    const data = {};
+    if (!existing || name !== undefined) {
+        if (!name || typeof name !== 'string' || !name.trim()) return { error: 'Укажите название позиции' };
+        if (name.trim().length > 500) return { error: 'Название позиции: не длиннее 500 символов' };
+        data.name = name.trim();
+    }
+    if (!existing || tradeName !== undefined) data.tradeName = clean(tradeName);
+    if (!existing || code !== undefined) data.code = clean(code);
+    if (!existing || categoryId !== undefined) data.categoryId = clean(categoryId);
+    if (!existing || itemType !== undefined) data.itemType = itemType || 'GOODS';
+    if (!existing || type !== undefined || itemType !== undefined) {
+        data.type = (type === 'HYZMAT' || itemType === 'WORKS' || itemType === 'SERVICES') ? 'HYZMAT' : 'HARYT';
+    }
+    if (!existing || description !== undefined) data.description = description ? String(description).slice(0, 5000) : null;
+    if (!existing || brandId !== undefined) data.brandId = clean(brandId);
+    if (!existing || officialUrl !== undefined) {
+        const urlErr = officialUrlError(officialUrl);
+        if (urlErr) return { error: urlErr };
+        data.officialUrl = clean(officialUrl);
+    }
+    if (!existing || imageFileName !== undefined) {
+        const imgErr = await imageFileError(req.user, imageFileName);
+        if (imgErr) return { error: imgErr };
+        data.imageFileName = clean(imageFileName);
+    }
+
+    const finalCategoryId = data.categoryId !== undefined ? data.categoryId : existing?.categoryId;
+    if (data.imageFileName && !(await isPhotoEnabled(finalCategoryId))) data.imageFileName = null;
+
+    // Характеристики проверяем, если их прислали или сменилась категория (у новой могут быть обязательные)
+    let rows;
+    if (attributes !== undefined || !existing || (data.categoryId !== undefined && data.categoryId !== existing.categoryId)) {
+        const result = await normalizeAttributeValues(finalCategoryId, attributes);
+        if (result.error) return { error: result.error };
+        rows = result.rows;
+    }
+    return { data, attributes: rows };
+}
+
 const createGeneralProduct = async (req, res) => {
     try {
-        const { name, tradeName, code, categoryId, type, itemType, description } = req.body;
-        const cleanCode = (code && typeof code === 'string' && code.trim()) ? code.trim() : null;
-        const cleanCatId = (categoryId && typeof categoryId === 'string' && categoryId.trim()) ? categoryId.trim() : null;
-        const cleanTrade = (tradeName && typeof tradeName === 'string' && tradeName.trim()) ? tradeName.trim() : null;
+        const input = await readProductInput(req);
+        if (input.error) return res.status(400).json({ error: input.error });
 
-        if (!name || typeof name !== 'string' || !name.trim()) {
-            return res.status(400).json({ error: 'Укажите название позиции' });
+        // Товар от поставщика попадает в справочник «на проверку» и виден только ему и админу
+        const isSupplier = req.user.roleType !== 'ADMIN';
+        if (isSupplier) {
+            const verified = await prisma.supplier.findFirst({ where: { userId: req.user.id, verificationStatus: 'VERIFIED' }, select: { id: true } });
+            if (!verified) return res.status(403).json({ error: 'Добавлять товары в справочник могут только проверенные поставщики' });
         }
-
         const product = await prisma.generalProduct.create({
             data: {
-                name: (name || '').trim(),
-                tradeName: cleanTrade,
-                code: cleanCode,
-                categoryId: cleanCatId,
-                type: (type === 'HYZMAT' || itemType === 'WORKS' || itemType === 'SERVICES') ? 'HYZMAT' : 'HARYT',
-                itemType: itemType || 'GOODS',
-                description: description || null,
+                ...input.data,
+                createdById: req.user.id,
+                moderationStatus: isSupplier ? 'PENDING' : 'APPROVED',
+                attributeValues: { create: input.attributes },
             },
-            include: { category: true }
+            include: PRODUCT_INCLUDE,
         });
+
+        if (isSupplier) {
+            notifyAdmins({
+                title: 'Новый товар на проверку',
+                message: `Поставщик добавил в справочник «${product.name}». Проверьте и одобрите, чтобы товар стал виден всем.`,
+                type: 'warning',
+                link: '/haryt?moderation=1',
+            }).catch((e) => console.error('notify pending product:', e));
+        }
         res.status(201).json(product);
     } catch (error) {
-        console.error('createGeneralProduct error:', error);
         sendError(res, error, 'Ошибка при добавлении записи в справочник');
     }
 };
@@ -267,6 +329,19 @@ const updateCategory = async (req, res) => {
         if (type !== undefined) data.type = type;
         if (description !== undefined) data.description = description || null;
         if (isActive !== undefined) data.isActive = Boolean(isActive);
+        if (req.body.photoEnabled !== undefined) data.photoEnabled = Boolean(req.body.photoEnabled);
+        if (req.body.parentId !== undefined) {
+            const parentId = req.body.parentId || null;
+            // Нельзя сделать категорию подкатегорией самой себя или своего потомка
+            let cursor = parentId;
+            for (let i = 0; cursor && i < 20; i++) {
+                if (cursor === req.params.id) {
+                    return res.status(400).json({ error: 'Категория не может быть вложена сама в себя' });
+                }
+                cursor = (await prisma.category.findUnique({ where: { id: cursor }, select: { parentId: true } }))?.parentId;
+            }
+            data.parentId = parentId;
+        }
 
         const category = await prisma.category.update({ where: { id: req.params.id }, data });
         res.json(category);
@@ -287,26 +362,25 @@ const deleteCategory = async (req, res) => {
 
 const updateGeneralProduct = async (req, res) => {
     try {
-        const { name, tradeName, code, categoryId, type, itemType, description, isActive } = req.body;
-        const data = {};
-        if (name !== undefined) data.name = (name || '').trim();
-        if (tradeName !== undefined) data.tradeName = (tradeName && typeof tradeName === 'string' && tradeName.trim()) ? tradeName.trim() : null;
-        if (code !== undefined) data.code = (code && typeof code === 'string' && code.trim()) ? code.trim() : null;
-        if (categoryId !== undefined) data.categoryId = (categoryId && typeof categoryId === 'string' && categoryId.trim()) ? categoryId.trim() : null;
-        if (type !== undefined) data.type = (type === 'HYZMAT' || itemType === 'WORKS' || itemType === 'SERVICES') ? 'HYZMAT' : 'HARYT';
-        if (itemType !== undefined) data.itemType = itemType;
-        if (description !== undefined) data.description = description || null;
-        if (isActive !== undefined) data.isActive = Boolean(isActive);
+        const existing = await prisma.generalProduct.findUnique({ where: { id: req.params.id } });
+        if (!existing) return res.status(404).json({ error: 'Позиция не найдена' });
 
-        const product = await prisma.generalProduct.update({ 
-            where: { id: req.params.id }, 
-            data,
-            include: { category: true }
+        const input = await readProductInput(req, existing);
+        if (input.error) return res.status(400).json({ error: input.error });
+        if (req.body.isActive !== undefined) input.data.isActive = Boolean(req.body.isActive);
+
+        const product = await prisma.$transaction(async (tx) => {
+            if (input.attributes !== undefined) {
+                await tx.productAttributeValue.deleteMany({ where: { productId: existing.id } });
+                if (input.attributes.length) {
+                    await tx.productAttributeValue.createMany({ data: input.attributes.map((r) => ({ ...r, productId: existing.id })) });
+                }
+            }
+            return tx.generalProduct.update({ where: { id: existing.id }, data: input.data, include: PRODUCT_INCLUDE });
         });
         res.json(product);
-    } catch (error) { 
-        console.error('updateGeneralProduct error:', error);
-        sendError(res, error, 'Ошибка обновления позиции'); 
+    } catch (error) {
+        sendError(res, error, 'Ошибка обновления позиции');
     }
 };
 const deleteGeneralProduct = async (req, res) => {
@@ -510,7 +584,7 @@ const deleteClient = async (req, res) => {
 const getUniqueMNNs = async (req, res) => {
     try {
         const products = await prisma.generalProduct.findMany({
-            where: { itemType: 'GOODS' },
+            where: { itemType: 'GOODS', ...productVisibilityWhere(req.user) },
             include: { category: true },
             orderBy: { name: 'asc' },
         });

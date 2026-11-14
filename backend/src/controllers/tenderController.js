@@ -11,6 +11,7 @@ const assertStructureEditable = async (tender) => {
 };
 const { sendNotification } = require('./notificationController');
 const { sendError } = require('../utils/httpErrors');
+const { publishTenderById, publishBlocker } = require('../services/tenderPublish');
 const { MAX_TITLE, tooLong, parseQuantity, specsError, lotNumberError, deadlineTooFar } = require('../utils/validation');
 
 // Генерация последовательного номера тендера вида TNDR-YYYY-MM-001
@@ -707,123 +708,37 @@ const updateTender = async (req, res) => {
 const publishTender = async (req, res) => {
     try {
         const { id } = req.params;
-        const tender = await prisma.tender.findUnique({
-            where: { id },
-            include: {
-                lots: {
-                    include: { specs: true }
-                }
-            }
-        });
 
-        if (!tender) {
-            return res.status(404).json({ error: 'Тендер не найден' });
+        // Отложенная публикация: проверяем тендер сейчас, публикует планировщик в назначенное время
+        if (req.body?.publishAt) {
+            const at = new Date(req.body.publishAt);
+            if (isNaN(at.getTime())) return res.status(400).json({ error: 'Некорректная дата публикации' });
+            if (at <= new Date()) return res.status(400).json({ error: 'Дата публикации должна быть в будущем. Чтобы опубликовать сейчас, нажмите «Опубликовать».' });
+            const tender = await prisma.tender.findUnique({ where: { id }, include: { lots: { include: { specs: true } } } });
+            if (!tender) return res.status(404).json({ error: 'Тендер не найден' });
+            const blocker = publishBlocker(tender, at);
+            if (blocker) return res.status(400).json({ error: blocker });
+            const updated = await prisma.tender.update({ where: { id }, data: { publishAt: at } });
+            return res.json(updated);
         }
 
-        if (tender.status !== 'TASLAMA') {
-            return res.status(400).json({ error: 'Опубликовать можно только черновик' });
-        }
-
-        if (!tender.lots || tender.lots.length === 0) {
-            return res.status(400).json({ error: 'Невозможно опубликовать тендер: добавьте как минимум один лот' });
-        }
-
-        const emptyLot = tender.lots.find((l) => !l.specs || l.specs.length === 0);
-        if (emptyLot) {
-            return res.status(400).json({ error: `Невозможно опубликовать тендер: в лоте «${emptyLot.name || emptyLot.lotNumber}» нет ни одной позиции` });
-        }
-
-        if (new Date(tender.deadline) <= new Date()) {
-            return res.status(400).json({ error: 'Невозможно опубликовать тендер: дедлайн уже прошёл. Укажите новый срок.' });
-        }
-
-        if (!tender.title?.trim() || tender.title.trim() === 'Без названия') {
-            return res.status(400).json({ error: 'Невозможно опубликовать тендер: укажите название закупки' });
-        }
-
-        // Атомарно: при двойном клике второй запрос не пройдёт (статус уже не TASLAMA),
-        // иначе поставщики получили бы оповещение о публикации дважды
-        const switched = await prisma.tender.updateMany({ where: { id, status: 'TASLAMA' }, data: { status: 'ACYK' } });
-        if (switched.count === 0) {
-            return res.status(400).json({ error: 'Тендер уже опубликован' });
-        }
-
-        const updated = await prisma.tender.findUnique({
-            where: { id },
-            include: {
-                lots: {
-                    orderBy: { lotNumber: 'asc' },
-                    include: {
-                        category: true,
-                        deliveryTerm: true,
-                        specs: {
-                            include: { generalProduct: true, unit: true, manufacturer: true },
-                            orderBy: { positionNumber: 'asc' }
-                        },
-                        files: {
-                            include: { document: true }
-                        }
-                    }
-                },
-                client: true,
-                category: true,
-                invitedSuppliers: {
-                    include: {
-                        supplier: true
-                    }
-                }
-            }
-        });
-
-        // Оповещения при публикации тендера:
-        try {
-            if (updated.visibility === 'YAPYK' && updated.invitedSuppliers && updated.invitedSuppliers.length > 0) {
-                // Закрытый тендер: персональные приглашения для выбранных поставщиков
-                for (const inv of updated.invitedSuppliers) {
-                    if (inv.supplier?.userId) {
-                        sendNotification({
-                            userId: inv.supplier.userId,
-                            title: 'Персональное приглашение на участие в закрытом тендере',
-                            message: `Ваша организация приглашена к участию в закрытом тендере №${updated.tenderNumber}: «${updated.title}».`,
-                            type: 'tender',
-                            link: `/tenders/${updated.id}`
-                        }).catch(e => console.error('Error sending private tender invite:', e));
-                    }
-                }
-            } else if (updated.visibility === 'ACYK') {
-                // Открытый тендер: оповещаем верифицированных поставщиков (например, по релевантной категории)
-                const suppliers = await prisma.supplier.findMany({
-                    where: {
-                        verificationStatus: 'VERIFIED',
-                        isActive: true,
-                        ...(updated.categoryId ? {
-                            categories: {
-                                some: { categoryId: updated.categoryId }
-                            }
-                        } : {})
-                    },
-                    select: { userId: true }
-                });
-
-                const targetUserIds = suppliers.map(s => s.userId).filter(Boolean);
-                if (targetUserIds.length > 0) {
-                    sendNotification({
-                        userIds: targetUserIds,
-                        title: 'Опубликован новый открытый тендер',
-                        message: `Объявлен открытый тендер №${updated.tenderNumber}: «${updated.title}». Прием заявок открыт.`,
-                        type: 'tender',
-                        link: `/tenders/${updated.id}`
-                    }).catch(e => console.error('Error notifying suppliers about new open tender:', e));
-                }
-            }
-        } catch (notifErr) {
-            console.error('Ошибка отправки уведомлений при публикации тендера:', notifErr);
-        }
-
-        res.json(updated);
+        const result = await publishTenderById(id);
+        if (result.error) return res.status(result.status).json({ error: result.error });
+        res.json(result.tender);
     } catch (error) {
         console.error('PublishTender Error:', error);
         sendError(res, error, 'Ошибка публикации тендера');
+    }
+};
+
+// Отменить отложенную публикацию: тендер остаётся черновиком
+const unscheduleTender = async (req, res) => {
+    try {
+        const { count } = await prisma.tender.updateMany({ where: { id: req.params.id, status: 'TASLAMA' }, data: { publishAt: null } });
+        if (!count) return res.status(400).json({ error: 'Отменить можно только запланированный черновик' });
+        res.json({ id: req.params.id, publishAt: null });
+    } catch (error) {
+        sendError(res, error, 'Ошибка отмены публикации');
     }
 };
 
@@ -1078,6 +993,7 @@ const deleteTender = async (req, res) => {
 };
 
 module.exports = {
+    unscheduleTender,
     createTender,
     getTenders,
     getTenderById,
