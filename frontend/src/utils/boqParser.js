@@ -21,11 +21,45 @@ const UNIT_ALIASES = {
 const squash = (s) => String(s ?? '').toLowerCase().replace(/\s+/g, '');
 const squashNoDots = (s) => squash(s).replace(/\.+$/, '');
 
-/** Число из ячейки: «1 250,5» → 1250.5; не число → NaN */
+/** Число из ячейки: «1 250,5», «1.250,50», «1,250.50» → 1250.5; не число → NaN */
 export function parseNumber(cell) {
-  const s = String(cell ?? '').replace(/[\s ]/g, '').replace(',', '.');
+  let s = String(cell ?? '').replace(/[\s\u00a0]/g, '');
+  if (s.includes(',') && s.includes('.')) {
+    // Разделитель дробной части — тот, что правее; другой — разряды
+    s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+  } else {
+    s = s.replace(',', '.');
+  }
   if (!/^-?\d+(\.\d+)?$/.test(s)) return NaN;
   return Number(s);
+}
+
+/**
+ * Текст из буфера → строки ячеек. Excel берёт в кавычки ячейку с переносом строки или кавычкой внутри,
+ * поэтому делить просто по \n нельзя: многострочное наименование развалилось бы на несколько позиций.
+ * Без табуляции считаем, что это CSV через «;».
+ */
+export function splitCells(text) {
+  const src = String(text ?? '').replace(/\r\n?/g, '\n');
+  const sep = src.includes('\t') ? '\t' : ';';
+  const lines = [];
+  let row = [];
+  let cell = '';
+  let quoted = false;
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (quoted) {
+      if (ch === '"' && src[i + 1] === '"') { cell += '"'; i++; }
+      else if (ch === '"') quoted = false;
+      else cell += ch;
+    } else if (ch === '"' && cell === '') quoted = true;
+    else if (ch === sep) { row.push(cell); cell = ''; }
+    else if (ch === '\n') { row.push(cell); lines.push(row); row = []; cell = ''; }
+    else cell += ch;
+  }
+  row.push(cell);
+  lines.push(row);
+  return lines.map((r) => r.map((c) => c.replace(/\s+/g, ' ').trim()));
 }
 
 /** Найти единицу справочника по тексту ячейки */
@@ -48,41 +82,55 @@ export function parseBoq(text, units = []) {
   const warnings = [];
   const sections = new Set();
   let section = '';
+  const isNum = (c) => !Number.isNaN(parseNumber(c));
 
-  String(text ?? '').split(/\r?\n/).forEach((line, i) => {
+  splitCells(text).forEach((raw, i) => {
     const lineNo = i + 1;
-    if (!line.trim()) return;
-    let cells = (line.includes('\t') ? line.split('\t') : line.split(';')).map((c) => c.trim());
+    // Строка из CSV «;» среди вставки из Excel
+    let cells = raw.length === 1 && raw[0].includes(';') ? raw[0].split(';').map((c) => c.trim()) : [...raw];
     while (cells.length && !cells[cells.length - 1]) cells.pop();
+    if (!cells.some(Boolean)) return;
     // Номер строки в первой колонке («1», «2.3») отбрасываем
     if (cells.length > 1 && ROW_NUMBER_RE.test(cells[0])) cells = cells.slice(1);
-    const nameIdx = cells.findIndex((c) => c && Number.isNaN(parseNumber(c)));
-    if (nameIdx === -1) return; // строка из одних чисел (итоги, номера колонок)
-    const name = cells[nameIdx];
-    if (TOTAL_RE.test(name)) return; // «Итого», «Всего» — не позиция и не раздел
-    const rest = cells.slice(nameIdx + 1);
-    const qtyIdx = rest.findIndex((c) => !Number.isNaN(parseNumber(c)));
+    const firstText = cells.findIndex((c) => c && !isNum(c));
+    if (firstText === -1) return; // строка из одних чисел (итоги, номера колонок)
+    if (cells.some((c) => TOTAL_RE.test(c))) return; // «Итого», «Всего» — не позиция и не раздел
+    const qtyAt = cells.findIndex((c, k) => k > firstText && isNum(c));
+    const before = (qtyAt === -1 ? cells : cells.slice(0, qtyAt)).map((c, k) => ({ c, k })).filter((x) => x.c && !isNum(x.c));
 
-    if (qtyIdx === -1) {
+    if (qtyAt === -1) {
       // Нет объёма: шапка таблицы или заголовок раздела
-      if (rest.some((c) => HEADER_RE.test(c)) || (HEADER_RE.test(name) && rest.length > 0)) return;
-      section = name.slice(0, 200);
+      if (cells.some((c) => HEADER_RE.test(c)) && cells.filter(Boolean).length > 1) return;
+      section = before.map((x) => x.c).sort((a, b) => b.length - a.length)[0].slice(0, 200);
       sections.add(section);
       return;
     }
 
-    const quantity = parseNumber(rest[qtyIdx]);
+    const quantity = parseNumber(cells[qtyAt]);
     if (!(quantity > 0)) {
       warnings.push(`Строка ${lineNo}: объём должен быть больше нуля, строка пропущена`);
       return;
     }
-    // Единица — текстовая ячейка между наименованием и объёмом, иначе сразу после объёма
-    const unitText = rest.slice(0, qtyIdx).find((c) => c) || rest[qtyIdx + 1] || '';
+    // Единица: текстовая ячейка до объёма, которая есть в справочнике (или короткая), иначе текст сразу после объёма.
+    // Наименование: самая длинная из остальных текстовых ячеек (шифр расценки «ГЭСН 46-01-001» короче названия).
+    const after = cells[qtyAt + 1] && !isNum(cells[qtyAt + 1]) ? { c: cells[qtyAt + 1], k: qtyAt + 1 } : null;
+    let unitCell = before.find((x) => matchUnit(x.c, units)) || null;
+    if (!unitCell && after && (matchUnit(after.c, units) || after.c.length <= 8)) unitCell = after;
+    if (!unitCell && before.length > 1) {
+      const short = before.filter((x) => x.c.length <= 8);
+      unitCell = short[short.length - 1] || null;
+    }
+    const nameCell = before.filter((x) => x !== unitCell).sort((a, b) => b.c.length - a.c.length)[0];
+    if (!nameCell) {
+      warnings.push(`Строка ${lineNo}: не нашли наименование, строка пропущена`);
+      return;
+    }
+    const unitText = unitCell?.c || '';
     const unit = matchUnit(unitText, units);
     if (unitText && !unit) warnings.push(`Строка ${lineNo}: единицы «${unitText}» нет в справочнике, выберите её вручную`);
-    const descCells = rest.slice(qtyIdx + 1).filter((c) => c && c !== unitText);
+    const descCells = cells.slice(qtyAt + 1).filter((c, k) => c && !isNum(c) && qtyAt + 1 + k !== unitCell?.k);
     rows.push({
-      name: name.slice(0, 500),
+      name: nameCell.c.slice(0, 500),
       unitId: unit?.id || '',
       unitText,
       quantity,

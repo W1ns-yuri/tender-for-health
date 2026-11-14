@@ -68,3 +68,24 @@ test('разбор вставки из Excel: разделы, шапка, ито
     assert.equal(r.sections, 2);
     assert.equal(r.warnings.length, 2, r.warnings.join('; ')); // «литр» и нулевой объём
 });
+
+test('разбор «кривой» сметы: шифры расценок, многострочные ячейки, цены после объёма', async () => {
+    const { parseBoq } = await import(pathToFileURL(path.resolve(__dirname, '../../frontend/src/utils/boqParser.js')).href);
+    const text = [
+        '№ п/п\tШифр\tНаименование работ\tЕд. изм.\tКол-во\tЦена\tСумма',
+        '1\t2\t3\t4\t5\t6\t7',
+        '\t\tРаздел 1. Земляные работы\t\t\t\t',
+        '1\tГЭСН 01-01-003\t"Разработка грунта экскаватором\nс погрузкой в самосвалы"\tм3\t1.250,50\t85,00\t106292,50',
+        '2\tГЭСН 01-02-061\tЗасыпка траншей вручную\tм3\t40\t\t',
+        '3\t\tКабель ВВГ 3х2,5\t120\tм\t',
+        '\t\tВсего по разделу 1\t\t\t\t106292,50',
+    ].join('\n');
+    const r = parseBoq(text, units);
+    const short = (id) => units.find((u) => u.id === id)?.shortName;
+    assert.deepEqual(r.rows.map((x) => [x.section, x.name, short(x.unitId), x.quantity]), [
+        ['Раздел 1. Земляные работы', 'Разработка грунта экскаватором с погрузкой в самосвалы', 'м³', 1250.5],
+        ['Раздел 1. Земляные работы', 'Засыпка траншей вручную', 'м³', 40],
+        ['Раздел 1. Земляные работы', 'Кабель ВВГ 3х2,5', 'м', 120],
+    ]);
+    assert.deepEqual(r.warnings, []);
+});

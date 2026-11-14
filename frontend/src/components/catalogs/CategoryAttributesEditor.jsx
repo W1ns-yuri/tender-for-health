@@ -165,7 +165,7 @@ export default function CategoryAttributesEditor({
                 type="text" value={draft.unit} maxLength={30}
                 onChange={(e) => setDraft({ ...draft, unit: e.target.value })}
                 placeholder={t('attrUnitPh', 'Единица: дюйм, кг, мг...')}
-                aria-label={t('attrUnit', 'Единица измерения')}
+                aria-label={t('attrUnitShort', 'Единица измерения')}
                 className={inputClass}
               />
             )}
@@ -174,7 +174,7 @@ export default function CategoryAttributesEditor({
                 type="text" value={draft.options}
                 onChange={(e) => setDraft({ ...draft, options: e.target.value })}
                 placeholder={t('attrOptionsPh', 'Варианты через запятую: белый, чёрный')}
-                aria-label={t('attrOptions', 'Варианты')}
+                aria-label={t('attrOptionsShort', 'Варианты')}
                 className={`${inputClass} sm:col-span-2`}
               />
             )}
