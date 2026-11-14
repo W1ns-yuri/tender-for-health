@@ -7,6 +7,15 @@ import { sanitizeInputText } from './tenderConstants';
  * Инкапсулирует загрузку справочников, работу с черновиком, атомарные операции над лотами,
  * загрузку документов и валидацию публикации.
  */
+// Требования позиции из ответа сервера → строки формы
+const toRequirementRows = (list) => (list || []).map(r => ({
+  attributeId: r.attributeId || '',
+  customName: r.customName || '',
+  operator: r.operator || 'EQ',
+  value: r.value || '',
+  isMandatory: r.isMandatory !== false,
+}));
+
 export default function useCreateTenderState({
   id,
   navigate,
@@ -138,7 +147,8 @@ export default function useCreateTenderState({
             unit: s.unitId || '',
             brand: s.manufacturerId || '',
             mukdar: s.quantity || 1,
-            desc: s.description || ''
+            desc: s.description || '',
+            requirements: toRequirementRows(s.requirements)
           }))
         }));
 
@@ -442,7 +452,9 @@ export default function useCreateTenderState({
       const nextLots = [...prev];
       const nextSpecs = [...(nextLots[activeLotIndex].specs || [])];
 
-      if (field === 'productSelect') {
+      if (field === 'requirements') {
+        nextSpecs[specIdx] = { ...nextSpecs[specIdx], requirements: value };
+      } else if (field === 'productSelect') {
         nextSpecs[specIdx] = {
           ...nextSpecs[specIdx],
           haryt: value,
@@ -493,7 +505,8 @@ export default function useCreateTenderState({
           quantity: parseFloat(s.mukdar) || 1,
           unitId: s.unit || undefined,
           manufacturerId: s.brand || undefined,
-          description: s.desc ? sanitizeInputText(s.desc).trim() : undefined
+          description: s.desc ? sanitizeInputText(s.desc).trim() : undefined,
+          requirements: (s.requirements || []).filter(r => String(r.value ?? '').trim())
         }));
 
       const payload = {
@@ -532,7 +545,8 @@ export default function useCreateTenderState({
             unit: s.unitId || '',
             brand: s.manufacturerId || '',
             mukdar: s.quantity || 1,
-            desc: s.description || ''
+            desc: s.description || '',
+            requirements: toRequirementRows(s.requirements)
           }))
         };
         return nextLots;

@@ -1,5 +1,6 @@
 import React from 'react';
-import { FileText, CornerDownRight } from 'lucide-react';
+import { FileText, CornerDownRight, CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
+import { OPERATOR_LABELS, formatValue } from '../../utils/requirements';
 
 /**
  * Раскрывающаяся попозиционная спецификация предложения поставщика в сравнении с ТЗ заказчика.
@@ -120,6 +121,27 @@ export default function EvaluationLotSpecBreakdown({
                           {os.description ? <span>{os.description}</span> : <span className="text-slate-400 italic">—</span>}
                         </td>
                       </tr>
+                      {os.requirementCheck?.results?.length > 0 && (
+                        <tr>
+                          <td></td>
+                          <td colSpan="6" className="px-3 pb-3">
+                            <ul className="flex flex-wrap gap-x-4 gap-y-1">
+                              {os.requirementCheck.results.map((r) => (
+                                <li key={r.requirementId} className={`flex items-center gap-1 text-xs ${
+                                  r.status === 'MATCH' ? 'text-emerald-700 dark:text-emerald-400'
+                                    : r.status === 'MISMATCH' ? (r.isMandatory ? 'text-rose-700 dark:text-rose-400 font-semibold' : 'text-amber-700 dark:text-amber-400')
+                                    : 'text-slate-500 dark:text-slate-400'}`}>
+                                  {r.status === 'MATCH' ? <CheckCircle2 size={13} /> : r.status === 'MISMATCH' ? <XCircle size={13} /> : <HelpCircle size={13} />}
+                                  {r.name} {r.operator === 'EQ' ? '' : OPERATOR_LABELS[r.operator] + ' '}{formatValue(r.required, r.type)}{r.unit ? ' ' + r.unit : ''}
+                                  {r.isMandatory ? '' : ` (${t('reqOptional', 'желательно')})`}
+                                  {' → '}
+                                  {r.offered === null ? t('reqNotSpecified', 'не указано, проверьте вручную') : formatValue(r.offered, r.type)}
+                                </li>
+                              ))}
+                            </ul>
+                          </td>
+                        </tr>
+                      )}
                     </React.Fragment>
                   );
                 })}

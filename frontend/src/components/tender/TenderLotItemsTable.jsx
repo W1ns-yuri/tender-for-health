@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Plus, Trash2, ListChecks } from 'lucide-react';
+import SpecRequirementsEditor from './SpecRequirementsEditor';
 import ProductSearchableSelect from './ProductSearchableSelect';
 import CustomSelect from '../CustomSelect';
 
@@ -18,6 +19,14 @@ export default function TenderLotItemsTable({
   t,
   role
 }) {
+  const [openReqs, setOpenReqs] = useState(() => new Set());
+  const toggleReqs = (key) => setOpenReqs((prev) => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
+  const colCount = activeLot?.lotType === 'GOODS' ? 7 : 6;
+
   const lotProducts = useMemo(() => {
     const targetType = activeLot?.lotType || 'GOODS';
     return products.filter(p => (p.itemType || 'GOODS') === targetType);
@@ -142,8 +151,12 @@ export default function TenderLotItemsTable({
                   return aName.localeCompare(bName);
                 });
 
+                const reqKey = spec.id || sIdx;
+                const reqCount = (spec.requirements || []).length;
+                const reqOpen = openReqs.has(reqKey);
                 return (
-                <tr key={spec.id || sIdx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                <React.Fragment key={reqKey}>
+                <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
                   <td className="py-2.5 px-2 text-center font-mono font-bold text-slate-400">
                     {sIdx + 1}
                   </td>
@@ -161,6 +174,15 @@ export default function TenderLotItemsTable({
                       theme={theme}
                       lang={lang}
                     />
+                    <button
+                      type="button"
+                      onClick={() => toggleReqs(reqKey)}
+                      aria-expanded={reqOpen}
+                      className={`mt-1.5 inline-flex items-center gap-1 text-xs font-semibold cursor-pointer hover:underline ${reqCount ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}
+                    >
+                      <ListChecks size={13} />
+                      {reqCount ? `${t('reqShort', 'Требования')}: ${reqCount}` : t('reqAddShort', '+ Требования')}
+                    </button>
                   </td>
 
                   <td className="py-2.5 px-2">
@@ -225,6 +247,21 @@ export default function TenderLotItemsTable({
                     </button>
                   </td>
                 </tr>
+                {reqOpen && (
+                  <tr className="bg-slate-50/60 dark:bg-slate-800/20">
+                    <td></td>
+                    <td colSpan={colCount - 1} className="py-3 px-3">
+                      <SpecRequirementsEditor
+                        value={spec.requirements || []}
+                        onChange={(rows) => handleSpecChange(sIdx, 'requirements', rows)}
+                        product={lotProducts.find((p) => p.id === spec.generalProductId)}
+                        inputClass={`px-2 py-1.5 rounded-md text-xs outline-none border ${theme.inputBg}`}
+                        t={t}
+                      />
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
               );
             })
             )}

@@ -78,11 +78,12 @@ const updateAttribute = async (req, res) => {
 
 const deleteAttribute = async (req, res) => {
     try {
-        const used = await prisma.productAttributeValue.count({ where: { attributeId: req.params.id } });
+        const used = await prisma.productAttributeValue.count({ where: { attributeId: req.params.id } })
+            + await prisma.tenderSpecRequirement.count({ where: { attributeId: req.params.id } });
         if (used) {
             // Значения у товаров не стираем: просто скрываем характеристику из новых форм
             await prisma.attribute.update({ where: { id: req.params.id }, data: { isActive: false } });
-            return res.json({ archived: true, message: `Характеристика заполнена у ${used} товаров, поэтому она скрыта, а не удалена` });
+            return res.json({ archived: true, message: `Характеристика уже используется (${used} раз в товарах и требованиях тендеров), поэтому она скрыта, а не удалена` });
         }
         await prisma.attribute.delete({ where: { id: req.params.id } });
         res.status(204).send();
