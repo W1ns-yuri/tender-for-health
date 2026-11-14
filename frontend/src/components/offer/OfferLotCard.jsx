@@ -11,6 +11,8 @@ import {
   ShieldCheck,
   Building2,
 } from 'lucide-react';
+import LotTypeConditions from '../tender/LotTypeConditions';
+import { lotTypeInfo, isNewLotType } from '../../utils/lotTypes';
 import CustomSelect from '../CustomSelect';
 import OfferLotItemRow from './OfferLotItemRow';
 import { resolveFileUrl } from '../../utils/themeUtils';
@@ -96,6 +98,12 @@ export default function OfferLotCard({
             <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold text-[12px] flex items-center gap-1 border border-blue-200 dark:border-blue-800/60">
               <Settings2 size={12} />
               <span>{t('servicesType', 'Услуги')}</span>
+            </span>
+          )}
+
+          {isNewLotType(lotType) && (
+            <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[12px] border border-slate-200 dark:border-slate-700">
+              {lotTypeInfo(lotType).name}
             </span>
           )}
 
@@ -219,6 +227,9 @@ export default function OfferLotCard({
                 )}
               </div>
             )}
+
+            {/* 4. Для АРЕНДЫ и ЛИЦЕНЗИЙ: срок, оператор, топливо, поддержка */}
+            <LotTypeConditions lot={lot} t={t} />
 
             {/* Итого по лоту */}
             <div className="text-right pl-3 border-l border-slate-200 dark:border-slate-700 shrink-0">

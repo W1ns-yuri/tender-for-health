@@ -80,3 +80,12 @@ function registrationError({ username, phone, taxId, companyName, firstName, las
 module.exports = {
     MAX_TITLE, MAX_UNIT_PRICE, tooLong, parseQuantity, specsError, lotNumberError, deadlineTooFar, registrationError,
 };
+
+/** Типы лотов. Для аренды и лицензий срок хранится в workPeriod («3 месяца»), место работы техники — в workAddress. */
+const LOT_TYPES = ['GOODS', 'WORKS', 'SERVICES', 'RENTAL', 'LICENSES'];
+function lotTypeError(lotType) {
+    if (lotType === undefined || lotType === null || lotType === '') return null;
+    return LOT_TYPES.includes(lotType) ? null : 'Неизвестный тип лота';
+}
+module.exports.LOT_TYPES = LOT_TYPES;
+module.exports.lotTypeError = lotTypeError;

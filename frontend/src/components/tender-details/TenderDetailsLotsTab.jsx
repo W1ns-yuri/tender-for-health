@@ -1,5 +1,7 @@
 import React from 'react';
 import { Bookmark, Trophy, Paperclip, FileText, Folder, Building2, Package, MapPin, Clock, ScrollText } from 'lucide-react';
+import LotTypeConditions from '../tender/LotTypeConditions';
+import { lotTypeInfo, isNewLotType } from '../../utils/lotTypes';
 import { cleanLotTitle, lotLabel } from '../../utils/pluralize';
 import { safeString } from '../../utils/themeUtils';
 import { getFileDownloadUrl } from './useTenderDetailsState';
@@ -27,7 +29,8 @@ export default function TenderDetailsLotsTab({
 
   const isWorks = lot.lotType === 'WORKS';
   const isServices = lot.lotType === 'SERVICES';
-  const isGoods = !isWorks && !isServices;
+  const isNewType = isNewLotType(lot.lotType);
+  const isGoods = !isWorks && !isServices && !isNewType;
 
   return (
     <div className="relative">
@@ -100,6 +103,8 @@ export default function TenderDetailsLotsTab({
                     ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
                     : isServices
                     ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300'
+                    : isNewType
+                    ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
                     : role === 'SUPPLIER'
                     ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/40'
                     : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
@@ -109,6 +114,8 @@ export default function TenderDetailsLotsTab({
                   ? t('worksType', 'Работы')
                   : isServices
                   ? t('servicesType', 'Услуги')
+                  : isNewType
+                  ? lotTypeInfo(lot.lotType).name
                   : t('catProducts', 'Товары')}
               </span>
             </div>
@@ -138,6 +145,8 @@ export default function TenderDetailsLotsTab({
                 </span>
               )}
             </div>
+
+            {isNewType && <div className="mt-2"><LotTypeConditions lot={lot} t={t} /></div>}
 
             {/* Условия поставки / выполнения */}
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">

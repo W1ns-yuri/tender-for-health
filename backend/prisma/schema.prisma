@@ -491,7 +491,7 @@ model TenderLot {
   lotNumber       Int?          @map("lot_number")
   name            String
   description     String?
-  lotType         String?       @default("GOODS") @map("lot_type") // GOODS | WORKS | SERVICES
+  lotType         String?       @default("GOODS") @map("lot_type") // GOODS | WORKS | SERVICES | RENTAL | LICENSES
   categoryId      String?       @map("category_id")
   category        Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   endUser         String?       @map("end_user")
@@ -503,6 +503,9 @@ model TenderLot {
   licenseRequired Boolean?      @default(false) @map("license_required")
   serviceFormat   String?       @map("service_format") // REMOTE | ON_SITE | HYBRID
   slaPeriod       String?       @map("sla_period")
+  withOperator    Boolean?      @default(false) @map("with_operator") // аренда: техника с оператором
+  fuelIncluded    Boolean?      @default(false) @map("fuel_included") // аренда: топливо за счёт арендодателя
+  supportIncluded Boolean?      @default(false) @map("support_included") // лицензии: техподдержка включена
 
   specs TenderSpecification[]
   files LotFile[]

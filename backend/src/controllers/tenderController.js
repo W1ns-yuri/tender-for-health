@@ -12,7 +12,7 @@ const assertStructureEditable = async (tender) => {
 const { sendNotification } = require('./notificationController');
 const { sendError } = require('../utils/httpErrors');
 const { publishTenderById, publishBlocker } = require('../services/tenderPublish');
-const { MAX_TITLE, tooLong, parseQuantity, specsError, lotNumberError, deadlineTooFar } = require('../utils/validation');
+const { MAX_TITLE, tooLong, parseQuantity, specsError, lotNumberError, deadlineTooFar, lotTypeError } = require('../utils/validation');
 
 const { normalizeSpecRequirements, REQUIREMENTS_INCLUDE } = require('../services/specRequirements');
 
@@ -122,7 +122,7 @@ const createTender = async (req, res) => {
             return res.status(400).json({ error: `Название тендера: не длиннее ${MAX_TITLE} символов` });
         }
         for (const lot of Array.isArray(lots) ? lots : []) {
-            const err = specsError(lot?.specs) || lotNumberError(lot?.lotNumber);
+            const err = specsError(lot?.specs) || lotNumberError(lot?.lotNumber) || lotTypeError(lot?.lotType);
             if (err) return res.status(400).json({ error: err });
         }
         const announcementDate = req.body.announcementDate ? new Date(req.body.announcementDate) : new Date();
@@ -191,6 +191,9 @@ const createTender = async (req, res) => {
                         licenseRequired: Boolean(lot.licenseRequired),
                         serviceFormat: lot.serviceFormat || null,
                         slaPeriod: lot.slaPeriod || null,
+                        withOperator: Boolean(lot.withOperator),
+                        fuelIncluded: Boolean(lot.fuelIncluded),
+                        supportIncluded: Boolean(lot.supportIncluded),
                     }
                 });
 
@@ -775,10 +778,13 @@ const createLot = async (req, res) => {
             licenseRequired,
             serviceFormat,
             slaPeriod,
+            withOperator,
+            fuelIncluded,
+            supportIncluded,
             specs
         } = req.body;
 
-        const inputError = specsError(specs) || lotNumberError(lotNumber) || (tooLong(name, MAX_TITLE) ? 'Слишком длинное название лота' : null);
+        const inputError = specsError(specs) || lotNumberError(lotNumber) || lotTypeError(lotType) || (tooLong(name, MAX_TITLE) ? 'Слишком длинное название лота' : null);
         if (inputError) return res.status(400).json({ error: inputError });
 
         const tender = await prisma.tender.findUnique({ where: { id } });
@@ -815,6 +821,9 @@ const createLot = async (req, res) => {
                     licenseRequired: Boolean(licenseRequired),
                     serviceFormat: serviceFormat || null,
                     slaPeriod: slaPeriod || null,
+                    withOperator: Boolean(withOperator),
+                    fuelIncluded: Boolean(fuelIncluded),
+                    supportIncluded: Boolean(supportIncluded),
                 }
             });
 
@@ -862,10 +871,13 @@ const updateLot = async (req, res) => {
             licenseRequired,
             serviceFormat,
             slaPeriod,
+            withOperator,
+            fuelIncluded,
+            supportIncluded,
             specs
         } = req.body;
 
-        const inputError = specsError(specs) || lotNumberError(lotNumber) || (tooLong(name, MAX_TITLE) ? 'Слишком длинное название лота' : null);
+        const inputError = specsError(specs) || lotNumberError(lotNumber) || lotTypeError(lotType) || (tooLong(name, MAX_TITLE) ? 'Слишком длинное название лота' : null);
         if (inputError) return res.status(400).json({ error: inputError });
 
         const existingLot = await prisma.tenderLot.findFirst({
@@ -896,6 +908,9 @@ const updateLot = async (req, res) => {
                     licenseRequired: licenseRequired !== undefined ? Boolean(licenseRequired) : existingLot.licenseRequired,
                     serviceFormat: serviceFormat !== undefined ? serviceFormat : existingLot.serviceFormat,
                     slaPeriod: slaPeriod !== undefined ? slaPeriod : existingLot.slaPeriod,
+                    withOperator: withOperator !== undefined ? Boolean(withOperator) : existingLot.withOperator,
+                    fuelIncluded: fuelIncluded !== undefined ? Boolean(fuelIncluded) : existingLot.fuelIncluded,
+                    supportIncluded: supportIncluded !== undefined ? Boolean(supportIncluded) : existingLot.supportIncluded,
                 }
             });
 

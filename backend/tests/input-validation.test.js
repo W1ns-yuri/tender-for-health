@@ -79,3 +79,23 @@ test('сервер отбивает мусорные и странные дан�
   await prisma.$disconnect();
   assert.deepEqual(out.filter((l) => l.startsWith('BAD')), []);
 });
+
+test('типы лотов: аренда и лицензии сохраняются со своими полями, неизвестный тип отклоняется', async () => {
+    const admin = await loginAdmin();
+    const t = await newTender(admin, { publish: false });
+    const bad = await api(admin, 'PUT', `/tenders/${t.tenderId}/lots/${t.lotId}`, { lotType: 'MAGIC' });
+    assert.equal(bad.status, 400);
+    const rental = await api(admin, 'POST', `/tenders/${t.tenderId}/lots`, {
+        name: 'Аренда экскаватора', lotType: 'RENTAL', workAddress: 'Ашхабад, ул. Магтымгулы', workPeriod: '30 дней', withOperator: true, fuelIncluded: true,
+    });
+    assert.equal(rental.status, 201, JSON.stringify(rental.data));
+    assert.equal(rental.data.lotType, 'RENTAL');
+    assert.equal(rental.data.withOperator, true);
+    assert.equal(rental.data.fuelIncluded, true);
+    const lic = await api(admin, 'POST', `/tenders/${t.tenderId}/lots`, { name: 'Лицензии Windows Server', lotType: 'LICENSES', workPeriod: '12 месяцев', supportIncluded: true, slaPeriod: 'реакция 4 часа' });
+    assert.equal(lic.status, 201);
+    assert.equal(lic.data.supportIncluded, true);
+    const upd = await api(admin, 'PUT', `/tenders/${t.tenderId}/lots/${lic.data.id}`, { supportIncluded: false });
+    assert.equal(upd.data.supportIncluded, false);
+    assert.equal(upd.data.workPeriod, '12 месяцев', 'остальные поля не затёрты');
+});
