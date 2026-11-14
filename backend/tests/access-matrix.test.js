@@ -43,6 +43,8 @@ const ADMIN_ONLY = [
     ['PUT', `/catalogs/categories/${FAKE}/attributes`],
     ['POST', `/catalogs/products/${FAKE}/approve`], ['POST', `/catalogs/products/${FAKE}/reject`],
     ['DELETE', `/tenders/${FAKE}/schedule`],
+    ['POST', `/contracts/generate/${FAKE}`], ['POST', `/contracts/${FAKE}/send`], ['POST', `/contracts/${FAKE}/admin-sign`],
+    ['POST', `/contracts/${FAKE}/return`], ['POST', `/contracts/${FAKE}/cancel`],
 ];
 
 test('админские запросы: гость 401, поставщик 403, админ проходит', async () => {
@@ -67,6 +69,7 @@ test('запросы только для вошедших: гость 401', asyn
         ['GET', '/notifications'], ['PUT', '/notifications/read-all'], ['PUT', `/notifications/${FAKE}/read`],
         ['GET', '/dashboard/stats'], ['POST', '/offers'], ['GET', '/offers/my'], ['GET', '/offers/my-wins'],
         ['GET', `/offers/${FAKE}`], ['DELETE', `/offers/${FAKE}`], ['GET', `/offers/tender/${FAKE}`],
+        ['GET', '/contracts'], ['GET', `/contracts/${FAKE}`], ['POST', `/contracts/${FAKE}/supplier-sign`],
         ['GET', '/suppliers/profile'], ['PUT', '/suppliers/profile'], ['GET', `/suppliers/${FAKE}`], ['GET', `/suppliers/${FAKE}/stats`],
         ['POST', '/catalogs/products'],
     ];

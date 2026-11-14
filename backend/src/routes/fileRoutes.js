@@ -20,6 +20,7 @@ const uploadDir = path.join(__dirname, '../../uploads');
  * - Ещё не привязанный ни к чему документ (загружен в форме, форма не сохранена, логотип):
  *   тот, кто загрузил, и админ.
  * - Фото товара справочника: все вошедшие, если товар проверен (до проверки — автор и админ).
+ * - Скан подписанного договора: админ и поставщик-сторона договора.
  * - Файл без записи в documents: только админ.
  */
 async function canAccessFile(user, fileName) {
@@ -31,6 +32,13 @@ async function canAccessFile(user, fileName) {
         select: { moderationStatus: true, createdById: true },
     });
     if (product && (isAdmin || product.moderationStatus === 'APPROVED' || product.createdById === user.id)) return true;
+
+    // Скан подписанного договора: только стороны договора
+    const contract = await prisma.contract.findFirst({
+        where: { OR: [{ supplierSignedFile: fileName }, { adminSignedFile: fileName }] },
+        select: { supplier: { select: { userId: true } } },
+    });
+    if (contract) return isAdmin || contract.supplier?.userId === user.id;
 
     const doc = await prisma.document.findFirst({
         where: { fileName },

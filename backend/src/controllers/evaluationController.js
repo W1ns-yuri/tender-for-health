@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { sendNotification } = require('./notificationController');
+const { ensureContracts } = require('./contractController');
 const { D } = require('../utils/money');
 const { isTenderOpened, sealOffer } = require('../utils/sealedEnvelope');
 
@@ -429,6 +430,9 @@ const completeEvaluation = async (req, res) => {
                 where: { id: tenderId },
                 data: { status: 'YENIJI_YGLAN_EDILDI' }
             });
+
+            // С каждым победителем сразу готовим черновик договора
+            await ensureContracts(tenderId, prisma);
         });
 
         // Оповещаем поставщиков о результатах оценки
@@ -439,9 +443,9 @@ const completeEvaluation = async (req, res) => {
                     sendNotification({
                         userId: offer.supplier.userId,
                         title: '🏆 Поздравляем с победой в тендере!',
-                        message: `Ваше предложение по тендеру №${tender.tenderNumber} признано победителем! Ознакомьтесь с протоколом.`,
+                        message: `Ваше предложение по тендеру №${tender.tenderNumber} признано победителем. Договор пришлём на подпись в разделе «Договоры».`,
                         type: 'winner',
-                        link: '/evaluation'
+                        link: '/contracts'
                     }).catch(e => console.error('Error notifying winner:', e));
                 } else {
                     sendNotification({

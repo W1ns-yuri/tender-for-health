@@ -28,18 +28,16 @@ export default function Toast({
     const timer = setInterval(() => {
       if (isHovered) return; // Pause timer when user hovers
 
-      setProgress((prev) => {
-        if (prev <= step) {
-          clearInterval(timer);
-          onClose?.(id);
-          return 0;
-        }
-        return prev - step;
-      });
+      setProgress((prev) => Math.max(0, prev - step));
     }, intervalTime);
 
     return () => clearInterval(timer);
-  }, [duration, isHovered, onClose, id]);
+  }, [duration, isHovered]);
+
+  // Закрываем вне функции-обновителя: setState родителя внутри setProgress(...) React ругается
+  useEffect(() => {
+    if (duration > 0 && progress <= 0) onClose?.(id);
+  }, [progress, duration, onClose, id]);
 
   const isSupplier = role === 'SUPPLIER';
 

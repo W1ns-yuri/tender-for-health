@@ -4,6 +4,7 @@ import {
   FileText,
   Send,
   Trophy,
+  FileSignature,
   User,
   Settings,
   Sun,
@@ -50,7 +51,7 @@ export default function Sidebar({
     <aside
       className={`${
         isCollapsed ? 'w-20' : 'w-64'
-      } ${isDarkMode ? 'bg-[#0f172a] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-800'} border-r flex flex-col justify-between transition-all duration-300 h-screen sticky top-0 z-30 shadow-xs select-none`}
+      } ${isDarkMode ? 'bg-[#0f172a] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-800'} print:hidden border-r flex flex-col justify-between transition-all duration-300 h-screen sticky top-0 z-30 shadow-xs select-none`}
     >
       {/* 1. Верхняя часть: Логотип */}
       <div className="flex-1 overflow-y-auto">
@@ -164,6 +165,18 @@ export default function Sidebar({
                 </button>
 
                 <button
+                  onClick={() => setActiveTab('contracts')}
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isTabActive('contracts')
+                      ? theme.primaryBg + ' font-semibold shadow-sm'
+                      : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <FileSignature size={19} />
+                  {!isCollapsed && <span className="ml-3">{t('contractsTitle', 'Договоры')}</span>}
+                </button>
+
+                <button
                   onClick={() => setActiveTab('settings')}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     isTabActive('settings')
@@ -212,6 +225,18 @@ export default function Sidebar({
                 >
                   <Trophy size={19} />
                   {!isCollapsed && <span className="ml-3">{t('myWins', 'Meniň ýeňişlerim')}</span>}
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('contracts')}
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isTabActive('contracts')
+                      ? theme.primaryBg + ' font-semibold shadow-sm'
+                      : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <FileSignature size={19} />
+                  {!isCollapsed && <span className="ml-3">{t('contractsTitle', 'Договоры')}</span>}
                 </button>
 
                 <button
