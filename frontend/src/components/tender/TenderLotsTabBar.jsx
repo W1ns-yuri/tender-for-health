@@ -57,7 +57,7 @@ export default function TenderLotsTabBar({
             
             {/* Информативный заголовок лота */}
             <span className={`max-w-xs md:max-w-sm truncate ${isActive ? 'font-black text-slate-800 dark:text-slate-100' : 'font-medium'}`}>
-              {lotLabel(lot.name, lot.lotNumber || idx + 1)}
+              {lotLabel(lot.name, lot.lotNumber || idx + 1, t)}
             </span>
 
             {/* Счетчик позиций спецификации */}

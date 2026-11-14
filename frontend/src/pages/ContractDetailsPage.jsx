@@ -11,7 +11,7 @@ import SectionRow from '../components/ui/SectionRow';
 const unitName = (u) => u?.shortName || u?.name || '';
 
 /** Кнопка «загрузить скан»: файл уходит в /documents/upload, затем имя файла — в действие договора */
-function ScanUpload({ label, onUploaded, busy, className }) {
+function ScanUpload({ label, onUploaded, busy, className, t }) {
   const [uploading, setUploading] = useState(false);
   const pick = async (e) => {
     const file = e.target.files?.[0];
@@ -24,14 +24,14 @@ function ScanUpload({ label, onUploaded, busy, className }) {
       const res = await API.post('/documents/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } });
       await onUploaded(res.data?.fileName);
     } catch (err) {
-      window.$toast?.({ type: 'error', message: err.response?.data?.error || 'Не удалось загрузить файл' });
+      window.$toast?.({ type: 'error', message: err.response?.data?.error || t('ctUploadError', 'Не удалось загрузить файл') });
     } finally {
       setUploading(false);
     }
   };
   return (
     <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer ${className} ${busy || uploading ? 'opacity-60 pointer-events-none' : ''}`}>
-      <Upload size={16} /> {uploading ? 'Загрузка...' : label}
+      <Upload size={16} /> {uploading ? t('uploading', 'Загрузка...') : label}
       <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" className="hidden" onChange={pick} />
     </label>
   );
@@ -56,8 +56,8 @@ export default function ContractDetailsPage({ role, isDarkMode, lang = 'RU' }) {
   const [text, setText] = useState('');
 
   const load = useCallback(() => {
-    API.get(`/contracts/${id}`).then((res) => setC(res.data)).catch((err) => setError(err.response?.data?.error || 'Договор не найден'));
-  }, [id]);
+    API.get(`/contracts/${id}`).then((res) => setC(res.data)).catch((err) => setError(err.response?.data?.error || t('ctNotFound', 'Договор не найден')));
+  }, [id, t]);
   useEffect(() => { load(); }, [load]);
 
   const act = async (action, body = {}, okMessage) => {
@@ -69,7 +69,7 @@ export default function ContractDetailsPage({ role, isDarkMode, lang = 'RU' }) {
       setText('');
       load();
     } catch (err) {
-      showToast({ type: 'error', message: err.response?.data?.error || 'Не получилось' });
+      showToast({ type: 'error', message: err.response?.data?.error || t('ctActionError', 'Не получилось') });
     } finally {
       setBusy(false);
     }
@@ -100,71 +100,71 @@ export default function ContractDetailsPage({ role, isDarkMode, lang = 'RU' }) {
       {/* Что сделать сейчас */}
       <section className={`${card} space-y-3 print:hidden`}>
         <div className="flex flex-wrap items-center gap-3">
-          <span className={`px-2.5 py-1 rounded-md border text-xs font-semibold ${st.cls}`}>{st.label}</span>
-          {c.sentAt && <span className="text-xs text-slate-500">Отправлен {formatDate(c.sentAt)}</span>}
-          {c.supplierSignedAt && <span className="text-xs text-slate-500">· поставщик подписал {formatDate(c.supplierSignedAt)}</span>}
-          {c.signedAt && <span className="text-xs text-slate-500">· подписан {formatDate(c.signedAt)}</span>}
+          <span className={`px-2.5 py-1 rounded-md border text-xs font-semibold ${st.cls}`}>{t(st.key, st.label)}</span>
+          {c.sentAt && <span className="text-xs text-slate-500">{t('ctSentOn', 'Отправлен')} {formatDate(c.sentAt)}</span>}
+          {c.supplierSignedAt && <span className="text-xs text-slate-500">· {t('ctSupplierSignedOn', 'поставщик подписал')} {formatDate(c.supplierSignedAt)}</span>}
+          {c.signedAt && <span className="text-xs text-slate-500">· {t('ctSignedOn', 'подписан')} {formatDate(c.signedAt)}</span>}
         </div>
 
         {c.note && c.status === 'SENT' && (
           <p className="text-sm rounded-lg border border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:border-amber-800/60 dark:text-amber-200 px-3 py-2">
-            Замечание организатора: {c.note}
+            {t('ctOrganizerNote', 'Замечание организатора')}: {c.note}
           </p>
         )}
-        {c.status === 'CANCELLED' && <p className="text-sm text-rose-600">Причина отмены: {c.cancelReason}</p>}
+        {c.status === 'CANCELLED' && <p className="text-sm text-rose-600">{t('ctCancelReason', 'Причина отмены')}: {c.cancelReason}</p>}
 
         <div className="flex flex-wrap items-center gap-4">
-          {c.supplierSignedFile && <ScanLink fileName={c.supplierSignedFile} label="Скан поставщика" />}
-          {c.adminSignedFile && <ScanLink fileName={c.adminSignedFile} label="Экземпляр организатора" />}
+          {c.supplierSignedFile && <ScanLink fileName={c.supplierSignedFile} label={t('ctSupplierScan', 'Скан поставщика')} />}
+          {c.adminSignedFile && <ScanLink fileName={c.adminSignedFile} label={t('ctOrganizerCopy', 'Экземпляр организатора')} />}
         </div>
 
         <div className="flex flex-wrap gap-2">
           {isAdmin && c.status === 'DRAFT' && (
-            <button type="button" disabled={busy} onClick={() => act('send', {}, 'Договор отправлен поставщику')} className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer disabled:opacity-60 ${theme.primaryBtn}`}>
-              <Send size={16} /> Отправить поставщику
+            <button type="button" disabled={busy} onClick={() => act('send', {}, t('ctSentToast', 'Договор отправлен поставщику'))} className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer disabled:opacity-60 ${theme.primaryBtn}`}>
+              <Send size={16} /> {t('ctSendToSupplier', 'Отправить поставщику')}
             </button>
           )}
           {!isAdmin && c.status === 'SENT' && (
-            <ScanUpload label="Загрузить подписанный скан" busy={busy} className={theme.primaryBtn}
-              onUploaded={(fileName) => act('supplier-sign', { fileName }, 'Скан отправлен организатору')} />
+            <ScanUpload t={t} label={t('ctUploadSignedScan', 'Загрузить подписанный скан')} busy={busy} className={theme.primaryBtn}
+              onUploaded={(fileName) => act('supplier-sign', { fileName }, t('ctScanSentToast', 'Скан отправлен организатору'))} />
           )}
           {isAdmin && c.status === 'SUPPLIER_SIGNED' && (
             <>
-              <ScanUpload label="Загрузить свой подписанный экземпляр" busy={busy} className={theme.primaryBtn}
-                onUploaded={(fileName) => act('admin-sign', { fileName }, 'Договор подписан')} />
+              <ScanUpload t={t} label={t('ctUploadOwnCopy', 'Загрузить свой подписанный экземпляр')} busy={busy} className={theme.primaryBtn}
+                onUploaded={(fileName) => act('admin-sign', { fileName }, t('ctSignedToast', 'Договор подписан'))} />
               <button type="button" onClick={() => setMode(mode === 'return' ? null : 'return')} className={ghostBtn}>
-                <Undo2 size={16} /> Вернуть с замечанием
+                <Undo2 size={16} /> {t('ctReturnWithNote', 'Вернуть с замечанием')}
               </button>
             </>
           )}
           {canCancel && (
             <button type="button" onClick={() => setMode(mode === 'cancel' ? null : 'cancel')} className={`${ghostBtn} text-rose-600`}>
-              <XCircle size={16} /> Отменить договор
+              <XCircle size={16} /> {t('ctCancel', 'Отменить договор')}
             </button>
           )}
         </div>
 
         {!isAdmin && c.status === 'SENT' && (
-          <p className="text-xs text-slate-500">Распечатайте договор кнопкой «Печать / PDF», подпишите, поставьте печать и загрузите скан (PDF или фото).</p>
+          <p className="text-xs text-slate-500">{t('ctSupplierHint', 'Распечатайте договор кнопкой «Печать / PDF», подпишите, поставьте печать и загрузите скан (PDF или фото).')}</p>
         )}
 
         {mode && (
           <div className="space-y-2">
             <textarea
               value={text} onChange={(e) => setText(e.target.value)} rows={3} maxLength={1000}
-              placeholder={mode === 'return' ? 'Что исправить: например, нет печати' : 'Причина отмены'}
-              aria-label={mode === 'return' ? 'Замечание' : 'Причина отмены'}
+              placeholder={mode === 'return' ? t('ctReturnPh', 'Что исправить: например, нет печати') : t('ctCancelReason', 'Причина отмены')}
+              aria-label={mode === 'return' ? t('ctNote', 'Замечание') : t('ctCancelReason', 'Причина отмены')}
               className={`w-full rounded-lg px-3 py-2 text-sm ${theme.inputBg}`}
             />
             <div className="flex gap-2">
               <button type="button" disabled={busy || !text.trim()}
                 onClick={() => (mode === 'return'
-                  ? act('return', { note: text }, 'Договор возвращён поставщику')
-                  : act('cancel', { reason: text }, 'Договор отменён'))}
+                  ? act('return', { note: text }, t('ctReturnedToast', 'Договор возвращён поставщику'))
+                  : act('cancel', { reason: text }, t('ctCancelledToast', 'Договор отменён')))}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer disabled:opacity-60 ${mode === 'cancel' ? 'bg-rose-600 hover:bg-rose-700 text-white' : theme.primaryBtn}`}>
-                {mode === 'return' ? 'Вернуть' : 'Отменить договор'}
+                {mode === 'return' ? t('ctReturn', 'Вернуть') : t('ctCancel', 'Отменить договор')}
               </button>
-              <button type="button" onClick={() => { setMode(null); setText(''); }} className={ghostBtn}>Не надо</button>
+              <button type="button" onClick={() => { setMode(null); setText(''); }} className={ghostBtn}>{t('ctNevermind', 'Не надо')}</button>
             </div>
           </div>
         )}
@@ -257,7 +257,7 @@ export default function ContractDetailsPage({ role, isDarkMode, lang = 'RU' }) {
           </div>
         </section>
       </article>
-      <p className="text-xs text-slate-400 print:hidden">Это типовой текст. Когда будет утверждённый шаблон договора, текст разделов заменим на него.</p>
+      <p className="text-xs text-slate-400 print:hidden">{t('ctTemplateNote', 'Это типовой текст. Когда будет утверждённый шаблон договора, текст разделов заменим на него.')}</p>
     </div>
   );
 }

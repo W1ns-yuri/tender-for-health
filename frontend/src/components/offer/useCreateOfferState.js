@@ -291,7 +291,7 @@ export function useCreateOfferState({ id, role = 'SUPPLIER', t, showAlert, showC
           title: t('successTitle', 'Успешно'),
           message: created.moderationStatus === 'PENDING'
             ? `Товар «${created.tradeName || created.name}» добавлен в ваше предложение. В общий справочник он попадёт после проверки организатором.`
-            : t('productAddedToCatalog', `Товар "${created.tradeName || created.name}" добавлен в справочник!`),
+            : t('productAddedToCatalog', 'Товар «{name}» добавлен в справочник', { name: created.tradeName || created.name }),
           type: 'success'
         });
       }

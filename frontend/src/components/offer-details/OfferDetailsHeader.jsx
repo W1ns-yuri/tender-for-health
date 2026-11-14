@@ -11,7 +11,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { getStatusBadge, getTypeBadge } from '../../utils/statusUtils';
-import { pluralize } from '../../utils/pluralize';
+import { countLabel } from '../../utils/pluralize';
 
 /**
  * OfferDetailsHeader Component
@@ -122,7 +122,7 @@ export default function OfferDetailsHeader({
             </div>
             <div className="text-[12px] text-slate-500 dark:text-slate-400 font-medium flex items-center sm:justify-end gap-1.5">
               <CheckCircle2 size={13} className={isAdmin ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'} />
-              <span>{pluralize(rawSpecsCount, ['позиция', 'позиции', 'позиций'])} {t('inBidSuffix', 'в заявке')}</span>
+              <span>{countLabel(rawSpecsCount, 'item', t)} {t('inBidSuffix', 'в заявке')}</span>
             </div>
           </div>
         </div>

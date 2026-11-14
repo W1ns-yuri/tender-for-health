@@ -19,8 +19,8 @@ export default function ContractsPage({ role, isDarkMode, lang = 'RU' }) {
   const load = useCallback(() => {
     API.get('/contracts', { params: tenderId ? { tenderId } : {} })
       .then((res) => setRows(Array.isArray(res.data) ? res.data : []))
-      .catch((err) => { setError(err.response?.data?.error || 'Не удалось загрузить договоры'); setRows([]); });
-  }, [tenderId]);
+      .catch((err) => { setError(err.response?.data?.error || t('ctListError', 'Не удалось загрузить договоры')); setRows([]); });
+  }, [tenderId, t]);
   useEffect(() => { load(); }, [load]);
 
   // Для тендеров, итоги которых объявили до появления договоров
@@ -30,7 +30,7 @@ export default function ContractsPage({ role, isDarkMode, lang = 'RU' }) {
       await API.post(`/contracts/generate/${tenderId}`);
       load();
     } catch (err) {
-      setError(err.response?.data?.error || 'Не удалось создать договоры');
+      setError(err.response?.data?.error || t('ctGenerateError', 'Не удалось создать договоры'));
     }
   };
 
@@ -91,10 +91,10 @@ export default function ContractsPage({ role, isDarkMode, lang = 'RU' }) {
                   {isAdmin && <td className="py-3 px-4">{c.supplier?.name}</td>}
                   <td className="py-3 px-4 text-right font-mono whitespace-nowrap">{formatMoney(c.amount, c.currencyCode)}</td>
                   <td className="py-3 px-4">
-                    <span className={`px-2 py-0.5 rounded-md border text-xs font-semibold whitespace-nowrap ${st.cls}`}>{st.label}</span>
+                    <span className={`px-2 py-0.5 rounded-md border text-xs font-semibold whitespace-nowrap ${st.cls}`}>{t(st.key, st.label)}</span>
                     {c.signedAt && <span className="block text-slate-400 mt-1">{formatDate(c.signedAt)}</span>}
                   </td>
-                  <td className="py-3 px-4 text-slate-500">{c.status === 'CANCELLED' ? c.cancelReason : nextStep(c.status, isAdmin)}</td>
+                  <td className="py-3 px-4 text-slate-500">{c.status === 'CANCELLED' ? c.cancelReason : nextStep(c.status, isAdmin, t)}</td>
                   <td className="py-3 px-4">
                     <Link to={`/contracts/${c.id}`} className={theme.actionBtn} title={t('open', 'Открыть')}><Eye size={15} /></Link>
                   </td>
