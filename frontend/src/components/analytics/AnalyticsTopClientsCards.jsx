@@ -52,7 +52,7 @@ export default function AnalyticsTopClientsCards({
               <div className="font-semibold text-slate-900 dark:text-white text-xs mb-1.5 leading-snug">
                 {client.name}
               </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+              <div className="flex items-center justify-between text-[12px] text-slate-500 dark:text-slate-400">
                 <span>
                   {client.procedures} {t('proceduresCount', 'процедур')}
                 </span>
@@ -60,7 +60,7 @@ export default function AnalyticsTopClientsCards({
                   {formatCurrency(client.budget, currencySymbol)}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 pt-1 border-t border-slate-200/40 dark:border-slate-800">
+              <div className="flex items-center justify-between text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 pt-1 border-t border-slate-200/40 dark:border-slate-800">
                 <span>{t('averageCompetition', 'Конкуренция')}:</span>
                 <span className="font-semibold">{client.avgCompetition} заявки / лот</span>
               </div>

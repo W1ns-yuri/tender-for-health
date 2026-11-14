@@ -163,7 +163,7 @@ export const CustomSelect = ({
     : '!border-emerald-500 !ring-2 !ring-emerald-500/25 shadow-xs';
 
   const sizePadding = size === 'xs'
-    ? 'px-2 py-1 text-[11px]'
+    ? 'px-2 py-1 text-[12px]'
     : size === 'sm'
     ? 'px-2.5 py-1.5 text-xs'
     : 'px-3 py-2 text-xs sm:text-sm';

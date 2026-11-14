@@ -91,7 +91,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">{logs.length}</span>
           </div>
           <p className="font-bold text-sm">{t('catLogs', 'Журнал аудита')}</p>
-          <p className="text-[11px] text-slate-400">{t('allEventLogsTab', 'Логи всех событий')}</p>
+          <p className="text-[12px] text-slate-400">{t('allEventLogsTab', 'Логи всех событий')}</p>
         </button>
 
         <button
@@ -106,7 +106,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">{users.length}</span>
           </div>
           <p className="font-bold text-sm">{t('catUsers', 'Пользователи')}</p>
-          <p className="text-[11px] text-slate-400">{t('userAccountsTab', 'Учетные записи')}</p>
+          <p className="text-[12px] text-slate-400">{t('userAccountsTab', 'Учетные записи')}</p>
         </button>
 
         <button
@@ -121,7 +121,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">5</span>
           </div>
           <p className="font-bold text-sm">{t('catRolesSub', 'Роли и права')}</p>
-          <p className="text-[11px] text-slate-400">{t('rbacModelTab', 'Модель RBAC')}</p>
+          <p className="text-[12px] text-slate-400">{t('rbacModelTab', 'Модель RBAC')}</p>
         </button>
 
         <button
@@ -136,7 +136,7 @@ export default function AdminLogs({ role = 'ADMIN', isDarkMode = false, lang = '
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
           </div>
           <p className="font-bold text-sm">Backup</p>
-          <p className="text-[11px] text-slate-400">{t('backupsTab', 'Резервные копии')}</p>
+          <p className="text-[12px] text-slate-400">{t('backupsTab', 'Резервные копии')}</p>
         </button>
       </div>
 

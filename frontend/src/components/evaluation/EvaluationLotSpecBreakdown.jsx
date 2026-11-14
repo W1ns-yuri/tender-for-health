@@ -19,7 +19,7 @@ export default function EvaluationLotSpecBreakdown({
               {t('itemizedSupplierProposalTitle', 'Попозиционное предложение поставщика:')}{' '}
               <span className="text-emerald-600 dark:text-emerald-400 font-bold">{co.supplierName}</span>
             </h4>
-            <span className="text-[11px] text-slate-400 font-medium">
+            <span className="text-[12px] text-slate-400 font-medium">
               {co.offerSpecs.length} {t('positionsFilledCount', 'позиций заполнено')}
             </span>
           </div>
@@ -58,7 +58,7 @@ export default function EvaluationLotSpecBreakdown({
                         </td>
                         <td className="p-3">
                           <div className="flex items-center gap-2">
-                            <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[9px] uppercase font-bold rounded tracking-wider">
+                            <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] uppercase font-bold rounded tracking-wider">
                               {t('requestLabel', 'Запрос')}
                             </span>
                             <span className="font-semibold text-slate-700 dark:text-slate-200">
@@ -74,7 +74,7 @@ export default function EvaluationLotSpecBreakdown({
                         </td>
                         <td className="p-3 text-right text-slate-400">—</td>
                         <td className="p-3 text-right text-slate-400">—</td>
-                        <td className="p-3 text-slate-500 italic text-[11px]">
+                        <td className="p-3 text-slate-500 italic text-[12px]">
                           {requestedDesc || '—'}
                         </td>
                       </tr>
@@ -85,13 +85,13 @@ export default function EvaluationLotSpecBreakdown({
                           <div className="flex items-start gap-2">
                             <CornerDownRight size={16} className="text-emerald-500 ml-1.5 mt-0.5 shrink-0" />
                             <div>
-                              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[9px] uppercase font-bold rounded-md tracking-wider mb-1 inline-flex items-center gap-1">
+                              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[11px] uppercase font-bold rounded-md tracking-wider mb-1 inline-flex items-center gap-1">
                                 {co.supplierName ? `${t('supplierProposalPrefix', 'КП:')} ${co.supplierName}` : t('supplierProposalDefault', 'КП поставщика')}
                               </span>
                               <div className="font-medium text-slate-800 dark:text-slate-200 text-xs">
                                 {offeredName}
                                 {isDifferent && (
-                                  <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 text-[9px] rounded uppercase font-bold tracking-wider">
+                                  <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 text-[11px] rounded uppercase font-bold tracking-wider">
                                     {t('substituteBadge', 'Замена')}
                                   </span>
                                 )}
@@ -111,9 +111,9 @@ export default function EvaluationLotSpecBreakdown({
                         <td className="p-3 text-right font-mono font-bold text-emerald-700 dark:text-emerald-400">
                           {((os.quantity || 0) * (os.unitPrice || 0)).toLocaleString('ru-RU', { minimumFractionDigits: 2 })} {co.currencyCode}
                         </td>
-                        <td className="p-3 text-slate-600 dark:text-slate-300 text-[11px]">
+                        <td className="p-3 text-slate-600 dark:text-slate-300 text-[12px]">
                           {offeredBrand && (
-                            <div className="font-semibold text-[10px] uppercase text-slate-500 dark:text-slate-400 mb-0.5">
+                            <div className="font-semibold text-[11px] uppercase text-slate-500 dark:text-slate-400 mb-0.5">
                               {offeredBrand}
                             </div>
                           )}

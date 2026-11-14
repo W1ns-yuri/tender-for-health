@@ -81,7 +81,7 @@ export default function AnalyticsTopSuppliersTable({
                     {/* Позиция с медалью */}
                     <td className="py-3.5 px-3 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-bold text-[11px] ${
+                        className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-bold text-[12px] ${
                           isTop1
                             ? 'bg-amber-400 text-slate-900 shadow-xs shadow-amber-400/50'
                             : isTop2
@@ -127,7 +127,7 @@ export default function AnalyticsTopSuppliersTable({
 
                     {/* Win Rate */}
                     <td className="py-3.5 px-3 text-right tabular-nums whitespace-nowrap">
-                      <span className="inline-block px-2 py-0.5 rounded-md font-semibold text-[11px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                      <span className="inline-block px-2 py-0.5 rounded-md font-semibold text-[12px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                         {sup.winRate}%
                       </span>
                     </td>

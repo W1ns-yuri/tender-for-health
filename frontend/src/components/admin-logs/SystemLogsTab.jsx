@@ -19,27 +19,27 @@ export default function SystemLogsTab({
     const norm = String(op || '').toUpperCase();
     if (norm === 'YAZMAK' || norm === 'ÝAZMAK' || norm === 'CREATE') {
       return (
-        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 rounded font-semibold text-[11px]">
+        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 rounded font-semibold text-[12px]">
           {t('opCreate', 'СОЗДАНИЕ / ЗАПИСЬ')}
         </span>
       );
     }
     if (norm === 'TAZELEMEK' || norm === 'TÄZELEMEK' || norm === 'UPDATE') {
       return (
-        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-semibold text-[11px]">
+        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-semibold text-[12px]">
           {t('opUpdate', 'ИЗМЕНЕНИЕ')}
         </span>
       );
     }
     if (norm === 'POZMAK' || norm === 'DELETE') {
       return (
-        <span className="px-2 py-0.5 bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 rounded font-semibold text-[11px]">
+        <span className="px-2 py-0.5 bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 rounded font-semibold text-[12px]">
           {t('opDelete', 'УДАЛЕНИЕ')}
         </span>
       );
     }
     return (
-      <span className="px-2 py-0.5 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded font-semibold text-[11px]">
+      <span className="px-2 py-0.5 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded font-semibold text-[12px]">
         {op || 'LOG'}
       </span>
     );

@@ -50,7 +50,7 @@ export default function SettingsGeneralTab({
                     }
                   `}
                 >
-                  <span className="font-mono text-[10px] px-1 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-black">
+                  <span className="font-mono text-[11px] px-1 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-black">
                     {item.code}
                   </span>
                   <span>{item.label}</span>
@@ -134,7 +134,7 @@ export default function SettingsGeneralTab({
                   `}
                 >
                   <span>{item.label}</span>
-                  <span className="font-mono text-[10px] text-slate-400 font-normal">
+                  <span className="font-mono text-[11px] text-slate-400 font-normal">
                     ({item.sub})
                   </span>
                 </button>

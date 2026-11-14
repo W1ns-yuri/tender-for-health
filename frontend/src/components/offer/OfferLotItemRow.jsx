@@ -34,7 +34,7 @@ export default function OfferLotItemRow({
         {/* Колонка 2: Название товара заказчика */}
         <td className="py-3.5 px-3.5">
           <div className="flex items-center gap-2.5">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
               {t('requestLabel', 'Запрос')}
             </span>
             <span className="font-extrabold text-slate-900 dark:text-slate-100 text-sm">
@@ -43,16 +43,16 @@ export default function OfferLotItemRow({
           </div>
         </td>
 
-        {/* Колонка 3: Ед. изм. */}
-        <td className="py-3.5 px-3.5 text-center text-slate-600 dark:text-slate-400 font-bold text-xs">
-          {item.requestedUnit || '-'}
-        </td>
-
-        {/* Колонка 4: Запрошенное количество */}
+        {/* Колонка 3: Запрошенное количество */}
         <td className="py-3.5 px-3.5 text-center font-black text-slate-900 dark:text-slate-100 text-sm">
           <span className="px-2.5 py-1 rounded-md bg-slate-200/80 dark:bg-slate-800">
             {item.requestedQty}
           </span>
+        </td>
+
+        {/* Колонка 4: Ед. изм. */}
+        <td className="py-3.5 px-3.5 text-center text-slate-600 dark:text-slate-400 font-bold text-xs">
+          {item.requestedUnit || '-'}
         </td>
 
         {/* Колонка 5: Цена (прочерк для запроса) */}
@@ -73,7 +73,7 @@ export default function OfferLotItemRow({
             </div>
           )}
           {item.requestedDesc && (
-            <div className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
+            <div className="text-slate-500 dark:text-slate-400 text-[12px] mt-0.5">
               {item.requestedDesc}
             </div>
           )}
@@ -91,13 +91,13 @@ export default function OfferLotItemRow({
         {/* Колонка 2: Предложение и чекбокс эквивалента */}
         <td className="py-3.5 px-3.5">
           <div className="flex items-center justify-between gap-2 mb-1.5">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
               {t('yourBidColumn', 'Ваше КП')}
             </span>
 
             {/* Чекбокс эквивалента / аналога (только для товаров) */}
             {lotType === 'GOODS' && (
-              <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline">
+              <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-[12px] text-blue-600 dark:text-blue-400 font-semibold hover:underline">
                 <input
                   type="checkbox"
                   checked={isEq}
@@ -167,7 +167,7 @@ export default function OfferLotItemRow({
             <span className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-black text-xs border border-slate-200 dark:border-slate-700 shadow-2xs">
               {item.requestedQty}
             </span>
-            <span className="text-[9px] text-slate-400 mt-0.5 font-medium">
+            <span className="text-[11px] text-slate-400 mt-0.5 font-medium">
               {t('fixedBadge', 'фиксировано')}
             </span>
           </div>
@@ -238,7 +238,7 @@ export default function OfferLotItemRow({
       {isEq && (
         <tr className="bg-blue-50/30 dark:bg-blue-950/20 border-b border-blue-100 dark:border-blue-900/40">
           <td colSpan="7" className="py-1.5 px-4">
-            <div className="flex items-center gap-2 text-[11px] text-blue-700 dark:text-blue-300 font-medium">
+            <div className="flex items-center gap-2 text-[12px] text-blue-700 dark:text-blue-300 font-medium">
               <Info size={13} className="shrink-0 text-blue-600" />
               <span>
                 {t('analogOfferedNotice', 'Предложен эквивалент / аналог. Заявка будет проверена организатором закупки на соответствие техническим и качественным характеристикам.')}

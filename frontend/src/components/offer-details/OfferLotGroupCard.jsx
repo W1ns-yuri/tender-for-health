@@ -92,7 +92,7 @@ export default function OfferLotGroupCard({
           )}
 
           <div className="text-left md:text-right pl-0 md:pl-4 md:border-l border-slate-200 dark:border-slate-800">
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">
+            <span className="text-[11px] text-slate-400 uppercase tracking-wider block font-semibold">
               {t('lotSubtotal', 'Итого по лоту')}
             </span>
             <span className={`text-base sm:text-lg font-black ${theme.primaryText}`}>
@@ -142,7 +142,7 @@ export default function OfferLotGroupCard({
                       {productName}
                     </div>
                     {spec.description && (
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal">
+                      <div className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal">
                         {spec.description}
                       </div>
                     )}

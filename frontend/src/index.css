@@ -2,6 +2,13 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+/* Шкала текста под чтение с экрана: основной мелкий текст 13px вместо 12px.
+   Раньше 70% текста на страницах было 12px и меньше, на ноутбуке это читается с напряжением. */
+@theme {
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.125rem;
+}
+
 @layer base {
   body {
     @apply bg-slate-50 text-slate-800 dark:bg-[#0b0f17] dark:text-slate-100 font-sans antialiased;

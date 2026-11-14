@@ -8,7 +8,8 @@ import {
   FileText, 
   MapPin, 
   Clock, 
-  ShieldCheck 
+  ShieldCheck,
+  Building2,
 } from 'lucide-react';
 import CustomSelect from '../CustomSelect';
 import OfferLotItemRow from './OfferLotItemRow';
@@ -72,7 +73,7 @@ export default function OfferLotCard({
 
           {/* Бейдж вне категории */}
           {!isAllowed && (
-            <span className="px-2.5 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-bold text-[11px] flex items-center gap-1 border border-rose-200 dark:border-rose-900/60">
+            <span className="px-2.5 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-bold text-[12px] flex items-center gap-1 border border-rose-200 dark:border-rose-900/60">
               <AlertCircle size={12} className="text-rose-500" />
               <span>{t('lotOutsideCategory', 'Лот вне вашей категории аккредитации')}</span>
             </span>
@@ -80,19 +81,19 @@ export default function OfferLotCard({
 
           {/* Бейдж типа предмета лота */}
           {lotType === 'GOODS' && (
-            <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1 border border-emerald-200 dark:border-emerald-800/60">
+            <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-bold text-[12px] flex items-center gap-1 border border-emerald-200 dark:border-emerald-800/60">
               <Package size={12} />
               <span>{t('catProducts', 'Товары')}</span>
             </span>
           )}
           {lotType === 'WORKS' && (
-            <span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-bold text-[11px] flex items-center gap-1 border border-amber-200 dark:border-amber-800/60">
+            <span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-bold text-[12px] flex items-center gap-1 border border-amber-200 dark:border-amber-800/60">
               <Wrench size={12} />
               <span>{t('worksType', 'Работы')}</span>
             </span>
           )}
           {lotType === 'SERVICES' && (
-            <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold text-[11px] flex items-center gap-1 border border-blue-200 dark:border-blue-800/60">
+            <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold text-[12px] flex items-center gap-1 border border-blue-200 dark:border-blue-800/60">
               <Settings2 size={12} />
               <span>{t('servicesType', 'Услуги')}</span>
             </span>
@@ -100,14 +101,14 @@ export default function OfferLotCard({
 
           {lot.endUser && (
             <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium pl-1">
-              🏢 {t('endUser', 'Конечный получатель')}: <strong className="text-slate-800 dark:text-slate-200 font-bold">{lot.endUser}</strong>
+              <Building2 size={12} /> {t('endUser', 'Конечный получатель')}: <strong className="text-slate-800 dark:text-slate-200 font-bold">{lot.endUser}</strong>
             </span>
           )}
 
           {lot.files && lot.files.length > 0 && (
             <div className="flex items-center gap-1.5 ml-auto">
               <Paperclip size={12} className="text-blue-500" />
-              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{t('lotDocuments', 'Документы лота')}:</span>
+              <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400">{t('lotDocuments', 'Документы лота')}:</span>
               {lot.files.map((f, fIdx) => {
                 const doc = f.document || f;
                 return (
@@ -116,7 +117,7 @@ export default function OfferLotCard({
                     href={resolveFileUrl(doc.filePath || doc.fileName || doc.name)}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 hover:underline text-[11px] font-bold flex items-center gap-1 border border-blue-200/60 dark:border-blue-800"
+                    className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 hover:underline text-[12px] font-bold flex items-center gap-1 border border-blue-200/60 dark:border-blue-800"
                     title={doc.fileName || doc.name}
                   >
                     <FileText size={11} />
@@ -161,7 +162,7 @@ export default function OfferLotCard({
                 </div>
 
                 {lot.deliveryAddress && (
-                  <div className="hidden xl:flex items-center gap-1 pl-2 border-l border-slate-200 dark:border-slate-700 text-[11px] text-slate-500">
+                  <div className="hidden xl:flex items-center gap-1 pl-2 border-l border-slate-200 dark:border-slate-700 text-[12px] text-slate-500">
                     <MapPin size={12} className="text-slate-400" />
                     <span className="truncate max-w-45" title={lot.deliveryAddress}>{lot.deliveryAddress}</span>
                   </div>
@@ -187,7 +188,7 @@ export default function OfferLotCard({
                   </div>
                 )}
                 {lot.licenseRequired && (
-                  <span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 font-bold text-[10px] flex items-center gap-1 border border-amber-200 dark:border-amber-800">
+                  <span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 font-bold text-[11px] flex items-center gap-1 border border-amber-200 dark:border-amber-800">
                     <ShieldCheck size={12} />
                     <span>{t('constructionLicenseRequired', 'Требуется строительная лицензия')}</span>
                   </span>
@@ -221,7 +222,7 @@ export default function OfferLotCard({
 
             {/* Итого по лоту */}
             <div className="text-right pl-3 border-l border-slate-200 dark:border-slate-700 shrink-0">
-              <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">
+              <span className="text-[11px] text-slate-400 uppercase tracking-wider block font-semibold">
                 {t('lotSubtotal', 'Итого по лоту')}
               </span>
               <span className="text-base font-black text-blue-600 dark:text-blue-400">

@@ -56,7 +56,7 @@ export default function OfferDocumentsCard({
                       <FileText size={16} className="text-slate-400 shrink-0" />
                       <div className="truncate">
                         <div className="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate">{doc.fileName || doc.name}</div>
-                        <div className="text-[10px] text-slate-400">{doc.fileType || 'DOC'}</div>
+                        <div className="text-[11px] text-slate-400">{doc.fileType || 'DOC'}</div>
                       </div>
                     </div>
                     <a 
@@ -88,7 +88,7 @@ export default function OfferDocumentsCard({
               <Paperclip size={16} className="text-blue-600 dark:text-blue-400" />
               <span>{t('supplierDocsTitle', 'Ваши сертификаты и документы')}</span>
             </h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="text-[12px] text-slate-400 mt-0.5">
               {t('supplierDocsSubtitle', 'Сертификаты, лицензии, коммерческое предложение (до 25 МБ)')}
             </p>
           </div>
@@ -165,7 +165,7 @@ export default function OfferDocumentsCard({
                       <div className="font-bold text-xs text-slate-800 dark:text-slate-200 truncate">
                         {doc.fileName || doc.name}
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                      <div className="flex items-center gap-2 text-[11px] text-slate-400">
                         <span className="uppercase font-semibold">{doc.fileType || 'FILE'}</span>
                         {doc.size && <span>• {formatFileSize ? formatFileSize(doc.size) : `${doc.size} B`}</span>}
                         <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">

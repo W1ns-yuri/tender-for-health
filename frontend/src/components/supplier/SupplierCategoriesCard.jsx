@@ -17,7 +17,7 @@ export default function SupplierCategoriesCard({
             {t('supplierCategories', 'Категории деятельности')} {isEditable && <span className="text-rose-500">*</span>}
           </label>
           {isCategoriesModified && (
-            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800 uppercase tracking-wider">
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800 uppercase tracking-wider">
               {t('moderationFieldChangedBadge', 'Изменено')}
             </span>
           )}
@@ -45,7 +45,7 @@ export default function SupplierCategoriesCard({
                     : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300'
                 }`}
               >
-                <div className={`w-4 h-4 rounded flex items-center justify-center border text-[10px] font-bold shrink-0 ${
+                <div className={`w-4 h-4 rounded flex items-center justify-center border text-[11px] font-bold shrink-0 ${
                   isChecked ? 'bg-white text-blue-600 border-white' : 'border-slate-300 bg-white'
                 }`}>
                   {isChecked ? '✓' : ''}

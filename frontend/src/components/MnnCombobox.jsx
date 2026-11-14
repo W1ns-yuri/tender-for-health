@@ -190,12 +190,12 @@ export default function MnnCombobox({
       {isOpen && (
         <div className={`absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-xl border shadow-xl ${dropdownBg} animate-in fade-in-50 zoom-in-95 duration-150`}>
           {/* Заголовок выпадающего списка */}
-          <div className="sticky top-0 z-10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100/90 dark:bg-slate-800/90 backdrop-blur-xs border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between">
+          <div className="sticky top-0 z-10 px-3 py-1.5 text-[12px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100/90 dark:bg-slate-800/90 backdrop-blur-xs border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between">
             <span className="flex items-center gap-1">
               <Pill size={12} className={isSupplier ? 'text-blue-500' : 'text-emerald-500'} />
               <span>{t ? t('archiveMNN', 'Архив веществ (МНН)') : 'Архив веществ (МНН)'} ({mnnList.length})</span>
             </span>
-            {loading && <span className={`text-[10px] animate-pulse ${isSupplier ? 'text-blue-500' : 'text-emerald-500'}`}>{t ? t('loading', 'Загрузка...') : 'Загрузка...'}</span>}
+            {loading && <span className={`text-[11px] animate-pulse ${isSupplier ? 'text-blue-500' : 'text-emerald-500'}`}>{t ? t('loading', 'Загрузка...') : 'Загрузка...'}</span>}
           </div>
 
           <div className="p-1 divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -218,7 +218,7 @@ export default function MnnCombobox({
                       <span className="font-bold text-sm leading-tight">{item.name}</span>
                       <div className="flex items-center gap-1.5 shrink-0">
                         {item.count > 0 && (
-                          <span className={`px-1.5 py-0.5 text-[10px] font-mono rounded border ${
+                          <span className={`px-1.5 py-0.5 text-[11px] font-mono rounded border ${
                             isSupplier
                               ? 'bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                               : 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
@@ -232,7 +232,7 @@ export default function MnnCombobox({
 
                     {/* Связанные торговые названия */}
                     {item.tradeNames && item.tradeNames.length > 0 && (
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                      <div className="text-[12px] text-slate-500 dark:text-slate-400 truncate">
                         <span className="font-medium text-slate-400 dark:text-slate-500 mr-1">Торговые:</span>
                         {item.tradeNames.join(', ')}
                       </div>
@@ -240,7 +240,7 @@ export default function MnnCombobox({
 
                     {/* Категория если есть */}
                     {item.categoryName && (
-                      <div className={`text-[10px] truncate ${isSupplier ? 'text-blue-600/80 dark:text-blue-400/80' : 'text-emerald-600/80 dark:text-emerald-400/80'}`}>
+                      <div className={`text-[11px] truncate ${isSupplier ? 'text-blue-600/80 dark:text-blue-400/80' : 'text-emerald-600/80 dark:text-emerald-400/80'}`}>
                         {item.categoryName}
                       </div>
                     )}

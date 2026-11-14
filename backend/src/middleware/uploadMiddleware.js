@@ -65,4 +65,36 @@ const upload = multer({
     fileFilter,
 });
 
+/**
+ * Проверка «по содержимому»: расширение и MIME присылает браузер, их легко подделать
+ * (exe или html, переименованный в .pdf/.png). Сверяем первые байты файла с форматом.
+ * Возвращает текст ошибки или null.
+ */
+const SIGNATURES = {
+    '.pdf': [[0x25, 0x50, 0x44, 0x46]],                 // %PDF
+    '.png': [[0x89, 0x50, 0x4e, 0x47]],
+    '.jpg': [[0xff, 0xd8, 0xff]],
+    '.jpeg': [[0xff, 0xd8, 0xff]],
+    '.webp': [[0x52, 0x49, 0x46, 0x46]],                // RIFF....WEBP
+    '.docx': [[0x50, 0x4b, 0x03, 0x04]],                // zip
+    '.xlsx': [[0x50, 0x4b, 0x03, 0x04]],
+    '.doc': [[0xd0, 0xcf, 0x11, 0xe0]],                 // старый Office
+    '.xls': [[0xd0, 0xcf, 0x11, 0xe0]],
+};
+
+function fileContentError(file) {
+    if (!file?.path) return 'Файл не был загружен';
+    if (!file.size) return 'Файл пустой';
+    const ext = path.extname(file.originalname).toLowerCase();
+    const expected = SIGNATURES[ext];
+    if (!expected) return 'Недопустимый формат файла';
+    const head = Buffer.alloc(12);
+    const fd = fs.openSync(file.path, 'r');
+    try { fs.readSync(fd, head, 0, 12, 0); } finally { fs.closeSync(fd); }
+    const ok = expected.some((sig) => sig.every((b, i) => head[i] === b))
+        && (ext !== '.webp' || head.subarray(8, 12).toString('latin1') === 'WEBP');
+    return ok ? null : `Содержимое файла не похоже на ${ext.slice(1).toUpperCase()}. Файл повреждён или это другой формат с изменённым расширением.`;
+}
+
 module.exports = upload;
+module.exports.fileContentError = fileContentError;

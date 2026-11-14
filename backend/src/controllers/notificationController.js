@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { sendError } = require('../utils/httpErrors');
 
 /**
  * 1. Получить уведомления текущего пользователя
@@ -30,7 +31,7 @@ const getUserNotifications = async (req, res) => {
         });
     } catch (error) {
         console.error('getUserNotifications error:', error);
-        res.status(500).json({ error: 'Ошибка при получении уведомлений', details: error.message });
+        sendError(res, error, 'Ошибка при получении уведомлений');
     }
 };
 
@@ -64,7 +65,7 @@ const markAsRead = async (req, res) => {
         res.json({ notification: updated, unreadCount });
     } catch (error) {
         console.error('markAsRead error:', error);
-        res.status(500).json({ error: 'Ошибка обновления статуса уведомления', details: error.message });
+        sendError(res, error, 'Ошибка обновления статуса уведомления');
     }
 };
 
@@ -83,7 +84,7 @@ const markAllAsRead = async (req, res) => {
         res.json({ success: true, count: result.count, unreadCount: 0 });
     } catch (error) {
         console.error('markAllAsRead error:', error);
-        res.status(500).json({ error: 'Ошибка отметки уведомлений', details: error.message });
+        sendError(res, error, 'Ошибка отметки уведомлений');
     }
 };
 
@@ -110,7 +111,7 @@ const deleteNotification = async (req, res) => {
         res.json({ success: true, unreadCount });
     } catch (error) {
         console.error('deleteNotification error:', error);
-        res.status(500).json({ error: 'Ошибка удаления уведомления', details: error.message });
+        sendError(res, error, 'Ошибка удаления уведомления');
     }
 };
 

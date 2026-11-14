@@ -39,7 +39,7 @@ export default function Tabs({
               {tab.count !== undefined && (
                 <span
                   className={`
-                    px-1.5 py-0.2 rounded-full text-[10px] font-bold
+                    px-1.5 py-0.2 rounded-full text-[11px] font-bold
                     ${
                       isActive
                         ? isSupplier
@@ -87,7 +87,7 @@ export default function Tabs({
               {tab.count !== undefined && (
                 <span
                   className={`
-                    px-1.5 py-0.5 rounded-full text-[10px] font-bold
+                    px-1.5 py-0.5 rounded-full text-[11px] font-bold
                     ${
                       isActive
                         ? isSupplier
@@ -143,7 +143,7 @@ export default function Tabs({
             {tab.count !== undefined && (
               <span
                 className={`
-                  px-1.5 py-0.2 rounded-full text-[10px] font-bold
+                  px-1.5 py-0.2 rounded-full text-[11px] font-bold
                   ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}
                 `}
               >

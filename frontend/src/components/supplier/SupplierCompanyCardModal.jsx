@@ -70,7 +70,7 @@ export default function SupplierCompanyCardModal({
           {/* Фирменная шапка */}
           <div className="border-b-2 border-slate-900 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+              <p className="text-[11px] font-black uppercase tracking-wider text-slate-500">
                 TÜRKMENISTANYŇ DÖWLET SAGLYK GORAÝYŞ SANLY TENDER MEÝDANÇASY
               </p>
               <h2 className="text-2xl font-black text-slate-900 mt-1">
@@ -85,7 +85,7 @@ export default function SupplierCompanyCardModal({
                 <CheckCircle2 size={14} className="text-emerald-600" />
                 {t('verifiedStateBadge', 'Верифицированный участник электронных торгов')}
               </span>
-              <p className="text-[11px] text-slate-400 mt-1 font-mono">
+              <p className="text-[12px] text-slate-400 mt-1 font-mono">
                 {t('exportDateLabel', 'Дата выгрузки')}: {new Date().toLocaleDateString()}
               </p>
             </div>
@@ -96,7 +96,7 @@ export default function SupplierCompanyCardModal({
             
             {/* Блок адреса и контактов */}
             <div className="p-4 bg-slate-50 rounded-2xl space-y-2.5 border border-slate-200/80">
-              <p className="font-black text-slate-400 uppercase tracking-wider text-[10px]">
+              <p className="font-black text-slate-400 uppercase tracking-wider text-[11px]">
                 {t('contactInfo', 'Адрес и контакты')}
               </p>
               <div>
@@ -123,7 +123,7 @@ export default function SupplierCompanyCardModal({
 
             {/* Блок банковских и налоговых реквизитов */}
             <div className="p-4 bg-slate-50 rounded-2xl space-y-2.5 border border-slate-200/80">
-              <p className="font-black text-slate-400 uppercase tracking-wider text-[10px]">
+              <p className="font-black text-slate-400 uppercase tracking-wider text-[11px]">
                 {t('bankDetails', 'Банковские и налоговые реквизиты')}
               </p>
               <div>
@@ -170,7 +170,7 @@ export default function SupplierCompanyCardModal({
 
           {/* Данные руководителя и медицинские лицензии */}
           <div className="p-4 bg-slate-50 rounded-2xl space-y-2 border border-slate-200/80 text-xs">
-            <p className="font-black text-slate-400 uppercase tracking-wider text-[10px]">
+            <p className="font-black text-slate-400 uppercase tracking-wider text-[11px]">
               {t('directorData', 'Руководитель и разрешения')}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -196,7 +196,7 @@ export default function SupplierCompanyCardModal({
                 <div className="sm:col-span-2 p-2.5 bg-blue-50/80 rounded-xl border border-blue-100 flex items-center justify-between">
                   <div>
                     <p className="font-bold text-blue-900">Лицензия Минздрава: № {formData.licenseNumber}</p>
-                    <p className="text-[11px] text-blue-700">Выдана: {formData.licenseIssuedBy || 'Минздрав ТМ'}</p>
+                    <p className="text-[12px] text-blue-700">Выдана: {formData.licenseIssuedBy || 'Минздрав ТМ'}</p>
                   </div>
                   <span className="text-xs font-bold text-blue-800">до {formData.licenseExpiryDate}</span>
                 </div>
@@ -207,14 +207,14 @@ export default function SupplierCompanyCardModal({
           {/* Проверенные документы */}
           {documents.length > 0 && (
             <div className="text-xs space-y-2">
-              <p className="font-black text-slate-400 uppercase tracking-wider text-[10px]">
+              <p className="font-black text-slate-400 uppercase tracking-wider text-[11px]">
                 {t('uploadedDocsCount', 'Проверенные регистрационные документы')} ({documents.length})
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {documents.map(doc => (
                   <div key={doc.id} className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
                     <span className="font-medium text-slate-700 truncate">{doc.name || doc.fileName}</span>
-                    <span className="text-[10px] font-bold text-emerald-600 shrink-0 ml-2">✓ {t('statusVerifiedBadge', 'Проверено')}</span>
+                    <span className="text-[11px] font-bold text-emerald-600 shrink-0 ml-2">✓ {t('statusVerifiedBadge', 'Проверено')}</span>
                   </div>
                 ))}
               </div>
@@ -222,7 +222,7 @@ export default function SupplierCompanyCardModal({
           )}
 
           {/* Официальный подвал с электронной подписью */}
-          <div className="pt-5 border-t-2 border-slate-200 flex flex-col sm:flex-row items-center justify-between text-[10px] text-slate-400 gap-2">
+          <div className="pt-5 border-t-2 border-slate-200 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-2">
             <p>
               {t('ePlatformFooterOfficial', 'Электронная торговая площадка Министерства здравоохранения Туркменистана • Сформировано автоматически')}
             </p>

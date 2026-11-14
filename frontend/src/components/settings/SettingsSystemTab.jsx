@@ -46,19 +46,19 @@ export default function SettingsSystemTab({
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
-            <span className="text-slate-400 text-[11px] block">{t('platformLabel', 'Платформа')}</span>
+            <span className="text-slate-400 text-[12px] block">{t('platformLabel', 'Платформа')}</span>
             <span className="font-bold text-slate-900 dark:text-white mt-0.5 block">Tender Ulgam</span>
           </div>
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
-            <span className="text-slate-400 text-[11px] block">{t('buildVersionLabel', 'Версия сборки')}</span>
+            <span className="text-slate-400 text-[12px] block">{t('buildVersionLabel', 'Версия сборки')}</span>
             <span className="font-mono font-bold text-slate-900 dark:text-white mt-0.5 block">v1.2.4-prod</span>
           </div>
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
-            <span className="text-slate-400 text-[11px] block">{t('databaseLabel', 'База данных')}</span>
+            <span className="text-slate-400 text-[12px] block">{t('databaseLabel', 'База данных')}</span>
             <span className="font-bold text-slate-900 dark:text-white mt-0.5 block">PostgreSQL (Prisma)</span>
           </div>
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
-            <span className="text-slate-400 text-[11px] block">{t('environmentLabel', 'Среда запуска')}</span>
+            <span className="text-slate-400 text-[12px] block">{t('environmentLabel', 'Среда запуска')}</span>
             <span className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block">Production</span>
           </div>
         </div>

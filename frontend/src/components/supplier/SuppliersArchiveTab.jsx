@@ -151,7 +151,7 @@ export default function SuppliersArchiveTab({
                       <p className="font-bold text-slate-900 dark:text-white">
                         {safeString(log.supplier?.name || '-')}
                       </p>
-                      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-400 font-mono">
+                      <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-400 font-mono">
                         <span>{log.supplier?.type || ''}</span>
                         {log.supplier?.taxId && <span>• STŞK: {log.supplier.taxId}</span>}
                       </div>

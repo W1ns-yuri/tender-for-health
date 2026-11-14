@@ -108,7 +108,7 @@ export default function OfferDetailsHeader({
               ? 'bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-300'
               : 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/80 text-blue-800 dark:text-blue-300'
           }`}>
-            <span className={`text-[11px] font-bold uppercase tracking-wider block ${
+            <span className={`text-[12px] font-bold uppercase tracking-wider block ${
               isAdmin ? 'text-emerald-700 dark:text-emerald-300' : 'text-blue-700 dark:text-blue-300'
             }`}>
               {t('proposalAmountTitle', 'Сумма предложения')}
@@ -118,7 +118,7 @@ export default function OfferDetailsHeader({
             }`}>
               {(offer.offeredPrice || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencyCode}
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center sm:justify-end gap-1.5">
+            <div className="text-[12px] text-slate-500 dark:text-slate-400 font-medium flex items-center sm:justify-end gap-1.5">
               <CheckCircle2 size={13} className={isAdmin ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'} />
               <span>{pluralize(rawSpecsCount, ['позиция', 'позиции', 'позиций'])} {t('inBidSuffix', 'в заявке')}</span>
             </div>

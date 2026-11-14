@@ -235,7 +235,7 @@ export default function TenderGeneralParamsTab({
         return (
           <div className="pt-2 flex flex-col items-end gap-2">
             {isClosedInvalid && (
-              <div className="text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-lg px-3 py-1.5 font-medium flex items-center gap-1.5">
+              <div className="text-[12px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-lg px-3 py-1.5 font-medium flex items-center gap-1.5">
                 <AlertCircle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" />
                 <span>
                   {t('minTwoSuppliersWarningBtn', 'Для сохранения закрытого тендера пригласите минимум 2 участников')} ({currentCount} / 2)

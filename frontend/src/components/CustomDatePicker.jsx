@@ -426,7 +426,7 @@ export default function CustomDatePicker({
                 {dayLabels.map((dl, idx) => (
                   <div 
                     key={dl} 
-                    className={`text-[11px] font-semibold py-1 ${
+                    className={`text-[12px] font-semibold py-1 ${
                       idx >= 5 ? 'text-rose-500/70 dark:text-rose-400/70' : 'text-slate-400 dark:text-slate-500'
                     }`}
                   >

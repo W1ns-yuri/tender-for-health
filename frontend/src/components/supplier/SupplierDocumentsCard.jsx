@@ -143,12 +143,12 @@ export default function SupplierDocumentsCard({
                         {t(slot.titleKey, slot.defaultTitle)}
                       </h4>
                       {slot.required && (
-                        <span className="text-[10px] font-black text-rose-500 uppercase tracking-wider">
+                        <span className="text-[11px] font-black text-rose-500 uppercase tracking-wider">
                           *{t('docSlotRequired', 'Обязательно')}
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">
                       {t(slot.descKey, slot.defaultDesc)}
                     </p>
                   </div>
@@ -200,7 +200,7 @@ export default function SupplierDocumentsCard({
                           <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
                             {doc.name || doc.fileName}
                           </p>
-                          <p className="text-[10px] text-slate-400">
+                          <p className="text-[11px] text-slate-400">
                             {formatFileSize(doc.fileSize)} {doc.createdAt ? `• ${new Date(doc.createdAt).toLocaleDateString()}` : ''}
                           </p>
                         </div>
@@ -218,7 +218,7 @@ export default function SupplierDocumentsCard({
                               href={fileUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="p-1 px-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 text-[11px] font-bold"
+                              className="p-1 px-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 text-[12px] font-bold"
                             >
                               <ExternalLink size={12} />
                               <span>{t('openActionBtn', 'Открыть')}</span>
@@ -240,7 +240,7 @@ export default function SupplierDocumentsCard({
                   ))}
                 </div>
               ) : (
-                <div className="py-2 text-[11px] text-slate-400 italic">
+                <div className="py-2 text-[12px] text-slate-400 italic">
                   {t('noDocInSlot', 'Документ в данный раздел еще не загружен')}
                 </div>
               )}

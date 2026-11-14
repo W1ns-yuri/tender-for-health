@@ -39,7 +39,7 @@ export default function SupplierLicenseCard({
                 {t('medicalLicenseBlockTitle', 'Лицензии и сертификаты Минздрава')}
               </h3>
               {isLicenseModified && (
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800 uppercase tracking-wider">
+                <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800 uppercase tracking-wider">
                   {t('moderationFieldChangedBadge', 'Изменено')}
                 </span>
               )}
@@ -92,7 +92,7 @@ export default function SupplierLicenseCard({
             }`}>
               {t('isMedicalLicensedLabel', 'Деятельность подлежит лицензированию Минздравом (Фармацевтика / Медтехника)')}
             </span>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+            <span className="text-[12px] text-slate-500 dark:text-slate-400 block mt-0.5">
               {isLicensed
                 ? t('licenseEnabledNotice', 'Заполните обязательные поля реквизитов лицензии ниже')
                 : t('licenseDisabledNotice', 'Включите переключатель, если ваша организация поставляет медикаменты или медтехнику')}

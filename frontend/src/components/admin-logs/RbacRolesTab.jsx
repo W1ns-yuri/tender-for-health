@@ -53,7 +53,7 @@ export default function RbacRolesTab({ cardBg, t }) {
                   </div>
                   <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">{r.name}</h4>
                 </div>
-                <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${r.badgeColor}`}>
+                <span className={`px-2 py-0.5 rounded-full font-bold text-[11px] ${r.badgeColor}`}>
                   {r.code}
                 </span>
               </div>

@@ -72,7 +72,7 @@ export default function SupplierBasicInfoCard({
             className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`}
           />
           {isEditable && (
-            <p className="text-[11px] text-slate-400 mt-1 ml-1">
+            <p className="text-[12px] text-slate-400 mt-1 ml-1">
               {t('companyBrandHint', 'Указывайте только название бренда без организационной формы (ИП, ХО, ЧП)')}
             </p>
           )}
@@ -92,7 +92,7 @@ export default function SupplierBasicInfoCard({
             className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`}
           />
           {isEditable && (
-            <p className="text-[11px] text-slate-400 mt-1 ml-1">
+            <p className="text-[12px] text-slate-400 mt-1 ml-1">
               {isForeignCompany ? t('foreignRegCodeHint', 'Регистрационный номер в торговом реестре') : t('okpoCodeHint', '8-значный код ОКПО предприятия')}
             </p>
           )}
@@ -113,7 +113,7 @@ export default function SupplierBasicInfoCard({
             className={`w-full px-4 py-3 rounded-xl text-sm font-medium border ${inputBg}`}
           />
           {isEditable && (
-            <p className="text-[11px] text-slate-400 mt-1 ml-1">
+            <p className="text-[12px] text-slate-400 mt-1 ml-1">
               {t('directorNameHint', 'ФИО первого руководителя организации или ИП')}
             </p>
           )}

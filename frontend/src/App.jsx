@@ -27,6 +27,8 @@ import { AlertProvider } from './context/AlertContext';
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
 
+const isNarrow = () => typeof window !== 'undefined' && window.innerWidth < 768;
+
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('tender_token') || '');
   const [user, setUser] = useState(() => {
@@ -40,7 +42,8 @@ export default function App() {
   const [role, setRole] = useState(user?.roleType || 'SUPPLIER');
   const navigate = useNavigate();
   const location = useLocation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // На телефоне меню по умолчанию свёрнуто до иконок, иначе оно занимает 2/3 экрана
+  const [isCollapsed, setIsCollapsed] = useState(isNarrow);
   const autoCollapsedRef = useRef(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('tender_theme') === 'dark';
@@ -60,9 +63,14 @@ export default function App() {
       }
     } else if (autoCollapsedRef.current) {
       autoCollapsedRef.current = false;
-      setIsCollapsed(false);
+      if (!isNarrow()) setIsCollapsed(false);
     }
   }, [location.pathname, isCollapsed, role]);
+
+  // Телефон: после перехода по меню сворачиваем его обратно
+  useEffect(() => {
+    if (isNarrow()) setIsCollapsed(true);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -287,8 +295,8 @@ export default function App() {
           onNavigate={handleNavigate}
         />
 
-        {/* 🟢 ЦЕНТРАЛЬНОЕ ОКНО С ЗАЩИТОЙ ERROR BOUNDARY */}
-        <main className={`p-6 flex-1 overflow-y-auto ${isDarkMode ? 'bg-[#0b0f17]' : 'bg-slate-50'}`}>
+        {/* ЦЕНТРАЛЬНОЕ ОКНО С ЗАЩИТОЙ ERROR BOUNDARY */}
+        <main className={`p-3 sm:p-6 flex-1 overflow-y-auto ${isDarkMode ? 'bg-[#0b0f17]' : 'bg-slate-50'}`}>
           <ErrorBoundary key={location.pathname} resetKey={location.pathname} onReset={() => navigate('/dashboard')}>
             <Suspense fallback={<div className="flex justify-center py-24"><div className="h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent opacity-40" /></div>}>
             <Routes>

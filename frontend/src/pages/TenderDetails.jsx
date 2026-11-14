@@ -120,7 +120,7 @@ export default function TenderDetails({
               <h4 className="text-xs font-bold text-amber-950 dark:text-amber-200">
                 {t('invitedToClosedTenderTitle', 'Вы приглашены к участию в закрытой закупке')}
               </h4>
-              <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90 mt-0.5 leading-relaxed">
+              <p className="text-[12px] text-amber-800/90 dark:text-amber-300/90 mt-0.5 leading-relaxed">
                 {t(
                   'invitedToClosedTenderDesc',
                   'Данный тендер является закрытым и доступен только для выбранного круга поставщиков. Вы можете изучить документацию и подать коммерческое предложение.'

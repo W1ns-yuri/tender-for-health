@@ -70,7 +70,7 @@ export default function RegisterForm({
                   {regStep > s.num ? '✓' : s.num}
                 </div>
                 <span
-                  className={`text-[11px] font-bold mt-1.5 text-center transition-colors ${
+                  className={`text-[12px] font-bold mt-1.5 text-center transition-colors ${
                     regStep === s.num
                       ? 'text-blue-600'
                       : regStep > s.num
@@ -185,7 +185,7 @@ export default function RegisterForm({
               />
             </div>
             {regData.countryCode === 'OTHER' && (
-              <p className="text-[11px] text-slate-400 mt-1 ml-1">
+              <p className="text-[12px] text-slate-400 mt-1 ml-1">
                 {t(
                   'phoneFormatInternationalHint',
                   'Формат: +[код страны] [номер], например: +49 151 2345678'
@@ -237,7 +237,7 @@ export default function RegisterForm({
                 className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
               />
             </div>
-            <p className="text-[11px] text-slate-400 mt-1 ml-1">
+            <p className="text-[12px] text-slate-400 mt-1 ml-1">
               {t(
                 'companyBrandHint',
                 'Указывайте только название бренда без организационной формы (ИП, ХО, ЧП)'
@@ -273,7 +273,7 @@ export default function RegisterForm({
                 className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium tracking-wider font-mono"
               />
             </div>
-            <p className="text-[11px] text-slate-400 mt-1 ml-1">
+            <p className="text-[12px] text-slate-400 mt-1 ml-1">
               {regData.countryCode === 'TM'
                 ? t('taxIdHintTM', 'Основной идентификатор юридического лица в Туркменистане (8 цифр)')
                 : t('taxIdHintForeign', 'Международный налоговый или регистрационный номер компании')}

@@ -27,6 +27,7 @@ router.get('/tender/:tenderId', authMiddleware, getOffersByTender);
 router.get('/my-wins', authMiddleware, checkRole(['SUPPLIER', 'ADMIN']), getMyWins);
 router.get('/my', authMiddleware, checkRole(['SUPPLIER', 'ADMIN']), getMyOffers);
 router.get('/:id', authMiddleware, checkRole(['SUPPLIER', 'ADMIN']), getOfferById);
-router.delete('/:id', authMiddleware, checkRole(['SUPPLIER', 'ADMIN']), deleteOffer);
+// Отозвать заявку может только сам поставщик: организатор не должен убирать чужие заявки
+router.delete('/:id', authMiddleware, checkRole(['SUPPLIER']), deleteOffer);
 
 module.exports = router;

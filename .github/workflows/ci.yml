@@ -21,6 +21,8 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:password@localhost:5432/health_tender_db?schema=public
       JWT_SECRET: ci_only_secret_not_for_production_use_000000
+      # Автотесты регистрируют много поставщиков с одного IP
+      REGISTER_RATE_LIMIT: '1000'
     defaults:
       run:
         working-directory: backend
@@ -52,6 +54,8 @@ jobs:
           curl -sf localhost:5000/api/tenders -H "authorization: Bearer $TOKEN" > /dev/null
           curl -sf localhost:5000/api/dashboard/stats -H "authorization: Bearer $TOKEN" > /dev/null
           test "$(curl -s -o /dev/null -w '%{http_code}' localhost:5000/api/offers/suppliers)" = "401"
+      # Права доступа по ролям и полный цикл тендера (сервер уже запущен шагом выше)
+      - run: npm test
       - if: failure()
         run: cat server.log || true
       - run: npm audit --omit=dev --audit-level=high

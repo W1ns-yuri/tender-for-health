@@ -11,6 +11,7 @@ export default function EvaluationBottomActionBar({
   allLotsAwarded = false,
   onPrint,
   onComplete,
+  isCompleted = false,
   t = (k, f) => f
 }) {
   const percent = lotsWithOffersCount > 0 
@@ -18,7 +19,7 @@ export default function EvaluationBottomActionBar({
     : 0;
 
   return (
-    <div className="sticky bottom-0 z-30 -mx-6 -mb-6 px-6 sm:px-8 py-3.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-2xl transition-all">
+    <div className="sticky bottom-0 z-30 -mx-3 -mb-3 sm:-mx-6 sm:-mb-6 px-6 sm:px-8 py-3.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-2xl transition-all">
       <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         {/* Индикатор прогресса слева */}
         <div className="flex items-center gap-3">
@@ -32,7 +33,7 @@ export default function EvaluationBottomActionBar({
                 {awardedLotsCount} {t('fromWord', 'из')} {lotsWithOffersCount} {t('lotsCountSuffix', 'лотов')}
               </span>
               {allLotsAwarded && (
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 text-[10px] font-bold">
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 text-[11px] font-bold">
                   {t('allLotsAllocatedBadge', 'Все лоты распределены')}
                 </span>
               )}
@@ -58,6 +59,12 @@ export default function EvaluationBottomActionBar({
             {t('exportPrintBtn', 'Экспорт / Печать')}
           </Button>
 
+          {isCompleted ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
+              <CheckCircle2 size={16} />
+              {t('protocolApprovedLabel', 'Протокол утверждён, итоги объявлены')}
+            </span>
+          ) : (
           <Button
             variant="success"
             size="sm"
@@ -67,6 +74,7 @@ export default function EvaluationBottomActionBar({
           >
             {t('approveProtocolBtn', 'Утвердить протокол и объявить победителей')}
           </Button>
+          )}
         </div>
       </div>
     </div>

@@ -63,7 +63,7 @@ export default function TenderDetailsStepper({
         <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
           {t('tenderLifecycleTitle', 'Жизненный цикл процедуры')}
         </h4>
-        <span className="text-[11px] font-bold text-slate-400">
+        <span className="text-[12px] font-bold text-slate-400">
           {t('stepNumberLabel', 'Этап')} {lifecycleStep} {t('outOf', 'из')} 5
         </span>
       </div>
@@ -110,7 +110,7 @@ export default function TenderDetailsStepper({
                   </span>
 
                   {/* Подпись */}
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1">
                     {step.desc}
                   </span>
                 </div>

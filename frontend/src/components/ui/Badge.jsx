@@ -39,7 +39,7 @@ const VARIANTS = {
 };
 
 const SIZES = {
-  sm: 'px-2 py-0.5 text-[11px] font-semibold gap-1 rounded-md',
+  sm: 'px-2 py-0.5 text-[12px] font-semibold gap-1 rounded-md',
   md: 'px-2.5 py-1 text-xs font-semibold gap-1.5 rounded-lg',
   lg: 'px-3 py-1.5 text-sm font-semibold gap-2 rounded-xl',
 };

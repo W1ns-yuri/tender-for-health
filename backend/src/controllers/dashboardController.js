@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { sendError } = require('../utils/httpErrors');
 
 // Получение статистики для Главной Панели (Dashboard)
 const getDashboardStats = async (req, res) => {
@@ -35,10 +36,11 @@ const getDashboardStats = async (req, res) => {
                 ? { status: 'YENIJI_YGLAN_EDILDI', offers: { some: { supplierId: { in: supplierIds }, specs: { some: { isAwarded: true } } } } }
                 : { status: 'YENIJI_YGLAN_EDILDI' },
         });
-        const totalSuppliers = await prisma.supplier.count();
+        // Число всех поставщиков и разбивка по статусам (включая черновики) — внутренняя статистика организатора
+        const totalSuppliers = isSupplier ? null : await prisma.supplier.count();
 
         // 2. Группировка тендеров по статусам
-        const statusGroups = await prisma.tender.groupBy({
+        const statusGroups = isSupplier ? [] : await prisma.tender.groupBy({
             by: ['status'],
             _count: { status: true },
         });
@@ -91,7 +93,7 @@ const getDashboardStats = async (req, res) => {
             recentLogs,
         });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении статистики панели управления', details: error.message });
+        sendError(res, error, 'Ошибка при получении статистики панели управления');
     }
 };
 
@@ -131,7 +133,7 @@ const getLogs = async (req, res) => {
         });
         res.json(logs);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении логов аудита', details: error.message });
+        sendError(res, error, 'Ошибка при получении логов аудита');
     }
 };
 

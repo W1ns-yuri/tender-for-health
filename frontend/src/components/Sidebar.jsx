@@ -72,7 +72,7 @@ export default function Sidebar({
 
         {/* 2. Навигация ESASY */}
         <div className="p-3">
-          {!isCollapsed && <p className={`px-3 text-[11px] font-semibold ${theme.subText} uppercase tracking-wider mb-2`}>{t('mainSection', 'Esasy')}</p>}
+          {!isCollapsed && <p className={`px-3 text-[12px] font-semibold ${theme.subText} uppercase tracking-wider mb-2`}>{t('mainSection', 'Esasy')}</p>}
 
           <nav className="space-y-1">
             {/* 1. Главная */}
@@ -245,7 +245,7 @@ export default function Sidebar({
         {/* 3. Секция Управления */}
         {isAdmin && (
           <div className={`p-3 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100'} mt-2`}>
-            {!isCollapsed && <p className={`px-3 text-[11px] font-semibold ${theme.subText} uppercase tracking-wider mb-2`}>{t('managementSection', 'Dolandyryş')}</p>}
+            {!isCollapsed && <p className={`px-3 text-[12px] font-semibold ${theme.subText} uppercase tracking-wider mb-2`}>{t('managementSection', 'Dolandyryş')}</p>}
             <nav className="space-y-1">
               <button
                 onClick={() => setActiveTab('umumy')}

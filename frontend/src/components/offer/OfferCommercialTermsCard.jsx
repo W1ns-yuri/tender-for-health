@@ -37,7 +37,7 @@ export default function OfferCommercialTermsCard({
             theme={theme}
             t={t}
           />
-          <span className="text-[10px] text-slate-400 mt-1 block">
+          <span className="text-[11px] text-slate-400 mt-1 block">
             {t('currencyNotice', 'Цены по всем лотам будут рассчитаны в этой валюте')}
           </span>
         </div>

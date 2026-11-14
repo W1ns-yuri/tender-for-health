@@ -48,7 +48,7 @@ export default function AnalyticsRegionalDistribution({
                 >
                   {region.name}
                 </div>
-                <div className="text-[10px] text-slate-400">
+                <div className="text-[11px] text-slate-400">
                   {region.tenders} {t('tendersCount', 'тендеров')}
                 </div>
               </div>
@@ -66,7 +66,7 @@ export default function AnalyticsRegionalDistribution({
                 <div className="font-bold text-slate-900 dark:text-white">
                   {formatCurrency(region.amount, currencySymbol)}
                 </div>
-                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
                   {region.percent}% объема
                 </div>
               </div>

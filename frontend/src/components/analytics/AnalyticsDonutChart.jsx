@@ -108,7 +108,7 @@ export default function AnalyticsDonutChart({
             <span className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums tracking-tight">
               {formatNumber(totalProcedures || 0)}
             </span>
-            <span className="text-[11px] font-medium text-slate-400 mt-0.5">
+            <span className="text-[12px] font-medium text-slate-400 mt-0.5">
               {t('totalProceduresLabel', 'Всего процедур')}
             </span>
           </div>
@@ -149,7 +149,7 @@ export default function AnalyticsDonutChart({
               </div>
               <div className="flex items-center space-x-2 tabular-nums shrink-0 whitespace-nowrap">
                 <span className="font-semibold text-slate-900 dark:text-white">{item.count}</span>
-                <span className="text-slate-400 text-[11px] shrink-0 whitespace-nowrap">
+                <span className="text-slate-400 text-[12px] shrink-0 whitespace-nowrap">
                   ({item.percent}%)
                 </span>
               </div>

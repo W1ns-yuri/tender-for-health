@@ -330,7 +330,7 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                       <div className="flex flex-col items-center gap-1">
                         <span>{safeString(item.tenderNumber)}</span>
                         {item.visibility === 'YAPYK' && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-extrabold uppercase bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60">
                             <Lock size={10} />
                             <span>{t('closedBadge', 'Закрытый')}</span>
                           </span>

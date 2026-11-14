@@ -3,6 +3,8 @@ const { passwordError } = require('../utils/accountRules');
 const jwt = require('jsonwebtoken');
 const prisma = require('../lib/prisma');
 const { setAuthCookie, clearAuthCookie } = require('../utils/authCookie');
+const { sendError } = require('../utils/httpErrors');
+const { registrationError } = require('../utils/validation');
 
 // Регистрация нового пользователя
 const register = async (req, res) => {
@@ -11,6 +13,17 @@ const register = async (req, res) => {
 
         if (!username || !password || !firstName || !lastName || !phone) {
             return res.status(400).json({ error: 'Пожалуйста, заполните обязательные поля: username, password, firstName, lastName, phone' });
+        }
+
+        const inputError = registrationError(req.body);
+        if (inputError) return res.status(400).json({ error: inputError });
+
+        // Одна компания = один ИНН: иначе можно завести несколько «независимых» участников одного тендера
+        if (taxId) {
+            const sameTax = await prisma.supplier.findFirst({ where: { taxId: String(taxId).trim() }, select: { id: true } });
+            if (sameTax) {
+                return res.status(400).json({ error: 'Компания с таким ИНН уже зарегистрирована. Войдите в существующий аккаунт или обратитесь к организатору.' });
+            }
         }
 
         // Проверяем, существует ли уже пользователь с таким логином
@@ -64,7 +77,7 @@ const register = async (req, res) => {
                     userId: user.id,
                     name: cleanCompanyName || `${firstName} ${lastName}`,
                     type: companyType || 'ENTREPRENEUR',
-                    taxId: taxId || null,
+                    taxId: taxId ? String(taxId).trim() : null,
                     okpoCode: okpoCode || (countryCode === 'TM' ? taxId : null),
                     countryId: countryId || null,
                     phone: phone || null,
@@ -98,7 +111,7 @@ const register = async (req, res) => {
         setAuthCookie(res, token);
         res.status(201).json({ user: userWithoutPassword, token });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при регистрации', details: error.message });
+        sendError(res, error, 'Ошибка при регистрации');
     }
 };
 
@@ -107,7 +120,7 @@ const login = async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        if (!username || !password) {
+        if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
             return res.status(400).json({ error: 'Укажите логин и пароль' });
         }
 
@@ -162,7 +175,7 @@ const login = async (req, res) => {
         setAuthCookie(res, token);
         res.json({ user: userWithoutPassword, token });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при входе', details: error.message });
+        sendError(res, error, 'Ошибка при входе');
     }
 };
 
@@ -195,7 +208,7 @@ const getMe = async (req, res) => {
         const { password: _, ...userWithoutPassword } = user;
         res.json(userWithoutPassword);
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при получении профиля', details: error.message });
+        sendError(res, error, 'Ошибка при получении профиля');
     }
 };
 
@@ -233,7 +246,7 @@ const changePassword = async (req, res) => {
 
         res.json({ success: true, message: 'Пароль успешно изменен' });
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка при смене пароля', details: error.message });
+        sendError(res, error, 'Ошибка при смене пароля');
     }
 };
 
