@@ -35,6 +35,7 @@ export default function TenderLotsManagerTab({
   handleAddSpecRow,
   handleSpecChange,
   handleRemoveSpec,
+  handleImportSpecs,
   handleOpenProductModal,
   savingActiveLot = false,
   handleSaveActiveLot,
@@ -116,6 +117,7 @@ export default function TenderLotsManagerTab({
               handleAddSpecRow={handleAddSpecRow}
               handleSpecChange={handleSpecChange}
               handleRemoveSpec={handleRemoveSpec}
+              handleImportSpecs={handleImportSpecs}
               handleOpenProductModal={handleOpenProductModal}
               isDarkMode={isDarkMode}
               theme={theme}

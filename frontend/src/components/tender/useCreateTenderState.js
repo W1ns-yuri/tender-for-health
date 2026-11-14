@@ -151,6 +151,7 @@ export default function useCreateTenderState({
             brand: s.manufacturerId || '',
             mukdar: s.quantity || 1,
             desc: s.description || '',
+            section: s.section || '',
             requirements: toRequirementRows(s.requirements)
           }))
         }));
@@ -444,7 +445,9 @@ export default function useCreateTenderState({
         unit: defaultUnitId,
         brand: '',
         mukdar: 1,
-        desc: ''
+        desc: '',
+        // Новая строка продолжает раздел предыдущей
+        section: nextSpecs[nextSpecs.length - 1]?.section || ''
       });
       nextLots[activeLotIndex] = { ...nextLots[activeLotIndex], specs: nextSpecs };
       return nextLots;
@@ -461,6 +464,13 @@ export default function useCreateTenderState({
 
       if (field === 'requirements') {
         nextSpecs[specIdx] = { ...nextSpecs[specIdx], requirements: value };
+      } else if (field === 'sectionGroup') {
+        // Переименовать раздел: все подряд идущие позиции с тем же разделом, начиная с specIdx
+        const old = nextSpecs[specIdx].section || '';
+        const name = sanitizeInputText(value);
+        for (let i = specIdx; i < nextSpecs.length && (nextSpecs[i].section || '') === old; i++) {
+          nextSpecs[i] = { ...nextSpecs[i], section: name };
+        }
       } else if (field === 'productSelect') {
         nextSpecs[specIdx] = {
           ...nextSpecs[specIdx],
@@ -475,6 +485,30 @@ export default function useCreateTenderState({
         };
       }
 
+      nextLots[activeLotIndex] = { ...nextLots[activeLotIndex], specs: nextSpecs };
+      return nextLots;
+    });
+  }, [activeLot, activeLotIndex]);
+
+  // Вставка ведомости из Excel: rows = [{ name, unitId, quantity, section, desc }]; replace — заменить все позиции
+  const handleImportSpecs = useCallback((rows, replace) => {
+    if (!activeLot || !rows.length) return;
+    setActiveLotDirty(true);
+    setLots(prev => {
+      const nextLots = [...prev];
+      const base = replace ? [] : [...(nextLots[activeLotIndex].specs || [])];
+      const added = rows.map((r, i) => ({
+        id: Date.now() + Math.random() + i,
+        generalProductId: null,
+        haryt: r.name,
+        name: r.name,
+        unit: r.unitId || '',
+        brand: '',
+        mukdar: r.quantity,
+        desc: r.desc || '',
+        section: r.section || ''
+      }));
+      const nextSpecs = [...base, ...added].map((s, idx) => ({ ...s, hk: String(idx + 1), positionNumber: idx + 1 }));
       nextLots[activeLotIndex] = { ...nextLots[activeLotIndex], specs: nextSpecs };
       return nextLots;
     });
@@ -513,6 +547,7 @@ export default function useCreateTenderState({
           unitId: s.unit || undefined,
           manufacturerId: s.brand || undefined,
           description: s.desc ? sanitizeInputText(s.desc).trim() : undefined,
+          section: s.section ? sanitizeInputText(s.section).trim() : undefined,
           requirements: (s.requirements || []).filter(r => String(r.value ?? '').trim())
         }));
 
@@ -556,6 +591,7 @@ export default function useCreateTenderState({
             brand: s.manufacturerId || '',
             mukdar: s.quantity || 1,
             desc: s.description || '',
+            section: s.section || '',
             requirements: toRequirementRows(s.requirements)
           }))
         };
@@ -1054,6 +1090,7 @@ export default function useCreateTenderState({
     handleAddSpecRow,
     handleSpecChange,
     handleRemoveSpec,
+    handleImportSpecs,
     handleSaveActiveLot,
     handleDeleteActiveLot,
     handleLotFileUpload,

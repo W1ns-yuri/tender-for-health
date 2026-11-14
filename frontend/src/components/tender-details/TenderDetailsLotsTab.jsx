@@ -1,4 +1,6 @@
 import React from 'react';
+import SectionRow from '../ui/SectionRow';
+import { isSectionStart } from '../../utils/sections';
 import { Bookmark, Trophy, Paperclip, FileText, Folder, Building2, Package, MapPin, Clock, ScrollText } from 'lucide-react';
 import LotTypeConditions from '../tender/LotTypeConditions';
 import { lotTypeInfo, isNewLotType } from '../../utils/lotTypes';
@@ -281,7 +283,9 @@ export default function TenderDetailsLotsTab({
                 </tr>
               ) : (
                 lot.specs.map((spec, idx) => (
-                  <tr key={spec.id || idx} className={theme.tableRowHover}>
+                  <React.Fragment key={spec.id || idx}>
+                  {isSectionStart(lot.specs, idx) && <SectionRow title={spec.section} />}
+                  <tr className={theme.tableRowHover}>
                     <td className="py-3.5 px-4 text-center font-semibold text-slate-400">
                       {safeString(spec?.positionNumber || idx + 1)}
                     </td>
@@ -303,6 +307,7 @@ export default function TenderDetailsLotsTab({
                       {safeString(spec?.description)}
                     </td>
                   </tr>
+                  </React.Fragment>
                 ))
               )}
             </tbody>
