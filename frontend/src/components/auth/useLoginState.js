@@ -33,6 +33,7 @@ export function useLoginState({ onLoginSuccess, t }) {
   const [regData, setRegData] = useState({
     username: '', // Рабочий Email
     password: '',
+    passwordConfirm: '', // повтор пароля: опечатка при регистрации = заблокированный вход
     firstName: '',
     lastName: '',
     countryCode: 'TM',
@@ -103,6 +104,7 @@ export function useLoginState({ onLoginSuccess, t }) {
     regData.username?.trim() &&
     regData.username.includes('@') &&
     regData.password?.length >= 8 &&
+    regData.password === regData.passwordConfirm &&
     regData.termsAccepted
   );
 
@@ -189,8 +191,10 @@ export function useLoginState({ onLoginSuccess, t }) {
         ? (regData.phone.startsWith('+') ? regData.phone : `+${regData.phone}`.trim())
         : `${selectedCountryObj.prefix} ${regData.phone}`.trim();
 
+      // eslint-disable-next-line no-unused-vars
+      const { passwordConfirm, ...regFields } = regData;
       const payload = {
-        ...regData,
+        ...regFields,
         phone: fullPhone,
         companyName: cleaned,
         okpoCode: regData.countryCode === 'TM' ? regData.taxId : null,

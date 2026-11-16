@@ -13,6 +13,6 @@ export { default as ManufacturersCatalogTable } from './ManufacturersCatalogTabl
 export { default as BrandsCatalogTable } from './BrandsCatalogTable';
 export { default as VariationsCatalogTable } from './VariationsCatalogTable';
 export { default as ClientsCatalogTable } from './ClientsCatalogTable';
-export { default as CatalogFormModal } from '../CatalogFormModal';
+export { default as CatalogFormModal } from './CatalogFormModal';
 export { default as AttributesCatalogTable } from './AttributesCatalogTable';
 export { default as RejectProductDialog } from './RejectProductDialog';

@@ -2,6 +2,9 @@ const prisma = require('../lib/prisma');
 const { sendNotification, notifyAdmins } = require('./notificationController');
 const { sendError } = require('../utils/httpErrors');
 
+// Секции профиля, изменение которых не требует повторной проверки компании
+const MINOR_CHANGE_SECTIONS = ['logoUrl', 'contacts', 'address'];
+
 // Вспомогательная функция определения измененных секций профиля поставщика для модератора
 const detectProfileChanges = (supplier, body, cleanName, combinedPassport) => {
     const changes = [];
@@ -161,8 +164,46 @@ const updateProfile = async (req, res) => {
             return res.status(404).json({ error: 'Профиль поставщика не найден' });
         }
 
+        // Очищаем наименование от случайных приставок формы
+        let cleanName = supplier.name;
+        if (name && typeof name === 'string' && name.trim()) {
+            cleanName = name.trim().replace(/^(ип|хо|ооо|чп|hj|dh|hk|telekeçi|hojalyk\s+jemgyýeti|hususy\s+telekeçi|hususy\s+kärhana)\s*["«'”]?\s*/i, '').replace(/["»'”]$/, '').trim() || name.trim();
+        }
+
+        const combinedPassport = passportInfo || [passportSeries, passportIssuedBy].filter(Boolean).join(', ');
+        // Вычисляем конкретный список изменений (diff)
+        const changedFields = detectProfileChanges(supplier, req.body, cleanName, combinedPassport);
+
+        // Телефон, email, логотип и фактический адрес не влияют на проверку компании: проверенная компания
+        // меняет их без повторной модерации. Реквизиты, ИНН, название, лицензия, категории и т. п. проверяются заново.
+        const changed = (field) => req.body[field] !== undefined && (req.body[field] ?? '') !== (supplier[field] ?? '');
+        const isMinorEdit = changedFields.every((c) => MINOR_CHANGE_SECTIONS.includes(c.field))
+            && !['legalAddress', 'taxId', 'countryId', 'type', 'okpoCode'].some(changed);
+        const keepVerified = supplier.verificationStatus === 'VERIFIED' && isMinorEdit;
+
         // Валидация срока действия медицинской лицензии при отправке на проверку
-        const willSubmitForReview = submitForReview !== false;
+        const willSubmitForReview = submitForReview !== false && !keepVerified;
+
+        // Проверенная компания не может тихо поменять реквизиты, ИНН или категории в обход модерации:
+        // иначе можно подменить банковский счёт или добавить категории без проверки и остаться VERIFIED
+        if (submitForReview === false && supplier.verificationStatus === 'VERIFIED' && !isMinorEdit) {
+            return res.status(400).json({ error: 'Изменения профиля проверенной компании отправляются на повторную проверку' });
+        }
+
+        // ИНН: тот же формат и та же уникальность, что при регистрации
+        if (taxId !== undefined && taxId !== null && String(taxId).trim() !== (supplier.taxId || '')) {
+            const cleanTax = String(taxId).trim();
+            if (cleanTax) {
+                const effCountryId = countryId ?? supplier.countryId;
+                const country = effCountryId ? await prisma.country.findUnique({ where: { id: effCountryId }, select: { alpha2: true } }) : null;
+                const isTm = (country?.alpha2 || 'TM') === 'TM';
+                if (isTm ? !/^\d{8}$/.test(cleanTax.replace(/\s/g, '')) : !/^[A-Za-z0-9-]{4,30}$/.test(cleanTax)) {
+                    return res.status(400).json({ error: isTm ? 'ИНН в Туркменистане состоит из 8 цифр' : 'Налоговый номер: от 4 до 30 латинских букв и цифр' });
+                }
+                const sameTax = await prisma.supplier.findFirst({ where: { taxId: cleanTax, id: { not: supplier.id } }, select: { id: true } });
+                if (sameTax) return res.status(400).json({ error: 'Компания с таким ИНН уже зарегистрирована' });
+            }
+        }
 
         // То же, что проверяет форма: без категорий и документов анкету на модерацию не принимаем
         if (willSubmitForReview) {
@@ -188,18 +229,8 @@ const updateProfile = async (req, res) => {
             }
         }
 
-        // Очищаем наименование от случайных приставок формы
-        let cleanName = supplier.name;
-        if (name && typeof name === 'string' && name.trim()) {
-            cleanName = name.trim().replace(/^(ип|хо|ооо|чп|hj|dh|hk|telekeçi|hojalyk\s+jemgyýeti|hususy\s+telekeçi|hususy\s+kärhana)\s*["«'”]?\s*/i, '').replace(/["»'”]$/, '').trim() || name.trim();
-        }
-
-        const combinedPassport = passportInfo || [passportSeries, passportIssuedBy].filter(Boolean).join(', ');
         const previousStatus = supplier.verificationStatus;
         const newStatus = willSubmitForReview ? 'PENDING_REVIEW' : supplier.verificationStatus;
-
-        // Вычисляем конкретный список изменений (diff)
-        const changedFields = detectProfileChanges(supplier, req.body, cleanName, combinedPassport);
 
         // Формируем структурированные данные изменений для модератора
         let moderationNotes = supplier.notes;
@@ -253,7 +284,7 @@ const updateProfile = async (req, res) => {
                     passportIssuedBy,
                     ...(directorPersonalCode !== undefined ? { directorPersonalCode } : {}),
                     ...(okpoCode !== undefined ? { okpoCode } : {}),
-                    ...(taxId !== undefined ? { taxId } : {}),
+                    ...(taxId !== undefined ? { taxId: taxId ? String(taxId).trim() : null } : {}),
                     ...(isMedicalLicensed !== undefined ? { isMedicalLicensed: Boolean(isMedicalLicensed) } : {}),
                     ...(licenseNumber !== undefined ? { licenseNumber } : {}),
                     ...(licenseIssuedBy !== undefined ? { licenseIssuedBy } : {}),
@@ -442,7 +473,17 @@ const getSupplierById = async (req, res) => {
             return res.status(403).json({ error: 'У вас нет прав на просмотр конфиденциальных данных этого поставщика' });
         }
 
-        res.json(supplier);
+        // Тот же расчётный счёт у другой компании: признак подставных фирм или сговора. Видит только организатор.
+        let sameBankAccount = [];
+        if (req.user?.roleType === 'ADMIN' && supplier.bankAccount?.trim()) {
+            sameBankAccount = await prisma.supplier.findMany({
+                where: { bankAccount: supplier.bankAccount.trim(), id: { not: supplier.id } },
+                select: { id: true, name: true, taxId: true },
+                take: 10,
+            });
+        }
+
+        res.json({ ...supplier, sameBankAccount });
     } catch (error) {
         sendError(res, error, 'Ошибка при получении данных поставщика');
     }

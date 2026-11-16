@@ -1,7 +1,7 @@
 import React from 'react';
 import { KeyRound, Eye, EyeOff, Lock } from 'lucide-react';
 import { Button, Badge } from '../ui';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '../ui/CustomSelect';
 
 /**
  * Вкладка 3: Безопасность учетной записи, смена пароля и таймаут автоблокировки сессии
@@ -115,7 +115,7 @@ export default function SettingsSecurityTab({
                     type={showNew ? 'text' : 'password'}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder={t('passwordMinLengthHint', 'Минимум 6 символов')}
+                    placeholder={t('passwordMinLength8Hint', 'Минимум 8 символов')}
                     className={`w-full pl-3.5 pr-10 py-2 rounded-xl text-xs outline-none border ${theme?.inputBg || ''}`}
                   />
                   <button

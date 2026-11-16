@@ -13,9 +13,9 @@ import {
   Button,
 } from '../ui';
 import { safeString } from '../../utils/themeUtils';
-import { getStandardizedOpfBadge } from '../../utils/pluralize';
+import { getStandardizedOpfBadge } from '../../utils/companyName';
 import { parseSupplierChanges } from './supplierUtils';
-import useT from '../../utils/useT';
+import useT from '../../hooks/useT';
 
 export default function SuppliersPendingTable({
   pendingSuppliers = [],

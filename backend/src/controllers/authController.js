@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const { passwordError } = require('../utils/accountRules');
-const jwt = require('jsonwebtoken');
+const { signToken } = require('../utils/authToken');
 const prisma = require('../lib/prisma');
 const { setAuthCookie, clearAuthCookie } = require('../utils/authCookie');
 const { sendError } = require('../utils/httpErrors');
@@ -100,12 +100,7 @@ const register = async (req, res) => {
             return user;
         });
 
-        // Генерируем JWT-токен на 7 дней
-        const token = jwt.sign(
-            { userId: newUser.id, roleType: newUser.roleType },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
+        const token = signToken(newUser);
 
         const { password: _, ...userWithoutPassword } = newUser;
         setAuthCookie(res, token);
@@ -165,11 +160,7 @@ const login = async (req, res) => {
             data: { lastLogin: new Date(), failedCount: 0, lockoutExpireDate: null }
         });
 
-        const token = jwt.sign(
-            { userId: user.id, roleType: user.roleType },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
+        const token = signToken(user);
 
         const { password: _, ...userWithoutPassword } = user;
         setAuthCookie(res, token);
@@ -212,23 +203,19 @@ const getMe = async (req, res) => {
     }
 };
 
-// Смена пароля текущего пользователя
+// Смена пароля текущего пользователя.
+// Все прежние токены (другие браузеры, украденный токен) перестают работать, текущей вкладке выдаём новый.
 const changePassword = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
 
-        if (!currentPassword || !newPassword) {
+        if (typeof currentPassword !== 'string' || !currentPassword || typeof newPassword !== 'string' || !newPassword) {
             return res.status(400).json({ error: 'Пожалуйста, укажите текущий и новый пароль' });
         }
+        const pwdError = passwordError(newPassword);
+        if (pwdError) return res.status(400).json({ error: pwdError });
 
-        if (newPassword.length < 6) {
-            return res.status(400).json({ error: 'Новый пароль должен содержать не менее 6 символов' });
-        }
-
-        const user = await prisma.user.findUnique({
-            where: { id: req.user.id },
-        });
-
+        const user = await prisma.user.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
@@ -237,14 +224,18 @@ const changePassword = async (req, res) => {
         if (!isMatch) {
             return res.status(400).json({ error: 'Неверный текущий пароль' });
         }
+        if (await bcrypt.compare(newPassword, user.password)) {
+            return res.status(400).json({ error: 'Новый пароль совпадает с текущим' });
+        }
 
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await prisma.user.update({
+        const updated = await prisma.user.update({
             where: { id: req.user.id },
-            data: { password: hashedPassword },
+            data: { password: await bcrypt.hash(newPassword, 10), passwordChangedAt: new Date() },
         });
 
-        res.json({ success: true, message: 'Пароль успешно изменен' });
+        const token = signToken(updated);
+        setAuthCookie(res, token);
+        res.json({ success: true, message: 'Пароль успешно изменен', token });
     } catch (error) {
         sendError(res, error, 'Ошибка при смене пароля');
     }

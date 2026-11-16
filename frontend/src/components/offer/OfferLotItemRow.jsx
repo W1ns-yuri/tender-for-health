@@ -210,7 +210,7 @@ export default function OfferLotItemRow({
             placeholder="0.00"
             value={item.price === 0 ? '' : item.price}
             onChange={(e) => handleSpecFieldChange(lotId, idx, 'price', e.target.value === '' ? 0 : Number(e.target.value))}
-            className={`w-full px-3 py-2 text-right font-black rounded-lg border text-xs transition-all ${
+            className={`w-full min-w-28 px-3 py-2 text-right font-black rounded-lg border text-xs transition-all tabular-nums ${
               !isAllowed || !isSelected ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800' : ''
             } ${
               hasPrice

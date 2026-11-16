@@ -2,6 +2,7 @@ import React from 'react';
 import { Clock, Users, LayoutGrid, Edit2, Lock, AlertCircle } from 'lucide-react';
 import { getStatusBadge, getTypeBadge } from '../../utils/statusUtils';
 import { safeString } from '../../utils/themeUtils';
+import { isBiddingOpen } from '../../utils/bidding';
 
 export default function TenderDetailsHeader({
   data,
@@ -18,6 +19,7 @@ export default function TenderDetailsHeader({
   lang = 'RU',
   t,
 }) {
+  const biddingClosed = !isBiddingOpen(data);
   return (
     <div className={`p-6 rounded-xl border shadow-xs ${theme.cardBg}`}>
       {/* Верхний заголовок и кнопки действий */}
@@ -61,6 +63,15 @@ export default function TenderDetailsHeader({
                 title={t('alreadySubmitted', 'Вы уже подали заявку на этот тендер')}
               >
                 {t('offerSubmitted', 'КП подано')}
+              </button>
+            ) : biddingClosed ? (
+              <button
+                type="button"
+                disabled
+                className="px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm transition-all opacity-50 cursor-not-allowed bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                title={t('biddingClosedHint', 'Срок подачи предложений по этому тендеру истёк')}
+              >
+                {t('biddingClosedBtn', 'Приём заявок завершён')}
               </button>
             ) : !isSupplierVerified ? (
               <button

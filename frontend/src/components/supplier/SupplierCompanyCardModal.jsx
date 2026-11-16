@@ -86,7 +86,7 @@ export default function SupplierCompanyCardModal({
                 {t('verifiedStateBadge', 'Верифицированный участник электронных торгов')}
               </span>
               <p className="text-[12px] text-slate-400 mt-1 font-mono">
-                {t('exportDateLabel', 'Дата выгрузки')}: {new Date().toLocaleDateString()}
+                {t('exportDateLabel', 'Дата выгрузки')}: {new Date().toLocaleDateString('ru-RU')}
               </p>
             </div>
           </div>

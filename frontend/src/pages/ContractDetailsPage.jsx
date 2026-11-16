@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Printer, Send, Upload, FileText, Undo2, XCircle } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme, resolveFileUrl } from '../utils/themeUtils';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 import { useAlert } from '../context/AlertContext';
 import { contractStatus, formatMoney, formatDate } from '../utils/contracts';
 import SectionRow from '../components/ui/SectionRow';

@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { sendError } = require('../utils/httpErrors');
+const { supplierTenderScope } = require('../utils/tenderAccess');
 
 // Получение статистики для Главной Панели (Dashboard)
 const getDashboardStats = async (req, res) => {
@@ -18,15 +19,20 @@ const getDashboardStats = async (req, res) => {
         // может видеть, его заявки и его победы (раньше «Победители» показывал все итоги по системе).
         const isSupplier = roleType === 'SUPPLIER';
         let supplierIds = [];
+        let supplier = null;
         if (isSupplier) {
-            const suppliers = await prisma.supplier.findMany({ where: { userId: id }, select: { id: true } });
-            supplierIds = suppliers.map(s => s.id);
+            supplier = await prisma.supplier.findFirst({ where: { userId: id }, include: { categories: true } });
+            supplierIds = supplier ? [supplier.id] : [];
         }
 
+        // Те же правила, что у списка тендеров: открытые по категориям поставщика + закрытые по приглашению.
+        // Раньше здесь считались все открытые тендеры, и на главной было «3», а в списке 1.
         const totalOpenTenders = await prisma.tender.count({
-            where: isSupplier
-                ? { status: 'ACYK', OR: [{ visibility: 'ACYK' }, { invitedSuppliers: { some: { supplierId: { in: supplierIds } } } }] }
-                : { status: 'ACYK' },
+            where: !isSupplier
+                ? { status: 'ACYK' }
+                : supplier
+                    ? { status: 'ACYK', AND: [supplierTenderScope(supplier)] }
+                    : { status: 'ACYK', visibility: 'ACYK' },
         });
 
         const totalOffers = await prisma.offer.count(isSupplier ? { where: { supplierId: { in: supplierIds } } } : {});
@@ -81,7 +87,17 @@ const getDashboardStats = async (req, res) => {
             },
         });
 
+        // Что организатору нужно сделать прямо сейчас (блок «Требует внимания» на главной)
+        const attention = !isAdmin ? null : {
+            pendingSuppliers: await prisma.supplier.count({ where: { verificationStatus: 'PENDING_REVIEW' } }),
+            awaitingOpening: await prisma.tender.count({ where: { status: 'ACYK', deadline: { lt: new Date() } } }),
+            inEvaluation: await prisma.tender.count({ where: { status: 'BAHALANDYRYLDY' } }),
+            contractsToSend: await prisma.contract.count({ where: { status: 'DRAFT' } }),
+            contractsToSign: await prisma.contract.count({ where: { status: 'SUPPLIER_SIGNED' } }),
+        };
+
         res.json({
+            attention,
             counters: {
                 totalOpenTenders,
                 totalOffers,

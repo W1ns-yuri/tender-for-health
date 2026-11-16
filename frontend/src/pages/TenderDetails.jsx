@@ -10,7 +10,7 @@ import TenderDetailsLotsTab from '../components/tender-details/TenderDetailsLots
 import TenderDetailsLegacySpecs from '../components/tender-details/TenderDetailsLegacySpecs';
 import TenderDetailsDocuments from '../components/tender-details/TenderDetailsDocuments';
 import TenderDetailsInvitedSuppliers from '../components/tender-details/TenderDetailsInvitedSuppliers';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 
 export default function TenderDetails({
   tenderId,

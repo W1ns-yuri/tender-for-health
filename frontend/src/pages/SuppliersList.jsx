@@ -14,7 +14,7 @@ import {
   EditSupplierModal,
   RejectSupplierModal,
 } from '../components/supplier';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 
 export default function SuppliersList({ role = 'ADMIN', isDarkMode = false, lang = 'RU' }) {
   const t = useT(lang);

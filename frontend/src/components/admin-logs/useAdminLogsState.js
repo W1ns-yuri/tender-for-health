@@ -70,20 +70,31 @@ export function useAdminLogsState({ t, showAlert, showConfirm }) {
     }
   }, [showConfirm, showAlert, t]);
 
-  // Сброс пароля
+  // Сброс пароля: сервер генерирует временный пароль и показывает его один раз.
+  // Раньше кнопка только показывала «успешно», ничего не меняя.
   const handleResetUserPassword = useCallback(async (user) => {
     const confirmed = await showConfirm({
       title: t('resetPasswordAction', 'Сбросить пароль'),
-      message: `Сбросить пароль для пользователя ${user.username}? Временный пароль будет сгенерирован системой.`,
+      message: t('resetPasswordConfirm', 'Сбросить пароль для {name}? Пользователь выйдет со всех устройств и войдёт с временным паролем.', { name: user.username }),
       type: 'warning',
       confirmText: t('reset', 'Сбросить'),
       cancelText: t('cancel', 'Отмена')
     });
-    if (confirmed) {
+    if (!confirmed) return;
+    try {
+      const res = await API.post(`/users/${user.id}/reset-password`);
+      const password = res.data?.temporaryPassword;
+      navigator.clipboard?.writeText(password).catch(() => {});
       showAlert({
-        title: t('successTitle', 'Успешно'),
-        message: `Временный пароль для ${user.username} успешно обновлен`,
+        title: t('tempPasswordTitle', 'Временный пароль'),
+        message: t('tempPasswordMsg', 'Пароль для {name}: {password}\nОн скопирован в буфер обмена. Передайте его пользователю, больше он показан не будет. Пользователь сменит его в настройках.', { name: user.username, password }),
         type: 'success'
+      });
+    } catch (err) {
+      showAlert({
+        title: t('errorTitle', 'Ошибка'),
+        message: err?.response?.data?.error || t('resetPasswordError', 'Не удалось сбросить пароль'),
+        type: 'error'
       });
     }
   }, [showConfirm, showAlert, t]);

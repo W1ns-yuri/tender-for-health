@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import CustomSelect from '../../components/CustomSelect';
+import CustomSelect from './CustomSelect';
 
 export default function Pagination({
   currentPage = 1,

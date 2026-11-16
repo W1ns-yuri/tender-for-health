@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, TrendingDown, CheckCircle, X, Eye, ChevronUp, ChevronDown } from 'lucide-react';
 import EvaluationLotSpecBreakdown from './EvaluationLotSpecBreakdown';
+import { BASE_CURRENCY } from './evaluationUtils';
 
 /**
  * Сравнительная таблица предложений поставщиков по конкретному лоту.
@@ -31,10 +32,11 @@ export default function EvaluationLotComparativeTable({
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
           {competingOffers.map(co => {
-            const isLowest = minPrice > 0 && Math.abs(co.numericTotal - minPrice) < 0.01;
-            const priceDiffPercent = minPrice > 0 
-              ? (((co.numericTotal - minPrice) / minPrice) * 100).toFixed(1)
+            const isLowest = co.isComparable && minPrice > 0 && Math.abs(co.totalInBase - minPrice) < 0.01;
+            const priceDiffPercent = co.isComparable && minPrice > 0
+              ? (((co.totalInBase - minPrice) / minPrice) * 100).toFixed(1)
               : 0;
+            const fmt = (n) => Number(n).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
             return (
               <React.Fragment key={co.offerId}>
@@ -53,6 +55,14 @@ export default function EvaluationLotComparativeTable({
                       >
                         {co.supplierName}
                       </Link>
+                      {co.hasEquivalent && (
+                        <span
+                          className="px-1.5 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 text-[11px] rounded uppercase font-bold tracking-wider"
+                          title={t('equivalentOfferedHint', 'Поставщик предложил аналог вместо запрошенного товара. Подробности в «Спецификации».')}
+                        >
+                          {t('equivalentBadge', 'Аналог')}
+                        </span>
+                      )}
                     </div>
 
                     {/* Условия поставки поставщика */}
@@ -109,8 +119,13 @@ export default function EvaluationLotComparativeTable({
                   {/* Итоговая сумма с кодом валюты */}
                   <td className="py-3 px-4 text-right">
                     <div className="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-400">
-                      {Number(co.totalLotPrice).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {co.currencyCode}
+                      {fmt(co.totalLotPrice)} {co.currencyCode}
                     </div>
+                    {co.currencyCode !== BASE_CURRENCY && co.totalInBase !== null && (
+                      <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                        ≈ {fmt(co.totalInBase)} {BASE_CURRENCY}
+                      </div>
+                    )}
                     {isLowest && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                         <TrendingDown size={11} />
@@ -121,7 +136,18 @@ export default function EvaluationLotComparativeTable({
 
                   {/* Сравнение цен */}
                   <td className="py-3 px-4 text-center">
-                    {isLowest ? (
+                    {!co.isFullCoverage ? (
+                      <span
+                        className="text-[12px] font-semibold text-amber-700 dark:text-amber-400"
+                        title={t('partialCoverageHint', 'Заявка покрывает не все позиции лота, поэтому её сумму нельзя сравнивать с полными заявками')}
+                      >
+                        {t('partialCoverageBadge', 'Неполное покрытие')}
+                      </span>
+                    ) : co.totalInBase === null ? (
+                      <span className="text-[12px] font-semibold text-amber-700 dark:text-amber-400">
+                        {t('noExchangeRateBadge', 'Нет курса валюты')}
+                      </span>
+                    ) : isLowest ? (
                       <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded">
                         {t('baselineMinBadge', 'Базовая мин.')}
                       </span>

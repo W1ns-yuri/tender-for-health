@@ -3,7 +3,7 @@ import { X, Check } from 'lucide-react';
 import API from '../../services/api';
 import { useAlert } from '../../context/AlertContext';
 import { CustomSelect } from '../ui';
-import useT from '../../utils/useT';
+import useT from '../../hooks/useT';
 
 export default function EditSupplierModal({ supplier, onClose, onSuccess, lang = 'RU', isDarkMode, countries = [] }) {
   const t = useT(lang);

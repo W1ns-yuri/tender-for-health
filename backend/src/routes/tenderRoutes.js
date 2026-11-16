@@ -8,10 +8,8 @@ const {
     unscheduleTender,
     deleteTender,
     getNextNumber,
-    createLot,
-    updateLot,
-    deleteLot
 } = require('../controllers/tenderController');
+const { createLot, updateLot, deleteLot } = require('../controllers/lotController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { checkRole } = require('../middleware/rbacMiddleware');
 

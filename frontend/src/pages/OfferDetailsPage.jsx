@@ -9,7 +9,7 @@ import {
   OfferStandaloneTable,
   OfferDetailsDocuments
 } from '../components/offer-details';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 
 /**
  * OfferDetailsPage

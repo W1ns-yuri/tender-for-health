@@ -21,7 +21,7 @@ before(async () => {
 after(() => prisma.$disconnect());
 
 const reqSpecs = (t, requirements) => t.specs.map((s, i) => ({
-    name: s.name, generalProductId: s.generalProductId, quantity: Number(s.quantity),
+    name: s.name, generalProductId: s.generalProductId, unitId: s.unitId, quantity: Number(s.quantity),
     requirements: i === 0 ? requirements : [],
 }));
 

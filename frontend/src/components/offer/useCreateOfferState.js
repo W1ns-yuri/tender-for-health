@@ -403,6 +403,14 @@ export function useCreateOfferState({ id, role = 'SUPPLIER', t, showAlert, showC
       return;
     }
 
+    // Аналог без названия заказчик оценить не сможет
+    const unnamedEquivalent = specsWithPrices.find((item) => item.isEquivalent && !item.equivalentName?.trim());
+    if (unnamedEquivalent) {
+      setErrorMsg(t('equivalentNameRequired', 'Для позиции «{name}» отмечен аналог, но не указано, какой товар вы предлагаете.', { name: unnamedEquivalent.requestedName }));
+      scrollToError();
+      return;
+    }
+
     // 3. Проверка: нет ли выбранных позиций с ценой 0 в активных лотах
     const unpricedItems = allActiveItems.filter((item) => !item.price || parseFloat(item.price) <= 0);
     if (unpricedItems.length > 0) {
@@ -437,7 +445,7 @@ export function useCreateOfferState({ id, role = 'SUPPLIER', t, showAlert, showC
 
     setIsSubmitting(true);
     try {
-      await API.post('/offers', {
+      const { data: created } = await API.post('/offers', {
         tenderId: id,
         deliveryTermId: primaryDeliveryTermId,
         baseCurrencyId: currency || null,
@@ -452,7 +460,8 @@ export function useCreateOfferState({ id, role = 'SUPPLIER', t, showAlert, showC
         message: t('successOffer', 'Коммерческое предложение успешно отправлено!'),
         type: 'success'
       });
-      navigate('/offers');
+      // Сразу показываем поданную заявку, а не пустую форму или общий список
+      navigate(created?.id ? `/offers/${created.id}` : '/offers');
     } catch (err) {
       console.error('Error submitting offer:', err);
       setErrorMsg(err.response?.data?.error || err.response?.data?.details || err.message || 'Ошибка отправки предложения');

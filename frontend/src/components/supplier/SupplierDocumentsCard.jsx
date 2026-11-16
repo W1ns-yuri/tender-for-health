@@ -51,7 +51,7 @@ export default function SupplierDocumentsCard({
         }
 
         if (file.size > MAX_DOCUMENT_FILE_SIZE) {
-          setUploadError(t('fileSizeExceeds10MB', 'Размер каждого файла не должен превышать 15 МБ'));
+          setUploadError(t('fileSizeExceedsLimit', 'Размер каждого файла не должен превышать 25 МБ'));
           setUploading(false);
           setActiveUploadSlot(null);
           return;
@@ -100,7 +100,7 @@ export default function SupplierDocumentsCard({
           {t('companyDocumentsTitle', 'Документы компании')}
         </h3>
         <p className="text-xs text-slate-400">
-          {t('documentFormatsHelp', 'Поддерживаемые форматы: PDF, JPG (до 10 МБ)')}
+          {t('documentFormatsHelp', 'Поддерживаемые форматы: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (до 25 МБ)')}
         </p>
       </div>
 
@@ -201,7 +201,7 @@ export default function SupplierDocumentsCard({
                             {doc.name || doc.fileName}
                           </p>
                           <p className="text-[11px] text-slate-400">
-                            {formatFileSize(doc.fileSize)} {doc.createdAt ? `• ${new Date(doc.createdAt).toLocaleDateString()}` : ''}
+                            {formatFileSize(doc.fileSize)} {doc.createdAt ? `• ${new Date(doc.createdAt).toLocaleDateString('ru-RU')}` : ''}
                           </p>
                         </div>
                       </div>

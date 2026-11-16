@@ -5,9 +5,9 @@ import {
   ArrowRight, AlertCircle, Inbox, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import API from '../services/api';
-import { getRoleTheme, getAvatarInitials, resolveFileUrl } from '../utils/themeUtils';
-import useT from '../utils/useT';
+import API from '../../services/api';
+import { getRoleTheme, getAvatarInitials, resolveFileUrl } from '../../utils/themeUtils';
+import useT from '../../hooks/useT';
 
 export default function Header({ user, role, isDarkMode, lang, setLang, onNavigate }) {
   const theme = getRoleTheme(role, isDarkMode);
@@ -68,7 +68,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
     const diffDays = Math.floor(diffHours / 24);
     if (diffDays === 1) return t('yesterday', 'Вчера');
     if (diffDays < 7) return `${diffDays} ${t('daysAgo', 'дн. назад')}`;
-    return new Date(dateStr).toLocaleDateString();
+    return new Date(dateStr).toLocaleDateString('ru-RU');
   };
 
   const fetchNotifications = useCallback(async () => {
@@ -335,7 +335,7 @@ export default function Header({ user, role, isDarkMode, lang, setLang, onNaviga
                             </div>
                             <div className="text-right shrink-0">
                               <span className="text-xs font-bold text-slate-900 dark:text-white tabular-nums">
-                                {Number(tender.price || 0).toLocaleString()} TMT
+                                {Number(tender.price || 0).toLocaleString('ru-RU')} TMT
                               </span>
                             </div>
                           </div>

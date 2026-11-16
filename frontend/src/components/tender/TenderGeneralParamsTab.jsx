@@ -1,7 +1,7 @@
 import React from 'react';
 import { RefreshCw, Save, ArrowRight, AlertCircle } from 'lucide-react';
 import API from '../../services/api';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '../ui/CustomSelect';
 import CustomDateInput from './CustomDateInput';
 import TenderVisibilityAndInvitedSuppliers from './TenderVisibilityAndInvitedSuppliers';
 

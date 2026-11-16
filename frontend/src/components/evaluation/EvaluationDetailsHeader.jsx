@@ -10,6 +10,7 @@ export default function EvaluationDetailsHeader({
   tenderId,
   tenderNumber = '',
   onPrint,
+  canPrint = true,
   t = (k, f) => f
 }) {
   const navigate = useNavigate();
@@ -45,7 +46,10 @@ export default function EvaluationDetailsHeader({
         <button
           type="button"
           onClick={onPrint}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
+          // До вскрытия конвертов печатать нечего: протокол вышел бы пустым
+          disabled={!canPrint}
+          title={canPrint ? undefined : t('printAfterOpeningHint', 'Протокол можно распечатать после вскрытия конвертов')}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white text-xs font-semibold transition-colors cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Printer size={14} />
           <span>{t('printProtocolBtn', 'Печать протокола')}</span>

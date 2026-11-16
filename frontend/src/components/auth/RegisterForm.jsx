@@ -11,7 +11,7 @@ import {
   ChevronRight,
   CheckCircle2,
 } from 'lucide-react';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '../ui/CustomSelect';
 
 export default function RegisterForm({
   regStep,
@@ -349,6 +349,27 @@ export default function RegisterForm({
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-[13px] font-bold text-slate-700 mb-1.5 ml-1">
+              {t('passwordConfirmLabel', 'Повторите пароль')}*
+            </label>
+            <div className="relative flex items-center">
+              <Lock size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoComplete="new-password"
+                value={regData.passwordConfirm}
+                onChange={(e) => setRegData({ ...regData, passwordConfirm: e.target.value })}
+                placeholder="••••••••"
+                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-slate-800 text-sm transition-all focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium"
+              />
+            </div>
+            {regData.passwordConfirm && regData.password !== regData.passwordConfirm && (
+              <p className="text-[12px] text-rose-600 mt-1 ml-1">{t('passwordsDoNotMatch', 'Пароли не совпадают')}</p>
+            )}
           </div>
 
           {/* Информационная плашка об аккредитации */}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, X, RotateCcw } from 'lucide-react';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from './CustomSelect';
 
 /**
  * Reusable TableFilters component for W1ns UI Kit

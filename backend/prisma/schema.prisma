@@ -141,6 +141,8 @@ model User {
   failedCount       Int       @default(0) @map("failed_count")
   lockoutExpireDate DateTime? @map("lockout_expire_date")
   isActive          Boolean   @default(true) @map("is_active")
+  // Токены, выданные раньше этого момента, не принимаются (смена/сброс пароля)
+  passwordChangedAt DateTime? @map("password_changed_at")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

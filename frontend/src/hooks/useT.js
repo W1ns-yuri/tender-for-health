@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { getTranslation } from './translations';
+import { getTranslation } from '../utils/translations';
 
 /**
  * Переводчик для компонента. Функция стабильна, пока не сменился язык.

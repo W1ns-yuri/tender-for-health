@@ -71,6 +71,7 @@ async function newTender(adminToken, { visibility = 'ACYK', invitedSupplierIds =
     const category = await prisma.category.findFirst({ where: { name: { contains: categoryName.split(' ')[0] } } });
     const client = await prisma.client.findFirst();
     const products = await prisma.generalProduct.findMany({ take: 2 });
+    const unit = await prisma.unit.findFirst({ where: { shortName: 'шт' } });
     const deadline = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
     const created = await api(adminToken, 'POST', '/tenders', {
         tenderNumber: `T-${RUN}-${Math.random().toString(36).slice(2, 6)}`,
@@ -84,7 +85,7 @@ async function newTender(adminToken, { visibility = 'ACYK', invitedSupplierIds =
     const lotId = lot.data.id;
     const upd = await api(adminToken, 'PUT', `/tenders/${tenderId}/lots/${lotId}`, {
         categoryId: category.id,
-        specs: products.map((p, i) => ({ name: p.name, generalProductId: p.id, quantity: (i + 1) * 100 })),
+        specs: products.map((p, i) => ({ name: p.name, generalProductId: p.id, unitId: unit.id, quantity: (i + 1) * 100 })),
     });
     if (upd.status !== 200) throw new Error(`Лот не сохранён: ${upd.status} ${JSON.stringify(upd.data)}`);
     if (publish) {

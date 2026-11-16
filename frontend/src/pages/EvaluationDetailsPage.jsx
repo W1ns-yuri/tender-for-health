@@ -80,6 +80,7 @@ export default function EvaluationDetailsPage({ role, isDarkMode, lang = 'RU' })
         tenderId={tenderDetails.id}
         tenderNumber={tenderDetails.tenderNumber}
         onPrint={handlePrint}
+        canPrint={!tenderDetails.isSealed}
         t={t}
       />
 

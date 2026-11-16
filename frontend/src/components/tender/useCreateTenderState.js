@@ -256,7 +256,9 @@ export default function useCreateTenderState({
         await API.post(`/tenders/${newTender.id}/lots`, {
           lotNumber: 1,
           name: 'Лот №1',
-          lotType: formData.procurementType === 'SERVICES_WORKS' ? 'WORKS' : 'GOODS'
+          lotType: formData.procurementType === 'SERVICES_WORKS' ? 'WORKS' : 'GOODS',
+          // Категория лота по умолчанию = категория тендера, чтобы не выбирать её второй раз
+          categoryId: formData.categoryId || undefined
         });
 
         showToast({
@@ -885,7 +887,7 @@ export default function useCreateTenderState({
 
     const confirmed = await showConfirm({
       title: t('publishTenderBtn', 'Опубликовать тендер'),
-      message: t('publishConfirm', 'Вы уверены, что хотите опубликовать тендер? Он станет открытым и поставщики смогут подавать предложения.'),
+      message: t('publishConfirm', 'Опубликовать тендер? Он станет открытым, поставщики получат уведомления. Лоты и позиции можно менять, только пока не подана первая заявка.'),
       type: 'info',
       confirmText: t('publishTenderBtn', 'Опубликовать'),
       cancelText: t('cancel', 'Отмена')

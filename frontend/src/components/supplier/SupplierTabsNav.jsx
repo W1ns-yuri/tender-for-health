@@ -1,7 +1,7 @@
 import React from 'react';
 import { Archive, Users, Shield } from 'lucide-react';
 import { Tabs } from '../ui';
-import useT from '../../utils/useT';
+import useT from '../../hooks/useT';
 
 export default function SupplierTabsNav({
   activeTab = 'all',

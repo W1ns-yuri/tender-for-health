@@ -4,9 +4,9 @@ import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
-import CustomDatePicker from '../components/CustomDatePicker';
+import CustomDatePicker from '../components/ui/CustomDatePicker';
 import { TableFilters, Tabs, Pagination, TableSkeletonRows } from '../components/ui';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 
 export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
   const [tenders, setTenders] = useState([]);
@@ -325,7 +325,12 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                 </tr>
               ) : (
                 paginatedList.map((item, idx) => (
-                  <tr key={item.id || idx} className={theme.tableRowHover}>
+                  <tr
+                    key={item.id || idx}
+                    // Клик по строке открывает тендер; кнопки внутри строки работают как раньше
+                    onClick={(e) => { if (!e.target.closest('button, a, input')) onNavigate('tender-details', item.id); }}
+                    className={`${theme.tableRowHover} cursor-pointer`}
+                  >
                     <td className="py-3.5 px-4 text-center font-semibold font-mono tabular-nums">
                       <div className="flex flex-col items-center gap-1">
                         <span>{safeString(item.tenderNumber)}</span>

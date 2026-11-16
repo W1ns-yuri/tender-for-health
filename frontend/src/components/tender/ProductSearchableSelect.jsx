@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Plus } from 'lucide-react';
-import useT from '../../utils/useT';
+import useT from '../../hooks/useT';
 
 export default function ProductSearchableSelect({
   products = [],

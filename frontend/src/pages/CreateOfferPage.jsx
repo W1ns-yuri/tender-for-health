@@ -16,6 +16,7 @@ import {
   formatFileSize
 } from '../components/offer';
 import { CatalogFormModal } from '../components/catalogs';
+import { isBiddingOpen } from '../utils/bidding';
 
 /**
  * CreateOfferPage
@@ -86,6 +87,45 @@ export default function CreateOfferPage({ role = 'SUPPLIER', isDarkMode, lang = 
       <div className="p-16 text-center text-slate-500 font-medium flex flex-col items-center justify-center space-y-3">
         <div className="w-9 h-9 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
         <span className="text-sm font-semibold">{t('loading', 'Загрузка данных тендера...')}</span>
+      </div>
+    );
+  }
+
+  // Заявка уже подана или приём закрыт: не даём заполнять форму впустую
+  const myOffer = (tender?.offers || []).find((o) => o.isMine);
+  if (tender && role === 'SUPPLIER' && (myOffer || !isBiddingOpen(tender))) {
+    return (
+      <div className="max-w-2xl mx-auto mt-10">
+        <div className={`p-8 rounded-2xl border shadow-xs text-center space-y-4 ${theme.cardBg}`}>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+            {myOffer
+              ? t('offerAlreadySubmittedTitle', 'Вы уже подали предложение')
+              : t('biddingClosedBtn', 'Приём заявок завершён')}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {myOffer
+              ? t('offerAlreadySubmittedText', 'От одного поставщика принимается одна заявка на тендер. Свою заявку можно посмотреть на её странице.')
+              : t('biddingClosedText', 'Срок подачи предложений по тендеру {number} истёк, новые заявки не принимаются.', { number: tender.tenderNumber || '' })}
+          </p>
+          <div className="flex justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(`/tenders/${tender.id}`)}
+              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            >
+              {t('backToTenderBtn', 'К тендеру')}
+            </button>
+            {myOffer && (
+              <button
+                type="button"
+                onClick={() => navigate(`/offers/${myOffer.id}`)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${theme.primaryBtn}`}
+              >
+                {t('openMyOfferBtn', 'Открыть мою заявку')}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     );
   }

@@ -1,16 +1,20 @@
-# React + Vite
+# Frontend — Tender Ulgamy
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+```bash
+npm ci
+npm run dev          # http://localhost:5173, /api проксируется на localhost:5000
+npm run lint         # oxlint
+npm run i18n:check   # каждый ключ перевода есть в tm, ru и en
+npm run build        # сборка в dist/
+```
 
-Currently, two official plugins are available:
+Переменные окружения: [.env.example](.env.example). Лучше держать фронт и API на одном домене
+(бэкенд умеет сам отдавать `dist`, `SERVE_FRONTEND=true`): тогда скачивание файлов по cookie работает без настройки CORS.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Где что лежит
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+- `src/pages/` — страницы. Логику большой страницы выносим в хук рядом с компонентами (`components/<раздел>/use<Раздел>State.js`).
+- `src/components/<раздел>/` — части страниц раздела. `ui/` — общие кнопки, таблицы, модалки; `layout/` — меню, шапка, обработчик ошибок.
+- `src/hooks/useT.js` — переводы: `t('ключ', 'запасной текст', { параметры })`. Новый ключ добавляй во все три файла `src/locales/`.
+- `src/services/api.js` — единственный axios-клиент, сам подставляет токен.
+- `src/utils/` — функции без React (форматирование, разбор сметы, статусы).

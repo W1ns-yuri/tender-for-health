@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Globe, Lock, Search, Plus, X, Users, Check, Building2, Sparkles, Trash2 } from 'lucide-react';
 import API from '../../services/api';
-import { parseCompanyName } from '../../utils/pluralize';
+import { parseCompanyName } from '../../utils/companyName';
 import {
   TableContainer,
   Table,

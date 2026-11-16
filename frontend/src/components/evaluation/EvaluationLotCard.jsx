@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircle, FileText } from 'lucide-react';
 import { cleanLotTitle } from '../../utils/pluralize';
-import { formatIncoterms } from './evaluationUtils';
+import { formatIncoterms, BASE_CURRENCY } from './evaluationUtils';
 import EvaluationLotComparativeTable from './EvaluationLotComparativeTable';
 
 /**
@@ -28,7 +28,12 @@ export default function EvaluationLotCard({
     if (offerSpecsForLot.length > 0) {
       const totalLotPrice = offerSpecsForLot.reduce((sum, os) => sum + (os.quantity * os.unitPrice), 0);
       const isAwarded = offerSpecsForLot.some(os => os.isAwarded);
-      const currencyCode = offer.baseCurrency?.code || offer.currency || 'TMT';
+      const currencyCode = offer.baseCurrency?.code || offer.currency || BASE_CURRENCY;
+      // Пересчёт в TMT по курсу, зафиксированному в момент подачи заявки
+      const rateObj = (offer.exchangeRates || []).find(r => r.currencyId === offer.baseCurrencyId);
+      const rate = currencyCode === BASE_CURRENCY ? 1 : (rateObj ? Number(rateObj.value) : null);
+      const totalInBase = rate === null ? null : totalLotPrice * rate;
+      const isFullCoverage = offerSpecsForLot.length === (lot.specs || []).length;
 
       competingOffers.push({
         offerId: offer.id,
@@ -37,6 +42,11 @@ export default function EvaluationLotCard({
         totalLotPrice: totalLotPrice.toFixed(2),
         numericTotal: totalLotPrice,
         currencyCode,
+        totalInBase,
+        isFullCoverage,
+        // Сравнивать «лучшую цену» можно только среди полных заявок с известным курсом
+        isComparable: isFullCoverage && totalInBase !== null,
+        hasEquivalent: offerSpecsForLot.some(os => os.isEquivalent),
         isAwarded,
         itemsCount: offerSpecsForLot.length,
         totalItems: (lot.specs || []).length,
@@ -50,9 +60,8 @@ export default function EvaluationLotCard({
     }
   });
 
-  const minPrice = competingOffers.length > 0
-    ? Math.min(...competingOffers.map(o => o.numericTotal))
-    : 0;
+  const comparableTotals = competingOffers.filter(o => o.isComparable).map(o => o.totalInBase);
+  const minPrice = comparableTotals.length > 0 ? Math.min(...comparableTotals) : 0;
 
   const hasWinner = competingOffers.some(o => o.isAwarded);
   const incotermsDisplay = formatIncoterms(lot.deliveryTerm);
