@@ -14,6 +14,11 @@ function publishBlocker(tender, at = new Date()) {
     if (emptyLot) return `Невозможно опубликовать тендер: в лоте «${emptyLot.name || emptyLot.lotNumber}» нет ни одной позиции`;
     if (new Date(tender.deadline) <= at) return 'Невозможно опубликовать тендер: дедлайн уже прошёл. Укажите новый срок.';
     if (!tender.title?.trim() || tender.title.trim() === 'Без названия') return 'Невозможно опубликовать тендер: укажите название закупки';
+    // Без единицы измерения поставщик не поймёт, за что ставит цену: за таблетку или за упаковку
+    for (const lot of tender.lots) {
+        const noUnit = lot.specs.find((s) => !s.unitId);
+        if (noUnit) return `Невозможно опубликовать тендер: в лоте «${lot.name || lot.lotNumber}» у позиции «${noUnit.name || noUnit.positionNumber}» не указана единица измерения`;
+    }
     return null;
 }
 

@@ -77,4 +77,4 @@ export const DOCUMENT_SLOTS = [
 
 // Ограничения на загрузку файлов
 export const ALLOWED_DOCUMENT_EXTS = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'xls', 'xlsx'];
-export const MAX_DOCUMENT_FILE_SIZE = 15 * 1024 * 1024; // 15 MB
+export const MAX_DOCUMENT_FILE_SIZE = 25 * 1024 * 1024; // 25 MB, как лимит сервера

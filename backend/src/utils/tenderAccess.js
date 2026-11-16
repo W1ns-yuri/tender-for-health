@@ -26,4 +26,24 @@ const checkTenderVisible = async (user, tenderId) => {
     return { ok: true };
 };
 
-module.exports = { checkTenderVisible };
+/**
+ * Какие тендеры показывать поставщику в списке: открытые по его категориям
+ * и закрытые, куда его пригласили. Одно правило для списка тендеров и счётчиков на главной,
+ * чтобы цифры совпадали.
+ */
+const supplierTenderScope = (supplier) => {
+    const catIds = (supplier.categories || []).map((c) => c.categoryId);
+    const categoryFilter = catIds.length > 0 ? [
+        { categoryId: { in: catIds } },
+        { lots: { some: { categoryId: { in: catIds } } } },
+        { AND: [{ categoryId: null }, { lots: { none: { categoryId: { not: null } } } }] },
+    ] : [];
+    return {
+        OR: [
+            { visibility: 'ACYK', ...(categoryFilter.length > 0 ? { OR: categoryFilter } : {}) },
+            { visibility: 'YAPYK', invitedSuppliers: { some: { supplierId: supplier.id } } },
+        ],
+    };
+};
+
+module.exports = { checkTenderVisible, supplierTenderScope };

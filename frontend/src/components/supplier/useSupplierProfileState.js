@@ -9,6 +9,9 @@ import {
   parseSupplierChanges,
 } from './supplierUtils';
 
+// Поля профиля, которые проверенная компания меняет без повторной проверки
+const MINOR_FIELDS = ['phone', 'email', 'logoUrl', 'address', 'region'];
+
 export function useSupplierProfileState({
   id,
   role,
@@ -372,6 +375,19 @@ export function useSupplierProfileState({
     initialDocuments.length,
   ]);
 
+  // Изменились только контакты, логотип или фактический адрес: проверенная компания сохраняет их
+  // без повторной модерации (то же правило на сервере)
+  const onlyMinorChanges = useMemo(() => {
+    if (!initialFormData) return false;
+    const majorChanged = Object.keys(initialFormData).some(
+      (k) => !MINOR_FIELDS.includes(k) && formData[k] !== initialFormData[k]
+    );
+    return !majorChanged &&
+      JSON.stringify([...selectedCategoryIds].sort()) === JSON.stringify([...initialCategoryIds].sort()) &&
+      pendingDeleteDocIds.length === 0 &&
+      documents.length === initialDocuments.length;
+  }, [initialFormData, formData, selectedCategoryIds, initialCategoryIds, pendingDeleteDocIds.length, documents.length, initialDocuments.length]);
+
   // Управление редактированием
   const handleStartEdit = () => {
     setInitialDocuments([...documents]);
@@ -535,7 +551,7 @@ export function useSupplierProfileState({
     }
 
     const isVerifiedSupplier = supplier?.verificationStatus === 'VERIFIED';
-    if (isVerifiedSupplier && hasChanges) {
+    if (isVerifiedSupplier && hasChanges && !onlyMinorChanges) {
       const confirmed = await showConfirm({
         title: t('resubmitWarningTitle', 'Повторная модерация'),
         message: t(
@@ -614,10 +630,9 @@ export function useSupplierProfileState({
       setIsEditing(false);
       showAlert({
         title: t('success', 'Успешно'),
-        message: t(
-          'submittedForReviewSuccess',
-          'Анкета успешно отправлена на модерацию! Ожидайте проверки специалистами Минздрава.'
-        ),
+        message: res.data?.verificationStatus === 'VERIFIED'
+          ? t('profileSavedStillVerified', 'Изменения сохранены. Повторная проверка не нужна, доступ к торгам сохранён.')
+          : t('submittedForReviewSuccess', 'Анкета успешно отправлена на модерацию! Ожидайте проверки специалистами Минздрава.'),
         type: 'success',
       });
     } catch (error) {

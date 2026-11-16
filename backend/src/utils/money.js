@@ -12,4 +12,7 @@ const sumLineTotals = (lines) =>
         .reduce((acc, line) => acc.plus(D(line.unitPrice).times(D(line.quantity))), D(0))
         .toDecimalPlaces(2);
 
-module.exports = { D, sumLineTotals };
+/** Валюта, в которой сравниваются все заявки. Курсы в справочнике задаются к ней. */
+const BASE_CURRENCY_CODE = 'TMT';
+
+module.exports = { D, sumLineTotals, BASE_CURRENCY_CODE };

@@ -266,7 +266,7 @@ export default function OfferLotCard({
                     : (t('specQty', 'Количество'))}*
                 </th>
                 <th className="py-3 px-3.5 w-28 text-center">{t('specUnit', 'Ед. изм.')}</th>
-                <th className="py-3 px-3.5 w-36 text-center">{t('unitPriceWithCurrency', `Цена за ед. (${currencyCode})`, { currencyCode })}*</th>
+                <th className="py-3 px-3.5 w-40 min-w-36 text-center">{t('unitPriceWithCurrency', `Цена за ед. (${currencyCode})`, { currencyCode })}*</th>
                 <th className="py-3 px-3.5 w-36 text-right">{t('totalSumWithCurrency', `Сумма (${currencyCode})`, { currencyCode })}</th>
                 <th className="py-3 px-3.5 min-w-45">
                   {lotType === 'WORKS'

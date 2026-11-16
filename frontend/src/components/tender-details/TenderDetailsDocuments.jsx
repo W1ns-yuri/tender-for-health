@@ -1,6 +1,32 @@
 import React from 'react';
 import { Download, FileText } from 'lucide-react';
 import { safeString } from '../../utils/themeUtils';
+import { formatFileSize } from '../offer/offerConstants';
+
+// В description документа тендера редактор хранит JSON {docType, isRequired}. Показываем его словами.
+const DOC_TYPE_KEYS = {
+  CONTRACT: ['docTypeContract', 'Проект договора / контракта'],
+  TEMPLATE: ['docTypeTemplate', 'Форма для заполнения'],
+  REGULATION: ['docTypeRegulation', 'Тендерный регламент / Положение'],
+  QUALIFICATION: ['docTypeQual', 'Квалификационные требования'],
+  ANNEX: ['docTypeAnnex', 'Общее техническое приложение'],
+};
+
+function describeDoc(doc, t) {
+  const raw = doc?.description;
+  if (!raw) return '';
+  try {
+    const meta = JSON.parse(raw);
+    if (meta && typeof meta === 'object') {
+      const [key, fallback] = DOC_TYPE_KEYS[meta.docType] || DOC_TYPE_KEYS.CONTRACT;
+      const label = t(key, fallback);
+      return meta.isRequired ? `${label} · ${t('mandatoryDocFlag', 'Обязательный')}` : label;
+    }
+  } catch {
+    // обычный текст
+  }
+  return raw;
+}
 
 export default function TenderDetailsDocuments({
   docsList,
@@ -49,16 +75,16 @@ export default function TenderDetailsDocuments({
                     {idx + 1}
                   </td>
                   <td className="py-3.5 px-4 text-center font-semibold text-slate-800 dark:text-slate-100">
-                    {safeString(doc?.fileName || doc?.name)}
+                    {safeString(doc?.name || doc?.fileName)}
                   </td>
                   <td className="py-3.5 px-4 text-center w-auto min-w-50 whitespace-normal text-wrap text-slate-500">
-                    {safeString(doc?.description)}
+                    {describeDoc(doc, t) || '—'}
                   </td>
                   <td className={`py-3.5 px-4 text-center font-bold ${theme.primaryText}`}>
                     {safeString(doc?.fileType || doc?.type)}
                   </td>
                   <td className="py-3.5 px-4 text-center text-slate-400">
-                    {safeString(doc?.size, '-')}
+                    {doc?.fileSize ? formatFileSize(doc.fileSize) : '—'}
                   </td>
                   <td className="py-3.5 px-4 text-center text-slate-400">
                     {formatDate(doc?.createdAt)}

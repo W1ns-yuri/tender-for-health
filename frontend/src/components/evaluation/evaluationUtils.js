@@ -3,6 +3,9 @@
  * маппинг международных условий поставки Incoterms и форматирование цен.
  */
 
+/** Валюта сравнения заявок: курсы в справочнике задаются к ней. */
+export const BASE_CURRENCY = 'TMT';
+
 export const INCOTERMS_MAP = {
   'delivered at place': 'DAP',
   'carriage and insurance paid to': 'CIP',

@@ -256,7 +256,9 @@ export default function useCreateTenderState({
         await API.post(`/tenders/${newTender.id}/lots`, {
           lotNumber: 1,
           name: 'Лот №1',
-          lotType: formData.procurementType === 'SERVICES_WORKS' ? 'WORKS' : 'GOODS'
+          lotType: formData.procurementType === 'SERVICES_WORKS' ? 'WORKS' : 'GOODS',
+          // Категория лота по умолчанию = категория тендера, чтобы не выбирать её второй раз
+          categoryId: formData.categoryId || undefined
         });
 
         showToast({
