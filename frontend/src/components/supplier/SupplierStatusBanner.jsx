@@ -81,7 +81,9 @@ export default function SupplierStatusBanner({
     if (!effectiveIsOwner && !isAdmin) return null;
 
     const parsedNotes = parseSupplierChanges(supplier.notes);
-    const hasChanges = Boolean(parsedNotes && parsedNotes.changes && parsedNotes.changes.length > 0);
+    // Первичная анкета проверяется целиком, «изменённых секций» у неё нет
+    const isInitial = parsedNotes?.type === 'INITIAL_SUBMISSION';
+    const hasChanges = !isInitial && Boolean(parsedNotes && parsedNotes.changes && parsedNotes.changes.length > 0);
 
     return (
       <div className="bg-gradient-to-r from-amber-50 to-orange-50/60 dark:from-amber-950/40 dark:to-orange-950/20 border border-amber-200/80 dark:border-amber-800/60 p-5 rounded-2xl mb-6 shadow-xs animate-in fade-in duration-200">

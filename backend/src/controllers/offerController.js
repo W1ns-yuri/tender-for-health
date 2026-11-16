@@ -1,6 +1,6 @@
 const prisma = require('../lib/prisma');
 const { sendNotification, notifyAdmins } = require('./notificationController');
-const { D, sumLineTotals } = require('../utils/money');
+const { D, sumLineTotals, BASE_CURRENCY_CODE } = require('../utils/money');
 const { isTenderOpened, sealOfferFor, SEALED_ERROR } = require('../utils/sealedEnvelope');
 const { checkTenderVisible } = require('../utils/tenderAccess');
 const { sendError } = require('../utils/httpErrors');
@@ -182,6 +182,25 @@ const createOffer = async (req, res) => {
             // Количество задаёт заказчик в тендере. Раньше поставщик мог прислать quantity: 1 вместо 6000,
             // получить сумму в тысячи раз меньше и "выиграть" сравнение по цене.
             item.quantity = validSpecMap.get(item.tenderSpecId);
+            // Аналог без названия: заказчик не узнает, что ему предлагают вместо запрошенного товара
+            if (item.isEquivalent && !(typeof item.equivalentName === 'string' && item.equivalentName.trim())) {
+                return res.status(400).json({ error: 'Для аналога укажите, какой товар вы предлагаете вместо запрошенного' });
+            }
+        }
+
+        // Валюта заявки. Для любой валюты кроме TMT нужен курс, заданный организатором: без него
+        // сумму нельзя честно сравнить с остальными (раньше отсутствующий курс считался равным 1).
+        if (baseCurrencyId) {
+            const currency = await prisma.currency.findUnique({ where: { id: baseCurrencyId } });
+            if (!currency || !currency.isActive) {
+                return res.status(400).json({ error: 'Указана неизвестная валюта' });
+            }
+            if (currency.code !== BASE_CURRENCY_CODE) {
+                const rate = await prisma.exchangeRate.findFirst({ where: { fromCurrencyId: currency.id } });
+                if (!rate) {
+                    return res.status(400).json({ error: `Курс ${currency.code} к ${BASE_CURRENCY_CODE} не задан организатором. Подайте предложение в ${BASE_CURRENCY_CODE} или обратитесь к организатору.` });
+                }
+            }
         }
 
         // Прикрепить можно только свои свежие, ещё ни к чему не привязанные файлы
@@ -220,8 +239,8 @@ const createOffer = async (req, res) => {
                 unitPrice: unitPrice,
                 description: item.description || null,
                 isEquivalent: Boolean(item.isEquivalent),
-                equivalentName: item.equivalentName || null,
-                equivalentJustification: item.equivalentJustification || null,
+                equivalentName: item.isEquivalent ? item.equivalentName.trim() : null,
+                equivalentJustification: item.isEquivalent ? (item.equivalentJustification || '').trim() || null : null,
             };
         });
 

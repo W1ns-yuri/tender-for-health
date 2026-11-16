@@ -40,7 +40,7 @@ export default function SupplierRepresentativeCard({
         <div>
           <span className="text-slate-400 block mb-0.5">{t('registeredAt', 'Дата регистрации')}</span>
           <span className="font-bold text-slate-800 dark:text-slate-200">
-            {supplier.user?.createdAt ? new Date(supplier.user.createdAt).toLocaleDateString() : (supplier.createdAt ? new Date(supplier.createdAt).toLocaleDateString() : '—')}
+            {supplier.user?.createdAt ? new Date(supplier.user.createdAt).toLocaleDateString('ru-RU') : (supplier.createdAt ? new Date(supplier.createdAt).toLocaleDateString('ru-RU') : '—')}
           </span>
         </div>
       </div>

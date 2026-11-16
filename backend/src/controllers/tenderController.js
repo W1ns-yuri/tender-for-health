@@ -1,77 +1,16 @@
+/**
+ * Тендер целиком: номер, создание, список, карточка, изменение, публикация, удаление.
+ * Лоты и позиции: controllers/lotController.js и services/tenderStructure.js.
+ */
 const prisma = require('../lib/prisma');
 const { isTenderOpened } = require('../utils/sealedEnvelope');
-const { canTransitionManually, isStructureEditable, parseDeadline } = require('../utils/tenderRules');
-
-const LOCKED_STRUCTURE_ERROR = 'Лоты и позиции нельзя менять: по тендеру уже поданы предложения или приём заявок закрыт. Отмените тендер и создайте новый.';
-
-// Можно ли менять лоты/позиции тендера (иначе удаление позиций каскадно стирает позиции поданных предложений)
-const assertStructureEditable = async (tender) => {
-    const offersCount = await prisma.offer.count({ where: { tenderId: tender.id } });
-    return isStructureEditable(tender, offersCount);
-};
-const { sendNotification } = require('./notificationController');
+const { canTransitionManually, parseDeadline } = require('../utils/tenderRules');
+const { supplierTenderScope } = require('../utils/tenderAccess');
 const { sendError } = require('../utils/httpErrors');
 const { publishTenderById, publishBlocker } = require('../services/tenderPublish');
-const { MAX_TITLE, tooLong, parseQuantity, specsError, lotNumberError, deadlineTooFar, lotTypeError } = require('../utils/validation');
-
-const { normalizeSpecRequirements, REQUIREMENTS_INCLUDE } = require('../services/specRequirements');
-
-/**
- * Записать позиции лота вместе с требованиями к характеристикам.
- * Позиции без названия пропускаются. Ошибка в требованиях → 400 (isClientError), транзакция откатывается.
- */
-async function createLotSpecs(tx, tenderId, lotId, specs) {
-    const valid = (Array.isArray(specs) ? specs : []).filter(s => (s.name || s.haryt) && (s.name || s.haryt).trim() !== '');
-    if (!valid.length) return;
-    const reqs = await normalizeSpecRequirements(valid);
-    if (reqs.error) throw Object.assign(new Error(reqs.error), { isClientError: true });
-    for (const [idx, spec] of valid.entries()) {
-        await tx.tenderSpecification.create({
-            data: {
-                tenderId,
-                lotId,
-                positionNumber: parseInt(spec.positionNumber, 10) || (idx + 1),
-                generalProductId: (spec.generalProductId && spec.generalProductId !== '') ? spec.generalProductId : null,
-                name: (spec.name || spec.haryt || '').trim(),
-                quantity: parseQuantity(spec.quantity ?? spec.mukdar),
-                unitId: (spec.unitId && spec.unitId !== '') ? spec.unitId : ((spec.unit && spec.unit !== '') ? spec.unit : null),
-                manufacturerId: (spec.manufacturerId && spec.manufacturerId !== '') ? spec.manufacturerId : ((spec.brand && spec.brand !== '') ? spec.brand : null),
-                description: (spec.description || spec.desc || '').trim() || null,
-                section: String(spec.section ?? '').trim().slice(0, 200) || null,
-                ...(reqs.bySpec[idx].length ? { requirements: { create: reqs.bySpec[idx] } } : {}),
-            },
-        });
-    }
-}
-
-// Генерация последовательного номера тендера вида TNDR-YYYY-MM-001
-const generateNextTenderNumber = async (txOrPrisma = prisma) => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const prefix = `TNDR-${year}-${month}-`;
-
-    const existingTenders = await txOrPrisma.tender.findMany({
-        where: {
-            tenderNumber: {
-                startsWith: prefix
-            }
-        },
-        select: { tenderNumber: true }
-    });
-
-    let maxSeq = 0;
-    for (const t of existingTenders) {
-        const numPart = t.tenderNumber.replace(prefix, '');
-        const parsed = parseInt(numPart, 10);
-        if (!isNaN(parsed) && parsed > maxSeq) {
-            maxSeq = parsed;
-        }
-    }
-
-    const nextSeq = String(maxSeq + 1).padStart(3, '0');
-    return `${prefix}${nextSeq}`;
-};
+const { MAX_TITLE, tooLong, specsError, lotNumberError, deadlineTooFar, lotTypeError } = require('../utils/validation');
+const { REQUIREMENTS_INCLUDE } = require('../services/specRequirements');
+const { assertStructureEditable, createLotSpecs, generateNextTenderNumber } = require('../services/tenderStructure');
 
 const getNextNumber = async (req, res) => {
     try {
@@ -327,18 +266,6 @@ const getTenders = async (req, res) => {
             });
 
             if (supplier) {
-                const catIds = (supplier.categories || []).map(c => c.categoryId);
-                const categoryFilter = catIds.length > 0 ? [
-                    { categoryId: { in: catIds } },
-                    { lots: { some: { categoryId: { in: catIds } } } },
-                    {
-                        AND: [
-                            { categoryId: null },
-                            { lots: { none: { categoryId: { not: null } } } }
-                        ]
-                    }
-                ] : [];
-
                 if (onlyInvited === 'true') {
                     // Только персональные приглашения в закрытые тендеры
                     where.AND.push({
@@ -347,23 +274,8 @@ const getTenders = async (req, res) => {
                         }
                     });
                 } else {
-                    // Поставщик видит:
-                    // 1) Открытые (ACYK) тендеры по своим направлениям
-                    // 2) ИЛИ закрытые (YAPYK), куда его персонально пригласили
-                    where.AND.push({
-                        OR: [
-                            {
-                                visibility: 'ACYK',
-                                ...(categoryFilter.length > 0 ? { OR: categoryFilter } : {})
-                            },
-                            {
-                                visibility: 'YAPYK',
-                                invitedSuppliers: {
-                                    some: { supplierId: supplier.id }
-                                }
-                            }
-                        ]
-                    });
+                    // Открытые тендеры по своим направлениям или закрытые, куда пригласили
+                    where.AND.push(supplierTenderScope(supplier));
                 }
             } else {
                 where.AND.push({ visibility: 'ACYK' });
@@ -758,214 +670,6 @@ const unscheduleTender = async (req, res) => {
     }
 };
 
-const createLot = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const {
-            lotNumber,
-            name,
-            description,
-            lotType,
-            categoryId,
-            endUser,
-            deliveryTermId,
-            deliveryAddress,
-            workAddress,
-            workPeriod,
-            licenseRequired,
-            serviceFormat,
-            slaPeriod,
-            withOperator,
-            fuelIncluded,
-            supportIncluded,
-            specs
-        } = req.body;
-
-        const inputError = specsError(specs) || lotNumberError(lotNumber) || lotTypeError(lotType) || (tooLong(name, MAX_TITLE) ? 'Слишком длинное название лота' : null);
-        if (inputError) return res.status(400).json({ error: inputError });
-
-        const tender = await prisma.tender.findUnique({ where: { id } });
-        if (!tender) {
-            return res.status(404).json({ error: 'Тендер не найден' });
-        }
-        if (!(await assertStructureEditable(tender))) {
-            return res.status(400).json({ error: LOCKED_STRUCTURE_ERROR });
-        }
-
-        let finalLotNumber = lotNumber;
-        if (!finalLotNumber) {
-            const maxLot = await prisma.tenderLot.findFirst({
-                where: { tenderId: id },
-                orderBy: { lotNumber: 'desc' }
-            });
-            finalLotNumber = (maxLot?.lotNumber || 0) + 1;
-        }
-
-        const newLot = await prisma.$transaction(async (tx) => {
-            const lot = await tx.tenderLot.create({
-                data: {
-                    tenderId: id,
-                    lotNumber: parseInt(finalLotNumber, 10) || 1,
-                    name: name?.trim() || `Лот №${finalLotNumber}`,
-                    description: description || null,
-                    lotType: lotType || 'GOODS',
-                    categoryId: (categoryId && categoryId !== '') ? categoryId : null,
-                    endUser: endUser ? endUser.trim() : null,
-                    deliveryTermId: (deliveryTermId && deliveryTermId !== '') ? deliveryTermId : null,
-                    deliveryAddress: deliveryAddress || null,
-                    workAddress: workAddress || null,
-                    workPeriod: workPeriod || null,
-                    licenseRequired: Boolean(licenseRequired),
-                    serviceFormat: serviceFormat || null,
-                    slaPeriod: slaPeriod || null,
-                    withOperator: Boolean(withOperator),
-                    fuelIncluded: Boolean(fuelIncluded),
-                    supportIncluded: Boolean(supportIncluded),
-                }
-            });
-
-            if (specs && Array.isArray(specs)) {
-                await createLotSpecs(tx, id, lot.id, specs);
-            }
-
-            return await tx.tenderLot.findUnique({
-                where: { id: lot.id },
-                include: {
-                    category: true,
-                    deliveryTerm: true,
-                    specs: {
-                        include: { generalProduct: true, unit: true, manufacturer: true, requirements: REQUIREMENTS_INCLUDE },
-                        orderBy: { positionNumber: 'asc' }
-                    },
-                    files: {
-                        include: { document: true }
-                    }
-                }
-            });
-        });
-
-        res.status(201).json(newLot);
-    } catch (error) {
-        sendError(res, error, 'Ошибка создания лота');
-    }
-};
-
-const updateLot = async (req, res) => {
-    try {
-        const { id, lotId } = req.params;
-        const {
-            lotNumber,
-            name,
-            description,
-            lotType,
-            categoryId,
-            endUser,
-            deliveryTermId,
-            deliveryAddress,
-            workAddress,
-            workPeriod,
-            licenseRequired,
-            serviceFormat,
-            slaPeriod,
-            withOperator,
-            fuelIncluded,
-            supportIncluded,
-            specs
-        } = req.body;
-
-        const inputError = specsError(specs) || lotNumberError(lotNumber) || lotTypeError(lotType) || (tooLong(name, MAX_TITLE) ? 'Слишком длинное название лота' : null);
-        if (inputError) return res.status(400).json({ error: inputError });
-
-        const existingLot = await prisma.tenderLot.findFirst({
-            where: { id: lotId, tenderId: id }
-        });
-        if (!existingLot) {
-            return res.status(404).json({ error: 'Лот не найден в данном тендере' });
-        }
-        const lotTender = await prisma.tender.findUnique({ where: { id } });
-        if (!(await assertStructureEditable(lotTender))) {
-            return res.status(400).json({ error: LOCKED_STRUCTURE_ERROR });
-        }
-
-        const updatedLot = await prisma.$transaction(async (tx) => {
-            await tx.tenderLot.update({
-                where: { id: lotId },
-                data: {
-                    lotNumber: lotNumber !== undefined ? parseInt(lotNumber, 10) : existingLot.lotNumber,
-                    name: name !== undefined ? name.trim() : existingLot.name,
-                    description: description !== undefined ? description : existingLot.description,
-                    lotType: lotType || existingLot.lotType,
-                    categoryId: (categoryId !== undefined) ? ((categoryId && categoryId !== '') ? categoryId : null) : existingLot.categoryId,
-                    endUser: endUser !== undefined ? (endUser ? endUser.trim() : null) : existingLot.endUser,
-                    deliveryTermId: (deliveryTermId !== undefined) ? ((deliveryTermId && deliveryTermId !== '') ? deliveryTermId : null) : existingLot.deliveryTermId,
-                    deliveryAddress: deliveryAddress !== undefined ? deliveryAddress : existingLot.deliveryAddress,
-                    workAddress: workAddress !== undefined ? workAddress : existingLot.workAddress,
-                    workPeriod: workPeriod !== undefined ? workPeriod : existingLot.workPeriod,
-                    licenseRequired: licenseRequired !== undefined ? Boolean(licenseRequired) : existingLot.licenseRequired,
-                    serviceFormat: serviceFormat !== undefined ? serviceFormat : existingLot.serviceFormat,
-                    slaPeriod: slaPeriod !== undefined ? slaPeriod : existingLot.slaPeriod,
-                    withOperator: withOperator !== undefined ? Boolean(withOperator) : existingLot.withOperator,
-                    fuelIncluded: fuelIncluded !== undefined ? Boolean(fuelIncluded) : existingLot.fuelIncluded,
-                    supportIncluded: supportIncluded !== undefined ? Boolean(supportIncluded) : existingLot.supportIncluded,
-                }
-            });
-
-            if (specs !== undefined && Array.isArray(specs)) {
-                await tx.tenderSpecification.deleteMany({
-                    where: { lotId }
-                });
-
-                await createLotSpecs(tx, id, lotId, specs);
-            }
-
-            return await tx.tenderLot.findUnique({
-                where: { id: lotId },
-                include: {
-                    category: true,
-                    deliveryTerm: true,
-                    specs: {
-                        include: { generalProduct: true, unit: true, manufacturer: true, requirements: REQUIREMENTS_INCLUDE },
-                        orderBy: { positionNumber: 'asc' }
-                    },
-                    files: {
-                        include: { document: true }
-                    }
-                }
-            });
-        });
-
-        res.json(updatedLot);
-    } catch (error) {
-        sendError(res, error, 'Ошибка обновления лота');
-    }
-};
-
-const deleteLot = async (req, res) => {
-    try {
-        const { id, lotId } = req.params;
-        const existingLot = await prisma.tenderLot.findFirst({
-            where: { id: lotId, tenderId: id }
-        });
-        if (!existingLot) {
-            return res.status(404).json({ error: 'Лот не найден' });
-        }
-        const lotTender = await prisma.tender.findUnique({ where: { id } });
-        if (!(await assertStructureEditable(lotTender))) {
-            return res.status(400).json({ error: LOCKED_STRUCTURE_ERROR });
-        }
-
-        await prisma.$transaction(async (tx) => {
-            await tx.tenderSpecification.deleteMany({ where: { lotId } });
-            await tx.lotFile.deleteMany({ where: { lotId } });
-            await tx.tenderLot.delete({ where: { id: lotId } });
-        });
-
-        res.json({ success: true, message: 'Лот успешно удален', lotId });
-    } catch (error) {
-        sendError(res, error, 'Ошибка удаления лота');
-    }
-};
-
 const deleteTender = async (req, res) => {
     try {
         const { id } = req.params;
@@ -995,7 +699,4 @@ module.exports = {
     publishTender,
     deleteTender,
     getNextNumber,
-    createLot,
-    updateLot,
-    deleteLot
 };

@@ -201,7 +201,7 @@ export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
               { id: '', name: t('allStatusesFilter', 'Все статусы') },
               { id: 'TABSARYLDY', name: t('statusTabsyryldy', 'Подано') },
               { id: 'YENIJI', name: t('statusYeniji', 'Победитель') },
-              { id: 'RET_EDILDI', name: t('statusRet', 'Отклонено') },
+              { id: 'RET_EDILDI', name: t('statusRet', 'Не выбрано') },
               { id: 'TASLAMA', name: t('statusTaslama', 'Черновик') }
             ],
             width: 'min-w-[170px]'

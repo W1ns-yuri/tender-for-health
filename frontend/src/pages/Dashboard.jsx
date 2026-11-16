@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FileText, Send, Trophy, Eye, Plus, Users, ChevronRight, Lock } from 'lucide-react';
+import { FileText, Send, Trophy, Eye, Plus, Users, ChevronRight, Lock, AlertCircle } from 'lucide-react';
 import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
@@ -11,6 +11,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
   const [myOffers, setMyOffers] = useState([]);
   const [stats, setStats] = useState({ openTenders: 0, totalOffers: 0, winnersCount: 0, totalSuppliers: 0 });
   const [supplierProfile, setSupplierProfile] = useState(null);
+  const [attention, setAttention] = useState(null);
   const [loadingTenders, setLoadingTenders] = useState(true);
   const [loadingOffers, setLoadingOffers] = useState(true);
 
@@ -88,6 +89,7 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
         setMyOffers(offersRes.data);
       }
 
+      setAttention(statsRes?.data?.attention || null);
       if (statsRes?.data?.counters) {
         setStats({
           openTenders: statsRes.data.counters.totalOpenTenders || 0,
@@ -174,6 +176,68 @@ export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDark
           </button>
         </div>
       )}
+
+      {/* Отклонённая анкета: поставщик должен увидеть это сразу, а не в уведомлениях */}
+      {role === 'SUPPLIER' && supplierProfile?.verificationStatus === 'REJECTED' && (
+        <div className="p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-rose-900 dark:text-rose-100 text-base">
+                {t('profileRejectedTitle', 'Проверка компании не пройдена')}
+              </h3>
+              <p className="text-sm text-rose-700 dark:text-rose-300 mt-0.5 max-w-2xl">
+                {supplierProfile.rejectionReason
+                  ? `${t('rejectionReasonLabel', 'Причина отклонения')}: ${supplierProfile.rejectionReason}`
+                  : t('profileRejectedCannotBidNotice', 'Верификация отклонена. Исправьте замечания в профиле и отправьте его на повторную проверку.')}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigate('profile')}
+            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/20 transition-all shrink-0 active:scale-95 flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>{t('fixProfileBtn', 'Исправить профиль')}</span>
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Требует внимания организатора: что сделать прямо сейчас */}
+      {role === 'ADMIN' && attention && (() => {
+        const items = [
+          { n: attention.pendingSuppliers, label: t('attnPendingSuppliers', 'Компаний ждут проверки'), to: 'suppliers' },
+          { n: attention.awaitingOpening, label: t('attnAwaitingOpening', 'Тендеров ждут вскрытия конвертов'), to: 'evaluation' },
+          { n: attention.inEvaluation, label: t('attnInEvaluation', 'Тендеров на оценке'), to: 'evaluation' },
+          { n: attention.contractsToSend, label: t('attnContractsToSend', 'Договоров не отправлены поставщику'), to: 'contracts' },
+          { n: attention.contractsToSign, label: t('attnContractsToSign', 'Договоров ждут вашей подписи'), to: 'contracts' },
+        ].filter((i) => i.n > 0);
+        if (items.length === 0) return null;
+        return (
+          <div className={`p-5 rounded-2xl border shadow-xs ${theme.cardBg}`}>
+            <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+              <AlertCircle size={16} className="text-amber-500" />
+              {t('needsAttentionTitle', 'Требует внимания')}
+            </h3>
+            <div className="flex flex-wrap gap-2.5">
+              {items.map((i) => (
+                <button
+                  key={i.label}
+                  type="button"
+                  onClick={() => onNavigate(i.to)}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
+                >
+                  <span className="text-base font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{i.n}</span>
+                  <span>{i.label}</span>
+                  <ChevronRight size={14} className="text-slate-400" />
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Метрики */}
       {role === 'ADMIN' ? (

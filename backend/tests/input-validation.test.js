@@ -45,7 +45,7 @@ test('сервер отбивает мусорные и странные дан�
   chk('лот без названия получает «Лот №N»', unnamed, (s, d) => s === 201 && /Лот №/.test(d.name));
   const del = await api(admin, 'DELETE', `/tenders/${t.tenderId}/lots/${unnamed.data.id}`);
   // восстановим валидные позиции и проверим двойную публикацию
-  await api(admin, 'PUT', `/tenders/${t.tenderId}/lots/${t.lotId}`, { categoryId: t.categoryId, specs: [{ name: 'x', generalProductId: prods[0].id, quantity: 10 }] });
+  await api(admin, 'PUT', `/tenders/${t.tenderId}/lots/${t.lotId}`, { categoryId: t.categoryId, specs: [{ name: 'x', generalProductId: prods[0].id, unitId: t.specs[0].unitId, quantity: 10 }] });
   const [p1, p2] = await Promise.all([api(admin, 'POST', `/tenders/${t.tenderId}/publish`), api(admin, 'POST', `/tenders/${t.tenderId}/publish`)]);
   chk('двойной клик «Опубликовать»: одна 200, вторая 400', { status: [p1.status, p2.status].sort().join('+'), data: [p1.data, p2.data] }, (s) => s === '200+400');
   // --- Поставщик делает странное

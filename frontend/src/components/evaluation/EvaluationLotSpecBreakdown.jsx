@@ -45,10 +45,10 @@ export default function EvaluationLotSpecBreakdown({
                   const requestedUnit = originalSpec?.unit?.name || originalSpec?.unit?.shortName || 'шт';
                   const requestedDesc = originalSpec ? originalSpec.description : '';
 
-                  const offeredName = os.generalProduct?.name || os.name || 'Н/Д';
+                  const offeredName = (os.isEquivalent && os.equivalentName) || os.generalProduct?.name || os.name || 'Н/Д';
                   const offeredUnit = os.unit?.name || os.unit?.shortName || 'шт';
                   const offeredBrand = os.manufacturer?.name || os.brand || '';
-                  const isDifferent = (requestedName !== offeredName) && (offeredName !== 'Н/Д');
+                  const isDifferent = os.isEquivalent || ((requestedName !== offeredName) && (offeredName !== 'Н/Д'));
 
                   return (
                     <React.Fragment key={os.id || idx}>
@@ -93,10 +93,16 @@ export default function EvaluationLotSpecBreakdown({
                                 {offeredName}
                                 {isDifferent && (
                                   <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 text-[11px] rounded uppercase font-bold tracking-wider">
-                                    {t('substituteBadge', 'Замена')}
+                                    {os.isEquivalent ? t('equivalentBadge', 'Аналог') : t('substituteBadge', 'Замена')}
                                   </span>
                                 )}
                               </div>
+                              {os.isEquivalent && (
+                                <div className="mt-1 text-[12px] text-slate-600 dark:text-slate-300">
+                                  <span className="font-semibold">{t('equivalentJustificationLabel', 'Обоснование аналога:')}</span>{' '}
+                                  {os.equivalentJustification || <span className="italic text-slate-400">{t('equivalentNoJustification', 'не указано')}</span>}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>

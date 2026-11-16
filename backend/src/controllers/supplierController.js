@@ -2,6 +2,9 @@ const prisma = require('../lib/prisma');
 const { sendNotification, notifyAdmins } = require('./notificationController');
 const { sendError } = require('../utils/httpErrors');
 
+// Секции профиля, изменение которых не требует повторной проверки компании
+const MINOR_CHANGE_SECTIONS = ['logoUrl', 'contacts', 'address'];
+
 // Вспомогательная функция определения измененных секций профиля поставщика для модератора
 const detectProfileChanges = (supplier, body, cleanName, combinedPassport) => {
     const changes = [];
@@ -161,12 +164,29 @@ const updateProfile = async (req, res) => {
             return res.status(404).json({ error: 'Профиль поставщика не найден' });
         }
 
+        // Очищаем наименование от случайных приставок формы
+        let cleanName = supplier.name;
+        if (name && typeof name === 'string' && name.trim()) {
+            cleanName = name.trim().replace(/^(ип|хо|ооо|чп|hj|dh|hk|telekeçi|hojalyk\s+jemgyýeti|hususy\s+telekeçi|hususy\s+kärhana)\s*["«'”]?\s*/i, '').replace(/["»'”]$/, '').trim() || name.trim();
+        }
+
+        const combinedPassport = passportInfo || [passportSeries, passportIssuedBy].filter(Boolean).join(', ');
+        // Вычисляем конкретный список изменений (diff)
+        const changedFields = detectProfileChanges(supplier, req.body, cleanName, combinedPassport);
+
+        // Телефон, email, логотип и фактический адрес не влияют на проверку компании: проверенная компания
+        // меняет их без повторной модерации. Реквизиты, ИНН, название, лицензия, категории и т. п. проверяются заново.
+        const changed = (field) => req.body[field] !== undefined && (req.body[field] ?? '') !== (supplier[field] ?? '');
+        const isMinorEdit = changedFields.every((c) => MINOR_CHANGE_SECTIONS.includes(c.field))
+            && !['legalAddress', 'taxId', 'countryId', 'type', 'okpoCode'].some(changed);
+        const keepVerified = supplier.verificationStatus === 'VERIFIED' && isMinorEdit;
+
         // Валидация срока действия медицинской лицензии при отправке на проверку
-        const willSubmitForReview = submitForReview !== false;
+        const willSubmitForReview = submitForReview !== false && !keepVerified;
 
         // Проверенная компания не может тихо поменять реквизиты, ИНН или категории в обход модерации:
         // иначе можно подменить банковский счёт или добавить категории без проверки и остаться VERIFIED
-        if (!willSubmitForReview && supplier.verificationStatus === 'VERIFIED') {
+        if (submitForReview === false && supplier.verificationStatus === 'VERIFIED' && !isMinorEdit) {
             return res.status(400).json({ error: 'Изменения профиля проверенной компании отправляются на повторную проверку' });
         }
 
@@ -209,18 +229,8 @@ const updateProfile = async (req, res) => {
             }
         }
 
-        // Очищаем наименование от случайных приставок формы
-        let cleanName = supplier.name;
-        if (name && typeof name === 'string' && name.trim()) {
-            cleanName = name.trim().replace(/^(ип|хо|ооо|чп|hj|dh|hk|telekeçi|hojalyk\s+jemgyýeti|hususy\s+telekeçi|hususy\s+kärhana)\s*["«'”]?\s*/i, '').replace(/["»'”]$/, '').trim() || name.trim();
-        }
-
-        const combinedPassport = passportInfo || [passportSeries, passportIssuedBy].filter(Boolean).join(', ');
         const previousStatus = supplier.verificationStatus;
         const newStatus = willSubmitForReview ? 'PENDING_REVIEW' : supplier.verificationStatus;
-
-        // Вычисляем конкретный список изменений (diff)
-        const changedFields = detectProfileChanges(supplier, req.body, cleanName, combinedPassport);
 
         // Формируем структурированные данные изменений для модератора
         let moderationNotes = supplier.notes;

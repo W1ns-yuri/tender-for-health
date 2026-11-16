@@ -267,6 +267,7 @@ const getTenderEvaluationDetails = async (req, res) => {
                     include: {
                         supplier: true,
                         baseCurrency: true,
+                        exchangeRates: true,
                         specs: {
                             include: {
                                 generalProduct: { include: PRODUCT_VALUES_INCLUDE },
