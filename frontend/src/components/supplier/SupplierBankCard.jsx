@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { CreditCard, ChevronDown, Search, Check } from 'lucide-react';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '../ui/CustomSelect';
 import { TURKMEN_BANKS } from './supplierConstants';
 
 export default function SupplierBankCard({

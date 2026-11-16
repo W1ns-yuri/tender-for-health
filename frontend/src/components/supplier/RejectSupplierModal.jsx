@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, AlertTriangle, ShieldAlert } from 'lucide-react';
-import useT from '../../utils/useT';
+import useT from '../../hooks/useT';
 
 export default function RejectSupplierModal({ 
   isOpen, 

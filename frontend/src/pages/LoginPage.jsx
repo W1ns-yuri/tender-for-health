@@ -7,7 +7,7 @@ import LoginForm from '../components/auth/LoginForm';
 import RegisterForm from '../components/auth/RegisterForm';
 import AuthDemoModal from '../components/auth/AuthDemoModal';
 import AuthForgotPasswordModal from '../components/auth/AuthForgotPasswordModal';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 
 export default function LoginPage({ onLoginSuccess, lang = 'RU', setLang }) {
   const t = useT(lang);

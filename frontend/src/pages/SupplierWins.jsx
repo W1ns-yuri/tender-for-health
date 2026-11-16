@@ -3,7 +3,7 @@ import { Trophy, CheckCircle, ExternalLink, Calendar, Package } from 'lucide-rea
 import { Link } from 'react-router-dom';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 
 export default function SupplierWins({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);

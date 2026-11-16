@@ -193,11 +193,11 @@ export function useSettingsState({
       return;
     }
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < 8) {
       showToast({
         type: 'warning',
         title: t('weakPassword', 'Слабый пароль'),
-        message: t('passwordMinLength', 'Новый пароль должен содержать не менее 6 символов'),
+        message: t('passwordMinLength8', 'Новый пароль должен быть не короче 8 символов'),
       });
       return;
     }
@@ -217,6 +217,9 @@ export function useSettingsState({
         currentPassword,
         newPassword,
       });
+
+      // Сервер завершил все прежние сессии и выдал этой вкладке новый токен
+      if (res.data?.token) localStorage.setItem('tender_token', res.data.token);
 
       showToast({
         type: 'success',

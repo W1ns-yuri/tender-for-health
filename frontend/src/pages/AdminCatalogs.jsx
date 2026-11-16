@@ -30,7 +30,7 @@ import {
   RejectProductDialog,
   CatalogFormModal,
 } from '../components/catalogs';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 
 /**
  * Главный экран управления справочниками и классификаторами (AdminCatalogs)

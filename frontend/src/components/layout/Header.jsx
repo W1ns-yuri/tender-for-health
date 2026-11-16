@@ -5,9 +5,9 @@ import {
   ArrowRight, AlertCircle, Inbox, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import API from '../services/api';
-import { getRoleTheme, getAvatarInitials, resolveFileUrl } from '../utils/themeUtils';
-import useT from '../utils/useT';
+import API from '../../services/api';
+import { getRoleTheme, getAvatarInitials, resolveFileUrl } from '../../utils/themeUtils';
+import useT from '../../hooks/useT';
 
 export default function Header({ user, role, isDarkMode, lang, setLang, onNavigate }) {
   const theme = getRoleTheme(role, isDarkMode);

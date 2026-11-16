@@ -7,7 +7,8 @@ const prisma = require('../lib/prisma');
  */
 const auditLog = (eventType = 'TENDER', operationType = 'OKAMAK') => {
     return async (req, res, next) => {
-        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+        // req.ip учитывает trust proxy; сырой X-Forwarded-For клиент может подделать и записать в журнал любой IP
+        const clientIp = req.ip || req.socket.remoteAddress;
 
         res.on('finish', async () => {
             // Логируем только мутирующие операции (не GET) и только успешные
@@ -49,7 +50,8 @@ const auditLog = (eventType = 'TENDER', operationType = 'OKAMAK') => {
 
 // Поля, которые нельзя писать в журнал: пароли и содержимое "конверта" предложения.
 // Журнал читают админы (и раньше видели поставщики на дашборде), а цены до вскрытия не должен видеть никто.
-const SECRET_KEYS = new Set(['password', 'newPassword', 'oldPassword', 'token']);
+// Любой ключ со словом password/token/secret: раньше currentPassword из смены пароля писался в журнал открытым текстом
+const SECRET_KEY_RE = /password|token|secret/i;
 const SEALED_KEYS = new Set(['specs', 'offeredPrice', 'unitPrice', 'exchangeRates', 'paymentTerms', 'deliveryTerm', 'comment']);
 
 function sanitizeBody(body, depth = 0) {
@@ -57,7 +59,7 @@ function sanitizeBody(body, depth = 0) {
     if (Array.isArray(body)) return body.map((v) => sanitizeBody(v, depth + 1));
     const sanitized = {};
     for (const [key, value] of Object.entries(body)) {
-        if (SECRET_KEYS.has(key)) sanitized[key] = '***HIDDEN***';
+        if (SECRET_KEY_RE.test(key)) sanitized[key] = '***HIDDEN***';
         else if (SEALED_KEYS.has(key)) sanitized[key] = '***SEALED***';
         else sanitized[key] = sanitizeBody(value, depth + 1);
     }

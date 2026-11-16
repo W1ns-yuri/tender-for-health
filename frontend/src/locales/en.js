@@ -1804,4 +1804,10 @@ export default {
   ctStCancelled: "Cancelled",
   langCode: 'EN',
   lotNumberPrefix: "Lot #",
+  resetPasswordConfirm: "Reset the password for {name}? The user will be signed out everywhere and will sign in with a temporary password.",
+  tempPasswordTitle: "Temporary password",
+  tempPasswordMsg: "Password for {name}: {password}\nIt has been copied to the clipboard. Give it to the user; it will not be shown again. The user can change it in settings.",
+  resetPasswordError: "Could not reset the password",
+  passwordMinLength8: "The new password must be at least 8 characters",
+  passwordMinLength8Hint: "At least 8 characters",
 };

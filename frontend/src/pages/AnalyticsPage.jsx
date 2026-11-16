@@ -14,7 +14,7 @@ import {
   getCurrencySymbol,
   exportAnalyticsReport,
 } from '../components/analytics';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 
 /**
  * Аналитический центр платформы (AnalyticsPage)

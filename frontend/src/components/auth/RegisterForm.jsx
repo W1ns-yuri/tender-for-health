@@ -11,7 +11,7 @@ import {
   ChevronRight,
   CheckCircle2,
 } from 'lucide-react';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '../ui/CustomSelect';
 
 export default function RegisterForm({
   regStep,

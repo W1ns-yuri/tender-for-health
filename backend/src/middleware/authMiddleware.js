@@ -1,75 +1,54 @@
-const jwt = require('jsonwebtoken');
 const prisma = require('../lib/prisma');
 const { readAuthCookie } = require('../utils/authCookie');
+const { verifyToken, issuedBeforePasswordChange } = require('../utils/authToken');
+
+const bearerToken = (req) => {
+    const header = req.headers.authorization;
+    return header && header.startsWith('Bearer ') ? header.slice(7) : null;
+};
+
+/**
+ * Пользователь по токену или { error }. Проверяем не только подпись, но и базу:
+ * заблокированный пользователь или токен до смены пароля не проходят.
+ */
+async function resolveUser(token) {
+    const payload = verifyToken(token);
+    const userId = payload?.userId || payload?.id;
+    if (!userId) return { error: 'Недействительный или истекший токен' };
+
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, roleType: true, isActive: true, passwordChangedAt: true },
+    });
+    if (!user || !user.isActive) return { error: 'Пользователь не найден или заблокирован. Пожалуйста, войдите снова.' };
+    if (issuedBeforePasswordChange(payload, user)) return { error: 'Пароль был изменён. Войдите снова.' };
+    return { user: { id: user.id, userId: user.id, roleType: user.roleType } };
+}
 
 const authMiddleware = async (req, res, next) => {
-    // Получаем заголовок Authorization: Bearer <TOKEN>
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Доступ запрещен. Токен не предоставлен' });
-    }
-
-    const token = authHeader.split(' ')[1];
-
+    const token = bearerToken(req);
+    if (!token) return res.status(401).json({ error: 'Доступ запрещен. Токен не предоставлен' });
     try {
-        // Проверяем валидность токена
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const userId = decoded.userId || decoded.id;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'Неверный токен' });
-        }
-
-        // Проверяем существование пользователя в базе данных
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { id: true, roleType: true, isActive: true }
-        });
-
-        if (!user || !user.isActive) {
-            return res.status(401).json({ error: 'Пользователь не найден или заблокирован. Пожалуйста, войдите снова.' });
-        }
-
-        // Записываем данные авторизованного пользователя в req.user
-        req.user = {
-            id: user.id,
-            userId: user.id,
-            roleType: user.roleType,
-        };
-
-        next(); // Передаем управление дальше контроллеру
+        const { user, error } = await resolveUser(token);
+        if (error) return res.status(401).json({ error });
+        req.user = user;
+        next();
     } catch (error) {
-        return res.status(401).json({ error: 'Недействительный или истекший токен' });
+        next(error);
     }
 };
 
+/** Вошёл — заполняем req.user, не вошёл или токен плохой — идём дальше как гость */
 const optionalAuthMiddleware = async (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return next();
-    }
-    const token = authHeader.split(' ')[1];
+    const token = bearerToken(req);
+    if (!token) return next();
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const userId = decoded.userId || decoded.id;
-        if (userId) {
-            const user = await prisma.user.findUnique({
-                where: { id: userId },
-                select: { id: true, roleType: true, isActive: true }
-            });
-            if (user && user.isActive) {
-                req.user = {
-                    id: user.id,
-                    userId: user.id,
-                    roleType: user.roleType,
-                };
-            }
-        }
-    } catch (_) {
-        // Ошибки токена игнорируются для опциональной авторизации
+        const { user } = await resolveUser(token);
+        if (user) req.user = user;
+        next();
+    } catch (error) {
+        next(error);
     }
-    next();
 };
 
 /**
@@ -80,9 +59,7 @@ const optionalAuthMiddleware = async (req, res, next) => {
 const fileAuthMiddleware = (req, res, next) => {
     if (!req.headers.authorization) {
         const cookieToken = readAuthCookie(req);
-        if (cookieToken) {
-            req.headers.authorization = `Bearer ${cookieToken}`;
-        }
+        if (cookieToken) req.headers.authorization = `Bearer ${cookieToken}`;
     }
     return authMiddleware(req, res, next);
 };

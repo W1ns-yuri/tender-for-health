@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Paperclip, Plus, FileText, Trash2, UploadCloud, ExternalLink } from 'lucide-react';
 import { resolveFileUrl } from '../../utils/themeUtils';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '../ui/CustomSelect';
 
 export default function TenderLotDocuments({
   activeLot,

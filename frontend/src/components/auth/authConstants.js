@@ -68,7 +68,7 @@ export const DEMO_ACCOUNTS = [
   {
     role: 'ADMIN',
     username: 'admin',
-    password: 'password123',
+    password: 'admin123',
     name: 'Главный Администратор',
     company: 'Министерство здравоохранения и медицинской промышленности',
     badge: 'ADMIN',

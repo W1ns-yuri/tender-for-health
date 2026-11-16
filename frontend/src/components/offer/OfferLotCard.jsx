@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import LotTypeConditions from '../tender/LotTypeConditions';
 import { lotTypeInfo, isNewLotType } from '../../utils/lotTypes';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '../ui/CustomSelect';
 import OfferLotItemRow from './OfferLotItemRow';
 import SectionRow from '../ui/SectionRow';
 import { isSectionStart } from '../../utils/sections';

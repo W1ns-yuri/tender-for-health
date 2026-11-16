@@ -1,7 +1,8 @@
 import axios from 'axios';
 
+// Бэкенд на другом домене: VITE_API_URL=https://api.example.tm/api (см. .env.example)
 const API = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
 });
 
 // Автоматически добавляем JWT-токен во все запросы

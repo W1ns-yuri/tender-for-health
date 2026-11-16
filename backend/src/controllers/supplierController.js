@@ -164,6 +164,27 @@ const updateProfile = async (req, res) => {
         // Валидация срока действия медицинской лицензии при отправке на проверку
         const willSubmitForReview = submitForReview !== false;
 
+        // Проверенная компания не может тихо поменять реквизиты, ИНН или категории в обход модерации:
+        // иначе можно подменить банковский счёт или добавить категории без проверки и остаться VERIFIED
+        if (!willSubmitForReview && supplier.verificationStatus === 'VERIFIED') {
+            return res.status(400).json({ error: 'Изменения профиля проверенной компании отправляются на повторную проверку' });
+        }
+
+        // ИНН: тот же формат и та же уникальность, что при регистрации
+        if (taxId !== undefined && taxId !== null && String(taxId).trim() !== (supplier.taxId || '')) {
+            const cleanTax = String(taxId).trim();
+            if (cleanTax) {
+                const effCountryId = countryId ?? supplier.countryId;
+                const country = effCountryId ? await prisma.country.findUnique({ where: { id: effCountryId }, select: { alpha2: true } }) : null;
+                const isTm = (country?.alpha2 || 'TM') === 'TM';
+                if (isTm ? !/^\d{8}$/.test(cleanTax.replace(/\s/g, '')) : !/^[A-Za-z0-9-]{4,30}$/.test(cleanTax)) {
+                    return res.status(400).json({ error: isTm ? 'ИНН в Туркменистане состоит из 8 цифр' : 'Налоговый номер: от 4 до 30 латинских букв и цифр' });
+                }
+                const sameTax = await prisma.supplier.findFirst({ where: { taxId: cleanTax, id: { not: supplier.id } }, select: { id: true } });
+                if (sameTax) return res.status(400).json({ error: 'Компания с таким ИНН уже зарегистрирована' });
+            }
+        }
+
         // То же, что проверяет форма: без категорий и документов анкету на модерацию не принимаем
         if (willSubmitForReview) {
             const finalCategories = Array.isArray(categoryIds) ? categoryIds : supplier.categories;
@@ -253,7 +274,7 @@ const updateProfile = async (req, res) => {
                     passportIssuedBy,
                     ...(directorPersonalCode !== undefined ? { directorPersonalCode } : {}),
                     ...(okpoCode !== undefined ? { okpoCode } : {}),
-                    ...(taxId !== undefined ? { taxId } : {}),
+                    ...(taxId !== undefined ? { taxId: taxId ? String(taxId).trim() : null } : {}),
                     ...(isMedicalLicensed !== undefined ? { isMedicalLicensed: Boolean(isMedicalLicensed) } : {}),
                     ...(licenseNumber !== undefined ? { licenseNumber } : {}),
                     ...(licenseIssuedBy !== undefined ? { licenseIssuedBy } : {}),

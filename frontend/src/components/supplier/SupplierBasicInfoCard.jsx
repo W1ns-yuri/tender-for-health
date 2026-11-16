@@ -1,6 +1,6 @@
 import React from 'react';
 import { Building2 } from 'lucide-react';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '../ui/CustomSelect';
 import { getCleanCompanyName, getCompanyTypeBadge } from './supplierUtils';
 
 export default function SupplierBasicInfoCard({

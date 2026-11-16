@@ -4,9 +4,9 @@ import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
-import CustomDatePicker from '../components/CustomDatePicker';
+import CustomDatePicker from '../components/ui/CustomDatePicker';
 import { TableFilters, Tabs, Pagination, TableSkeletonRows } from '../components/ui';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 
 export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
   const [tenders, setTenders] = useState([]);

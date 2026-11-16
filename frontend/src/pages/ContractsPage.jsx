@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { FileSignature, Eye } from 'lucide-react';
 import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 import { contractStatus, formatMoney, formatDate, nextStep } from '../utils/contracts';
 
 /** Договоры по итогам тендеров: организатор видит все, поставщик только свои */
