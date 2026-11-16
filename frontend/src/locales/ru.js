@@ -1806,4 +1806,10 @@ export default {
   ctStCancelled: "Отменён",
   langCode: 'RU',
   lotNumberPrefix: "Лот №",
+  resetPasswordConfirm: "Сбросить пароль для {name}? Пользователь выйдет со всех устройств и войдёт с временным паролем.",
+  tempPasswordTitle: "Временный пароль",
+  tempPasswordMsg: "Пароль для {name}: {password}\nОн скопирован в буфер обмена. Передайте его пользователю, больше он показан не будет. Пользователь сменит его в настройках.",
+  resetPasswordError: "Не удалось сбросить пароль",
+  passwordMinLength8: "Новый пароль должен быть не короче 8 символов",
+  passwordMinLength8Hint: "Минимум 8 символов",
 };

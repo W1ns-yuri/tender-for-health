@@ -1,7 +1,7 @@
 import { lotLabel } from '../../utils/pluralize';
 import React, { useMemo } from 'react';
 import { Bookmark, Trash2 } from 'lucide-react';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '../ui/CustomSelect';
 import { lotTypeInfo } from '../../utils/lotTypes';
 
 export default function TenderLotDetailsCard({

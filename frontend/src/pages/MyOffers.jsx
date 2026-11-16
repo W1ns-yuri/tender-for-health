@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { useAlert } from '../context/AlertContext';
 import { TableFilters, Pagination, TableSkeletonRows } from '../components/ui';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 
 export default function MyOffers({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);

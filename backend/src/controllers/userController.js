@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const { ASSIGNABLE_ROLES, passwordError } = require('../utils/accountRules');
 const { sendError } = require('../utils/httpErrors');
 
@@ -70,7 +71,7 @@ const createUser = async (req, res) => {
         const { password: _, ...userWithoutPassword } = newUser;
         res.status(201).json(userWithoutPassword);
     } catch (error) {
-        res.status(400).json({ error: 'Не удалось создать пользователя' });
+        sendError(res, error, 'Не удалось создать пользователя');
     }
 };
 
@@ -120,8 +121,7 @@ const updateUser = async (req, res) => {
 
         res.json(updated);
     } catch (error) {
-        console.error('Error updating user:', error);
-        res.status(400).json({ error: 'Не удалось обновить пользователя' });
+        sendError(res, error, 'Не удалось обновить пользователя');
     }
 };
 
@@ -145,12 +145,44 @@ const toggleUserStatus = async (req, res) => {
 
         res.json(updated);
     } catch (error) {
-        console.error('Error toggling user status:', error);
-        res.status(400).json({ error: 'Не удалось изменить статус пользователя' });
+        sendError(res, error, 'Не удалось изменить статус пользователя');
+    }
+};
+
+// Временный пароль без похожих символов (0/O, 1/l/I), чтобы его можно было продиктовать по телефону
+const TEMP_ALPHABET = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const tempPassword = (length = 12) =>
+    Array.from(crypto.randomBytes(length), (b) => TEMP_ALPHABET[b % TEMP_ALPHABET.length]).join('');
+
+// Сброс пароля админом («Забыли пароль?» ведёт к администратору).
+// Пароль показываем один раз в ответе, в базе только хеш. Все сессии пользователя завершаются.
+const resetUserPassword = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (id === req.user.id) {
+            return res.status(400).json({ error: 'Свой пароль меняйте в настройках профиля' });
+        }
+        const user = await prisma.user.findUnique({ where: { id }, select: { id: true, username: true } });
+        if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+
+        const password = tempPassword();
+        await prisma.user.update({
+            where: { id },
+            data: {
+                password: await bcrypt.hash(password, 10),
+                passwordChangedAt: new Date(),
+                failedCount: 0,
+                lockoutExpireDate: null,
+            },
+        });
+        res.json({ username: user.username, temporaryPassword: password });
+    } catch (error) {
+        sendError(res, error, 'Ошибка при сбросе пароля');
     }
 };
 
 module.exports = {
+    resetUserPassword,
     getUsers,
     createUser,
     updateUser,

@@ -18,7 +18,7 @@ import {
   LogDetailsModal,
   UserEditModal
 } from '../components/admin-logs';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 
 /**
  * AdminLogs Page

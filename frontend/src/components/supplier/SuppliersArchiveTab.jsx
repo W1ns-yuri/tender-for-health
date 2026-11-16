@@ -16,7 +16,7 @@ import {
   Tabs,
 } from '../ui';
 import { safeString } from '../../utils/themeUtils';
-import useT from '../../utils/useT';
+import useT from '../../hooks/useT';
 
 export default function SuppliersArchiveTab({
   archiveLogs = [],

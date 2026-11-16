@@ -4,7 +4,7 @@ import API from '../services/api';
 import { getStatusBadge, getTypeBadge } from '../utils/statusUtils';
 import { getRoleTheme, safeString } from '../utils/themeUtils';
 import { Pagination, TableSkeletonRows } from '../components/ui';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 
 export default function Dashboard({ role, onNavigate, onOpenCreateTender, isDarkMode, lang = 'RU' }) {
   const [tenders, setTenders] = useState([]);

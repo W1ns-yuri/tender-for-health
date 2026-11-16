@@ -2,6 +2,7 @@ const prisma = require('../lib/prisma');
 const { sendNotification, notifyAdmins } = require('./notificationController');
 const { D, sumLineTotals } = require('../utils/money');
 const { isTenderOpened, sealOfferFor, SEALED_ERROR } = require('../utils/sealedEnvelope');
+const { checkTenderVisible } = require('../utils/tenderAccess');
 const { sendError } = require('../utils/httpErrors');
 const { MAX_UNIT_PRICE } = require('../utils/validation');
 
@@ -189,6 +190,7 @@ const createOffer = async (req, res) => {
             const usableDocs = await prisma.document.count({
                 where: {
                     id: { in: attachedDocumentIds },
+                    uploadedById: userId,
                     tenderId: null,
                     bidId: null,
                     tenderFiles: { none: {} },
@@ -322,6 +324,13 @@ const getOffersByTender = async (req, res) => {
 
         if (!tender) {
             return res.status(404).json({ error: 'Тендер не найден' });
+        }
+
+        // После итогов поставщики видят цены конкурентов, но только по тендеру, который им виден:
+        // раньше любой поставщик мог открыть итоги чужого закрытого тендера
+        if (req.user.roleType !== 'ADMIN') {
+            const access = await checkTenderVisible(req.user, tenderId);
+            if (!access.ok) return res.status(access.status).json({ error: access.error });
         }
 
         const whereClause = { tenderId };

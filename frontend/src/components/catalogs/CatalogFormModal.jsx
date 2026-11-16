@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
-import CustomSelect from './CustomSelect';
+import CustomSelect from '../ui/CustomSelect';
 import MnnCombobox from './MnnCombobox';
-import API from '../services/api';
-import ProductAttributesFields from './catalogs/ProductAttributesFields';
-import CategoryAttributesEditor from './catalogs/CategoryAttributesEditor';
-import { ATTRIBUTE_TYPES } from './catalogs/attributeTypes';
+import API from '../../services/api';
+import ProductAttributesFields from './ProductAttributesFields';
+import CategoryAttributesEditor from './CategoryAttributesEditor';
+import { ATTRIBUTE_TYPES } from './attributeTypes';
 
 export default function CatalogFormModal({
   isOpen,

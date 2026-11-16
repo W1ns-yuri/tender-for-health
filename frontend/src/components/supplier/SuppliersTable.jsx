@@ -15,8 +15,8 @@ import {
   TableSkeletonRows,
 } from '../ui';
 import { safeString, getRoleTheme } from '../../utils/themeUtils';
-import { parseCompanyName } from '../../utils/pluralize';
-import useT from '../../utils/useT';
+import { parseCompanyName } from '../../utils/companyName';
+import useT from '../../hooks/useT';
 
 export default function SuppliersTable({
   suppliers = [],

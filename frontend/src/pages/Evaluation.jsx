@@ -6,7 +6,7 @@ import { getRoleTheme } from '../utils/themeUtils';
 import { getStatusBadge } from '../utils/statusUtils';
 import { TableFilters, Pagination, TableSkeletonRows } from '../components/ui';
 import { countLabel } from '../utils/pluralize';
-import useT from '../utils/useT';
+import useT from '../hooks/useT';
 
 export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
   const theme = getRoleTheme(role, isDarkMode);

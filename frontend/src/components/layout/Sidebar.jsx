@@ -19,8 +19,8 @@ import {
   Package,
   BarChart3
 } from 'lucide-react';
-import { getRoleTheme } from '../utils/themeUtils';
-import useT from '../utils/useT';
+import { getRoleTheme } from '../../utils/themeUtils';
+import useT from '../../hooks/useT';
 
 export default function Sidebar({
   activeTab,

@@ -1,5 +1,5 @@
 import React from 'react';
-import CustomDatePicker from '../CustomDatePicker';
+import CustomDatePicker from '../ui/CustomDatePicker';
 
 export default function CustomDateInput({
   value,

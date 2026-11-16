@@ -1,5 +1,5 @@
 import React from 'react';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '../ui/CustomSelect';
 import { getCurrencyLabel } from '../../utils/themeUtils';
 
 export default function OfferCommercialTermsCard({

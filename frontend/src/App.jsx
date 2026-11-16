@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import ErrorBoundary from './components/ErrorBoundary';
+import Sidebar from './components/layout/Sidebar';
+import Header from './components/layout/Header';
+import ErrorBoundary from './components/layout/ErrorBoundary';
 import API from './services/api';
 
 import LoginPage from './pages/LoginPage';
@@ -270,6 +270,9 @@ export default function App() {
     );
   }
 
+  // Страница только для организатора; остальных отправляем на fallback
+  const adminOnly = (page, fallback = '/dashboard') => (role === 'ADMIN' ? page : <Navigate to={fallback} replace />);
+
   return (
     <AlertProvider isDarkMode={isDarkMode} lang={lang} role={role}>
       <div className={`h-screen w-screen overflow-hidden print:h-auto print:overflow-visible flex font-sans ${isDarkMode ? 'bg-[#0b0f17] text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
@@ -291,7 +294,6 @@ export default function App() {
         <Header
           user={user}
           role={role}
-          setRole={setRole}
           isDarkMode={isDarkMode}
           lang={lang}
           setLang={setLang}
@@ -314,12 +316,12 @@ export default function App() {
                   lang={lang}
                 />
               } />
-              <Route path="/analytics" element={role === 'ADMIN' ? <AnalyticsPage role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
+              <Route path="/analytics" element={adminOnly(<AnalyticsPage role={role} isDarkMode={isDarkMode} lang={lang} />)} />
               
-              <Route path="/create-tender" element={role === 'ADMIN' ? <CreateTenderPage onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
-              <Route path="/tenders/:id/edit" element={role === 'ADMIN' ? <CreateTenderPage onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} isEdit={true} /> : <Navigate to="/dashboard" replace />} />
-              <Route path="/suppliers" element={role === 'ADMIN' ? <SuppliersList role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
-              <Route path="/suppliers/:id" element={role === 'ADMIN' ? <SupplierProfilePage role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/profile" replace />} />
+              <Route path="/create-tender" element={adminOnly(<CreateTenderPage onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} />)} />
+              <Route path="/tenders/:id/edit" element={adminOnly(<CreateTenderPage onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} isEdit={true} />)} />
+              <Route path="/suppliers" element={adminOnly(<SuppliersList role={role} isDarkMode={isDarkMode} lang={lang} />)} />
+              <Route path="/suppliers/:id" element={adminOnly(<SupplierProfilePage role={role} isDarkMode={isDarkMode} lang={lang} />, '/profile')} />
               <Route path="/tenders" element={<Tenders onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/tenders/:id" element={<TenderDetails onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/tender-details/:id" element={<TenderDetails onNavigate={handleNavigate} role={role} isDarkMode={isDarkMode} lang={lang} />} />
@@ -332,14 +334,14 @@ export default function App() {
               <Route path="/admin/evaluations/:id" element={role === 'SUPPLIER' ? <SupplierWins role={role} isDarkMode={isDarkMode} lang={lang} /> : <EvaluationDetailsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/contracts" element={<ContractsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
               <Route path="/contracts/:id" element={<ContractDetailsPage role={role} isDarkMode={isDarkMode} lang={lang} />} />
-              <Route path="/umumy" element={role === 'ADMIN' ? <AdminCatalogs section="umumy" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
-              <Route path="/haryt" element={role === 'ADMIN' ? <AdminCatalogs section="haryt" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
+              <Route path="/umumy" element={adminOnly(<AdminCatalogs section="umumy" role={role} isDarkMode={isDarkMode} lang={lang} />)} />
+              <Route path="/haryt" element={adminOnly(<AdminCatalogs section="haryt" role={role} isDarkMode={isDarkMode} lang={lang} />)} />
               <Route path="/catalogs" element={<Navigate to="/umumy" replace />} />
               <Route path="/catalog" element={<Navigate to="/umumy" replace />} />
               <Route path="/products" element={<Navigate to="/haryt" replace />} />
-              <Route path="/administrasiya" element={role === 'ADMIN' ? <AdminCatalogs section="administrasiya" role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
-              <Route path="/logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
-              <Route path="/admin-logs" element={role === 'ADMIN' ? <AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} /> : <Navigate to="/dashboard" replace />} />
+              <Route path="/administrasiya" element={adminOnly(<AdminCatalogs section="administrasiya" role={role} isDarkMode={isDarkMode} lang={lang} />)} />
+              <Route path="/logs" element={adminOnly(<AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} />)} />
+              <Route path="/admin-logs" element={adminOnly(<AdminLogs role={role} isDarkMode={isDarkMode} lang={lang} />)} />
               {UiKitGallery && <Route path="/ui-kit" element={<UiKitGallery role={role} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} lang={lang} />} />}
               
               <Route path="/profile" element={<SupplierProfilePage role={role} isDarkMode={isDarkMode} lang={lang} isOwner={true} />} />

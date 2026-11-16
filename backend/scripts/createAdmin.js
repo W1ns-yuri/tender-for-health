@@ -31,7 +31,7 @@ async function main() {
             console.error(`Пользователь «${username}» уже есть и он не администратор. Выберите другой логин.`);
             process.exit(1);
         }
-        await prisma.user.update({ where: { id: existing.id }, data: { password: hash, isActive: true, failedCount: 0, lockoutExpireDate: null } });
+        await prisma.user.update({ where: { id: existing.id }, data: { password: hash, passwordChangedAt: new Date(), isActive: true, failedCount: 0, lockoutExpireDate: null } });
         console.log(`Пароль администратора «${username}» обновлён.`);
     } else {
         await prisma.user.create({

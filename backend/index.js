@@ -92,6 +92,16 @@ const registerLimiter = rateLimit({
 });
 app.use('/api/auth/register', registerLimiter);
 
+// Загрузка файлов до 25 МБ: без лимита любой зарегистрированный аккаунт может забить диск сервера
+const uploadLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: Number(process.env.UPLOAD_RATE_LIMIT) || 200,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { error: 'Слишком много загрузок файлов за час. Попробуйте позже.' },
+});
+app.use('/api/documents/upload', uploadLimiter);
+
 // Скачивание загруженных документов: только для вошедших и с проверкой прав (см. fileRoutes.js).
 // Раньше здесь был express.static, и любой документ мог скачать кто угодно по имени файла.
 app.use('/uploads', require('./src/routes/fileRoutes'));

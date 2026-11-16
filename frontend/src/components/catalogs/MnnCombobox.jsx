@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ChevronDown, X, Check, Plus, Pill } from 'lucide-react';
-import API from '../services/api';
+import API from '../../services/api';
 
 /**
  * MnnCombobox - Интерактивный комбобокс для выбора Международного непатентованного наименования (МНН).

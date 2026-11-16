@@ -1805,4 +1805,10 @@ export default {
   ctStCancelled: "Ýatyryldy",
   langCode: 'TM',
   lotNumberPrefix: "Lot №",
+  resetPasswordConfirm: "{name} üçin paroly täzelemeli? Ulanyjy ähli enjamlardan çykar we wagtlaýyn parol bilen girer.",
+  tempPasswordTitle: "Wagtlaýyn parol",
+  tempPasswordMsg: "{name} üçin parol: {password}\nOl göçürildi. Ony ulanyja beriň, ol başga görkezilmez. Ulanyjy ony sazlamalarda üýtgeder.",
+  resetPasswordError: "Paroly täzeläp bolmady",
+  passwordMinLength8: "Täze parol azyndan 8 nyşandan ybarat bolmaly",
+  passwordMinLength8Hint: "Azyndan 8 nyşan",
 };

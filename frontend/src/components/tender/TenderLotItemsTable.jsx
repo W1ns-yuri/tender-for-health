@@ -4,7 +4,7 @@ import BoqImportModal from './BoqImportModal';
 import SpecRequirementsEditor from './SpecRequirementsEditor';
 import { lotTypeInfo } from '../../utils/lotTypes';
 import ProductSearchableSelect from './ProductSearchableSelect';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '../ui/CustomSelect';
 
 export default function TenderLotItemsTable({
   activeLot,
