@@ -53,7 +53,6 @@ const createOffer = async (req, res) => {
             supplierId,
             deliveryTermId,
             baseCurrencyId,
-            number,
             paymentTerms,
             specs,
             status,
@@ -268,6 +267,8 @@ const createOffer = async (req, res) => {
 
         const newVersion = previousOffersCount + 1;
 
+        const offerSeq = (await prisma.offer.count({ where: { tenderId } })) + 1;
+
         // Сохраняем коммерческое предложение в транзакции
         const offer = await prisma.offer.create({
             data: {
@@ -275,7 +276,8 @@ const createOffer = async (req, res) => {
                 supplierId: finalSupplierId,
                 deliveryTermId: deliveryTermId || null,
                 baseCurrencyId: baseCurrencyId || null,
-                number: number || `OFFER-${Date.now()}`,
+                // Номер, который удобно назвать по телефону: номер тендера / порядковый номер заявки
+                number: `${tender.tenderNumber || 'OFFER'}/${String(offerSeq).padStart(2, '0')}`,
                 paymentTerms,
                 version: newVersion,
                 isDefault: true,

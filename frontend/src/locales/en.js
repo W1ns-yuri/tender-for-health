@@ -985,7 +985,7 @@ export default {
   fileUploaded: 'File uploaded successfully',
   fileUploadError: 'File upload error',
   lotEmptySpecsError: 'Add at least one specification item to the lot before saving',
-  publishConfirm: 'Are you sure you want to publish the tender? It will become available to participants.',
+  publishConfirm: "Publish the tender? It will open and suppliers will be notified. Lots and items can be changed only until the first bid arrives.",
   publishTenderBtn: 'Publish Tender',
   deadlineBeforeAnnouncementError: 'Submission deadline must be later than the tender announcement date',
   minTwoInvitedSuppliersError: 'For a closed tender, at least 2 suppliers must be invited to ensure competitiveness',
@@ -1834,4 +1834,8 @@ export default {
   attnContractsToSend: "Contracts not yet sent to the supplier",
   attnContractsToSign: "Contracts awaiting your signature",
   needsAttentionTitle: "Needs attention",
+  sameBankAccountWarning: "The same bank account is used by other companies:",
+  passwordConfirmLabel: "Repeat password",
+  passwordsDoNotMatch: "Passwords do not match",
+  printAfterOpeningHint: "The protocol can be printed after the envelopes are opened",
 };

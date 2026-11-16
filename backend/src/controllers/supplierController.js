@@ -473,7 +473,17 @@ const getSupplierById = async (req, res) => {
             return res.status(403).json({ error: 'У вас нет прав на просмотр конфиденциальных данных этого поставщика' });
         }
 
-        res.json(supplier);
+        // Тот же расчётный счёт у другой компании: признак подставных фирм или сговора. Видит только организатор.
+        let sameBankAccount = [];
+        if (req.user?.roleType === 'ADMIN' && supplier.bankAccount?.trim()) {
+            sameBankAccount = await prisma.supplier.findMany({
+                where: { bankAccount: supplier.bankAccount.trim(), id: { not: supplier.id } },
+                select: { id: true, name: true, taxId: true },
+                take: 10,
+            });
+        }
+
+        res.json({ ...supplier, sameBankAccount });
     } catch (error) {
         sendError(res, error, 'Ошибка при получении данных поставщика');
     }

@@ -887,7 +887,7 @@ export default function useCreateTenderState({
 
     const confirmed = await showConfirm({
       title: t('publishTenderBtn', 'Опубликовать тендер'),
-      message: t('publishConfirm', 'Вы уверены, что хотите опубликовать тендер? Он станет открытым и поставщики смогут подавать предложения.'),
+      message: t('publishConfirm', 'Опубликовать тендер? Он станет открытым, поставщики получат уведомления. Лоты и позиции можно менять, только пока не подана первая заявка.'),
       type: 'info',
       confirmText: t('publishTenderBtn', 'Опубликовать'),
       cancelText: t('cancel', 'Отмена')

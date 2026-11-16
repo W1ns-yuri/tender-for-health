@@ -110,3 +110,26 @@ test('у организатора на главной есть блок «Тре
     const sup = await newSupplier(admin, { categoryNames: CAT });
     assert.equal((await api(sup.token, 'GET', '/dashboard/stats')).data.attention, null, 'поставщику блок не отдаём');
 });
+
+test('номер заявки читаемый: номер тендера / порядковый номер', async () => {
+    const t = await newTender(admin);
+    const tender = await prisma.tender.findUnique({ where: { id: t.tenderId } });
+    const a = await newSupplier(admin, { categoryNames: CAT });
+    const b = await newSupplier(admin, { categoryNames: CAT });
+    const body = { tenderId: t.tenderId, number: 'HACK', specs: t.specs.map((s) => ({ tenderSpecId: s.id, unitPrice: 3 })) };
+    const o1 = await api(a.token, 'POST', '/offers', body);
+    const o2 = await api(b.token, 'POST', '/offers', body);
+    assert.equal(o1.data.number, `${tender.tenderNumber}/01`, 'номер задаёт сервер, не поставщик');
+    assert.equal(o2.data.number, `${tender.tenderNumber}/02`);
+});
+
+test('организатор видит, что у компаний одинаковый расчётный счёт', async () => {
+    const a = await newSupplier(admin, { verified: false });
+    const b = await newSupplier(admin, { verified: false });
+    const acc = String(Date.now()).padEnd(20, '7');
+    await prisma.supplier.updateMany({ where: { id: { in: [a.supplierId, b.supplierId] } }, data: { bankAccount: acc } });
+    const r = await api(admin, 'GET', `/suppliers/${a.supplierId}`);
+    assert.deepEqual(r.data.sameBankAccount.map((x) => x.id), [b.supplierId]);
+    const own = await api(a.token, 'GET', `/suppliers/${a.supplierId}`);
+    assert.deepEqual(own.data.sameBankAccount, [], 'поставщику чужие компании не показываем');
+});

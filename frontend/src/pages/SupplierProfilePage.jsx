@@ -149,6 +149,21 @@ export default function SupplierProfilePage({
         t={t}
       />
 
+      {/* Тот же расчётный счёт у других компаний: организатору стоит проверить, не подставные ли это фирмы */}
+      {isAdmin && supplier?.sameBankAccount?.length > 0 && (
+        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-xs text-amber-800 dark:text-amber-200">
+          <span className="font-bold">{t('sameBankAccountWarning', 'Такой же расчётный счёт указан у других компаний:')}</span>{' '}
+          {supplier.sameBankAccount.map((o, i) => (
+            <React.Fragment key={o.id}>
+              {i > 0 && ', '}
+              <button type="button" onClick={() => navigate(`/suppliers/${o.id}`)} className="underline font-semibold cursor-pointer">
+                {o.name}{o.taxId ? ` (${o.taxId})` : ''}
+              </button>
+            </React.Fragment>
+          ))}
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Левая колонка: Профиль и формы */}
         <div className={`flex-1 min-w-0 rounded-[2rem] p-6 sm:p-8 space-y-8 ${cardBg}`}>

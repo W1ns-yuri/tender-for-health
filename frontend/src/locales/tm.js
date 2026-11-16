@@ -986,7 +986,7 @@ export default {
   fileUploaded: 'Faýl üstünlikli birikdirildi',
   fileUploadError: 'Faýl ýüklenende ýalňyşlyk',
   lotEmptySpecsError: 'Ýatda saklamazdan öň lotyň iň bolmanda bir aýratynlygyny dolduryň',
-  publishConfirm: 'Tenderi çap etmek isleýändigiňize ynanýarsyňyzmy? Ol gatnaşyjylara elýeterli bolar.',
+  publishConfirm: "Tenderi çap etmelimi? Ol açyk bolar, üpjün edijiler habar alarlar. Lotlary we pozisiýalary diňe ilkinji teklip gelýänçä üýtgedip bolar.",
   publishTenderBtn: 'Tenderi çap etmek',
   deadlineBeforeAnnouncementError: 'Kriteriýa möhleti (gutaryş wagty) tenderiň yglan edilen senesinden soň bolmaly',
   minTwoInvitedSuppliersError: 'Ýapyk tender üçin bäsdeşligi üpjün etmek maksady bilen iň az 2 üpjün ediji çagyrylmalydyr',
@@ -1835,4 +1835,8 @@ export default {
   attnContractsToSend: "Üpjün edijä ugradylmadyk şertnamalar",
   attnContractsToSign: "Siziň goluňyza garaşýan şertnamalar",
   needsAttentionTitle: "Üns bermeli",
+  sameBankAccountWarning: "Şol bir hasaplaşyk hasaby beýleki kompaniýalarda hem görkezilen:",
+  passwordConfirmLabel: "Paroly gaýtalaň",
+  passwordsDoNotMatch: "Parollar gabat gelmeýär",
+  printAfterOpeningHint: "Teswirnamany konwertler açylandan soň çap edip bolar",
 };

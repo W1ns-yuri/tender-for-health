@@ -325,7 +325,12 @@ export default function Tenders({ onNavigate, role, isDarkMode, lang = 'RU' }) {
                 </tr>
               ) : (
                 paginatedList.map((item, idx) => (
-                  <tr key={item.id || idx} className={theme.tableRowHover}>
+                  <tr
+                    key={item.id || idx}
+                    // Клик по строке открывает тендер; кнопки внутри строки работают как раньше
+                    onClick={(e) => { if (!e.target.closest('button, a, input')) onNavigate('tender-details', item.id); }}
+                    className={`${theme.tableRowHover} cursor-pointer`}
+                  >
                     <td className="py-3.5 px-4 text-center font-semibold font-mono tabular-nums">
                       <div className="flex flex-col items-center gap-1">
                         <span>{safeString(item.tenderNumber)}</span>
