@@ -275,7 +275,7 @@ export default function OfferLotItemRow({
                       {status === 'MATCH' ? <CheckCircle2 size={13} /> : status === 'MISMATCH' ? <XCircle size={13} /> : <HelpCircle size={13} />}
                       {requirementText(req)}
                       {' → '}
-                      {offered === null ? t('reqNotSpecified', 'у товара не указано') : formatValue(offered, req.attribute?.type)}
+                      {offered === null ? t('reqNotSpecifiedOffer', 'у товара не указано') : formatValue(offered, req.attribute?.type)}
                     </li>
                   ))}
                 </ul>

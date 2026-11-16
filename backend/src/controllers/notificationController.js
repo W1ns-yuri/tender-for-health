@@ -30,7 +30,6 @@ const getUserNotifications = async (req, res) => {
             totalPages: Math.ceil(total / limit) || 1,
         });
     } catch (error) {
-        console.error('getUserNotifications error:', error);
         sendError(res, error, 'Ошибка при получении уведомлений');
     }
 };
@@ -64,7 +63,6 @@ const markAsRead = async (req, res) => {
 
         res.json({ notification: updated, unreadCount });
     } catch (error) {
-        console.error('markAsRead error:', error);
         sendError(res, error, 'Ошибка обновления статуса уведомления');
     }
 };
@@ -83,7 +81,6 @@ const markAllAsRead = async (req, res) => {
 
         res.json({ success: true, count: result.count, unreadCount: 0 });
     } catch (error) {
-        console.error('markAllAsRead error:', error);
         sendError(res, error, 'Ошибка отметки уведомлений');
     }
 };
@@ -110,7 +107,6 @@ const deleteNotification = async (req, res) => {
 
         res.json({ success: true, unreadCount });
     } catch (error) {
-        console.error('deleteNotification error:', error);
         sendError(res, error, 'Ошибка удаления уведомления');
     }
 };

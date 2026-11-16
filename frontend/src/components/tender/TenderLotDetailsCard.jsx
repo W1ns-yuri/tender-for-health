@@ -33,7 +33,7 @@ export default function TenderLotDetailsCard({
         <div className="flex items-center gap-2">
           <Bookmark size={16} className="text-emerald-600 dark:text-emerald-400" />
           <h3 className={`text-sm font-black ${theme?.primaryText || ''}`}>
-            {lotLabel(activeLot.name, activeLot.lotNumber || activeLotIndex + 1)}
+            {lotLabel(activeLot.name, activeLot.lotNumber || activeLotIndex + 1, t)}
           </h3>
         </div>
 

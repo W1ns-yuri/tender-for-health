@@ -54,7 +54,7 @@ export default function OfferLotGroupCard({
           </div>
           <div>
             <h4 className="font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100">
-              {t('lotUpperLabel', 'Лот')} #{group.lot.lotNumber || groupIdx + 1}: {cleanLotTitle(group.lot.name, group.lot.lotNumber || groupIdx + 1)}
+              {t('lotUpperLabel', 'Лот')} #{group.lot.lotNumber || groupIdx + 1}: {cleanLotTitle(group.lot.name, group.lot.lotNumber || groupIdx + 1, t)}
             </h4>
             {group.lot?.description && (
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">

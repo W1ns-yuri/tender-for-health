@@ -195,7 +195,7 @@ export default function SettingsSecurityTab({
             onChange={handleSessionTimeoutChange}
             options={[
               { id: '15', name: `15 ${t('minutes', 'минут')}` },
-              { id: '30', name: `30 ${t('minutes', 'минут (Рекомендуется)')}` },
+              { id: '30', name: `30 ${t('minutesRecommended', 'минут (рекомендуется)')}` },
               { id: '60', name: `1 ${t('hour', 'час')}` },
               { id: 'never', name: t('neverTimeout', 'Не блокировать сеанс') },
             ]}

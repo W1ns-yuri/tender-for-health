@@ -7,7 +7,7 @@ import {
   Layers,
   Users,
 } from 'lucide-react';
-import { pluralize } from '../../utils/pluralize';
+import { countLabel } from '../../utils/pluralize';
 import { formatNumber, formatCurrency } from './analyticsUtils';
 
 export default function AnalyticsKpiCards({
@@ -93,7 +93,7 @@ export default function AnalyticsKpiCards({
         <div className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
           {formatNumber(kpi?.totalProcedures || 0)}{' '}
           <span className="text-sm font-normal text-slate-400">
-            {pluralize(Number(kpi?.totalProcedures || 0), ['тендер', 'тендера', 'тендеров']).replace(
+            {countLabel(Number(kpi?.totalProcedures || 0), 'tender', t).replace(
               /^\d+\s*/,
               ''
             )}
@@ -125,7 +125,7 @@ export default function AnalyticsKpiCards({
         <div className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
           {formatNumber(kpi?.totalOffers || 0)}{' '}
           <span className="text-sm font-normal text-slate-400">
-            {pluralize(Number(kpi?.totalOffers || 0), ['заявка', 'заявки', 'заявок']).replace(
+            {countLabel(Number(kpi?.totalOffers || 0), 'bid', t).replace(
               /^\d+\s*/,
               ''
             )}
@@ -157,7 +157,7 @@ export default function AnalyticsKpiCards({
         <div className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
           {formatNumber(kpi?.activeSuppliers || 0)}{' '}
           <span className="text-sm font-normal text-slate-400">
-            {pluralize(Number(kpi?.activeSuppliers || 0), ['компания', 'компании', 'компаний']).replace(
+            {countLabel(Number(kpi?.activeSuppliers || 0), 'company', t).replace(
               /^\d+\s*/,
               ''
             )}

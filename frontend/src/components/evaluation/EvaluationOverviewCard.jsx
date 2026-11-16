@@ -1,7 +1,7 @@
 import React from 'react';
 import { Building2, Clock } from 'lucide-react';
 import { getStatusBadge } from '../../utils/statusUtils';
-import { pluralize } from '../../utils/pluralize';
+import { countLabel } from '../../utils/pluralize';
 
 /**
  * Сводная карточка информации о тендере:
@@ -88,8 +88,8 @@ export default function EvaluationOverviewCard({
             {t('lotsAndBidsTab', 'Лоты и заявки')}
           </p>
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            {pluralize(lotsList.length, ['лот', 'лота', 'лотов'])} •{' '}
-            {pluralize((tenderDetails.offers || []).length, ['заявка', 'заявки', 'заявок'])}
+            {countLabel(lotsList.length, 'lot', t)} •{' '}
+            {countLabel((tenderDetails.offers || []).length, 'bid', t)}
           </p>
         </div>
       </div>

@@ -64,7 +64,7 @@ export default function TenderDetailsLotsTab({
                 }
               />
               <span className="truncate max-w-44">
-                {lotLabel(lItem.name, lItem.lotNumber || lIdx + 1)}
+                {lotLabel(lItem.name, lItem.lotNumber || lIdx + 1, t)}
               </span>
               <span
                 className={`text-[11px] px-1.5 py-0.2 rounded-full font-mono font-black ${
@@ -97,7 +97,7 @@ export default function TenderDetailsLotsTab({
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-base">
                 {t('lotUpperLabel', 'Лот')} #{lot.lotNumber || lotIdx + 1}:{' '}
-                {cleanLotTitle(lot.name, lot.lotNumber || lotIdx + 1)}
+                {cleanLotTitle(lot.name, lot.lotNumber || lotIdx + 1, t)}
               </h3>
               <span
                 className={`text-[12px] font-semibold px-2 py-0.5 rounded-md ${

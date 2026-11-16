@@ -39,7 +39,7 @@ export default function WorksCatalogTable({
         <thead>
           <tr className={tableHeaderClass}>
             <th className="py-3 px-4 w-12 text-center">#</th>
-            <th className="py-3 px-4 min-w-56">{t('workStageName', 'Вид / этап работ')}</th>
+            <th className="py-3 px-4 min-w-56">{t('workStageCol', 'Вид / этап работ')}</th>
             <th className="py-3 px-4 min-w-40">{t('category', 'Категория работ')}</th>
             <th className="py-3 px-4 text-center w-28">{t('colCode', 'Шифр / Код')}</th>
             <th className="py-3 px-4 min-w-52">

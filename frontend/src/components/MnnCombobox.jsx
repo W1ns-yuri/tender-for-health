@@ -268,7 +268,7 @@ export default function MnnCombobox({
               >
                 <Plus size={14} className={`shrink-0 ${isSupplier ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`} />
                 <span className="truncate">
-                  {t ? t('useNewMNN', `Использовать новое МНН: "${inputValue.trim()}"`) : `Использовать новое МНН: "${inputValue.trim()}"`}
+                  {t ? t('useNewMNN', 'Использовать новое МНН: «{name}»', { name: inputValue.trim() }) : `Использовать новое МНН: «${inputValue.trim()}»`}
                 </span>
               </div>
             )}

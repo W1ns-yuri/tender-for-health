@@ -49,7 +49,7 @@ export default function SupplierAdminPanel({
           {hasChanges && (
             <div className="flex items-center gap-1.5 flex-wrap mt-2">
               <span className="text-[12px] font-bold text-amber-700 dark:text-amber-400">
-                {t('modifiedFieldsLabel', 'Изменено:')}
+                {t('modifiedShort', 'Изменено:')}
               </span>
               {parsedNotes.changes.map((c, i) => (
                 <span

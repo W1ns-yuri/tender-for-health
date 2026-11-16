@@ -35,7 +35,7 @@ export default function AttributesCatalogTable({
         <thead>
           <tr className={tableHeaderClass}>
             <th className="py-3 px-4 w-12 text-center">#</th>
-            <th className="py-3 px-4 min-w-44">{t('attrName', 'Характеристика')}</th>
+            <th className="py-3 px-4 min-w-44">{t('attrColName', 'Характеристика')}</th>
             <th className="py-3 px-4 w-36">{t('attrType', 'Тип значения')}</th>
             <th className="py-3 px-4 min-w-56">{t('attrOptionsCol', 'Варианты / единица')}</th>
             <th className="py-3 px-4 text-center w-28">{t('attrCategories', 'Категорий')}</th>

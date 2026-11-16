@@ -43,7 +43,6 @@ const createCategory = async (req, res) => {
         });
         res.status(201).json(category);
     } catch (error) {
-        console.error('createCategory error:', error);
         sendError(res, error, 'Ошибка при создании категории');
     }
 };
@@ -315,7 +314,6 @@ const createManufacturer = async (req, res) => {
         });
         res.status(201).json(manufacturer);
     } catch (error) {
-        console.error('createManufacturer error:', error);
         sendError(res, error, 'Ошибка при создании производителя');
     }
 };
@@ -346,7 +344,6 @@ const updateCategory = async (req, res) => {
         const category = await prisma.category.update({ where: { id: req.params.id }, data });
         res.json(category);
     } catch (error) { 
-        console.error('updateCategory error:', error);
         sendError(res, error, 'Ошибка обновления категории'); 
     }
 };
@@ -355,7 +352,6 @@ const deleteCategory = async (req, res) => {
         await prisma.category.delete({ where: { id: req.params.id } });
         res.status(204).send();
     } catch (error) { 
-        console.error('deleteCategory error:', error);
         sendError(res, error, 'Ошибка удаления категории'); 
     }
 };
@@ -388,7 +384,6 @@ const deleteGeneralProduct = async (req, res) => {
         await prisma.generalProduct.delete({ where: { id: req.params.id } });
         res.status(204).send();
     } catch (error) { 
-        console.error('deleteGeneralProduct error:', error);
         sendError(res, error, 'Ошибка удаления позиции'); 
     }
 };
@@ -405,7 +400,6 @@ const updateUnit = async (req, res) => {
         const unit = await prisma.unit.update({ where: { id: req.params.id }, data });
         res.json(unit);
     } catch (error) { 
-        console.error('updateUnit error:', error);
         sendError(res, error, 'Ошибка обновления единицы измерения'); 
     }
 };
@@ -414,7 +408,6 @@ const deleteUnit = async (req, res) => {
         await prisma.unit.delete({ where: { id: req.params.id } });
         res.status(204).send();
     } catch (error) { 
-        console.error('deleteUnit error:', error);
         sendError(res, error, 'Ошибка удаления единицы измерения'); 
     }
 };
@@ -433,7 +426,6 @@ const updateCurrency = async (req, res) => {
         const currency = await prisma.currency.update({ where: { id: req.params.id }, data });
         res.json(currency);
     } catch (error) { 
-        console.error('updateCurrency error:', error);
         sendError(res, error, 'Ошибка обновления валюты'); 
     }
 };
@@ -442,7 +434,6 @@ const deleteCurrency = async (req, res) => {
         await prisma.currency.delete({ where: { id: req.params.id } });
         res.status(204).send();
     } catch (error) { 
-        console.error('deleteCurrency error:', error);
         sendError(res, error, 'Ошибка удаления валюты'); 
     }
 };
@@ -460,7 +451,6 @@ const updateCountry = async (req, res) => {
         const country = await prisma.country.update({ where: { id: req.params.id }, data });
         res.json(country);
     } catch (error) { 
-        console.error('updateCountry error:', error);
         sendError(res, error, 'Ошибка обновления страны'); 
     }
 };
@@ -469,7 +459,6 @@ const deleteCountry = async (req, res) => {
         await prisma.country.delete({ where: { id: req.params.id } });
         res.status(204).send();
     } catch (error) { 
-        console.error('deleteCountry error:', error);
         sendError(res, error, 'Ошибка удаления страны'); 
     }
 };
@@ -485,7 +474,6 @@ const updateDeliveryTerm = async (req, res) => {
         const term = await prisma.deliveryTerm.update({ where: { id: req.params.id }, data });
         res.json(term);
     } catch (error) { 
-        console.error('updateDeliveryTerm error:', error);
         sendError(res, error, 'Ошибка обновления условия поставки'); 
     }
 };
@@ -494,7 +482,6 @@ const deleteDeliveryTerm = async (req, res) => {
         await prisma.deliveryTerm.delete({ where: { id: req.params.id } });
         res.status(204).send();
     } catch (error) { 
-        console.error('deleteDeliveryTerm error:', error);
         sendError(res, error, 'Ошибка удаления условия поставки'); 
     }
 };
@@ -511,7 +498,6 @@ const updateManufacturer = async (req, res) => {
         const m = await prisma.manufacturer.update({ where: { id: req.params.id }, data });
         res.json(m);
     } catch (error) { 
-        console.error('updateManufacturer error:', error);
         sendError(res, error, 'Ошибка обновления производителя'); 
     }
 };
@@ -520,7 +506,6 @@ const deleteManufacturer = async (req, res) => {
         await prisma.manufacturer.delete({ where: { id: req.params.id } });
         res.status(204).send();
     } catch (error) { 
-        console.error('deleteManufacturer error:', error);
         sendError(res, error, 'Ошибка удаления производителя'); 
     }
 };
@@ -661,7 +646,6 @@ const createBrand = async (req, res) => {
         });
         res.status(201).json(brand);
     } catch (error) {
-        console.error('createBrand error:', error);
         sendError(res, error, 'Ошибка при создании бренда');
     }
 };
@@ -680,7 +664,6 @@ const updateBrand = async (req, res) => {
         });
         res.json(brand);
     } catch (error) {
-        console.error('updateBrand error:', error);
         sendError(res, error, 'Ошибка при обновлении бренда');
     }
 };
@@ -690,7 +673,6 @@ const deleteBrand = async (req, res) => {
         await prisma.brand.delete({ where: { id: req.params.id } });
         res.status(204).send();
     } catch (error) {
-        console.error('deleteBrand error:', error);
         sendError(res, error, 'Ошибка при удалении бренда');
     }
 };

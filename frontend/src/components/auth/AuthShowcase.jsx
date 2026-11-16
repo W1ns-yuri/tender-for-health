@@ -68,7 +68,8 @@ export default function AuthShowcase({
           {/* Индикатор вариантов */}
           <div className="w-full pt-2.5 pb-0.5 px-2 flex items-center justify-between text-xs">
             <span className="font-bold text-slate-700 text-[12px] truncate max-w-70">
-              {t(currentIll.tagKey, currentIll.defaultTag)}
+              {/* Подпись — смысл картинки, а не номер варианта дизайна («Вариант 3 (ЭЦП…)» видели все пользователи) */}
+              {t(currentIll.titleKey, currentIll.defaultTitle)}
             </span>
             <div className="flex items-center gap-1.5 shrink-0">
               {illustrations.map((ill, i) => (

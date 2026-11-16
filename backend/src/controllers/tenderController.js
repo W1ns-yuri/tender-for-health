@@ -276,7 +276,6 @@ const createTender = async (req, res) => {
 
         res.status(201).json(tender);
     } catch (error) {
-        console.error('CreateTender Error:', error);
         sendError(res, error, 'Ошибка при создании тендера');
     }
 };
@@ -415,7 +414,6 @@ const getTenders = async (req, res) => {
 
         res.json(tenders);
     } catch (error) {
-        console.error('GetTenders Error:', error);
         sendError(res, error, 'Ошибка при получении списка тендеров');
     }
 };
@@ -720,7 +718,6 @@ const updateTender = async (req, res) => {
 
         res.json(updated);
     } catch (error) {
-        console.error('UpdateTender Error:', error);
         sendError(res, error, 'Ошибка обновления тендера');
     }
 };
@@ -746,7 +743,6 @@ const publishTender = async (req, res) => {
         if (result.error) return res.status(result.status).json({ error: result.error });
         res.json(result.tender);
     } catch (error) {
-        console.error('PublishTender Error:', error);
         sendError(res, error, 'Ошибка публикации тендера');
     }
 };
@@ -850,7 +846,6 @@ const createLot = async (req, res) => {
 
         res.status(201).json(newLot);
     } catch (error) {
-        console.error('CreateLot error:', error);
         sendError(res, error, 'Ошибка создания лота');
     }
 };
@@ -941,7 +936,6 @@ const updateLot = async (req, res) => {
 
         res.json(updatedLot);
     } catch (error) {
-        console.error('UpdateLot error:', error);
         sendError(res, error, 'Ошибка обновления лота');
     }
 };
@@ -968,7 +962,6 @@ const deleteLot = async (req, res) => {
 
         res.json({ success: true, message: 'Лот успешно удален', lotId });
     } catch (error) {
-        console.error('DeleteLot error:', error);
         sendError(res, error, 'Ошибка удаления лота');
     }
 };
@@ -989,7 +982,6 @@ const deleteTender = async (req, res) => {
         });
         res.json({ message: 'Тендер успешно удален' });
     } catch (error) {
-        console.error('Delete tender error:', error);
         sendError(res, error, 'Ошибка при удалении тендера');
     }
 };

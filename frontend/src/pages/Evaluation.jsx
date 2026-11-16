@@ -5,7 +5,7 @@ import API from '../services/api';
 import { getRoleTheme } from '../utils/themeUtils';
 import { getStatusBadge } from '../utils/statusUtils';
 import { TableFilters, Pagination, TableSkeletonRows } from '../components/ui';
-import { pluralize } from '../utils/pluralize';
+import { countLabel } from '../utils/pluralize';
 import useT from '../utils/useT';
 
 export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
@@ -367,10 +367,10 @@ export default function Evaluation({ role, isDarkMode, lang = 'RU' }) {
                             }`}
                           >
                             <FileText size={11} />
-                            <span>{pluralize(offersCount, ['заявка', 'заявки', 'заявок'])}</span>
+                            <span>{countLabel(offersCount, 'bid', t)}</span>
                           </span>
                           <span className="text-xs text-slate-400 font-medium">
-                            {lotsCount > 0 ? pluralize(lotsCount, ['лот', 'лота', 'лотов']) : `1 ${t('lotUpperLabel', 'лот')}`}
+                            {countLabel(lotsCount || 1, 'lot', t)}
                           </span>
                         </div>
                       </td>
